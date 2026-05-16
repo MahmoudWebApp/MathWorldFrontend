@@ -1,0 +1,663 @@
+{
+  "metadata": {
+    "title": "MathWorld - The World of Mathematics",
+    "description": "An interactive platform for solving math problems"
+  },
+  "nav": {
+    "home": "Home",
+    "problems": "Problems",
+    "categories": "Categories",
+    "search": "Search",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "profile": "Profile",
+    "dashboard": "Dashboard",
+    "admin": "Admin Panel",
+    "guide": "Entry Guide"
+  },
+  "hero": {
+    "title": "Discover the World of Mathematics",
+    "subtitle": "Solve problems, learn concepts, develop your skills",
+    "searchPlaceholder": "Search for a problem, category, or concept...",
+    "searchButton": "Search",
+    "browseCategories": "Browse Categories",
+    "startChallenge": "Start Challenge",
+    "tagline": "Discover the Interactive World of Mathematics",
+    "equations": [
+      "e^(iπ) + 1 = 0",
+      "a² + b² = c²",
+      "E = mc²",
+      "F = ma",
+      "Σ(n=1→∞) 1/n² = π²/6"
+    ],
+    "stats": {
+      "students": "Active Students",
+      "problems": "Math Problems",
+      "solutions": "Submitted Solutions"
+    }
+  },
+  "stages": {
+    "title": "Educational Stages",
+    "heading": "Explore by Stage",
+    "subtitle": "Find problems tailored to your academic level"
+  },
+  "categories": {
+    "title": "Categories",
+    "subtitle": "Explore math problems organized by category and subject to streamline your learning and practice",
+    "viewAll": "View All"
+  },
+  "tags": {
+    "title": "Popular Tags",
+    "subtitle": "Explore problems by topic"
+  },
+  "stats": {
+    "whyMathWorld": "Why MathWorld?",
+    "description": "A comprehensive platform designed specifically to help you master mathematics",
+    "features": {
+      "variety": {
+        "title": "Diverse Problems",
+        "description": "Over 5000 problems across different branches of mathematics"
+      },
+      "progress": {
+        "title": "Progress Tracking",
+        "description": "Monitor your progress and develop your skills step by step"
+      },
+      "solutions": {
+        "title": "Detailed Solutions",
+        "description": "Learn from detailed step-by-step solutions for every problem"
+      },
+      "points": {
+        "title": "Points System",
+        "description": "Earn points and compete with other students"
+      }
+    }
+  },
+  "search": {
+    "title": "Search Problems",
+    "subtitle": "Find math problems by topic or difficulty",
+    "placeholder": "Search for a problem...",
+    "filters": "Filters",
+    "allCategories": "All Categories",
+    "allDifficulties": "All Levels",
+    "difficultyLabel": "Difficulty",
+    "categoryLabel": "Category",
+    "resultsFound": "{count} results found",
+    "noResults": "No results found",
+    "tryDifferent": "Try a different search or adjust the filters",
+    "startTyping": "Start typing to search for problems"
+  },
+  "problems": {
+    "title": "Math Problems",
+    "subtitle": "Browse, search, and solve a wide variety of math problems categorized by difficulty and topic",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "status": {
+      "solved": "Solved",
+      "unsolved": "Unsolved",
+      "inProgress": "In Progress"
+    },
+    "filters": {
+      "all": "All",
+      "category": "Category",
+      "difficulty": "Difficulty",
+      "status": "Status"
+    },
+    "activeFilters": "Active Filters",
+    "views": "Views",
+    "points": "Points",
+    "viewsTooltip": "Total views",
+    "pointsTooltip": "Points earned on correct answer"
+  },
+  "problem": {
+    "backToProblems": "Problems",
+    "successRate": "Success",
+    "minutes": "min",
+    "attempts": "attempts",
+    "enterAnswer": "Enter your answer",
+    "writeSolution": "Write your solution here...",
+    "submit": "Submit Solution",
+    "submitting": "Submitting...",
+    "correct": "Correct answer! Well done",
+    "wrong": "Wrong answer, try again",
+    "loginToSolve": "Login to solve this problem",
+    "hint": "Hint",
+    "hints": "Hints",
+    "noHints": "No hints available for this problem",
+    "solution": "Solution",
+    "problem": "Problem",
+    "correctAnswerWas": "The correct answer was:",
+    "viewSolution": "View Solution",
+    "question": "Question",
+    "videoSolution": "Video Solution"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Welcome back! Login to continue",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Login",
+      "orContinueWith": "Or continue with",
+      "google": "Google",
+      "facebook": "Facebook",
+      "noAccount": "Don't have an account?",
+      "registerNow": "Register now",
+      "forgotPassword": "Forgot password?",
+      "rememberMe": "Remember me"
+    },
+    "register": {
+      "title": "Create Account",
+      "subtitle": "Join us and start your journey in the world of mathematics",
+      "fullName": "Full Name",
+      "username": "Username",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Create Account",
+      "orContinueWith": "Or continue with",
+      "hasAccount": "Already have an account?",
+      "loginNow": "Login now",
+      "fullNamePlaceholder": "John Doe",
+      "emailPlaceholder": "example@email.com",
+      "passwordMismatch": "Passwords do not match",
+      "generalError": "Something went wrong. Please try again."
+    }
+  },
+  "dashboard": {
+    "user": {
+      "title": "Dashboard",
+      "subtitle": "Track your progress and achievements",
+      "solvedProblems": "Solved Problems",
+      "favoriteProblems": "Favorites",
+      "totalPoints": "Total Points",
+      "successRate": "Success Rate",
+      "recentActivity": "Recent Activity",
+      "statistics": "Statistics",
+      "noSolvedYet": "No solved problems yet",
+      "startSolving": "Start solving now",
+      "noFavoritesYet": "No favorite problems yet",
+      "exploreProblems": "Explore problems",
+      "welcome": "Welcome",
+      "solvedProblemMessage": "Solved {type} problem #{id}",
+      "hoursAgo": "{hours, plural, =1 {an hour ago} =2 {2 hours ago} other {# hours ago}}",
+      "problemTypes": {
+        "algebra": "Algebra",
+        "geometry": "Geometry",
+        "logic": "Logic"
+      },
+      "noActivityYet": "No recent activity yet. Start solving problems to see your progress here!",
+      "solvedProblemActivity": "Solved {title} in {category}",
+      "justNow": "Just now",
+      "minutesAgo": "{minutes} min ago",
+      "daysAgo": "{days} days ago"
+    },
+    "admin": {
+      "title": "Admin Panel",
+      "subtitle": "Manage the platform and users",
+      "users": "Users",
+      "problems": "Problems",
+      "categories": "Categories",
+      "tags": "Tags",
+      "stats": "Statistics",
+      "addNew": "Add New",
+      "edit": "Edit",
+      "delete": "Delete",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "dailyStats": "Daily Statistics",
+      "totalUsers": "Total Users",
+      "totalProblems": "Total Problems",
+      "totalSolutions": "Total Solutions",
+      "activeToday": "Active Today",
+      "recentUsers": "Recent Users",
+      "statsOverview": "Statistics Overview",
+      "stages": "Stages"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Users Management",
+      "total": "Total Users",
+      "name": "Full Name",
+      "email": "Email Address",
+      "role": "Role",
+      "status": "Status",
+      "solved": "Solved Problems",
+      "active": "Active",
+      "inactive": "Inactive",
+      "changeRole": "Change Role",
+      "confirmRoleChange": "Are you sure you want to change the role of this user?"
+    },
+    "categories": {
+      "title": "Categories Management",
+      "icon": "Icon",
+      "nameAr": "Name (Arabic)",
+      "nameEn": "Name (English)",
+      "order": "Display Order",
+      "addNew": "Add New Category",
+      "edit": "Edit Category",
+      "add": "Add Category",
+      "delete": "Delete",
+      "uploadIcon": "Upload Icon",
+      "confirmDelete": "Are you sure you want to delete this category? This action cannot be undone."
+    },
+    "tags": {
+      "title": "Manage Tags",
+      "addNew": "Add New Tag",
+      "id": "ID",
+      "name": "Name",
+      "nameAr": "Name (Arabic)",
+      "nameEn": "Name (English)",
+      "problemsCount": "Problems",
+      "edit": "Edit Tag",
+      "add": "Add Tag",
+      "noTags": "No tags found. Create your first tag!",
+      "slug": "Slug",
+      "confirmDelete": "Are you sure you want to delete this tag? This action cannot be undone."
+    },
+    "problems": {
+      "title": "Problems Management",
+      "subtitle": "Add, edit, and delete math problems",
+      "addNew": "Add New Problem",
+      "edit": "Edit Problem",
+      "add": "Add Problem",
+      "editSubtitle": "Edit existing problem details",
+      "addSubtitle": "Add a new problem with all its mathematical details",
+      "basicInfo": "Basic Information",
+      "questionDetails": "Question Details & Equations",
+      "mainLatexNote": "(Standalone Main Equation)",
+      "equationPreview": "Equation Preview:",
+      "optionLatexLabel": "Option Equation (Optional)",
+      "detailedSolutionsSection": "Detailed Solutions",
+      "youtubeUrlLabel": "YouTube Solution URL (Optional)",
+      "youtubeUrlDescription": "Put the video link here to show students an explanatory video for the written solution.",
+      "youtubeVideoExists": "Solution video URL exists",
+      "watchVideo": "Watch Video",
+      "questionArPlaceholder": "Write the question text here... (You can use $x$ for inline math)",
+      "questionEnPlaceholder": "Write the English question text here... (You can use $x$ for inline math)",
+      "searchPlaceholder": "Search by title or equation...",
+      "category": "Category",
+      "difficulty": "Difficulty",
+      "points": "Points",
+      "pointsMustBePositive": "Points must be greater than 0",
+      "page": "Page",
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard",
+      "titleAr": "Title (Arabic)",
+      "titleEn": "Title (English)",
+      "latexCode": "LaTeX Code",
+      "preview": "Preview:",
+      "questionAr": "Question Text (Arabic)",
+      "questionEn": "Question Text (English)",
+      "options": "Options",
+      "addOption": "Add Option",
+      "optionLabel": "Option {number}",
+      "optionTextAr": "Arabic Text",
+      "optionTextEn": "English Text",
+      "optionLatex": "LaTeX (Optional)",
+      "correctAnswer": "Correct Answer",
+      "markAsCorrect": "Mark as Correct",
+      "oneCorrectRequired": "At least one correct answer is required",
+      "onlyOneCorrect": "Only one correct answer is allowed",
+      "confirmDelete": "Are you sure you want to delete this problem? All associated solutions will be deleted and this action cannot be undone.",
+      "tags": "Tags",
+      "tag": "Tag",
+      "total": "Total Problems",
+      "noProblems": "No problems found. Create your first problem!",
+      "detailedSolution": "Detailed Solution",
+      "detailedSolutionAr": "Detailed Solution (Arabic)",
+      "detailedSolutionEn": "Detailed Solution (English)",
+      "detailedSolutionPlaceholder": "Write a detailed solution here...",
+      "stage": "Stage",
+      "stageRequired": "You must select an educational stage"
+    },
+    "stages": {
+      "title": "Educational Stages",
+      "subtitle": "Manage educational stages and levels",
+      "addNew": "Add New Stage",
+      "edit": "Edit Stage",
+      "add": "Add Stage",
+      "id": "ID",
+      "nameAr": "Arabic Name",
+      "nameEn": "English Name",
+      "order": "Order",
+      "noStages": "No stages found. Create your first stage!",
+      "confirmDelete": "Are you sure you want to delete this stage? This action cannot be undone."
+    },
+    "guide": {
+      "title": "Math Problems Data Entry Guide",
+      "subtitle": "Welcome to the data entry team! Please read this quick guide to ensure problems are displayed beautifully and with high scientific accuracy.",
+      "latexRules": {
+        "title": "Rules for Writing Equations (LaTeX)",
+        "rule1": {
+          "title": "Dedicated Equation Fields (Main Equation + Option Equations)",
+          "desc": "In these code-only fields, <strong>never</strong> write dollar signs <code>$</code>. The platform adds them programmatically."
+        },
+        "rule2": {
+          "title": "Equations inside Plain Text (Question + Detailed Solutions)",
+          "desc": "When writing plain text and inserting math symbols, you must use dollar signs:",
+          "inline": "Use one dollar sign <code>$code$</code> for inline equations.",
+          "block": "Use two dollar signs <code>$$code$$</code> for large block equations."
+        },
+        "correct": "Correct Method",
+        "wrong": "Wrong Method",
+        "exampleTitle": "Practical Example of a Detailed Solution:",
+        "exampleCode": "To solve this integral, we use the substitution method. Let:\n$$ u = x^2 + 1 $$\nDifferentiating both sides gives:\n$$ du = 2x \\, dx $$\nNow, we know that the variable $x$ is positive, so we substitute into the equation."
+      },
+      "options": {
+        "title": "Options (Answers)",
+        "point1": "Write plain text in the (Arabic/English Text) field as 'First Answer'.",
+        "point2": "If the option contains a fraction or root, use the dedicated <strong>(Option Equation)</strong> LaTeX field and remember NOT to put <code>$</code>.",
+        "warning": "<strong>Important Note:</strong> Don't forget to click the 'Mark as Correct' button for the ONLY correct answer. The platform won't let you save without one correct answer."
+      },
+      "solutions": {
+        "title": "Detailed Solutions & Video",
+        "desc": "The detailed solution is the real value we provide to the student. The explanation must be thorough and step-by-step.",
+        "dashboardTitle": "Math Dashboard",
+        "dashboardDesc": "Use the toolbar above text fields. Clicking any symbol (like $\\pi$ or $\\int$) inserts its LaTeX code directly at your cursor.",
+        "youtubeTitle": "YouTube Link",
+        "youtubeDesc": "If a video explaining the problem is available, copy the full link into the designated field. Example: <code>https://youtube.com/watch?v=...</code>"
+      }
+    }
+  },
+  "footer": {
+    "description": "An interactive platform for solving math problems and developing skills",
+    "links": "Quick Links",
+    "support": "Support",
+    "about": "About",
+    "contact": "Contact Us",
+    "privacy": "Privacy Policy",
+    "followUs": "Follow Us",
+    "github": "GitHub",
+    "twitter": "Twitter",
+    "copyright": "© {year} MathWorld. All rights reserved."
+  },
+  "common": {
+    "welcome": "Welcome",
+    "viewAll": "View All",
+    "noData": "No data available",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "next": "Next",
+    "previous": "Previous",
+    "page": "Page",
+    "of": "of",
+    "unknown": "Unknown",
+    "errorLoadingData": "Failed to load data. Please try again.",
+    "errorLoadingUsers": "Failed to load users list.",
+    "chartPlaceholder": "Chart will be displayed here",
+    "actions": "Actions",
+    "confirmDelete": "Are you sure you want to delete this item?",
+    "all": "All",
+    "clearAll": "Clear All",
+    "solveNow": "Solve Now",
+    "remove": "Remove",
+    "saving": "Saving...",
+    "errorSaving": "Failed to save. Please try again.",
+    "errorDeleting": "Failed to delete. Please try again.",
+    "confirmDeleteTitle": "Confirm Delete",
+    "select": "Select...",
+    "view": "View",
+    "required": "This field is required",
+    "explore": "Explore"
+  },
+  "about": {
+    "metadata": {
+      "title": "About MathWorld - Our Story & Mission",
+      "description": "Discover the story behind MathWorld, our mission to make mathematics accessible, and the team behind the platform."
+    },
+    "hero": {
+      "title": "About MathWorld",
+      "subtitle": "Our journey to make mathematics accessible, engaging, and enjoyable for everyone",
+      "badge": "Our Story"
+    },
+    "mission": {
+      "title": "Our Mission",
+      "description": "We believe mathematics is the universal language of logic and creativity. Our mission is to break down complex concepts into interactive, solvable challenges that empower learners worldwide.",
+      "points": [
+        "Making math accessible to all levels",
+        "Bridging the gap between theory and practice",
+        "Building a global community of problem solvers"
+      ]
+    },
+    "vision": {
+      "title": "Our Vision",
+      "description": "To become the world's leading interactive mathematics platform, where every student, educator, and enthusiast finds the tools and community to excel in mathematical thinking."
+    },
+    "values": {
+      "title": "Our Core Values",
+      "items": [
+        {
+          "title": "Excellence",
+          "description": "We strive for the highest quality in every problem, solution, and interaction."
+        },
+        {
+          "title": "Accessibility",
+          "description": "Mathematics should have no barriers. We design for every learner, everywhere."
+        },
+        {
+          "title": "Innovation",
+          "description": "We constantly explore new ways to make learning mathematics interactive and fun."
+        },
+        {
+          "title": "Community",
+          "description": "We believe in the power of collaborative learning and peer support."
+        }
+      ]
+    },
+    "stats": {
+      "title": "Our Impact",
+      "subtitle": "Numbers that reflect our commitment to mathematical education",
+      "items": {
+        "users": "Active Learners",
+        "problems": "Math Problems",
+        "solutions": "Submitted Solutions",
+        "countries": "Countries Reached"
+      }
+    },
+    "features": {
+      "title": "What Makes Us Different",
+      "subtitle": "A platform designed with the learner in mind",
+      "items": [
+        {
+          "title": "Adaptive Learning",
+          "description": "Problems that adjust to your skill level and learning pace."
+        },
+        {
+          "title": "Detailed Solutions",
+          "description": "Step-by-step explanations that teach, not just answer."
+        },
+        {
+          "title": "Gamified Experience",
+          "description": "Points, badges, and leaderboards to keep you motivated."
+        },
+        {
+          "title": "Bilingual Support",
+          "description": "Full Arabic and English support for a seamless experience."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Ready to Start Your Journey?",
+      "subtitle": "Join thousands of learners who have discovered the joy of mathematics",
+      "primaryButton": "Explore Problems",
+      "secondaryButton": "Join Now"
+    }
+  },
+  "privacy": {
+    "metadata": {
+      "title": "Privacy Policy - MathWorld",
+      "description": "Learn how MathWorld collects, uses, and protects your personal information."
+    },
+    "hero": {
+      "title": "Privacy Policy",
+      "subtitle": "Your privacy matters to us. Learn how we protect your data.",
+      "badge": "Legal",
+      "lastUpdated": "Last updated: May 2026",
+      "stats": {
+        "students": "Active Students",
+        "problems": "Math Problems",
+        "solutions": "Submitted Solutions",
+        "countries": "Countries Reached"
+      }
+    },
+    "sections": {
+      "introduction": {
+        "title": "Introduction",
+        "content": "At MathWorld, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform."
+      },
+      "information": {
+        "title": "Information We Collect",
+        "content": "We collect information that you provide directly to us, including:",
+        "items": [
+          "Account information (name, email, username)",
+          "Profile information and preferences",
+          "Problem solutions and submissions",
+          "Usage data and analytics",
+          "Communication records with support"
+        ]
+      },
+      "usage": {
+        "title": "How We Use Your Information",
+        "content": "We use the information we collect to:",
+        "items": [
+          "Provide and maintain our services",
+          "Personalize your learning experience",
+          "Improve our platform and develop new features",
+          "Communicate with you about updates and support",
+          "Ensure platform security and prevent fraud"
+        ]
+      },
+      "sharing": {
+        "title": "Information Sharing",
+        "content": "We do not sell your personal information. We may share your information only in the following circumstances:",
+        "items": [
+          "With your consent",
+          "To comply with legal obligations",
+          "To protect our rights and safety",
+          "With service providers who assist our operations"
+        ]
+      },
+      "security": {
+        "title": "Data Security",
+        "content": "We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction."
+      },
+      "cookies": {
+        "title": "Cookies & Tracking",
+        "content": "We use cookies and similar tracking technologies to enhance your experience, analyze usage patterns, and remember your preferences. You can manage cookie settings through your browser."
+      },
+      "rights": {
+        "title": "Your Rights",
+        "content": "You have the right to:",
+        "items": [
+          "Access your personal data",
+          "Request correction of inaccurate data",
+          "Request deletion of your data",
+          "Object to certain processing activities",
+          "Withdraw consent at any time"
+        ]
+      },
+      "contact": {
+        "title": "Contact Us",
+        "content": "If you have any questions about this Privacy Policy or our data practices, please contact us at:"
+      }
+    }
+  },
+  "contact": {
+    "metadata": {
+      "title": "Contact Us - MathWorld",
+      "description": "Get in touch with the MathWorld team. Find our email and social media links."
+    },
+    "hero": {
+      "title": "Contact Us",
+      "subtitle": "Have a question or suggestion? We'd love to hear from you.",
+      "badge": "Get in Touch"
+    },
+    "email": {
+      "title": "Email Us",
+      "description": "For general inquiries, support, or feedback",
+      "button": "Send Email",
+      "address": "support@mathworld.com"
+    },
+    "social": {
+      "title": "Follow Us",
+      "description": "Stay connected through our social media channels"
+    },
+    "response": {
+      "title": "Response Time",
+      "description": "We typically respond within 24-48 hours during business days."
+    }
+  },
+  "solved": {
+    "metadata": {
+      "title": "Solved Problems - MathWorld",
+      "description": "View all your solved math problems and track your progress."
+    },
+    "title": "Solved Problems",
+    "subtitle": "Problems you've successfully solved",
+    "searchPlaceholder": "Search solved problems...",
+    "filters": {
+      "all": "All Solved",
+      "category": "Category",
+      "difficulty": "Difficulty"
+    },
+    "sort": {
+      "newest": "Newest First",
+      "oldest": "Oldest First",
+      "points": "Highest Points"
+    },
+    "stats": {
+      "total": "Total Solved"
+    },
+    "empty": {
+      "title": "No solved problems yet",
+      "description": "Start solving problems to see them here!",
+      "button": "Browse Problems"
+    }
+  },
+  "favorites": {
+    "metadata": {
+      "title": "Favorite Problems - MathWorld",
+      "description": "Your favorite math problems saved for later."
+    },
+    "title": "Favorite Problems",
+    "subtitle": "Problems you've saved for later",
+    "searchPlaceholder": "Search favorites...",
+    "filters": {
+      "all": "All Favorites",
+      "category": "Category",
+      "difficulty": "Difficulty"
+    },
+    "sort": {
+      "newest": "Newest First",
+      "oldest": "Oldest First"
+    },
+    "stats": {
+      "total": "Total Favorites"
+    },
+    "empty": {
+      "title": "No favorites yet",
+      "description": "Save problems you like to find them easily later!",
+      "button": "Browse Problems"
+    },
+    "remove": "Remove from favorites"
+  },
+  "errors": {
+    "passwordMismatch": "Passwords do not match",
+    "problemNotFound": "Problem not found"
+  }
+}

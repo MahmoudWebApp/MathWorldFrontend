@@ -1,0 +1,70 @@
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    font-family: var(--font-sans);
+  }
+
+  /* RTL mode: Arabic font */
+  html[dir="rtl"],
+  [dir="rtl"] {
+    font-family: var(--font-arabic) !important;
+  }
+
+  /* English override */
+  :lang(en),
+  [dir="ltr"] {
+    font-family: var(--font-sans) !important;
+  }
+
+  /* Arabic override */
+  :lang(ar),
+  [dir="rtl"] {
+    font-family: var(--font-arabic) !important;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.55 0.155 260 / 0.2);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.55 0.155 260 / 0.4);
+  }
+
+  /* Reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float,
+    .animate-float-reverse,
+    .animate-spin-slow,
+    .animate-spin-slow-reverse,
+    .animate-pulse-glow,
+    .animate-orbit-1,
+    .animate-orbit-2,
+    .animate-orbit-3,
+    .animate-draw-path,
+    .animate-shimmer,
+    .animate-wave-rotate,
+    .animate-tag-float,
+    .hero-anim,
+    .hero-anim-down {
+      animation: none !important;
+    }
+    .hero-anim, .hero-anim-down {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+}
