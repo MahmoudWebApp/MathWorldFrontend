@@ -224,7 +224,7 @@ export function HeroSection() {
                 >
                   <Search className="h-4 w-4 sm:hidden" />
                   <span className="hidden sm:inline">{t("hero.searchButton")}</span>
-                  <span className="sm:hidden">بحث</span>
+                  <span className="sm:hidden">{t("hero.searchButton")}</span>
                 </Button>
               </div>
             </div>
@@ -257,7 +257,7 @@ export function HeroSection() {
           </div>
 
           {/* 7 — Stats */}
-          {/* تم تغيير الشبكة لتستوعب 4 عناصر بشكل متناسق */}
+      
           <div className="hero-anim hero-delay-7 grid grid-cols-2 sm:grid-cols-4 gap-5 max-w-4xl mx-auto">
             {stats.map((stat, index) => (
               <div
