@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
 import { Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -16,8 +15,6 @@ const floatingSymbols = [
 
 export function AboutHero() {
   const t = useTranslations('about');
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

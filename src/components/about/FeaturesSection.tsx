@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Brain, BookOpen, Trophy, Languages } from 'lucide-react';
 import { useInView } from '@/lib/useInView';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -15,8 +15,7 @@ const gradients = [
 
 export function FeaturesSection() {
   const t = useTranslations('about');
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
+
   const { ref: sectionRef, isInView } = useInView(0.1);
 
   const features = t.raw('features.items') as Array<{ title: string; description: string }>;

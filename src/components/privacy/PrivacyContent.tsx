@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations} from 'next-intl';
 import { 
   FileText, 
   Database, 
@@ -31,8 +31,6 @@ const colorGradients = [
 
 export function PrivacyContent() {
   const t = useTranslations('privacy');
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
   const { ref: sectionRef, isInView } = useInView(0.05);
 
   const sections = [

@@ -34,7 +34,8 @@
     "stats": {
       "students": "Active Students",
       "problems": "Math Problems",
-      "solutions": "Submitted Solutions"
+      "solutions": "Submitted Solutions",
+      "countries": "Countries Reached"
     }
   },
   "stages": {
@@ -507,13 +508,7 @@
       "title": "Privacy Policy",
       "subtitle": "Your privacy matters to us. Learn how we protect your data.",
       "badge": "Legal",
-      "lastUpdated": "Last updated: May 2026",
-      "stats": {
-        "students": "Active Students",
-        "problems": "Math Problems",
-        "solutions": "Submitted Solutions",
-        "countries": "Countries Reached"
-      }
+      "lastUpdated": "Last updated: May 2026"
     },
     "sections": {
       "introduction": {

@@ -127,7 +127,7 @@ export default function ProblemPage() {
     skip: isNaN(problemId),
   });
 
-  const { data: favoriteData, refetch: refetchFavorite } = useCheckFavoriteQuery(problemId, {
+  const { data: favoriteData} = useCheckFavoriteQuery(problemId, {
     skip: !isAuthenticated || isNaN(problemId),
   });
 

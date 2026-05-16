@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations ,useLocale} from "next-intl";
-import { Link, useRouter } from "@/i18n/routing";
+import { Link } from "@/i18n/routing";
 import { useRegisterMutation } from "@/store/api/authApi";
 import { setCredentials } from "@/store/slices/authSlice";
 import { useDispatch } from "react-redux";
@@ -23,7 +23,6 @@ import { User } from "@/store/api/types";
 // ============================================================================
 export default function RegisterPage() {
   const t = useTranslations();
-  const router = useRouter();
   const dispatch = useDispatch();
   const locale = useLocale();
 
@@ -44,7 +43,7 @@ export default function RegisterPage() {
   const handleAuthSuccess = (
     userData: User,
     dispatch: ReturnType<typeof useDispatch>,
-    router: ReturnType<typeof useRouter>,
+
   ) => {
     // Dispatch user credentials to Redux store for global state management
     dispatch(setCredentials({ user: userData, token: userData.Token }));
@@ -89,7 +88,7 @@ export default function RegisterPage() {
       }).unwrap();
 
       // ✅ Use shared auth handler for consistent post-authentication flow
-      handleAuthSuccess(userData, dispatch, router);
+      handleAuthSuccess(userData, dispatch);
     } catch (err: any) {
       // Error handling: Extract meaningful message from API response
       const serverMessage = err?.data?.message || err?.data?.Message || "";

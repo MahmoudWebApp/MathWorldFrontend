@@ -6,7 +6,7 @@ import { useGetFavoritesQuery, useToggleFavoriteMutation } from '@/store/api/use
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Heart, ArrowRight, Loader2, AlertCircle, X } from 'lucide-react';
+import { Heart, ArrowRight, AlertCircle, X } from 'lucide-react';
 import { ArrowLeft } from 'iconsax-reactjs';
 import { AnimatedCounter } from '@/components/home/AnimatedCounter';
 import { useState, useEffect } from 'react';

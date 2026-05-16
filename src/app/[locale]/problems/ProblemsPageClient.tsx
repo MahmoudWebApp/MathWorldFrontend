@@ -9,10 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi";
 import { useGetTagsQuery } from "@/store/api/tagsApi";
 import { useSearchProblemsQuery } from "@/store/api/problemsApi";
-import {
-  useGetAdminStagesQuery,
-  useGetStagesQuery,
-} from "@/store/api/stagesApi"; // ✅ Fetch educational stages
+import {useGetStagesQuery,} from "@/store/api/stagesApi";
 import type { ProblemPreview } from "@/store/api/types";
 import {
   X,

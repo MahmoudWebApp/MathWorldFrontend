@@ -94,7 +94,7 @@ export const usersApi = createApi({
         }
       },
 
-      invalidatesTags: (result, error, { ProblemId }) => [
+      invalidatesTags: (_result, _error, { ProblemId }) => [
         'Favorite',
         'Dashboard',
         { type: 'Problem', id: ProblemId },
@@ -104,7 +104,7 @@ export const usersApi = createApi({
     // Check if a problem is favorite
     checkFavorite: builder.query<FavoriteCheck, number>({
       query: (ProblemId) => `/users/favorite/check/${ProblemId}`,
-      providesTags: (result, error, ProblemId) => [{ type: 'Problem', id: ProblemId }],
+      providesTags: (_result, _error, ProblemId) => [{ type: 'Problem', id: ProblemId }],
     }),
 
     // Admin: Get all users with pagination

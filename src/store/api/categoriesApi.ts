@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { ApiResponse, baseQuery, createFormDataQuery } from './baseQuery';
+import {  baseQuery, createFormDataQuery } from './baseQuery';
 import { Category, PagedProblemsResponse, PagedResponse } from './types';
 
 export interface CreateCategoryRequest {
@@ -95,7 +95,7 @@ export const categoriesApi = createApi({
         if (result.error) return { error: result.error };
         return { data: result.data as Category };
       },
-      invalidatesTags: (result, error, { Id }) => [{ type: 'Category', Id }],
+      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Category', Id }],
     }),
 
     // Admin: Delete category

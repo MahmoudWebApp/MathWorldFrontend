@@ -14,12 +14,10 @@ import {
   TickCircle, 
   Activity,
   ArrowRight2,
-  Add,
   Warning2,
   Category2 // ✅ Icon for stages
 } from 'iconsax-reactjs';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import AdminStatsChart from '@/components/admin/AdminStatsChart';
 
 interface AdminUser {

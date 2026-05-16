@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Award, Globe, Lightbulb, Users } from 'lucide-react';
 import { useInView } from '@/lib/useInView';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -16,8 +16,7 @@ const colorClasses = [
 
 export function ValuesSection() {
   const t = useTranslations('about');
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
+
   const { ref: sectionRef, isInView } = useInView(0.1);
 
   const values = t.raw('values.items') as Array<{ title: string; description: string }>;

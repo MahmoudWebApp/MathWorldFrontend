@@ -179,7 +179,7 @@ export const problemsApi = createApi({
     // Get single problem by ID
     getProblem: builder.query<ProblemDetail, number>({
       query: (Id) => `/Problems/${Id}`,
-      providesTags: (result, error, Id) => [{ type: 'Problem', Id }],
+      providesTags: (_result, _error, Id) => [{ type: 'Problem', Id }],
     }),
 
     // Submit answer for a problem
@@ -189,7 +189,7 @@ export const problemsApi = createApi({
         method: 'POST',
         body,
       }),
-      invalidatesTags: (result, error, { ProblemId }) =>
+      invalidatesTags: (_result, _error, { ProblemId }) =>
         [{ type: 'Problem', Id: ProblemId }],
     }),
 
@@ -257,7 +257,7 @@ export const problemsApi = createApi({
         method: 'PUT',
         body: Data,
       }),
-      invalidatesTags: (result, error, { Id }) => [{ type: 'Problem', Id }],
+      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Problem', Id }],
     }),
 
     // Admin: Delete problem

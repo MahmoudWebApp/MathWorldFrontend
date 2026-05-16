@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link"; // ✅ تمت إضافة الاستيراد هنا
+import Link from "next/link"; 
 import {
   useLazyGetAdminProblemsQuery,
   useCreateProblemMutation,
@@ -146,7 +146,6 @@ export default function AdminProblemsPage() {
   const t = useTranslations();
   const locale = useLocale();
   const isRtl = locale === "ar";
-  const isAr = locale === "ar";
 
   /* ── View State ── */
   const [view, setView] = useState<"list" | "form">("list");

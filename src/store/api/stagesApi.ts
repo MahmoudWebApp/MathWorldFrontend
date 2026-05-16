@@ -1,7 +1,7 @@
 // store/api/stagesApi.ts
 
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { ApiResponse, baseQuery } from './baseQuery';
+import {  baseQuery } from './baseQuery';
 
 export interface Stage {
   Id: number;
@@ -61,8 +61,8 @@ export const stagesApi = createApi({
 
 // ✅ Export the new public hook + keep admin hooks for admin pages
 export const {
-  useGetStagesQuery,        // 👈 New: For public/frontend usage
-  useGetAdminStagesQuery,   // 👈 Keep: For admin panel usage
+  useGetStagesQuery,       
+  useGetAdminStagesQuery,   
   useCreateStageMutation,
   useUpdateStageMutation,
   useDeleteStageMutation,

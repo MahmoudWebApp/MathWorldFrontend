@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Mail, Clock, ExternalLink } from 'lucide-react';
 import { useInView } from '@/lib/useInView';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -82,7 +82,6 @@ const socialLinks = [
   },
 ];
 
-// ✅ الهوفر الموحد لكل الأيقونات - بلون الموقع Primary
 const socialCardHover = `
   group
   flex flex-col items-center gap-3 p-6 rounded-2xl 
@@ -99,8 +98,7 @@ const socialCardHover = `
 
 export function ContactLinks() {
   const t = useTranslations('contact');
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
+
   const { ref: sectionRef, isInView } = useInView(0.1);
 
   return (
