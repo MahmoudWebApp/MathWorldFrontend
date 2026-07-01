@@ -1,6 +1,5 @@
-'use client';
-
-import { useState, useEffect, useRef } from 'react';
+"use client";
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
 import { useTheme } from 'next-themes';
@@ -27,7 +26,8 @@ import { problemsApi } from '@/store/api/problemsApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
 import { useSearchParams } from 'next/navigation'; 
 
-export function Navbar() {
+// 1. Rename the main component and remove 'export'
+function NavbarContent() {
   const t = useTranslations();
   const locale = useLocale();
   const pathname = usePathname();
@@ -76,7 +76,7 @@ export function Navbar() {
     router.push('/');
   };
 
- const toggleLocale = () => {
+  const toggleLocale = () => {
     const newLocale = locale === 'ar' ? 'en' : 'ar';
     dispatch(setLocale(newLocale));
     dispatch(problemsApi.util.invalidateTags(['Problem', 'Category']));
@@ -131,7 +131,7 @@ export function Navbar() {
             </Link>
           ))}
           
-          {/* ✅ Stages Dropdown */}
+          {/* Stages Dropdown */}
           <div 
             className="relative"
             ref={stagesMenuRef}
@@ -184,7 +184,7 @@ export function Navbar() {
             )}
           </div>
 
-          {/* ✅ عن المنصة */}
+          {/* About Section */}
           <Link
             href="/about"
             className={cn(
@@ -334,3 +334,17 @@ export function Navbar() {
     </header>
   );
 }
+
+// 2. Export the new Navbar wrapped in Suspense
+export function Navbar() {
+  return (
+    <Suspense 
+      fallback={
+        <header className="sticky top-0 z-50 w-full h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" />
+      }
+    >
+      <NavbarContent />
+    </Suspense>
+  );
+}
+
