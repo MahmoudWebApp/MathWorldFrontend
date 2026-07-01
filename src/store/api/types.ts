@@ -9,14 +9,7 @@ export interface Category {
   Name: string;
   Icon: string;
   Order?: number;
-}
-
-export interface Tag {
-  Id: number;
-  TextAr: string;
-  TextEn: string;
-  Text: string;
-  ProblemsCount?: number;
+  StageId?: number;
 }
 
 export interface ProblemPreview {
@@ -28,7 +21,6 @@ export interface ProblemPreview {
   ViewsCount: number;
   RequiresLogin: boolean;
   Points: number;
-  LatexCode?: string;
 }
 
 export interface PagedResponse<T> {
@@ -56,7 +48,7 @@ export interface User {
   SubscriptionType: string;
 }
 
-// --- NEW TYPES FOR DASHBOARD ---
+// --- DASHBOARD TYPES ---
 
 export interface RecentActivityItem {
   ProblemId: number;

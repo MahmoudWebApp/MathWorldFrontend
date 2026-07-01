@@ -1,5 +1,3 @@
-// File: app/[locale]/problems/ProblemsPageClient.tsx
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -7,9 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { useGetCategoriesQuery } from "@/store/api/categoriesApi";
-import { useGetTagsQuery } from "@/store/api/tagsApi";
+import { useGetStagesQuery } from "@/store/api/stagesApi";
 import { useSearchProblemsQuery } from "@/store/api/problemsApi";
-import {useGetStagesQuery,} from "@/store/api/stagesApi";
 import type { ProblemPreview } from "@/store/api/types";
 import {
   X,
@@ -18,12 +15,12 @@ import {
   Loader2,
   AlertCircle,
   Search,
-  Filter,
   RotateCcw,
 } from "lucide-react";
+import { Link } from "@/i18n/routing";
 import { ProblemCard } from "@/components/problems/ProblemCard";
 
-const DEFAULT_PAGE_SIZE = 5;
+const DEFAULT_PAGE_SIZE = 10;
 const DEBOUNCE_DELAY = 500;
 
 // Simple debounce hook
@@ -57,25 +54,27 @@ function ProblemsPageClient() {
   const locale = useLocale();
   const searchParams = useSearchParams();
 
+  // ── Get filters from URL params ─────────────────────────
+  const urlStageId = searchParams.get("stageId") || "";
+  const urlCategoryId = searchParams.get("categoryId") || "";
+  const urlSearch = searchParams.get("q") || "";
+
   // ── State ───────────────────────────────────────────────
   const [page, setPage] = useState(1);
-  const [inputValue, setInputValue] = useState(searchParams.get("q") || "");
+  const [inputValue, setInputValue] = useState(urlSearch);
   const debouncedSearch = useDebounce(inputValue, DEBOUNCE_DELAY);
 
-  // ✅ Replace old difficulty state with stageId (numeric string)
-  const [stageId, setStageId] = useState(searchParams.get("stageId") || "");
-  const [categoryId, setCategoryId] = useState(
-    searchParams.get("category") || "",
-  );
-  const [tagId, setTagId] = useState(searchParams.get("tagId") || "");
-  const [showFilters, setShowFilters] = useState(false);
-  const [engine] = useState<"meilisearch" | "postgresql">("meilisearch");
+  useEffect(() => {
+    setInputValue(urlSearch);
+  }, [urlSearch]);
+
+  // These come from URL and are fixed
+  const stageId = urlStageId;
+  const categoryId = urlCategoryId;
 
   // ── API queries ─────────────────────────────────────────
-  const { data: categories, isLoading: categoriesLoading } =
-    useGetCategoriesQuery();
-  const { data: tags, isLoading: tagsLoading } = useGetTagsQuery();
-  const { data: stages, isLoading: stagesLoading } = useGetStagesQuery();
+  const { data: categories } = useGetCategoriesQuery();
+  const { data: stages } = useGetStagesQuery();
 
   const {
     data: searchResults,
@@ -84,13 +83,12 @@ function ProblemsPageClient() {
     isFetching,
   } = useSearchProblemsQuery(
     {
-      Q: debouncedSearch || undefined,
+      Q: debouncedSearch || "",
       CategoryId: categoryId ? parseInt(categoryId) : undefined,
-      TagId: tagId ? parseInt(tagId) : undefined,
-      StageId: stageId ? parseInt(stageId) : undefined, // ✅ Send stageId instead of Difficulty
-      Engine: engine,
+      StageId: stageId ? parseInt(stageId) : undefined,
       Page: page,
       PageSize: DEFAULT_PAGE_SIZE,
+      locale: locale,
     },
     { skip: false },
   );
@@ -100,64 +98,65 @@ function ProblemsPageClient() {
   const totalResults = searchResults?.Data?.Total || 0;
   const totalPages = searchResults?.Data?.TotalPages || 0;
   const currentPage = searchResults?.Data?.Page || page;
-  const activeFiltersCount = [
-    stageId,
-    categoryId,
-    tagId,
-    debouncedSearch,
-  ].filter(Boolean).length;
 
-  // Reset page when any filter changes
+  // Get names for display
+  const stageName =
+    stageId && stages
+      ? (locale === "ar"
+          ? stages.find((s) => s.Id === parseInt(stageId))?.NameAr
+          : stages.find((s) => s.Id === parseInt(stageId))?.NameEn) || ""
+      : "";
+
+  const categoryName =
+    categoryId && categories
+      ? (locale === "ar"
+          ? categories.find((c) => c.Id === parseInt(categoryId))?.NameAr
+          : categories.find((c) => c.Id === parseInt(categoryId))?.NameEn) || ""
+      : "";
+
+  // Reset page when search changes
   useEffect(() => {
     setPage(1);
-  }, [stageId, categoryId, tagId, debouncedSearch]);
+  }, [debouncedSearch]);
 
   // ── Helper functions ────────────────────────────────────
-  const clearFilters = () => {
-    setStageId("");
-    setCategoryId("");
-    setTagId("");
+  const clearSearch = () => {
     setInputValue("");
     setPage(1);
   };
 
-  const removeFilter = (filter: "stage" | "category" | "tag" | "search") => {
-    if (filter === "stage") setStageId("");
-    if (filter === "category") setCategoryId("");
-    if (filter === "tag") setTagId("");
-    if (filter === "search") setInputValue("");
-    setPage(1);
-  };
+  const isLoading = searchLoading || isFetching;
 
-  const getCategoryName = (id: string): string => {
-    const cat = categories?.find((c) => c.Id === parseInt(id));
-    return cat ? (locale === "ar" ? cat.NameAr : cat.NameEn) : "";
-  };
+  // Build breadcrumb
+  const breadcrumbItems: { href: string; label: string }[] = [
+    { href: "/stages", label: t("nav.stages") },
+  ];
+  if (stageId && stageName) {
+    breadcrumbItems.push({ href: `/stages/${stageId}`, label: stageName });
+  }
+  if (categoryId && categoryName) {
+    breadcrumbItems.push({ href: "", label: categoryName });
+  }
 
-  const getTagName = (id: string): string => {
-    const tag = tags?.find((t) => t.Id === parseInt(id));
-    return tag ? (locale === "ar" ? tag.TextAr : tag.TextEn) : "";
-  };
+  // Page title based on context
+  const pageTitle = categoryName || stageName || t("problems.title");
+  const pageSubtitle = categoryName
+    ? t("problems.categorySubtitle", { category: categoryName })
+    : stageName
+      ? t("problems.stageSubtitle", { stage: stageName })
+      : t("search.subtitle");
 
-  const getStageName = (id: string): string => {
-    const stage = stages?.find((s) => s.Id === parseInt(id));
-    return stage ? (locale === "ar" ? stage.NameAr : stage.NameEn) : "";
-  };
-
-  // Options for stage filter buttons
-  const stageOptions = stages || [];
-
-  const isLoading =
-    searchLoading ||
-    isFetching ||
-    categoriesLoading ||
-    tagsLoading ||
-    stagesLoading;
+  // Search placeholder based on context
+  const searchPlaceholder = categoryName
+    ? t("search.searchInCategory", { category: categoryName })
+    : stageName
+      ? t("search.searchInStage", { stage: stageName })
+      : t("search.placeholder");
 
   // ── Early return: full page loader ───────────────────────
-  if (isLoading && !searchResults && !categories && !tags && !stages) {
+  if (isLoading && !searchResults) {
     return (
-      <div className="container mx-auto  lg:px-24 md:px-16 px-4 py-20 flex flex-col justify-center items-center gap-4">
+      <div className="container mx-auto lg:px-24 md:px-16 px-4 py-20 flex flex-col justify-center items-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="text-muted-foreground animate-pulse">
           {t("common.loading") || "Loading..."}
@@ -168,19 +167,41 @@ function ProblemsPageClient() {
 
   // ── Main render ─────────────────────────────────────────
   return (
-    <div className="container mx-auto  lg:px-24 md:px-16 px-4 py-12">
+    <div className="container mx-auto lg:px-24 md:px-16 px-4 py-12">
+      {/* Breadcrumb */}
+      <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+        <Link href="/" className="hover:text-primary transition-colors">
+          {t("nav.home")}
+        </Link>
+        {breadcrumbItems.map((item, index) => (
+          <span key={index} className="flex items-center gap-2">
+            <span className="mx-1">/</span>
+            {item.href ? (
+              <Link
+                href={item.href}
+                className="hover:text-primary transition-colors"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span className="text-foreground font-medium">{item.label}</span>
+            )}
+          </span>
+        ))}
+      </div>
+
       {/* Page header */}
       <div className="mb-10 text-center md:text-start">
         <h1 className="text-4xl md:text-5xl/[65px] font-extrabold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          {t("problems.title")}
+          {pageTitle}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
-          {t("search.subtitle")}
+          {pageSubtitle}
         </p>
       </div>
 
       {/* Search bar */}
-      <div className="mb-6">
+      <div className="mb-8">
         <div className="relative">
           <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
 
@@ -188,18 +209,19 @@ function ProblemsPageClient() {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={t("search.placeholder")}
+            placeholder={searchPlaceholder}
             className="w-full rounded-2xl border border-border/50 bg-background/50 backdrop-blur-sm py-4 ps-12 pe-10 text-base outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-sm"
           />
 
           <div className="absolute inset-y-0 end-3 flex items-center gap-1">
-            {inputValue !== debouncedSearch && (
+            {/* [IMPROVED] Show spinner if typing OR if data is actively fetching from API */}
+            {(inputValue !== debouncedSearch || isFetching) && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
             {inputValue && (
               <button
                 type="button"
-                onClick={() => removeFilter("search")}
+                onClick={clearSearch}
                 className="p-1 rounded-full hover:bg-muted transition-colors"
                 aria-label="Clear search"
               >
@@ -210,155 +232,51 @@ function ProblemsPageClient() {
         </div>
       </div>
 
-      {/* Filter controls */}
-      <div className="flex flex-col gap-4 mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* ✅ Stage filter buttons (replaced difficulty) */}
-          <div className="flex flex-wrap gap-2">
+      {/* Active search badge */}
+      {debouncedSearch && (
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <span className="text-sm text-muted-foreground">
+            {t("problems.searchResults")}:
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
+            &ldquo;{debouncedSearch}&rdquo;
             <button
-              onClick={() => {
-                setStageId("");
-                setPage(1);
-              }}
-              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
-                stageId === ""
-                  ? "bg-primary text-primary-foreground shadow-md scale-105"
-                  : "bg-background border border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground"
-              }`}
+              onClick={clearSearch}
+              className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
             >
-              {t("problems.filters.all")}
+              <X className="h-3.5 w-3.5" />
             </button>
-            {stageOptions.map((stage) => (
-              <button
-                key={stage.Id}
-                onClick={() => {
-                  setStageId(stage.Id.toString());
-                  setPage(1);
-                }}
-                className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
-                  stageId === stage.Id.toString()
-                    ? "bg-primary/15 text-primary scale-105"
-                    : "bg-background border border-border text-muted-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground"
-                }`}
-              >
-                {locale === "ar" ? stage.NameAr : stage.NameEn}
-              </button>
-            ))}
-          </div>
-
-          <Button
-            variant={showFilters ? "default" : "outline"}
-            onClick={() => setShowFilters(!showFilters)}
-            className="rounded-full gap-2 px-6"
-          >
-            <Filter className="h-4 w-4" />
-            {t("search.filters")}
-            {activeFiltersCount > 0 && (
-              <span className="ms-2 h-5 w-5 rounded-full bg-background text-foreground text-xs flex items-center justify-center font-bold">
-                {activeFiltersCount}
-              </span>
-            )}
-          </Button>
+          </span>
         </div>
+      )}
 
-        {/* Active filter badges */}
-        {activeFiltersCount > 0 && (
-          <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/40 border border-border/50 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300">
-            <span className="text-sm font-medium text-muted-foreground me-1">
-              {t("problems.activeFilters") || "Active:"}
+      {/* Context info badge */}
+      {(stageName || categoryName) && (
+        <div className="flex flex-wrap items-center gap-2 mb-6">
+          <span className="text-sm text-muted-foreground">
+            {t("problems.showing")}:
+          </span>
+          {stageName && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm font-medium">
+              {stageName}
             </span>
-
-            {debouncedSearch && (
-              <BadgeFilter
-                label={`"${debouncedSearch}"`}
-                onRemove={() => removeFilter("search")}
-              />
-            )}
-            {stageId && (
-              <BadgeFilter
-                label={getStageName(stageId)}
-                onRemove={() => removeFilter("stage")}
-              />
-            )}
-            {categoryId && (
-              <BadgeFilter
-                label={getCategoryName(categoryId)}
-                onRemove={() => removeFilter("category")}
-              />
-            )}
-            {tagId && (
-              <BadgeFilter
-                label={getTagName(tagId)}
-                onRemove={() => removeFilter("tag")}
-              />
-            )}
-
-            <button
-              onClick={clearFilters}
-              className="flex items-center gap-1.5 text-sm text-destructive hover:text-destructive/80 font-semibold ms-2 transition-colors"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              {t("common.clearAll") || "Clear all"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Advanced filters dropdown (category & tag) */}
-      <div
-        className={`grid transition-all duration-300 ease-in-out ${showFilters ? "grid-rows-[1fr] opacity-100 mb-8" : "grid-rows-[0fr] opacity-0"}`}
-      >
-        <div className="overflow-hidden">
-          <div className="p-6 rounded-2xl border border-border/50 bg-card/50 backdrop-blur-md shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground/80 ms-1">
-                {t("search.categoryLabel")}
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => {
-                  setCategoryId(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
-              >
-                <option value="">{t("search.allCategories")}</option>
-                {categories?.map((cat) => (
-                  <option key={cat.Id} value={cat.Id}>
-                    {locale === "ar" ? cat.NameAr : cat.NameEn}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground/80 ms-1">
-                {t("tags.title")}
-              </label>
-              <select
-                value={tagId}
-                onChange={(e) => {
-                  setTagId(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full rounded-xl border border-border/50 bg-background px-4 py-3 text-sm outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
-              >
-                <option value="">{t("common.all") || "All Tags"}</option>
-                {tags?.map((tag) => (
-                  <option key={tag.Id} value={tag.Id}>
-                    {locale === "ar" ? tag.TextAr : tag.TextEn}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          )}
+          {categoryName && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 text-sm font-medium">
+              {categoryName}
+            </span>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Results count */}
       <p className="text-sm font-medium text-muted-foreground mb-6 flex items-center gap-2">
         <span className="h-px bg-border flex-1"></span>
-        {t("search.resultsFound", { count: totalResults })}
+        <span>
+          {totalResults > 0
+            ? t("search.resultsFound", { count: totalResults })
+            : t("search.noResultsFound")}
+        </span>
         <span className="h-px bg-border flex-1"></span>
       </p>
 
@@ -395,15 +313,25 @@ function ProblemsPageClient() {
               <p className="text-muted-foreground">
                 {t("search.tryDifferent")}
               </p>
-              {activeFiltersCount > 0 && (
+              {debouncedSearch && (
                 <Button
                   variant="outline"
-                  onClick={clearFilters}
+                  onClick={clearSearch}
                   className="mt-6 gap-2"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  {t("common.clearAll") || "Reset filters"}
+                  {t("common.clearSearch") || "Clear search"}
                 </Button>
+              )}
+              {(stageId || categoryId) && (
+                <div className="mt-4">
+                  <Link
+                    href="/problems"
+                    className="text-primary hover:underline text-sm"
+                  >
+                    {t("problems.browseAll")}
+                  </Link>
+                </div>
               )}
             </div>
           )}
@@ -478,27 +406,5 @@ function ProblemsPageClient() {
         </>
       )}
     </div>
-  );
-}
-
-// Small component for removable filter badges
-function BadgeFilter({
-  label,
-  onRemove,
-}: {
-  label: string;
-  onRemove: () => void;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium animate-in fade-in zoom-in duration-200">
-      {label}
-      <button
-        onClick={onRemove}
-        className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-        aria-label="Remove filter"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
-    </span>
   );
 }

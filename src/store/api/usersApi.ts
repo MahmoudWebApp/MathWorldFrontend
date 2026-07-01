@@ -46,7 +46,7 @@ export const usersApi = createApi({
   baseQuery,
   tagTypes: ['User', 'Favorite', 'Solved', 'Dashboard', 'Problem'],
   endpoints: (builder) => ({
-    // Get current user profile
+
     getProfile: builder.query<UserProfile, void>({
       query: () => '/users/profile',
       providesTags: ['User'],
@@ -57,43 +57,34 @@ export const usersApi = createApi({
       providesTags: ['Dashboard'],
     }),
 
-    // Get user's favorite problems - translated based on Accept-Language
     getFavorites: builder.query<ProblemPreview[], void>({
       query: () => '/users/favorites',
       providesTags: ['Favorite'],
     }),
 
-    // Get user's solved problems - translated based on Accept-Language
     getSolvedProblems: builder.query<ProblemPreview[], void>({
       query: () => '/users/solved',
       providesTags: ['Solved'],
     }),
 
-    // Toggle favorite status for a problem
     toggleFavorite: builder.mutation<FavoriteCheck, FavoriteToggleRequest>({
       query: (body) => ({
         url: '/users/favorite/toggle',
         method: 'POST',
         body,
       }),
-
-      // Optimistic update: update the cache immediately before the server responds
       async onQueryStarted({ ProblemId, IsFavorite }, { dispatch, queryFulfilled }) {
-        // Update checkFavorite cache immediately for instant UI feedback
         const patchResult = dispatch(
           usersApi.util.updateQueryData('checkFavorite', ProblemId, (draft) => {
             draft.IsFavorite = IsFavorite;
           })
         );
-
         try {
           await queryFulfilled;
         } catch {
-          // If the server request fails, undo the optimistic update
           patchResult.undo();
         }
       },
-
       invalidatesTags: (_result, _error, { ProblemId }) => [
         'Favorite',
         'Dashboard',
@@ -101,22 +92,19 @@ export const usersApi = createApi({
       ],
     }),
 
-    // Check if a problem is favorite
     checkFavorite: builder.query<FavoriteCheck, number>({
       query: (ProblemId) => `/users/favorite/check/${ProblemId}`,
       providesTags: (_result, _error, ProblemId) => [{ type: 'Problem', id: ProblemId }],
     }),
 
-    // Admin: Get all users with pagination
     getAdminUsers: builder.query<ApiResponse<PagedUserList>, { Page?: number; PageSize?: number }>({
       query: ({ Page = 1, PageSize = 20 } = {}) => ({
         url: '/admin/users',
-        params: { Page, PageSize },
+        params: { page: Page, pageSize: PageSize },
       }),
       providesTags: ['User'],
     }),
 
-    // Admin: Update user
     updateUser: builder.mutation<UserProfile, { Id: number; Data: Partial<UserProfile> }>({
       query: ({ Id, Data }) => ({
         url: `/admin/users/${Id}`,
@@ -126,7 +114,6 @@ export const usersApi = createApi({
       invalidatesTags: ['User'],
     }),
 
-    // Admin: Delete user
     deleteUser: builder.mutation<void, number>({
       query: (Id) => ({
         url: `/admin/users/${Id}`,
@@ -135,7 +122,6 @@ export const usersApi = createApi({
       invalidatesTags: ['User'],
     }),
 
-    // Admin: Activate user
     activateUser: builder.mutation<void, number>({
       query: (Id) => ({
         url: `/admin/users/${Id}/activate`,
@@ -144,7 +130,6 @@ export const usersApi = createApi({
       invalidatesTags: ['User'],
     }),
 
-    // Admin: Deactivate user
     deactivateUser: builder.mutation<void, number>({
       query: (Id) => ({
         url: `/admin/users/${Id}/deactivate`,
@@ -166,5 +151,5 @@ export const {
   useDeleteUserMutation,
   useActivateUserMutation,
   useDeactivateUserMutation,
-  useGetDashboardQuery
+  useGetDashboardQuery,
 } = usersApi;

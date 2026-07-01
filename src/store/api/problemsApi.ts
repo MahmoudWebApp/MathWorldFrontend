@@ -2,10 +2,20 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { ApiResponse, baseQuery } from './baseQuery';
 import { ProblemPreview, PagedProblemsResponse, PagedResponse } from './types';
 
+// ============================================
+// DTOs - Frontend interfaces matching backend
+// ============================================
+
 export interface OptionForStudent {
   Id: number;
-  Text: string;
-  LatexCode?: string;
+  LatexCode: string;
+  Order: number;
+  IsCorrect?: boolean;
+}
+
+export interface QuestionOptionDto {
+  LatexCode: string;
+  IsCorrect: boolean;
   Order: number;
 }
 
@@ -13,33 +23,27 @@ export interface ProblemForStudent {
   Id: number;
   Title: string;
   QuestionText: string;
-  LatexCode?: string;
   StageId: number;
   StageName: string;
   Points: number;
   CategoryName: string;
   CategoryIcon: string;
-  DetailedSolutionAr?: string;
-  DetailedSolutionEn?: string;
   DetailedSolution?: string;
   YoutubeSolutionUrl?: string;
   Options: OptionForStudent[];
   IsSolved: boolean;
   IsFavorite: boolean;
-  Tags: string[];
 }
 
 export interface ProblemForPublic {
   Id: number;
   Title: string;
   QuestionText: string;
-  LatexCode?: string;
   StageId: number;
   StageName: string;
   CategoryName: string;
   CategoryIcon: string;
   Message: string;
-  Tags: string[];
 }
 
 export interface ProblemAdminDetail {
@@ -48,72 +52,34 @@ export interface ProblemAdminDetail {
   TitleEn: string;
   QuestionTextAr: string;
   QuestionTextEn: string;
-  LatexCode?: string;
-  DetailedSolution?: string;
-  DetailedSolutionAr?: string;
-  DetailedSolutionEn?: string;
+  DetailedSolutionAr: string;
+  DetailedSolutionEn: string;
   YoutubeSolutionUrl?: string;
   StageId: number;
+  StageName?: string;
   Points: number;
   CategoryId: number;
-  Options: Array<{
-    Id: number;
-    TextAr: string;
-    TextEn: string;
-    LatexCode?: string;
-    IsCorrect: boolean;
-    Order: number;
-  }>;
-  Tags: Array<{ Id: number; TextAr: string; TextEn: string }>;
+  CategoryName?: string;
+  Options: OptionForStudent[];
 }
 
-export interface AdminProblemResponse {
-  Id?: number;
-  TitleAr: string;
-  TitleEn: string;
-  QuestionTextAr: string;
-  QuestionTextEn: string;
-  LatexCode?: string;
-  DetailedSolutionAr?: string;
-  DetailedSolutionEn?: string;
-  YoutubeSolutionUrl?: string;
-  StageId: number;
-  Points: number;
-  CategoryId: number;
-  Options: Array<{
-    TextAr: string;
-    TextEn: string;
-    LatexCode?: string;
-    IsCorrect: boolean;
-    Order: number;
-  }>;
-  TagIds?: number[];
-}
-
+// ============================================
+// Create/Update Problem DTO (matches CreateProblemDto in backend)
+// ============================================
 export interface CreateProblemRequest {
-  TitleAr: string;
-  TitleEn: string;
   QuestionTextAr: string;
   QuestionTextEn: string;
-  LatexCode?: string;
-  DetailedSolutionAr?: string;
-  DetailedSolutionEn?: string;
+  DetailedSolutionAr: string;
+  DetailedSolutionEn: string;
   YoutubeSolutionUrl?: string;
   StageId: number;
   Points: number;
   CategoryId: number;
-  Options: Array<{
-    TextAr: string;
-    TextEn: string;
-    LatexCode?: string;
-    IsCorrect: boolean;
-    Order: number;
-  }>;
-  TagIds?: number[];
+  Options: QuestionOptionDto[];
 }
 
 export interface AdminProblemsPagedResponse {
-  Results: AdminProblemResponse[];
+  Results: ProblemAdminDetail[];
   Total: number;
   Page: number;
   PageSize: number;
@@ -143,43 +109,47 @@ export interface AnswerResult {
   DetailedSolution: string;
   CorrectOptionText: string;
   IsSolved: boolean;
-   YoutubeSolutionUrl?: string;
+  YoutubeSolutionUrl?: string;
 }
+
+// ============================================
+// API Definition
+// ============================================
 
 export const problemsApi = createApi({
   reducerPath: 'problemsApi',
   baseQuery,
-  tagTypes: ['Problem', 'Category', 'Tag'],
+  tagTypes: ['Problem', 'Category'],
   endpoints: (builder) => ({
+
     // Search problems with filters - returns translated data based on Accept-Language header
     searchProblems: builder.query<ApiResponse<SearchResponse>, {
       Q?: string;
       CategoryId?: number;
       StageId?: number;
       Engine?: 'meilisearch' | 'postgresql';
-      TagId?: number;
       Page?: number;
       PageSize?: number;
+      locale?: string; 
     }>({
       query: (params) => ({
         url: '/Problems/search',
         params: {
-          q: params.Q,
-          categoryId: params.CategoryId,
-          stageId: params.StageId,
+          q: params.Q || '', // Ensure empty string instead of undefined
+          categoryId: params.CategoryId || undefined,
+          stageId: params.StageId || undefined,
           engine: params.Engine || 'meilisearch',
-          tagId: params.TagId,
           page: params.Page || 1,
           pageSize: params.PageSize || 10,
         },
       }),
-      providesTags: ['Problem'], // Cache tagged for invalidation on locale change
-    }),
+      providesTags: ['Problem'],
+    }), // 👈 THIS CLOSING BRACKET WAS MISSING
 
-    // Get single problem by ID
-    getProblem: builder.query<ProblemDetail, number>({
-      query: (Id) => `/Problems/${Id}`,
-      providesTags: (_result, _error, Id) => [{ type: 'Problem', Id }],
+    // Get single problem by ID - returns different data based on auth & role
+    getProblem: builder.query<ProblemDetail,{ Id: number, locale?: string }>({
+      query: (data) => `/Problems/${data.Id}`,
+     providesTags: (_result, _error, params) => [{ type: 'Problem', id: params.Id }],
     }),
 
     // Submit answer for a problem
@@ -190,7 +160,7 @@ export const problemsApi = createApi({
         body,
       }),
       invalidatesTags: (_result, _error, { ProblemId }) =>
-        [{ type: 'Problem', Id: ProblemId }],
+        [{ type: 'Problem', id: ProblemId }],
     }),
 
     // Get problems by category - returns translated content
@@ -205,26 +175,17 @@ export const problemsApi = createApi({
       providesTags: ['Problem', 'Category'],
     }),
 
-    // Get problems by tag - returns translated content
-    getTagProblems: builder.query<
-      PagedResponse<PagedProblemsResponse>,
-      { Id: number; Page?: number; PageSize?: number }
-    >({
-      query: ({ Id, Page = 1, PageSize = 20 }) => ({
-        url: `/tags/${Id}/problems`,
-        params: { Page, PageSize },
-      }),
-      providesTags: ['Problem', 'Tag'],
-    }),
+    // ============================================
+    // Admin Endpoints
+    // ============================================
 
     // Admin: Get all problems (bilingual - returns both Ar/En fields)
     getAdminProblems: builder.query<AdminProblemsPagedResponse, {
       q?: string;
       categoryId?: number;
       stageId?: number;
-      tagId?: number;
-      Page?: number;
-      PageSize?: number;
+      page?: number;
+      pageSize?: number;
     }>({
       query: (params) => ({
         url: '/admin/problems',
@@ -232,15 +193,14 @@ export const problemsApi = createApi({
           q: params?.q,
           categoryId: params?.categoryId,
           stageId: params?.stageId,
-          tagId: params?.tagId,
-          page: params?.Page || 1,
-          pageSize: params?.PageSize || 10,
+          page: params?.page || 1,
+          pageSize: params?.pageSize || 10,
         },
       }),
       providesTags: ['Problem'],
     }),
 
-    // Admin: Create new problem
+    // Admin: Create new problem (title is auto-extracted from question text)
     createProblem: builder.mutation<{ Id: number }, CreateProblemRequest>({
       query: (body) => ({
         url: '/admin/problems',
@@ -257,7 +217,7 @@ export const problemsApi = createApi({
         method: 'PUT',
         body: Data,
       }),
-      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Problem', Id }],
+      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Problem', id: Id }],
     }),
 
     // Admin: Delete problem
@@ -276,7 +236,6 @@ export const {
   useGetProblemQuery,
   useSubmitAnswerMutation,
   useGetCategoryProblemsQuery,
-  useGetTagProblemsQuery,
   useGetAdminProblemsQuery,
   useLazyGetAdminProblemsQuery,
   useCreateProblemMutation,

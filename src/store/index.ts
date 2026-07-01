@@ -4,7 +4,6 @@ import authReducer from './slices/authSlice';
 import { authApi } from './api/authApi';
 import { problemsApi } from './api/problemsApi';
 import { categoriesApi } from './api/categoriesApi';
-import { tagsApi } from './api/tagsApi';
 import { usersApi } from './api/usersApi';
 import { statsApi } from './api/statsApi';
 import localeReducer from './slices/localeSlice';
@@ -16,7 +15,6 @@ export const store = configureStore({
     [authApi.reducerPath]: authApi.reducer,
     [problemsApi.reducerPath]: problemsApi.reducer,
     [categoriesApi.reducerPath]: categoriesApi.reducer,
-    [tagsApi.reducerPath]: tagsApi.reducer,
     [usersApi.reducerPath]: usersApi.reducer,
     [statsApi.reducerPath]: statsApi.reducer,
     [stagesApi.reducerPath]: stagesApi.reducer,
@@ -26,7 +24,6 @@ export const store = configureStore({
       authApi.middleware,
       problemsApi.middleware,
       categoriesApi.middleware,
-      tagsApi.middleware,
       usersApi.middleware,
       statsApi.middleware,
       stagesApi.middleware,

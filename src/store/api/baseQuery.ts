@@ -1,7 +1,8 @@
 import { fetchBaseQuery, BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 
 // API base URL - production backend
-const API_BASE_URL = 'https://mathwordbackend.onrender.com/api';
+ const API_BASE_URL = 'https://mathwordbackend.onrender.com/api';
+//const API_BASE_URL = 'http://localhost:5229/api';
 
 // Safe cookie reader (works in SSR and CSR)
 const getCookie = (name: string): string | undefined => {
@@ -32,18 +33,24 @@ export interface ApiResponse<T> {
 const baseQueryWithInterceptor = fetchBaseQuery({
   baseUrl: API_BASE_URL,
   prepareHeaders: (headers, { getState }) => {
+    // 1. Access Redux state directly
     const reduxState = getState() as any;
+    
+    // 2. Extract Token
     const token = reduxState?.auth?.token || getCookie('token');
 
-    // Get locale from Redux store (set by localeSlice) - fallback to cookie then default 'ar'
-    const locale = reduxState?.locale?.current || getCookie('NEXT_LOCALE') || 'ar';
+    // 3. Extract exact current Locale
+    // Since we call dispatch(setLocale) right before fetching, reduxState.locale.current will always be 100% accurate.
+    // We fallback to cookie for the first ever page load.
+    const currentLocale = reduxState?.locale?.current || getCookie('NEXT_LOCALE') || 'ar';
 
+    // 4. Attach Authorization token
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    // Send current language to backend so it returns translated data
-    headers.set('Accept-Language', locale);
+    // 5. Attach Language header for backend translations
+    headers.set('Accept-Language', currentLocale);
     headers.set('Accept', 'application/json');
 
     return headers;
@@ -74,11 +81,11 @@ export const baseQuery: BaseQueryFn<
   if (response?.Success) {
     // Case A: Response has Meta (pagination)
     if (response.Meta) {
-      return { 
-        data: { 
-          Data: response.Data ?? null, 
-          Meta: response.Meta 
-        } 
+      return {
+        data: {
+          Data: response.Data ?? null,
+          Meta: response.Meta
+        }
       };
     }
     // Case B: Response has Data (even if null/undefined)

@@ -1,11 +1,16 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import {  baseQuery, createFormDataQuery } from './baseQuery';
-import { Category, PagedProblemsResponse, PagedResponse } from './types';
+import { baseQuery, createFormDataQuery } from './baseQuery';
+
+
+// ============================================
+// DTOs
+// ============================================
 
 export interface CreateCategoryRequest {
   NameAr: string;
   NameEn: string;
   Order?: number;
+  StageId: number;
   Icon?: File;
 }
 
@@ -13,49 +18,44 @@ export interface UpdateCategoryRequest {
   NameAr?: string;
   NameEn?: string;
   Order?: number;
+  StageId?: number;
   Icon?: File;
 }
 
-export interface ApiResponseCategory {
-  Success: boolean;
-  Message: string;
-  StatusCode: number;
-  Data?: Category[];
-  Errors?: Record<string, string[]>;
-  Timestamp: string;
+export interface CategoryDto {
+  Id: number;
+  NameAr: string;
+  NameEn: string;
+  Name: string;
+  Icon: string;
+  StageId: number;
+  Order: number;
 }
+
+// ============================================
+// API Definition
+// ============================================
 
 export const categoriesApi = createApi({
   reducerPath: 'categoriesApi',
   baseQuery,
   tagTypes: ['Category'],
   endpoints: (builder) => ({
-    // Get all categories (public) - returns translated names based on Accept-Language
-    getCategories: builder.query<Category[], void>({
+
+    // Public: Get all categories - returns translated names based on Accept-Language
+    getCategories: builder.query<CategoryDto[], void>({
       query: () => '/categories',
       providesTags: ['Category'],
     }),
 
-    // Get paginated problems by category - returns translated content
-    getCategoryProblems: builder.query<
-      PagedResponse<PagedProblemsResponse>,
-      { Id: number; Page?: number; PageSize?: number }
-    >({
-      query: ({ Id, Page = 1, PageSize = 20 }) => ({
-        url: `/categories/${Id}/problems`,
-        params: { Page, PageSize },
-      }),
-      providesTags: ['Category'],
-    }),
-
     // Admin: Get all categories (bilingual)
-    getAdminCategories: builder.query<Category[], void>({
+    getAdminCategories: builder.query<CategoryDto[], void>({
       query: () => '/admin/categories',
       providesTags: ['Category'],
     }),
 
     // Admin: Create category with optional icon upload
-    createCategory: builder.mutation<Category, CreateCategoryRequest>({
+    createCategory: builder.mutation<CategoryDto, CreateCategoryRequest>({
       queryFn: async (data, _queryApi, _extraOptions, fetchWithBQ) => {
         const formData = new FormData();
         formData.append('NameAr', data.NameAr);
@@ -63,6 +63,7 @@ export const categoriesApi = createApi({
         if (data.Order !== undefined) {
           formData.append('Order', data.Order.toString());
         }
+        formData.append('StageId', data.StageId.toString());
         if (data.Icon) {
           formData.append('Icon', data.Icon);
         }
@@ -72,18 +73,19 @@ export const categoriesApi = createApi({
         );
 
         if (result.error) return { error: result.error };
-        return { data: result.data as Category };
+        return { data: result.data as CategoryDto };
       },
       invalidatesTags: ['Category'],
     }),
 
     // Admin: Update category with optional icon upload
-    updateCategory: builder.mutation<Category, { Id: number; Data: UpdateCategoryRequest }>({
+    updateCategory: builder.mutation<CategoryDto, { Id: number; Data: UpdateCategoryRequest }>({
       queryFn: async ({ Id, Data }, _queryApi, _extraOptions, fetchWithBQ) => {
         const formData = new FormData();
         if (Data.NameAr) formData.append('NameAr', Data.NameAr);
         if (Data.NameEn) formData.append('NameEn', Data.NameEn);
         if (Data.Order !== undefined) formData.append('Order', Data.Order.toString());
+        if (Data.StageId !== undefined) formData.append('StageId', Data.StageId.toString());
         if (Data.Icon) {
           formData.append('Icon', Data.Icon);
         }
@@ -93,9 +95,9 @@ export const categoriesApi = createApi({
         );
 
         if (result.error) return { error: result.error };
-        return { data: result.data as Category };
+        return { data: result.data as CategoryDto };
       },
-      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Category', Id }],
+      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Category', id: Id }],
     }),
 
     // Admin: Delete category
@@ -111,7 +113,6 @@ export const categoriesApi = createApi({
 
 export const {
   useGetCategoriesQuery,
-  useGetCategoryProblemsQuery,
   useGetAdminCategoriesQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,

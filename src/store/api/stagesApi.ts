@@ -1,7 +1,7 @@
-// store/api/stagesApi.ts
+// File: store/api/stagesApi.ts
 
 import { createApi } from '@reduxjs/toolkit/query/react';
-import {  baseQuery } from './baseQuery';
+import { baseQuery } from './baseQuery';
 
 export interface Stage {
   Id: number;
@@ -21,19 +21,22 @@ export const stagesApi = createApi({
   baseQuery,
   tagTypes: ['Stage'],
   endpoints: (builder) => ({
-    // 🔹 Public Endpoint: For displaying stages in the frontend (StagesSection, etc.)
+    
+    // ✅ PUBLIC: Get all stages (no auth required)
+    // Calls: GET /api/stages
     getStages: builder.query<Stage[], void>({
-      query: () => '/stages', // Calls: GET /api/stages (Public Controller)
+      query: () => '/stages',
       providesTags: ['Stage'],
     }),
 
-    // 🔹 Admin Endpoint: For admin panel management (CRUD operations)
+    // Admin: Get all stages (requires auth)
     getAdminStages: builder.query<Stage[], void>({
-      query: () => '/admin/stages', // Calls: GET /api/admin/stages (Requires Auth)
+      query: () => '/admin/stages',
       providesTags: ['Stage'],
     }),
 
-    createStage: builder.mutation<Stage, CreateStageRequest>({
+    // Admin: Create stage
+    createStage: builder.mutation<{ Id: number }, CreateStageRequest>({
       query: (body) => ({
         url: '/admin/stages',
         method: 'POST',
@@ -41,6 +44,8 @@ export const stagesApi = createApi({
       }),
       invalidatesTags: ['Stage'],
     }),
+
+    // Admin: Update stage
     updateStage: builder.mutation<void, { Id: number; Data: CreateStageRequest }>({
       query: ({ Id, Data }) => ({
         url: `/admin/stages/${Id}`,
@@ -49,6 +54,8 @@ export const stagesApi = createApi({
       }),
       invalidatesTags: ['Stage'],
     }),
+
+    // Admin: Delete stage
     deleteStage: builder.mutation<void, number>({
       query: (Id) => ({
         url: `/admin/stages/${Id}`,
@@ -59,10 +66,9 @@ export const stagesApi = createApi({
   }),
 });
 
-// ✅ Export the new public hook + keep admin hooks for admin pages
 export const {
-  useGetStagesQuery,       
-  useGetAdminStagesQuery,   
+  useGetStagesQuery,
+  useGetAdminStagesQuery,
   useCreateStageMutation,
   useUpdateStageMutation,
   useDeleteStageMutation,

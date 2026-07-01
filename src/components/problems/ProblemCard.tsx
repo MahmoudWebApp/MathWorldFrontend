@@ -1,13 +1,12 @@
 "use client";
 
 import { Link } from '@/i18n/routing';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { CheckCircle, Lock, ChevronRight, GraduationCap, Eye, Star } from 'lucide-react';
 import type { ProblemPreview } from '@/store/api/types';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
-import { LatexPreview } from '../ui/LatexPreview';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/Tooltip';
+import { RichText } from '@/components/ui/RichText';
 
 interface ProblemCardProps {
   problem: ProblemPreview;
@@ -15,6 +14,8 @@ interface ProblemCardProps {
 
 export function ProblemCard({ problem }: ProblemCardProps) {
   const t = useTranslations();
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
 
   const getStageColorClass = (stageId: number | undefined): string => {
     if (stageId === undefined) {
@@ -38,25 +39,26 @@ export function ProblemCard({ problem }: ProblemCardProps) {
 
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Left: Title, LaTeX, Badges */}
-            <div className="flex-1 space-y-3">
-              <div className="flex items-center gap-3">
-                <h3 className="text-xl font-bold group-hover:text-primary transition-colors duration-300 line-clamp-1">
-                  {problem.Title}
-                </h3>
-                {problem.RequiresLogin ? (
-                  <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
-                ) : (
-                  <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
-                )}
-              </div>
-
-              {/* LaTeX rendered beautifully */}
-              {problem.LatexCode && (
-                <div className="max-w-full overflow-hidden">
-                  <LatexPreview latex={problem.LatexCode} block={false} className="text-sm" />
+            {/* Left: Title with RichText + Badges */}
+            <div className="flex-1 space-y-3 min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 shrink-0">
+                  {problem.RequiresLogin ? (
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <CheckCircle className="h-5 w-5 text-emerald-500" />
+                  )}
                 </div>
-              )}
+                
+                {/* Title with LaTeX rendering */}
+                <div className="min-w-0 flex-1">
+                  <RichText 
+                    text={problem.Title} 
+                    isArabic={isArabic}
+                    className="line-clamp-3 text-lg font-bold group-hover:text-primary transition-colors duration-300"
+                  />
+                </div>
+              </div>
 
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2">
@@ -74,36 +76,22 @@ export function ProblemCard({ problem }: ProblemCardProps) {
               </div>
             </div>
 
-            {/* Right: Views, Points (with Tooltips), Call to Action */}
+            {/* Right: Stats + CTA */}
             <div className="flex md:flex-col items-center md:items-end justify-between gap-3 text-sm text-muted-foreground">
-          
               <div className="flex items-center gap-4 bg-muted/30 rounded-lg px-3 py-2">
-                {/* Views with Tooltip */}
-                <Tooltip>
-                  <TooltipTrigger className="inline-flex items-center gap-1.5 cursor-help bg-transparent border-none p-0 text-sm text-muted-foreground outline-none hover:text-foreground">
-                    <Eye className="h-4 w-4 text-primary/70" />
-                    <span className="font-medium">{problem.ViewsCount}</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p>{t('problems.viewsTooltip')}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <div className="inline-flex items-center gap-1.5 text-sm">
+                  <Eye className="h-4 w-4 text-primary/70" />
+                  <span className="font-medium">{problem.ViewsCount}</span>
+                </div>
 
                 <div className="w-px h-4 bg-border"></div>
 
-                {/* Points with Tooltip -*/}
-                <Tooltip>
-                  <TooltipTrigger className="inline-flex items-center gap-1.5 cursor-help bg-transparent border-none p-0 text-sm text-muted-foreground outline-none hover:text-foreground">
-                    <Star className="h-4 w-4 text-primary/70" />
-                    <span className="font-medium">{problem.Points}</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p>{t('problems.pointsTooltip')}</p>
-                  </TooltipContent>
-                </Tooltip>
+                <div className="inline-flex items-center gap-1.5 text-sm">
+                  <Star className="h-4 w-4 text-primary/70" />
+                  <span className="font-medium">{problem.Points}</span>
+                </div>
               </div>
 
-              {/* Solve link */}
               <div className="flex items-center gap-1 font-medium group-hover:text-primary transition-colors">
                 {t('common.solveNow')}
                 <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />

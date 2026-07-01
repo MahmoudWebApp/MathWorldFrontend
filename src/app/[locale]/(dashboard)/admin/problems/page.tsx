@@ -2,17 +2,15 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link"; 
+import Link from "next/link";
 import {
   useLazyGetAdminProblemsQuery,
   useCreateProblemMutation,
   useUpdateProblemMutation,
   useDeleteProblemMutation,
-  type CreateProblemRequest,
-  type AdminProblemResponse,
+  type ProblemAdminDetail,
 } from "@/store/api/problemsApi";
 import { useGetAdminCategoriesQuery } from "@/store/api/categoriesApi";
-import { useGetAdminTagsQuery } from "@/store/api/tagsApi";
 import { useGetAdminStagesQuery } from "@/store/api/stagesApi";
 import { LatexPreview } from "@/components/ui/LatexPreview";
 
@@ -55,6 +53,14 @@ import {
 } from "@/components/ui/Dialog";
 import { Textarea } from "@/components/ui/Textarea";
 import { LatexToolbarAdvanced } from "@/components/problems/Latextoolbaradvanced";
+import { RichText } from "@/components/ui/RichText";
+// ✅ تم إزالة TooltipProvider لأنه أصبح في الـ Providers
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/Tooltip";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 /* ────────────────────────────────────────────
    TYPES
@@ -63,46 +69,27 @@ import { LatexToolbarAdvanced } from "@/components/problems/Latextoolbaradvanced
 type FormErrors = Record<string, string>;
 
 type ActiveField =
-  | "mainLatex"
+  | "questionAr"
+  | "questionEn"
   | "solutionAr"
   | "solutionEn"
   | `opt_${number}`
   | null;
 
-interface ExtendedCreateProblemRequest extends Omit<
-  CreateProblemRequest,
-  "YoutubeSolutionUrl"
-> {
+interface ExtendedCreateProblemRequest {
+  QuestionTextAr: string;
+  QuestionTextEn: string;
+  DetailedSolutionAr: string;
+  DetailedSolutionEn: string;
   YoutubeSolutionUrl?: string;
-}
-
-/* ────────────────────────────────────────────
-   SOLUTION TEXT
-   ──────────────────────────────────────────── */
-
-function SolutionText({ text, isArabic }: { text: string; isArabic: boolean }) {
-  if (!text) return null;
-  const TOKEN = /(\$\$[\s\S]+?\$\$|\$[^\n$]+?\$)/g;
-  const parts = text.split(TOKEN);
-
-  return (
-    <div
-      dir={isArabic ? "rtl" : "ltr"}
-      className={`prose max-w-none text-sm leading-loose ${
-        isArabic ? "text-right" : "text-left"
-      }`}
-    >
-      {parts.map((part, i) => {
-        if (part.startsWith("$$") && part.endsWith("$$"))
-          return (
-            <LatexPreview key={i} latex={part.slice(2, -2).trim()} block />
-          );
-        if (part.startsWith("$") && part.endsWith("$") && part.length > 2)
-          return <LatexPreview key={i} latex={part.slice(1, -1).trim()} />;
-        return <span key={i}>{part}</span>;
-      })}
-    </div>
-  );
+  StageId: number;
+  Points: number;
+  CategoryId: number;
+  Options: {
+    LatexCode: string;
+    IsCorrect: boolean;
+    Order: number;
+  }[];
 }
 
 /* ────────────────────────────────────────────
@@ -110,32 +97,27 @@ function SolutionText({ text, isArabic }: { text: string; isArabic: boolean }) {
    ──────────────────────────────────────────── */
 
 const emptyForm: ExtendedCreateProblemRequest = {
-  TitleAr: "",
-  TitleEn: "",
   QuestionTextAr: "",
   QuestionTextEn: "",
-  LatexCode: "",
   DetailedSolutionAr: "",
   DetailedSolutionEn: "",
   YoutubeSolutionUrl: "",
   StageId: 0,
   Points: 10,
   CategoryId: 0,
-  TagIds: [],
   Options: [
-    { TextAr: "", TextEn: "", LatexCode: "", IsCorrect: false, Order: 1 },
-    { TextAr: "", TextEn: "", LatexCode: "", IsCorrect: false, Order: 2 },
-    { TextAr: "", TextEn: "", LatexCode: "", IsCorrect: false, Order: 3 },
-    { TextAr: "", TextEn: "", LatexCode: "", IsCorrect: false, Order: 4 },
+    { LatexCode: "", IsCorrect: false, Order: 1 },
+    { LatexCode: "", IsCorrect: false, Order: 2 },
+    { LatexCode: "", IsCorrect: false, Order: 3 },
+    { LatexCode: "", IsCorrect: false, Order: 4 },
   ],
 };
 
 const defaultFilters = {
   CategoryId: undefined as number | undefined,
   StageId: undefined as number | undefined,
-  TagId: undefined as number | undefined,
   Page: 1,
-  PageSize: 5,
+  PageSize: 10,
 };
 
 /* ────────────────────────────────────────────
@@ -147,42 +129,36 @@ export default function AdminProblemsPage() {
   const locale = useLocale();
   const isRtl = locale === "ar";
 
-  /* ── View State ── */
   const [view, setView] = useState<"list" | "form">("list");
-
-  /* ── Search & filter state ── */
   const [searchText, setSearchText] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [filters, setFilters] = useState(defaultFilters);
 
-  /* ── API queries ── */
   const [
     fetchProblems,
     { data: searchResult, isLoading: isSearching, isFetching },
   ] = useLazyGetAdminProblemsQuery();
 
-  const problems = searchResult?.Results || [];
-  const totalPages = searchResult?.TotalPages || 1;
-  const totalProblems = searchResult?.Total || 0;
+  const problems: ProblemAdminDetail[] = searchResult?.Results || [];
+  const totalPages = (searchResult as any)?.TotalPages || 1;
+  const totalProblems = (searchResult as any)?.Total || 0;
 
-  const { data: categories } = useGetAdminCategoriesQuery();
-  const { data: tags } = useGetAdminTagsQuery();
+  const { data: allCategories } = useGetAdminCategoriesQuery();
   const { data: stages } = useGetAdminStagesQuery();
 
   const [createProblem, { isLoading: isCreating }] = useCreateProblemMutation();
   const [updateProblem, { isLoading: isUpdating }] = useUpdateProblemMutation();
   const [deleteProblem] = useDeleteProblemMutation();
 
-  /* ── Form state ── */
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [form, setForm] = useState<ExtendedCreateProblemRequest>(emptyForm);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [viewingProblem, setViewingProblem] =
-    useState<AdminProblemResponse | null>(null);
+    useState<ProblemAdminDetail | null>(null);
 
-  /* ── Toolbar Refs ── */
-  const refMainLatex = useRef<HTMLTextAreaElement>(null);
+  const refQuestionAr = useRef<HTMLTextAreaElement>(null);
+  const refQuestionEn = useRef<HTMLTextAreaElement>(null);
   const refSolutionAr = useRef<HTMLTextAreaElement>(null);
   const refSolutionEn = useRef<HTMLTextAreaElement>(null);
   const refOptLatex = [
@@ -194,22 +170,26 @@ export default function AdminProblemsPage() {
 
   const [activeField, setActiveField] = useState<ActiveField>(null);
 
+  const categories =
+    allCategories?.filter((c) => !form.StageId || c.StageId === form.StageId) ||
+    [];
+
+  const filteredCategoriesForFilter =
+    allCategories?.filter(
+      (c) => !filters.StageId || c.StageId === filters.StageId,
+    ) || [];
+
   /* ── Validation ── */
   const validateForm = useCallback((): boolean => {
     const errors: FormErrors = {};
-
-    if (!form.TitleAr.trim()) errors.TitleAr = t("common.required");
-    if (!form.TitleEn.trim()) errors.TitleEn = t("common.required");
     if (!form.QuestionTextAr.trim())
       errors.QuestionTextAr = t("common.required");
     if (!form.QuestionTextEn.trim())
       errors.QuestionTextEn = t("common.required");
-
     if (!form.DetailedSolutionAr?.trim())
       errors.DetailedSolutionAr = t("common.required");
     if (!form.DetailedSolutionEn?.trim())
       errors.DetailedSolutionEn = t("common.required");
-
     if (!form.CategoryId || form.CategoryId === 0)
       errors.CategoryId = t("common.required");
     if (!form.StageId || form.StageId === 0)
@@ -224,34 +204,22 @@ export default function AdminProblemsPage() {
       errors.correctAnswer = t("admin.problems.onlyOneCorrect");
 
     form.Options.forEach((opt, idx) => {
-      if (!opt.TextAr.trim())
-        errors[`opt_${idx}_TextAr`] = t("common.required");
-      if (!opt.TextEn.trim())
-        errors[`opt_${idx}_TextEn`] = t("common.required");
+      if (!opt.LatexCode.trim())
+        errors[`opt_${idx}_Latex`] = t("common.required");
     });
 
     setFormErrors(errors);
-
-    if (Object.keys(errors).length > 0) {
-      const firstErrorField = document.getElementById(
-        `field-${Object.keys(errors)[0]}`,
-      );
-      firstErrorField?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-
     return Object.keys(errors).length === 0;
   }, [form, t]);
 
   const clearError = (key: string) => {
     setFormErrors((prev) => {
-      if (!prev[key]) return prev;
       const next = { ...prev };
       delete next[key];
       return next;
     });
   };
 
-  /* ── Effects ── */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQ(searchText);
@@ -265,38 +233,30 @@ export default function AdminProblemsPage() {
       q: debouncedQ,
       categoryId: filters.CategoryId,
       stageId: filters.StageId,
-      tagId: filters.TagId,
-      Page: filters.Page,
-      PageSize: filters.PageSize,
+      page: filters.Page,
+      pageSize: filters.PageSize,
     });
   }, [debouncedQ, filters, fetchProblems]);
 
-  /* ── Handlers ── */
   const handleResetFilters = () => {
     setSearchText("");
     setDebouncedQ("");
     setFilters(defaultFilters);
   };
 
-  const openForm = (problem?: AdminProblemResponse) => {
+  const openForm = (problem?: ProblemAdminDetail) => {
     if (problem) {
       setEditingId(problem.Id || null);
       setForm({
-        TitleAr: problem.TitleAr,
-        TitleEn: problem.TitleEn,
         QuestionTextAr: problem.QuestionTextAr,
         QuestionTextEn: problem.QuestionTextEn,
-        LatexCode: problem.LatexCode || "",
         DetailedSolutionAr: problem.DetailedSolutionAr || "",
         DetailedSolutionEn: problem.DetailedSolutionEn || "",
         YoutubeSolutionUrl: (problem as any).YoutubeSolutionUrl || "",
         StageId: problem.StageId,
         Points: problem.Points,
         CategoryId: problem.CategoryId,
-        TagIds: problem.TagIds || [],
-        Options: problem.Options.map((opt) => ({
-          TextAr: opt.TextAr,
-          TextEn: opt.TextEn,
+        Options: problem.Options.map((opt: any) => ({
           LatexCode: opt.LatexCode || "",
           IsCorrect: opt.IsCorrect,
           Order: opt.Order,
@@ -322,30 +282,23 @@ export default function AdminProblemsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-
     try {
-      const cleanedForm: ExtendedCreateProblemRequest = {
+      const cleanedForm = {
         ...form,
-        LatexCode: form.LatexCode?.trim() || "",
         DetailedSolutionAr: form.DetailedSolutionAr?.trim() || "",
         DetailedSolutionEn: form.DetailedSolutionEn?.trim() || "",
         YoutubeSolutionUrl: form.YoutubeSolutionUrl?.trim() || "",
         Options: form.Options.map((opt) => ({
           ...opt,
-          TextAr: opt.TextAr.trim(),
-          TextEn: opt.TextEn.trim(),
-          LatexCode: opt.LatexCode?.trim() || "",
+          LatexCode: opt.LatexCode.trim(),
         })),
       };
-
-      if (editingId) {
+      if (editingId)
         await updateProblem({
           Id: editingId,
-          Data: cleanedForm as CreateProblemRequest,
+          Data: cleanedForm as any,
         }).unwrap();
-      } else {
-        await createProblem(cleanedForm as CreateProblemRequest).unwrap();
-      }
+      else await createProblem(cleanedForm as any).unwrap();
       closeForm();
     } catch (err) {
       console.error("Failed to save problem", err);
@@ -357,43 +310,39 @@ export default function AdminProblemsPage() {
     try {
       await deleteProblem(id).unwrap();
     } catch (error) {
-      console.error("Failed to delete problem", error);
+      console.error(error);
     } finally {
       setDeletingId(null);
     }
   };
 
-  const updateOption = <K extends keyof CreateProblemRequest["Options"][0]>(
+  const updateOption = (
     index: number,
-    field: K,
-    value: CreateProblemRequest["Options"][0][K],
+    field: "LatexCode" | "IsCorrect",
+    value: string | boolean,
   ) => {
     setForm((prev) => {
       const newOpts = prev.Options.map((o) => ({ ...o }));
-      if (field === "IsCorrect" && value === true) {
+      if (field === "IsCorrect" && value === true)
         newOpts.forEach((_, i) => {
-          newOpts[i] = { ...newOpts[i], IsCorrect: i === index };
+          newOpts[i].IsCorrect = i === index;
         });
-      } else if (field === "IsCorrect" && value === false) {
-        return prev;
-      } else {
-        newOpts[index] = { ...newOpts[index], [field]: value };
-      }
+      else if (field === "IsCorrect" && value === false) return prev;
+      else newOpts[index] = { ...newOpts[index], [field]: value as string };
       return { ...prev, Options: newOpts };
     });
-
-    if (field === "TextAr") clearError(`opt_${index}_TextAr`);
-    if (field === "TextEn") clearError(`opt_${index}_TextEn`);
+    if (field === "LatexCode") clearError(`opt_${index}_Latex`);
     if (field === "IsCorrect") clearError("correctAnswer");
   };
 
   const getStageName = (stageId: number) =>
     stages?.find((s) => s.Id === stageId)?.NameAr || "";
+  const getCategoryName = (categoryId: number) =>
+    allCategories?.find((c) => c.Id === categoryId)?.NameAr || "-";
 
-  /* ── Sub-components ── */
   const FieldError = ({ id }: { id: string }) =>
     formErrors[id] ? (
-      <p className="mt-1 text-xs text-red-500 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+      <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
         <AlertCircle className="h-3 w-3 shrink-0" />
         {formErrors[id]}
       </p>
@@ -428,8 +377,8 @@ export default function AdminProblemsPage() {
           isActive
             ? "border-primary ring-2 ring-primary/20 shadow-sm"
             : hasError
-              ? "border-red-500 shadow-sm shadow-red-500/10"
-              : "border-input hover:border-border/80",
+              ? "border-red-500"
+              : "border-input",
         )}
       >
         <LatexToolbarAdvanced
@@ -450,30 +399,26 @@ export default function AdminProblemsPage() {
           placeholder={placeholder}
           onFocus={() => setActiveField(fieldKey)}
           onChange={(e) => onChange(e.target.value)}
-          className={cn(
-            "border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-y min-h-[80px]",
-            dir === "ltr" && "font-mono text-sm",
-          )}
+          className="border-0 rounded-none focus-visible:ring-0 resize-y min-h-[80px]"
         />
       </div>
     );
   };
 
   /* ══════════════════════════════════════════
-     RENDER FORM VIEW (PAGE MODE)
+     RENDER FORM VIEW
      ══════════════════════════════════════════ */
   if (view === "form") {
     return (
       <div className="min-h-screen bg-muted/10 pb-20">
-        {/* Sticky Header */}
         <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b shadow-sm mb-8">
-          <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="mx-auto lg:px-24 md:px-16 px-4 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={closeForm}
-                className="rounded-full hover:bg-muted"
+                className="rounded-full"
               >
                 {isRtl ? (
                   <ArrowRight className="h-5 w-5" />
@@ -495,7 +440,6 @@ export default function AdminProblemsPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {/* ✅ زر فتح الدليل في صفحة جديدة حتى لا يضيع تعب الإدخال */}
               <Link href={`/${locale}/admin/problems/guide`} target="_blank">
                 <Button
                   variant="ghost"
@@ -528,8 +472,7 @@ export default function AdminProblemsPage() {
           </div>
         </div>
 
-        {/* Form Content */}
-        <div className="container mx-auto px-4">
+        <div className="mx-auto lg:px-24 md:px-16 px-4">
           <form
             id="problem-form"
             onSubmit={handleSubmit}
@@ -544,85 +487,8 @@ export default function AdminProblemsPage() {
                   {t("admin.problems.basicInfo")}
                 </h3>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div id="field-TitleAr">
-                  <label className="block mb-2 text-sm font-semibold">
-                    {t("admin.problems.titleAr")}{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    dir="rtl"
-                    value={form.TitleAr}
-                    onChange={(e) => {
-                      setForm((f) => ({ ...f, TitleAr: e.target.value }));
-                      clearError("TitleAr");
-                    }}
-                    className={cn(
-                      "h-12",
-                      formErrors.TitleAr &&
-                        "border-red-500 focus-visible:ring-red-500",
-                    )}
-                  />
-                  <FieldError id="TitleAr" />
-                </div>
-                <div id="field-TitleEn">
-                  <label className="block mb-2 text-sm font-semibold">
-                    {t("admin.problems.titleEn")}{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    dir="ltr"
-                    value={form.TitleEn}
-                    onChange={(e) => {
-                      setForm((f) => ({ ...f, TitleEn: e.target.value }));
-                      clearError("TitleEn");
-                    }}
-                    className={cn(
-                      "h-12",
-                      formErrors.TitleEn &&
-                        "border-red-500 focus-visible:ring-red-500",
-                    )}
-                  />
-                  <FieldError id="TitleEn" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-muted/20 p-5 rounded-xl border">
-                <div id="field-CategoryId">
-                  <label className="block mb-2 text-sm font-semibold">
-                    {t("admin.problems.category")}{" "}
-                    <span className="text-red-500">*</span>
-                  </label>
-                  <Select
-                    value={
-                      form.CategoryId ? form.CategoryId.toString() : undefined
-                    }
-                    onValueChange={(v) => {
-                      setForm((f) => ({ ...f, CategoryId: Number(v) }));
-                      clearError("CategoryId");
-                    }}
-                  >
-                    <SelectTrigger
-                      className={cn(
-                        "h-12 bg-background",
-                        formErrors.CategoryId && "border-red-500",
-                      )}
-                    >
-                      <SelectValue placeholder={t("common.select")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((c) => (
-                        <SelectItem key={c.Id} value={c.Id.toString()}>
-                          {c.NameAr}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError id="CategoryId" />
-                </div>
-
-                <div id="field-StageId">
+              <div className="flex flex-col md:flex-row gap-6 bg-muted/20 p-5 rounded-xl border">
+                <div id="field-StageId" className="flex-1">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.stage")}{" "}
                     <span className="text-red-500">*</span>
@@ -630,7 +496,11 @@ export default function AdminProblemsPage() {
                   <Select
                     value={form.StageId ? form.StageId.toString() : undefined}
                     onValueChange={(v) => {
-                      setForm((f) => ({ ...f, StageId: Number(v) }));
+                      setForm((f) => ({
+                        ...f,
+                        StageId: Number(v),
+                        CategoryId: 0,
+                      }));
                       clearError("StageId");
                     }}
                   >
@@ -645,15 +515,53 @@ export default function AdminProblemsPage() {
                     <SelectContent>
                       {stages?.map((s) => (
                         <SelectItem key={s.Id} value={s.Id.toString()}>
-                          {s.NameAr}
+                          {locale === "ar" ? s.NameAr : s.NameEn}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <FieldError id="StageId" />
                 </div>
-
-                <div id="field-Points">
+                <div id="field-CategoryId" className="flex-1">
+                  <label className="block mb-2 text-sm font-semibold">
+                    {t("admin.problems.category")}{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <Select
+                    value={
+                      form.CategoryId ? form.CategoryId.toString() : undefined
+                    }
+                    onValueChange={(v) => {
+                      setForm((f) => ({ ...f, CategoryId: Number(v) }));
+                      clearError("CategoryId");
+                    }}
+                    disabled={!form.StageId}
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        "h-12 bg-background",
+                        formErrors.CategoryId && "border-red-500",
+                      )}
+                    >
+                      <SelectValue
+                        placeholder={
+                          form.StageId
+                            ? t("common.select")
+                            : t("admin.problems.selectStageFirst")
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((c) => (
+                        <SelectItem key={c.Id} value={c.Id.toString()}>
+                          {locale === "ar" ? c.NameAr : c.NameEn}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FieldError id="CategoryId" />
+                </div>
+                <div id="field-Points" className="w-full md:w-32">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.points")}{" "}
                     <span className="text-red-500">*</span>
@@ -677,42 +585,9 @@ export default function AdminProblemsPage() {
                   <FieldError id="Points" />
                 </div>
               </div>
-
-              <div>
-                <label className="block mb-3 text-sm font-semibold">
-                  {t("admin.problems.tags")}
-                </label>
-                <div className="flex flex-wrap gap-2 p-4 border rounded-xl bg-muted/10 min-h-[60px]">
-                  {tags?.map((tag) => {
-                    const isSelected = form.TagIds?.includes(tag.Id);
-                    return (
-                      <button
-                        key={tag.Id}
-                        type="button"
-                        className={cn(
-                          "px-4 py-2 rounded-lg text-sm border transition-all duration-200 font-medium",
-                          isSelected
-                            ? "bg-primary text-primary-foreground border-primary shadow-md scale-105"
-                            : "bg-background hover:bg-muted border-border",
-                        )}
-                        onClick={() =>
-                          setForm((prev) => ({
-                            ...prev,
-                            TagIds: isSelected
-                              ? prev.TagIds?.filter((id) => id !== tag.Id)
-                              : [...(prev.TagIds || []), tag.Id],
-                          }))
-                        }
-                      >
-                        {tag.Text}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
 
-            {/* ── SECTION 2: Question & Math Setup ── */}
+            {/* ── SECTION 2: Question Text (WITH LaTeX TOOLBAR & PREVIEW) ── */}
             <div className="bg-background rounded-2xl border shadow-sm p-6 lg:p-8 space-y-6">
               <div className="flex items-center gap-2 border-b pb-3 mb-6">
                 <BookOpen className="w-5 h-5 text-primary" />
@@ -721,84 +596,72 @@ export default function AdminProblemsPage() {
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="lg:col-span-2">
-                  <label className="block mb-2 text-sm font-semibold">
-                    {t("admin.problems.latexCode")}{" "}
-                    {t("admin.problems.mainLatexNote")}
-                  </label>
-                  <TextareaWithToolbar
-                    fieldKey="mainLatex"
-                    textareaRef={refMainLatex}
-                    value={form.LatexCode || ""}
-                    onChange={(v) => setForm((f) => ({ ...f, LatexCode: v }))}
-                    dir="ltr"
-                    rows={4}
-                    placeholder="e.g. \int_{0}^{\infty} e^{-x^2} dx"
-                  />
-                  {form.LatexCode && (
-                    <div className="mt-3 p-6 bg-muted/30 rounded-xl border border-dashed border-primary/30 flex flex-col items-center justify-center">
-                      <p className="text-sm text-muted-foreground mb-4 w-full text-start font-medium">
-                        {t("admin.problems.equationPreview")}
-                      </p>
-                      <LatexPreview
-                        latex={form.LatexCode}
-                        block
-                        className="text-xl"
-                      />
-                    </div>
-                  )}
-                </div>
-
+              <div className="space-y-8">
+                {/* سؤال عربي */}
                 <div id="field-QuestionTextAr">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.questionAr")}{" "}
                     <span className="text-red-500">*</span>
                   </label>
-                  <Textarea
-                    dir="rtl"
-                    rows={5}
+                  <TextareaWithToolbar
+                    fieldKey="questionAr"
+                    textareaRef={refQuestionAr}
                     value={form.QuestionTextAr}
-                    onChange={(e) => {
-                      setForm((f) => ({
-                        ...f,
-                        QuestionTextAr: e.target.value,
-                      }));
+                    onChange={(v) => {
+                      setForm((f) => ({ ...f, QuestionTextAr: v }));
                       clearError("QuestionTextAr");
                     }}
-                    className={cn(
-                      "resize-y text-base p-4",
-                      formErrors.QuestionTextAr &&
-                        "border-red-500 focus-visible:ring-red-500",
-                    )}
+                    dir="rtl"
+                    rows={5}
+                    hasError={!!formErrors.QuestionTextAr}
                     placeholder={t("admin.problems.questionArPlaceholder")}
                   />
                   <FieldError id="QuestionTextAr" />
+
+                  {/* ✅ عرض مباشر للسؤال العربي */}
+                  {form.QuestionTextAr && (
+                    <div className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-primary/20">
+                      <div className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-primary" /> معاينة السؤال
+                      </div>
+                      <RichText text={form.QuestionTextAr} isArabic={true} />
+                    </div>
+                  )}
                 </div>
+
+                {/* سؤال إنجليزي */}
                 <div id="field-QuestionTextEn">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.questionEn")}{" "}
                     <span className="text-red-500">*</span>
                   </label>
-                  <Textarea
-                    dir="ltr"
-                    rows={5}
+                  <TextareaWithToolbar
+                    fieldKey="questionEn"
+                    textareaRef={refQuestionEn}
                     value={form.QuestionTextEn}
-                    onChange={(e) => {
-                      setForm((f) => ({
-                        ...f,
-                        QuestionTextEn: e.target.value,
-                      }));
+                    onChange={(v) => {
+                      setForm((f) => ({ ...f, QuestionTextEn: v }));
                       clearError("QuestionTextEn");
                     }}
-                    className={cn(
-                      "resize-y text-base p-4",
-                      formErrors.QuestionTextEn &&
-                        "border-red-500 focus-visible:ring-red-500",
-                    )}
+                    dir="ltr"
+                    rows={5}
+                    hasError={!!formErrors.QuestionTextEn}
                     placeholder={t("admin.problems.questionEnPlaceholder")}
                   />
                   <FieldError id="QuestionTextEn" />
+
+                  {/* ✅ عرض مباشر للسؤال الإنجليزي */}
+                  {form.QuestionTextEn && (
+                    <div
+                      className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-primary/20"
+                      dir="ltr"
+                    >
+                      <div className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-primary" /> Preview
+                      </div>
+                      <RichText text={form.QuestionTextEn} isArabic={false} />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -814,14 +677,14 @@ export default function AdminProblemsPage() {
                   </h3>
                 </div>
                 {formErrors.correctAnswer && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm animate-pulse">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     {formErrors.correctAnswer}
                   </div>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 {form.Options.map((opt, idx) => (
                   <div
                     key={idx}
@@ -830,13 +693,12 @@ export default function AdminProblemsPage() {
                       "p-6 border-2 rounded-xl flex flex-col gap-5 transition-all duration-300",
                       opt.IsCorrect
                         ? "bg-green-500/5 border-green-500/40 shadow-[0_0_15px_rgba(34,197,94,0.1)]"
-                        : formErrors[`opt_${idx}_TextAr`] ||
-                            formErrors[`opt_${idx}_TextEn`]
+                        : formErrors[`opt_${idx}_Latex`]
                           ? "bg-red-500/5 border-red-500/40"
                           : "bg-card hover:border-border/80 hover:shadow-sm",
                     )}
                   >
-                    <div className="flex items-center justify-between border-b pb-4">
+                    <div className="flex items-center justify-between">
                       <span className="text-base font-bold text-muted-foreground flex items-center gap-2">
                         <span className="bg-muted px-3 py-1 rounded-md text-foreground">
                           {idx + 1}
@@ -865,58 +727,23 @@ export default function AdminProblemsPage() {
                           : t("admin.problems.markAsCorrect")}
                       </button>
                     </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <Input
-                          dir="rtl"
-                          placeholder={t("admin.problems.optionTextAr")}
-                          value={opt.TextAr}
-                          onChange={(e) =>
-                            updateOption(idx, "TextAr", e.target.value)
-                          }
-                          className={cn(
-                            "h-11",
-                            formErrors[`opt_${idx}_TextAr`] && "border-red-500",
-                          )}
-                        />
-                        <FieldError id={`opt_${idx}_TextAr`} />
-                      </div>
-                      <div>
-                        <Input
-                          dir="ltr"
-                          placeholder={t("admin.problems.optionTextEn")}
-                          value={opt.TextEn}
-                          onChange={(e) =>
-                            updateOption(idx, "TextEn", e.target.value)
-                          }
-                          className={cn(
-                            "h-11",
-                            formErrors[`opt_${idx}_TextEn`] && "border-red-500",
-                          )}
-                        />
-                        <FieldError id={`opt_${idx}_TextEn`} />
-                      </div>
-                    </div>
-
-                    <div className="mt-2">
+                    <div>
                       <label className="text-sm font-semibold text-muted-foreground mb-2 block">
-                        {t("admin.problems.optionLatexLabel")}
+                        {t("admin.problems.optionLatexLabel")}{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <TextareaWithToolbar
                         fieldKey={`opt_${idx}`}
-                        textareaRef={
-                          refOptLatex[
-                            idx
-                          ] as React.RefObject<HTMLTextAreaElement | null>
-                        }
-                        value={opt.LatexCode || ""}
+                        textareaRef={refOptLatex[idx] as any}
+                        value={opt.LatexCode}
                         onChange={(v) => updateOption(idx, "LatexCode", v)}
                         dir="ltr"
                         rows={2}
                         compact
-                        placeholder="\frac{x}{y}"
+                        placeholder="\\frac{x}{y}"
+                        hasError={!!formErrors[`opt_${idx}_Latex`]}
                       />
+                      <FieldError id={`opt_${idx}_Latex`} />
                       {opt.LatexCode && (
                         <div className="mt-3 px-4 py-3 bg-background rounded-lg shadow-sm border text-center">
                           <LatexPreview latex={opt.LatexCode} block />
@@ -928,7 +755,7 @@ export default function AdminProblemsPage() {
               </div>
             </div>
 
-            {/* ── SECTION 4: Detailed Solutions & Video ── */}
+            {/* ── SECTION 4: Solutions ── */}
             <div className="bg-background rounded-2xl border shadow-sm p-6 lg:p-8 space-y-6 mb-8">
               <div className="flex items-center gap-2 border-b pb-3 mb-6">
                 <Lightbulb className="w-5 h-5 text-green-600" />
@@ -937,8 +764,6 @@ export default function AdminProblemsPage() {
                   <span className="text-red-500">*</span>
                 </h3>
               </div>
-
-              {/* Youtube URL */}
               <div className="bg-red-50/50 dark:bg-red-900/10 p-5 rounded-xl border border-red-100 dark:border-red-900/30 mb-6">
                 <label className="flex items-center gap-2 mb-2 text-sm font-bold text-red-600 dark:text-red-400">
                   <svg
@@ -966,8 +791,8 @@ export default function AdminProblemsPage() {
                   {t("admin.problems.youtubeUrlDescription")}
                 </p>
               </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-8">
+                {/* حل عربي */}
                 <div id="field-DetailedSolutionAr">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.detailedSolutionAr")}{" "}
@@ -986,7 +811,22 @@ export default function AdminProblemsPage() {
                     hasError={!!formErrors.DetailedSolutionAr}
                   />
                   <FieldError id="DetailedSolutionAr" />
+
+                  {/* ✅ عرض مباشر للحل العربي */}
+                  {form.DetailedSolutionAr && (
+                    <div className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-green-500/30">
+                      <div className="text-xs font-bold text-green-600 dark:text-green-500 mb-3 flex items-center gap-2">
+                        <Eye className="w-4 h-4" /> معاينة الحل
+                      </div>
+                      <RichText
+                        text={form.DetailedSolutionAr}
+                        isArabic={true}
+                      />
+                    </div>
+                  )}
                 </div>
+
+                {/* حل إنجليزي */}
                 <div id="field-DetailedSolutionEn">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.detailedSolutionEn")}{" "}
@@ -1005,6 +845,22 @@ export default function AdminProblemsPage() {
                     hasError={!!formErrors.DetailedSolutionEn}
                   />
                   <FieldError id="DetailedSolutionEn" />
+
+                  {/* ✅ عرض مباشر للحل الإنجليزي */}
+                  {form.DetailedSolutionEn && (
+                    <div
+                      className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-green-500/30"
+                      dir="ltr"
+                    >
+                      <div className="text-xs font-bold text-green-600 dark:text-green-500 mb-3 flex items-center gap-2">
+                        <Eye className="w-4 h-4" /> Preview
+                      </div>
+                      <RichText
+                        text={form.DetailedSolutionEn}
+                        isArabic={false}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1015,10 +871,18 @@ export default function AdminProblemsPage() {
   }
 
   /* ══════════════════════════════════════════
-     RENDER LIST VIEW (TABLE)
+     RENDER LIST VIEW
      ══════════════════════════════════════════ */
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    // ✅ تم إزالة <TooltipProvider> من هنا بالكامل
+    <div className="mx-auto lg:px-24 md:px-16 px-4 py-8 space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: t("nav.admin"), href: "/admin" },
+          { label: t("admin.problems.title") },
+        ]}
+        className="mb-6"
+      />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">{t("admin.problems.title")}</h1>
@@ -1032,7 +896,6 @@ export default function AdminProblemsPage() {
               {t("admin.problems.total")}: {totalProblems}
             </span>
           )}
-          {/* ✅ تمت إضافة زر الدليل هنا */}
           <Link href={`/${locale}/admin/problems/guide`}>
             <Button variant="outline" className="gap-2 shadow-sm" size="lg">
               <BookOpen className="h-5 w-5 text-primary" />
@@ -1062,11 +925,12 @@ export default function AdminProblemsPage() {
               />
             </div>
             <Select
-              value={filters.StageId?.toString() || "all"}
+              value={filters.StageId?.toString() ?? ""}
               onValueChange={(v) =>
                 setFilters((prev) => ({
                   ...prev,
                   StageId: v === "all" ? undefined : Number(v),
+                  CategoryId: undefined,
                   Page: 1,
                 }))
               }
@@ -1075,15 +939,15 @@ export default function AdminProblemsPage() {
                 <SelectValue placeholder={t("admin.problems.stage")} />
               </SelectTrigger>
               <SelectContent>
-                {stages?.map((stage) => (
-                  <SelectItem key={stage.Id} value={stage.Id.toString()}>
-                    {stage.NameAr}
+                {stages?.map((s) => (
+                  <SelectItem key={s.Id} value={s.Id.toString()}>
+                    {locale === "ar" ? s.NameAr : s.NameEn}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select
-              value={filters.CategoryId?.toString() || "all"}
+              value={filters.CategoryId?.toString() ?? ""}
               onValueChange={(v) =>
                 setFilters((prev) => ({
                   ...prev,
@@ -1091,35 +955,21 @@ export default function AdminProblemsPage() {
                   Page: 1,
                 }))
               }
+              disabled={!filters.StageId}
             >
               <SelectTrigger className="h-11 w-full md:w-[180px] bg-muted/50">
-                <SelectValue placeholder={t("admin.problems.category")} />
+                <SelectValue
+                  placeholder={
+                    filters.StageId
+                      ? t("admin.problems.category")
+                      : t("admin.problems.selectStageFirst")
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                {categories?.map((cat) => (
-                  <SelectItem key={cat.Id} value={cat.Id.toString()}>
-                    {cat.NameAr}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.TagId?.toString() || "all"}
-              onValueChange={(v) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  TagId: v === "all" ? undefined : Number(v),
-                  Page: 1,
-                }))
-              }
-            >
-              <SelectTrigger className="h-11 w-full md:w-[180px] bg-muted/50">
-                <SelectValue placeholder={t("admin.problems.tag")} />
-              </SelectTrigger>
-              <SelectContent>
-                {tags?.map((tag) => (
-                  <SelectItem key={tag.Id} value={tag.Id.toString()}>
-                    {tag.Text}
+                {filteredCategoriesForFilter.map((c) => (
+                  <SelectItem key={c.Id} value={c.Id.toString()}>
+                    {locale === "ar" ? c.NameAr : c.NameEn}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1149,13 +999,13 @@ export default function AdminProblemsPage() {
                 <tr>
                   <th className="p-5 font-semibold">ID</th>
                   <th className="p-5 font-semibold text-start">
-                    {t("admin.problems.title")}
-                  </th>
-                  <th className="p-5 font-semibold">
-                    {t("admin.problems.category")}
+                    {t("admin.problems.titleAr")}
                   </th>
                   <th className="p-5 font-semibold">
                     {t("admin.problems.stage")}
+                  </th>
+                  <th className="p-5 font-semibold">
+                    {t("admin.problems.category")}
                   </th>
                   <th className="p-5 font-semibold">
                     {t("admin.problems.points")}
@@ -1186,92 +1036,118 @@ export default function AdminProblemsPage() {
                     >
                       <div className="flex flex-col items-center justify-center gap-3">
                         <HelpCircle className="h-10 w-10 text-muted-foreground/40" />
-                        <p className="text-lg">{t("common.noData")}</p>
+                        <p className="text-lg">
+                          {t("admin.problems.noProblems")}
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  problems.map((p) => {
-                    const catName =
-                      categories?.find((c) => c.Id === p.CategoryId)?.NameAr ||
-                      "-";
-                    const stageName = getStageName(p.StageId);
-                    return (
-                      <tr
-                        key={p.Id}
-                        className="border-b hover:bg-muted/30 transition-colors"
-                      >
-                        <td className="p-5 font-mono text-sm text-muted-foreground">
-                          #{p.Id}
-                        </td>
-                        <td className="p-5 text-start max-w-[300px]">
-                          <div className="flex flex-col gap-1.5">
-                            <span className="font-semibold truncate">
-                              {p.TitleAr}
-                            </span>
-                            <span
-                              className="text-xs text-muted-foreground truncate"
-                              dir="ltr"
-                            >
-                              {p.TitleEn}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="p-5 text-muted-foreground font-medium">
-                          {catName}
-                        </td>
-                        <td className="p-5">
-                          <Badge className="px-3 py-1 bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
-                            {stageName}
-                          </Badge>
-                        </td>
-                        <td className="p-5">
-                          <Badge
-                            variant="secondary"
-                            className="font-bold text-sm px-3 py-1"
-                          >
-                            {p.Points ?? "-"}
-                          </Badge>
-                        </td>
-                        <td className="p-5 space-x-2 rtl:space-x-reverse">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setViewingProblem(p)}
-                            className="hover:text-primary hover:bg-primary/10"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openForm(p)}
-                            className="hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <PopoverConfirm
-                            onConfirm={() => handleDelete(p.Id!)}
-                            title={t("common.confirmDeleteTitle")}
-                            description={t("admin.problems.confirmDelete")}
-                            confirmText={t("common.delete")}
-                            cancelText={t("common.cancel")}
-                            isLoading={deletingId === p.Id}
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={deletingId === p.Id}
-                                className="hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            }
+                  problems.map((p) => (
+                    <tr
+                      key={p.Id}
+                      className="border-b hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="p-5 font-mono text-sm text-muted-foreground">
+                        #{p.Id}
+                      </td>
+                      <td className="p-5 text-start max-w-[300px]">
+                        <div className="line-clamp-2 font-semibold">
+                          <RichText
+                            text={p.TitleAr || ""}
+                            isArabic={true}
+                            className="m-0 p-0 text-sm prose-p:m-0 prose-p:inline"
                           />
-                        </td>
-                      </tr>
-                    );
-                  })
+                        </div>
+                      </td>
+                      <td className="p-5">
+                        <Badge className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
+                          {getStageName(p.StageId)}
+                        </Badge>
+                      </td>
+                      <td className="p-5 text-muted-foreground font-medium">
+                        {getCategoryName(p.CategoryId)}
+                      </td>
+                      <td className="p-5">
+                        <Badge
+                          variant="secondary"
+                          className="font-bold text-sm px-3 py-1"
+                        >
+                          {p.Points ?? "-"}
+                        </Badge>
+                      </td>
+                      <td className="p-5 space-x-2 rtl:space-x-reverse">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setViewingProblem(p)}
+                              className="hover:text-primary hover:bg-primary/10"
+                            >
+                              <Eye className="h-4 w-4 text-blue-500" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            className="shadow-md rounded-lg border-0"
+                          >
+                            <p>{t("common.view")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openForm(p)}
+                              className="hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            >
+                              <Pencil className="h-4 w-4 text-green-500" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            className="shadow-md rounded-lg border-0"
+                          >
+                            <p>{t("common.edit")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-block">
+                              <PopoverConfirm
+                                onConfirm={() => handleDelete(p.Id!)}
+                                title={t("common.confirmDeleteTitle")}
+                                description={t("admin.problems.confirmDelete")}
+                                confirmText={t("common.delete")}
+                                cancelText={t("common.cancel")}
+                                isLoading={deletingId === p.Id}
+                                trigger={
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    disabled={deletingId === p.Id}
+                                    className="hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                  >
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                }
+                              />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            className="shadow-md rounded-lg border-0"
+                          >
+                            <p>{t("common.delete")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
@@ -1316,63 +1192,44 @@ export default function AdminProblemsPage() {
         </CardContent>
       </Card>
 
-      {/* ══════════════════════════════════════════
-          VIEW DIALOG (POPUP ONLY FOR VIEWING)
-          ══════════════════════════════════════════ */}
+      {/* ✅ Dialog العرض المحسّن */}
       <Dialog
         open={!!viewingProblem}
         onOpenChange={() => setViewingProblem(null)}
       >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-xl">
-              {viewingProblem?.TitleAr}
-              <Badge className="px-2.5 py-0.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+            <DialogTitle className="sr-only">
+              {viewingProblem?.TitleAr || t("admin.problems.viewDetails")}
+            </DialogTitle>
+
+            <div className="flex flex-wrap items-center gap-3 pb-4 border-b">
+              <Badge className="px-4 py-2 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-base font-semibold flex items-center gap-2">
+                <BookOpen className="h-4 w-4" />
                 {getStageName(viewingProblem?.StageId || 0)}
               </Badge>
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {viewingProblem?.TitleEn}
-            </p>
+              <Badge className="px-4 py-2 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-base font-semibold flex items-center gap-2">
+                <ListChecks className="h-4 w-4" />
+                {getCategoryName(viewingProblem?.CategoryId || 0)}
+              </Badge>
+              <Badge className="px-4 py-2 bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 text-base font-semibold flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                {viewingProblem?.Points} {t("admin.problems.points")}
+              </Badge>
+            </div>
           </DialogHeader>
 
           <div className="space-y-6 mt-4">
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="text-sm">
-                {
-                  categories?.find((c) => c.Id === viewingProblem?.CategoryId)
-                    ?.NameAr
-                }
-              </Badge>
-              <Badge variant="outline" className="text-sm">
-                {viewingProblem?.Points} {t("admin.problems.points")}
-              </Badge>
-              {viewingProblem?.TagIds?.map((tagId) => {
-                const tag = tags?.find((t) => t.Id === tagId);
-                return tag ? (
-                  <Badge key={tagId} variant="secondary" className="text-sm">
-                    {tag.Text}
-                  </Badge>
-                ) : null;
-              })}
-            </div>
-
-            {viewingProblem?.LatexCode && (
-              <div className="p-6 bg-muted/30 rounded-xl border border-dashed border-primary/30 text-center shadow-sm">
-                <LatexPreview latex={viewingProblem.LatexCode} block />
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-primary flex items-center gap-2">
                   <BookOpen className="h-4 w-4" />
                   {t("admin.problems.questionAr")}
                 </label>
                 <div className="bg-muted/20 p-4 rounded-xl border">
-                  <SolutionText
+                  <RichText
                     text={viewingProblem?.QuestionTextAr || ""}
-                    isArabic={true}
+                    isArabic
                   />
                 </div>
               </div>
@@ -1382,7 +1239,7 @@ export default function AdminProblemsPage() {
                   {t("admin.problems.questionEn")}
                 </label>
                 <div className="bg-muted/20 p-4 rounded-xl border" dir="ltr">
-                  <SolutionText
+                  <RichText
                     text={viewingProblem?.QuestionTextEn || ""}
                     isArabic={false}
                   />
@@ -1413,46 +1270,43 @@ export default function AdminProblemsPage() {
               </div>
             )}
 
-            {(viewingProblem?.DetailedSolutionAr ||
-              viewingProblem?.DetailedSolutionEn) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {viewingProblem?.DetailedSolutionAr && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-green-600 flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4" />
-                      {t("admin.problems.detailedSolutionAr")}
-                    </label>
-                    <div className="bg-green-50/50 dark:bg-green-900/10 p-4 rounded-xl border border-green-200 dark:border-green-800/50">
-                      <SolutionText
-                        text={viewingProblem.DetailedSolutionAr}
-                        isArabic
-                      />
-                    </div>
+            <div className="space-y-4">
+              {viewingProblem?.DetailedSolutionAr && (
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-green-600 flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4" />
+                    {t("admin.problems.detailedSolutionAr")}
+                  </label>
+                  <div className="bg-green-50/50 dark:bg-green-900/10 p-4 rounded-xl border border-green-200 dark:border-green-800/50">
+                    <RichText
+                      text={viewingProblem.DetailedSolutionAr}
+                      isArabic
+                    />
                   </div>
-                )}
-                {viewingProblem?.DetailedSolutionEn && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-green-600 flex items-center gap-2">
-                      <Lightbulb className="h-4 w-4" />
-                      {t("admin.problems.detailedSolutionEn")}
-                    </label>
-                    <div className="bg-green-50/50 dark:bg-green-900/10 p-4 rounded-xl border border-green-200 dark:border-green-800/50">
-                      <SolutionText
-                        text={viewingProblem.DetailedSolutionEn}
-                        isArabic={false}
-                      />
-                    </div>
+                </div>
+              )}
+              {viewingProblem?.DetailedSolutionEn && (
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-green-600 flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4" />
+                    {t("admin.problems.detailedSolutionEn")}
+                  </label>
+                  <div className="bg-green-50/50 dark:bg-green-900/10 p-4 rounded-xl border border-green-200 dark:border-green-800/50">
+                    <RichText
+                      text={viewingProblem.DetailedSolutionEn}
+                      isArabic={false}
+                    />
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
 
             <div className="space-y-3">
               <label className="text-sm font-bold text-primary flex items-center gap-2">
                 <ListChecks className="h-4 w-4" />
                 {t("admin.problems.options")}
               </label>
-              <div className="grid gap-3">
+              <div className="space-y-3">
                 {[...(viewingProblem?.Options || [])]
                   .sort((a, b) => a.Order - b.Order)
                   .map((opt) => (
@@ -1470,25 +1324,9 @@ export default function AdminProblemsPage() {
                       ) : (
                         <Circle className="h-6 w-6 text-muted-foreground/30 shrink-0" />
                       )}
-                      <div className="flex-1 flex flex-col md:flex-row gap-4">
-                        <span className="text-base flex-1 font-medium">
-                          {opt.TextAr}
-                        </span>
-                        <span
-                          className="text-base text-muted-foreground flex-1"
-                          dir="ltr"
-                        >
-                          {opt.TextEn}
-                        </span>
+                      <div className="flex-1">
+                        <LatexPreview latex={opt.LatexCode} />
                       </div>
-                      {opt.LatexCode && (
-                        <div className="shrink-0 bg-background px-4 py-2 rounded-lg shadow-sm border">
-                          <LatexPreview
-                            latex={opt.LatexCode}
-                            className="text-sm"
-                          />
-                        </div>
-                      )}
                     </div>
                   ))}
               </div>

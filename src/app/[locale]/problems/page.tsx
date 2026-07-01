@@ -1,16 +1,12 @@
 import { getTranslations } from 'next-intl/server';
 import ProblemsPageClientWrapper from './ProblemsPageClient';
 
-// Generate metadata with translations based on locale
 export async function generateMetadata({ 
   params 
 }: { 
   params: Promise<{ locale: string }> 
 }) {
-  // Await the params Promise to get the locale
   const { locale } = await params;
-  
-  // Load translations for the problems namespace
   const t = await getTranslations({ locale, namespace: 'problems' });
   
   return {

@@ -96,9 +96,9 @@ export function SolvedProblemsPage() {
             <h3 className="text-xl font-semibold mb-2">{t('solved.empty.title')}</h3>
             <p className="text-muted-foreground mb-6">{t('solved.empty.description')}</p>
             <Button asChild>
-              <Link href="/problems">
-                {t('solved.empty.button')}
-                <ArrowRight className="h-4 w-4 ml-2 rtl:mr-2 rtl:ml-0" />
+                <Link href="/stages">
+                  {t("hero.browseStages")}
+                <ArrowRight className="h-4 w-4 ml-2 rtl:mr-2 rtl:ml-0 rtl:rotate-180" />
               </Link>
             </Button>
           </CardContent>

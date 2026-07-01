@@ -2,20 +2,17 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-// API hooks
 import { useGetStatsQuery } from '@/store/api/statsApi';
 import { useGetAdminUsersQuery } from '@/store/api/usersApi';
 import { useGetAdminCategoriesQuery } from '@/store/api/categoriesApi';
-import { useGetAdminTagsQuery } from '@/store/api/tagsApi';
-import { useGetAdminStagesQuery } from '@/store/api/stagesApi'; // ✅ Import stages hook
+import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
 import { 
   People, 
   Book, 
   TickCircle, 
-  Activity,
   ArrowRight2,
   Warning2,
-  Category2 // ✅ Icon for stages
+  Category2
 } from 'iconsax-reactjs';
 import { Card, CardContent } from '@/components/ui/Card';
 import AdminStatsChart from '@/components/admin/AdminStatsChart';
@@ -30,18 +27,17 @@ interface AdminUser {
 export default function AdminDashboardPage() {
   const t = useTranslations();
   
-  // Fetch data from the APIs
+  // Fetch data from the APIs (بدون tagsApi)
   const { data: stats, isLoading: statsLoading, isError: statsError } = useGetStatsQuery();
   const { data: users, isLoading: usersLoading, isError: usersError } = useGetAdminUsersQuery({ PageSize: 5 });
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useGetAdminCategoriesQuery();
-  const { data: tags, isLoading: tagsLoading, isError: tagsError } = useGetAdminTagsQuery();
-  const { data: stages, isLoading: stagesLoading, isError: stagesError } = useGetAdminStagesQuery(); // ✅ Fetch stages
+  const { data: stages, isLoading: stagesLoading, isError: stagesError } = useGetAdminStagesQuery();
 
   // Aggregate loading and error states
-  const isCardsLoading = statsLoading || categoriesLoading || tagsLoading || stagesLoading;
-  const hasCardsError = statsError || categoriesError || tagsError || stagesError;
+  const isCardsLoading = statsLoading || categoriesLoading || stagesLoading;
+  const hasCardsError = statsError || categoriesError || stagesError;
 
-  // Dashboard cards configuration
+  // Dashboard cards configuration (4 بطاقات فقط - بدون تاغات)
   const adminCards = [
     {
       icon: People,
@@ -68,17 +64,8 @@ export default function AdminDashboardPage() {
       bg: 'bg-purple-50 dark:bg-purple-900/20',
     },
     {
-      icon: Activity,
-      title: t('dashboard.admin.tags'),
-      count: tags?.length || 0,
-      href: '/admin/tags',
-      color: 'text-orange-500',
-      bg: 'bg-orange-50 dark:bg-orange-900/20',
-    },
-    // ✅ New card for Educational Stages
-    {
       icon: Category2,
-      title: t('dashboard.admin.stages'), // translation key "stages"
+      title: t('dashboard.admin.stages'),
       count: stages?.length || 0,
       href: '/admin/stages',
       color: 'text-cyan-500',
@@ -92,8 +79,7 @@ export default function AdminDashboardPage() {
       'text-blue-500': '#3b82f6',
       'text-green-500': '#22c55e',
       'text-purple-500': '#a855f7',
-      'text-orange-500': '#f97316',
-      'text-cyan-500': '#06b6d4', // Added for stages card
+      'text-cyan-500': '#06b6d4',
     };
     return {
       name: card.title,
@@ -103,21 +89,19 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 lg:px-24 md:px-16 px-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">{t('dashboard.admin.title')}</h1>
           <p className="text-muted-foreground">{t('dashboard.admin.subtitle')}</p>
         </div>
-    
       </div>
 
-      {/* Stats Cards - changed grid to 5 columns on large screens */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      {/* Stats Cards - 4 columns on large screens */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {isCardsLoading ? (
-          // Skeleton loaders for 5 cards
-          Array.from({ length: 5 }).map((_, i) => (
+          Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-6 flex flex-col justify-between h-full">
                 <div className="h-12 w-12 rounded-xl bg-muted animate-pulse mb-4" />
@@ -154,7 +138,7 @@ export default function AdminDashboardPage() {
       {/* Quick Stats & Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Stats Chart with stage data included */}
+        {/* Stats Chart */}
         <AdminStatsChart 
           data={chartData} 
           isLoading={isCardsLoading} 

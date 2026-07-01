@@ -11,6 +11,7 @@ import { RootState } from '@/store';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { LatexPreview } from '@/components/ui/LatexPreview';
+import { RichText } from '@/components/ui/RichText';
 import type { ProblemDetail, ProblemForStudent, ProblemForPublic, ProblemAdminDetail } from '@/store/api/problemsApi';
 
 import {
@@ -55,8 +56,9 @@ function isAdminProblem(problem: ProblemDetail | undefined): problem is ProblemA
 
 function YoutubeEmbed({ url }: { url: string }) {
   const getVideoId = (youtubeUrl: string): string | null => {
+    // [IMPROVED] Better Regex to support YouTube Shorts and standard URLs
     const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
       /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
     ];
     for (const pattern of patterns) {
@@ -83,34 +85,6 @@ function YoutubeEmbed({ url }: { url: string }) {
 }
 
 /* ────────────────────────────────────────────
-   SOLUTION TEXT HELPER
-   ──────────────────────────────────────────── */
-
-function SolutionText({ text, isArabic }: { text: string; isArabic: boolean }) {
-  const TOKEN = /(\$\$[\s\S]+?\$\$|\$[^\n$]+?\$)/g
-  const parts = text.split(TOKEN)
-
-  return (
-    <div
-      dir={isArabic ? 'rtl' : 'ltr'}
-      className={`prose max-w-none text-lg leading-loose ${
-        isArabic ? 'text-right' : 'text-left'
-      }`}
-    >
-      {parts.map((part, i) => {
-        if (part.startsWith('$$') && part.endsWith('$$')) {
-          return <LatexPreview key={i} latex={part.slice(2, -2).trim()} block />
-        }
-        if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
-          return <LatexPreview key={i} latex={part.slice(1, -1).trim()} />
-        }
-        return <span key={i}>{part}</span>
-      })}
-    </div>
-  )
-}
-
-/* ────────────────────────────────────────────
    MAIN COMPONENT
    ──────────────────────────────────────────── */
 
@@ -123,11 +97,11 @@ export default function ProblemPage() {
   const solutionRef = useRef<HTMLDivElement>(null);
 
   // ── API hooks ──────────────────────────────
-  const { data: problem, isLoading, error, refetch: refetchProblem } = useGetProblemQuery(problemId, {
+  const { data: problem, isLoading, error, refetch: refetchProblem } = useGetProblemQuery( { Id: problemId, locale: locale }, {
     skip: isNaN(problemId),
   });
 
-  const { data: favoriteData} = useCheckFavoriteQuery(problemId, {
+  const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
     skip: !isAuthenticated || isNaN(problemId),
   });
 
@@ -137,7 +111,6 @@ export default function ProblemPage() {
   // ── Local state ────────────────────────────
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [submissionDone, setSubmissionDone] = useState(false);
-
   const [activeTab, setActiveTab] = useState<'question' | 'video'>('question');
   const [startTime] = useState(Date.now());
 
@@ -155,41 +128,37 @@ export default function ProblemPage() {
     if (!problem) return null;
     let title: string;
     let questionText: string;
-    let categoryName: string;
-    let tags: string[] = [];
+    let categoryName: string = '';
     let points: number = 0;
+    
+    // [NEW] Added variables to store IDs for the dynamic breadcrumbs
+    let categoryId: number | null = null;
+    let stageId: number | null = null;
+    let stageName: string = '';
 
     if (isAdminProblem(problem)) {
       title = locale === 'ar' ? problem.TitleAr : problem.TitleEn;
       questionText = locale === 'ar' ? problem.QuestionTextAr : problem.QuestionTextEn;
-      categoryName = '';
-      tags = problem.Tags.map((tag: any) => locale === 'ar' ? tag.TextAr : tag.TextEn);
+      categoryName = problem.CategoryName || '';
     } else if (isStudentProblem(problem)) {
       title = problem.Title;
       questionText = problem.QuestionText;
       categoryName = problem.CategoryName;
-      tags = problem.Tags;
     } else {
       const pub = problem as ProblemForPublic;
       title = pub.Title;
       questionText = pub.QuestionText;
       categoryName = pub.CategoryName;
-      tags = pub.Tags;
     }
 
-    if ('Points' in problem) {
-      points = (problem as any).Points;
-    }
+    // [NEW] Extracting IDs safely if they exist in the problem object
+    if ('Points' in problem) points = (problem as any).Points;
+    if ('StageName' in problem) stageName = (problem as any).StageName;
+    if ('CategoryId' in problem) categoryId = (problem as any).CategoryId;
+    if ('StageId' in problem) stageId = (problem as any).StageId;
 
-    return { title, questionText, categoryName, tags, points };
+    return { title, questionText, categoryName, points, categoryId, stageId, stageName };
   }, [problem, locale]);
-
-  const stageName = useMemo(() => {
-    if (!problem) return '';
-    if ('StageName' in problem) return (problem as any).StageName;
-    if ('StageId' in problem) return `Stage ${(problem as any).StageId}`;
-    return '';
-  }, [problem]);
 
   const solutionText = useMemo(() => {
     if (answerResult?.DetailedSolution) return answerResult.DetailedSolution;
@@ -205,7 +174,6 @@ export default function ProblemPage() {
       answerResult?.YoutubeSolutionUrl ||
       (isStudentProblem(problem) ? problem.YoutubeSolutionUrl : null) ||
       (isAdminProblem(problem) ? problem.YoutubeSolutionUrl : null);
-
     if (!url) return null;
     if (!url.includes('youtube') && !url.includes('youtu.be')) return null;
     return url;
@@ -213,6 +181,8 @@ export default function ProblemPage() {
 
   // ── Safe access ──
   const problemIsSolved = isStudentProblem(problem) ? problem.IsSolved : false;
+  
+  // [FIXED UX] User can only answer if they haven't submitted yet and are not currently submitting
   const canAnswer =
     isAuthenticated &&
     isStudentProblem(problem) &&
@@ -222,53 +192,64 @@ export default function ProblemPage() {
 
   const showResult = !!(answerResult || problemIsSolved);
   const isCorrect = answerResult?.IsCorrect ?? problemIsSolved;
-
-  const showSolutionSection =
-    (solutionText || youtubeUrl) && (isCorrect || isAdminProblem(problem));
-
+  const showSolutionSection = (solutionText || youtubeUrl) && (isCorrect || isAdminProblem(problem));
   const showVideoTab = isAuthenticated && !!youtubeUrl;
 
   // ── Handlers ───────────────────────────────
-
-  /**
-   * Toggle favorite status for the current problem.
-   * The optimistic update in usersApi.ts handles instant UI feedback.
-   * No need for manual refetch here since the cache is already updated.
-   */
   const handleFavorite = async () => {
     if (!problem) return;
     try {
-      // Toggle favorite - the optimistic update in usersApi.ts will
-      // update the cache immediately, so the heart icon changes color right away
       await toggleFavorite({
         ProblemId: problem.Id,
         IsFavorite: !favoriteData?.IsFavorite,
       }).unwrap();
-
-      // Optional: refetch problem to sync any related data (e.g., favorite count)
-      // This is non-blocking and won't affect the instant UI feedback
       refetchProblem();
     } catch (err) {
       console.error('Failed to toggle favorite:', err);
-      // If the mutation fails, the optimistic update is automatically
-      // rolled back by onQueryStarted in usersApi.ts
     }
   };
 
   const handleSubmit = async () => {
-    if (!selectedOptionId || !problem || submissionDone) return;
+    // [FIXED UX] Prevent multiple submissions
+    if (!selectedOptionId || !problem || submissionDone || isSubmitting) return;
+    
     const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
-    setSubmissionDone(true);
+    
     try {
+      // [FIXED UX] Wait for the API response BEFORE changing UI state
       await submitAnswer({
         ProblemId: problem.Id,
         SelectedOptionId: selectedOptionId,
         TimeSpentSeconds: timeSpentSeconds,
       }).unwrap();
+
+      // [FIXED UX] Update state only after successful API call
+      setSubmissionDone(true);
     } catch (err) {
       console.error('Submit failed:', err);
-      setSubmissionDone(false);
     }
+  };
+
+  // [IMPROVED] Smart logic to handle correct/wrong colors based on API result
+  const getOptionState = (option: { Id: number; LatexCode: string; IsCorrect?: boolean }) => {
+    const isSelected = selectedOptionId === option.Id;
+    const showCorrectness = problemIsSolved || (submissionDone && !!answerResult);
+
+    if (!showCorrectness) return isSelected ? 'selected' : 'idle';
+
+    if (problemIsSolved && option.IsCorrect === true) return 'correct';
+    
+    if (submissionDone && answerResult) {
+       if (isSelected) {
+          return answerResult.IsCorrect ? 'correct' : 'wrong';
+       }
+       if ((answerResult as any).CorrectOptionId === option.Id) {
+          return 'correct';
+       }
+    }
+
+    if (isSelected) return 'wrong';
+    return 'idle';
   };
 
   // ── Early returns ──────────────────────────
@@ -299,41 +280,63 @@ export default function ProblemPage() {
     );
   }
 
-  const { title, questionText, categoryName, tags, points } = problemData;
+  const { title, questionText, categoryName, points } = problemData;
   const isArabic = locale === 'ar';
 
-  const getOptionState = (option: { Id: number; Text: string; IsCorrect?: boolean }) => {
-    const isSelected = selectedOptionId === option.Id;
-    const showCorrectness = submissionDone || problemIsSolved;
-
-    if (!showCorrectness) return isSelected ? 'selected' : 'idle';
-
-    const isCorrectOption =
-      option.IsCorrect === true ||
-      (answerResult?.CorrectOptionText === option.Text);
-
-    if (isCorrectOption) return 'correct';
-    if (isSelected && !isCorrect) return 'wrong';
-    return 'idle';
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/problems" className="flex items-center gap-1 hover:text-primary transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          {t('problem.backToProblems')}
+    <div className="container mx-auto px-4 py-8 lg:px-24 md:px-16">
+      
+      {/* 
+        [NEW] Hierarchical Breadcrumbs 
+        Displays Home / Stages / Stage Name / Category Name / Question Title
+        Clicking Category Name retains the URL parameters so filters are preserved! 
+      */}
+      <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-primary transition-colors">
+          {t('nav.home') || 'الرئيسية'}
         </Link>
-        <span>/</span>
-        <span className="text-foreground font-medium truncate max-w-[200px]">{title}</span>
+        <span className="mx-1 opacity-50">/</span>
+
+        <Link href="/stages" className="hover:text-primary transition-colors">
+          {t('nav.stages') || 'المستويات'}
+        </Link>
+
+        {problemData?.stageName && (
+          <>
+            <span className="mx-1 opacity-50">/</span>
+            <Link 
+              href={`/problems?stageId=${problemData.stageId || ''}`} 
+              className="hover:text-primary transition-colors"
+            >
+              {problemData.stageName}
+            </Link>
+          </>
+        )}
+
+        {problemData?.categoryName && (
+          <>
+            <span className="mx-1 opacity-50">/</span>
+            <Link 
+              href={`/problems?stageId=${problemData.stageId || ''}&categoryId=${problemData.categoryId || ''}`} 
+              className="hover:text-primary transition-colors font-medium text-foreground"
+            >
+              {problemData.categoryName}
+            </Link>
+          </>
+        )}
+
+        <span className="mx-1 opacity-50">/</span>
+        <span className="text-muted-foreground truncate max-w-[150px] sm:max-w-[250px]" title={title}>
+          <RichText text={title} isArabic={isArabic} />
+    
+        </span>
       </div>
 
       {/* Header */}
       <div className="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <h1 className={`text-3xl sm:text-4xl font-bold mb-3 ${isArabic ? 'text-right' : 'text-left'}`}>
-            {title}
+            <RichText text={title} isArabic={isArabic} className="text-inherit" />
           </h1>
           <div className={`flex flex-wrap items-center gap-2 ${isArabic ? 'justify-end' : 'justify-start'}`}>
             {points > 0 && (
@@ -342,16 +345,13 @@ export default function ProblemPage() {
                 <span className="font-semibold">{points}</span>
               </Badge>
             )}
-            {stageName && (
+            {problemData?.stageName && (
               <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 gap-1">
                 <GraduationCap className="h-3.5 w-3.5" />
-                {stageName}
+                {problemData.stageName}
               </Badge>
             )}
             {categoryName && <Badge variant="secondary">{categoryName}</Badge>}
-            {tags.map((tag, idx) => (
-              <Badge key={idx} variant="outline">{tag}</Badge>
-            ))}
           </div>
         </div>
 
@@ -368,11 +368,7 @@ export default function ProblemPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        {/* ═══════════════════════════
-            TABS: Question | Video
-            ═══════════════════════════ */}
         <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-
           {showVideoTab && (
             <div className="flex border-b">
               <button
@@ -386,7 +382,6 @@ export default function ProblemPage() {
                 <BookOpen className="h-4 w-4" />
                 {t('problem.question')}
               </button>
-
               <button
                 onClick={() => setActiveTab('video')}
                 className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
@@ -404,15 +399,11 @@ export default function ProblemPage() {
           {/* ── Question Tab ── */}
           {activeTab === 'question' && (
             <div className="p-6">
-              <div className={`prose max-w-none leading-relaxed dark:prose-invert mb-6 ${isArabic ? 'text-right' : 'text-left'}`}>
-                <p className="text-lg">{questionText}</p>
-                {'LatexCode' in problem && problem.LatexCode && (
-                  <div className="mt-4">
-                    <LatexPreview latex={problem.LatexCode} block />
-                  </div>
-                )}
-              </div>
-
+              <RichText 
+                text={questionText} 
+                isArabic={isArabic} 
+                className="mb-6 text-lg"
+              />
 
               {!isAuthenticated && isPublicProblem(problem) && (
                 <div className="text-center py-8 border-t">
@@ -431,6 +422,10 @@ export default function ProblemPage() {
                   <div className="space-y-3 mb-6">
                     {problem.Options.map((option) => {
                       const state = getOptionState(option);
+                      
+                      // [FIXED UX] Disable radio buttons while submitting to prevent double-clicks
+                      const isOptionDisabled = !canAnswer || isSubmitting;
+
                       return (
                         <label
                           key={option.Id}
@@ -441,17 +436,18 @@ export default function ProblemPage() {
                               ? 'bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-800'
                               : state === 'selected'
                               ? 'border-primary bg-primary/5'
-                              : 'hover:border-primary/50 cursor-pointer'
-                          } ${!canAnswer ? 'cursor-default' : ''}`}
+                              : 'hover:border-primary/50'
+                          } ${isOptionDisabled ? 'cursor-default opacity-90' : 'cursor-pointer'}`}
                         >
-                          {canAnswer && (
+                          {(canAnswer || isSubmitting) && (
                             <input
                               type="radio"
                               name="option"
                               value={option.Id}
                               checked={selectedOptionId === option.Id}
                               onChange={() => setSelectedOptionId(option.Id)}
-                              className="mt-1.5 accent-primary"
+                              disabled={isOptionDisabled} 
+                              className="mt-1.5 accent-primary disabled:opacity-50"
                             />
                           )}
                           {state === 'correct' && (
@@ -461,7 +457,6 @@ export default function ProblemPage() {
                             <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                           )}
                           <div className="flex-1">
-                            <div className="text-base">{option.Text}</div>
                             {option.LatexCode && (
                               <LatexPreview latex={option.LatexCode} className="mt-1" />
                             )}
@@ -476,11 +471,15 @@ export default function ProblemPage() {
                       <Button
                         onClick={handleSubmit}
                         disabled={isSubmitting || !selectedOptionId}
-                        className="gap-2"
+                        className="gap-2 transition-all"
                         size="lg"
                       >
+                        {/* [FIXED UX] Loader now displays correctly during API call */}
                         {isSubmitting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {t('common.loading') || 'Loading...'}
+                          </>
                         ) : (
                           <>
                             <Send className="h-4 w-4" />
@@ -491,8 +490,9 @@ export default function ProblemPage() {
                     </div>
                   )}
 
+                  {/* [IMPROVED] Smooth fade-in animation for result message */}
                   {showResult && (
-                    <div className={`mt-6 rounded-xl p-5 ${
+                    <div className={`mt-6 rounded-xl p-5 animate-in fade-in zoom-in duration-300 ${
                       isCorrect
                         ? 'bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800'
                         : 'bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800'
@@ -505,9 +505,9 @@ export default function ProblemPage() {
                           {isCorrect ? t('problem.correct') : t('problem.wrong')}
                         </span>
                       </div>
-                      {!isCorrect && answerResult?.CorrectOptionText && (
-                        <p className="text-sm text-red-700 dark:text-red-300">
-                          {t('problem.correctAnswerWas')}: {answerResult.CorrectOptionText}
+                      {!isCorrect && (answerResult as any)?.CorrectOptionText && (
+                        <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                          {t('problem.correctAnswerWas')}: {(answerResult as any).CorrectOptionText}
                         </p>
                       )}
                     </div>
@@ -516,7 +516,6 @@ export default function ProblemPage() {
               )}
             </div>
           )}
-
 
           {activeTab === 'video' && showVideoTab && youtubeUrl && (
             <div className="p-6">
@@ -536,13 +535,14 @@ export default function ProblemPage() {
           <div
             ref={solutionRef}
             id="solution-section"
-            className="rounded-2xl border border-green-200 bg-green-50/30 dark:bg-green-900/10 shadow-sm p-6 scroll-mt-20"
+            // [IMPROVED] Smooth slide-in animation when solution is revealed
+            className="rounded-2xl border border-green-200 bg-green-50/30 dark:bg-green-900/10 shadow-sm p-6 scroll-mt-20 animate-in fade-in slide-in-from-bottom-4 duration-500"
           >
-            <h3 className={`text-lg font-semibold flex items-center gap-2 mb-4 text-green-800 dark:text-green-300 `}>
+            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 text-green-800 dark:text-green-300">
               <CheckCircle className="h-5 w-5" />
               {t('problem.solution')}
             </h3>
-            <SolutionText text={solutionText} isArabic={isArabic} />
+            <RichText text={solutionText} isArabic={isArabic} />
           </div>
         )}
       </div>

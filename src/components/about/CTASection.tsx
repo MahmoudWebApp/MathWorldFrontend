@@ -40,10 +40,11 @@ export function CTASection() {
               className="gap-2 rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               asChild
             >
-              <Link href="/problems">
+              <Link href="/stages">
                 <BookOpen className="h-5 w-5" />
                 {t('cta.primaryButton')}
               </Link>
+            
             </Button>
             
             <Button

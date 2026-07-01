@@ -12,6 +12,7 @@ import { Add, Edit, Trash, CloseCircle } from "iconsax-reactjs";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default function AdminStagesPage() {
   const t = useTranslations();
@@ -20,7 +21,12 @@ export default function AdminStagesPage() {
   const [updateStage] = useUpdateStageMutation();
   const [deleteStage] = useDeleteStageMutation();
 
-  const [formData, setFormData] = useState({ Id: 0, NameAr: "", NameEn: "", Order: 1 });
+  const [formData, setFormData] = useState({
+    Id: 0,
+    NameAr: "",
+    NameEn: "",
+    Order: 1,
+  });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,13 +98,20 @@ export default function AdminStagesPage() {
 
   if (isLoading)
     return (
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
         <div className="text-center">{t("common.loading")}</div>
       </div>
     );
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
+      <Breadcrumbs
+        items={[
+          { label: t("nav.admin"), href: "/admin" },
+          { label: t("admin.stages.title") },
+        ]}
+        className="mb-6"
+      />
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">{t("admin.stages.title")}</h1>
@@ -252,7 +265,10 @@ export default function AdminStagesPage() {
                   className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   value={formData.Order}
                   onChange={(e) =>
-                    setFormData({ ...formData, Order: Number(e.target.value) || 1 })
+                    setFormData({
+                      ...formData,
+                      Order: Number(e.target.value) || 1,
+                    })
                   }
                   min={1}
                 />

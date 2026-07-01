@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 
 import { ProblemCard } from "@/components/problems/ProblemCard";
@@ -15,11 +15,12 @@ import {
 import { Trophy, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery } from "@/store/api/usersApi";
+import { RichText } from "@/components/ui/RichText";
 
 // Helper function to calculate relative time from a date string
 function getRelativeTime(
   dateStr: string,
-  t: (key: string, params?: Record<string, number>) => string
+  t: (key: string, params?: Record<string, number>) => string,
 ): string {
   const now = new Date();
   const date = new Date(dateStr);
@@ -31,14 +32,14 @@ function getRelativeTime(
   if (diffMinutes < 1) return t("dashboard.user.justNow");
   if (diffMinutes < 60)
     return t("dashboard.user.minutesAgo", { minutes: diffMinutes });
-  if (diffHours < 24)
-    return t("dashboard.user.hoursAgo", { hours: diffHours });
+  if (diffHours < 24) return t("dashboard.user.hoursAgo", { hours: diffHours });
   return t("dashboard.user.daysAgo", { days: diffDays });
 }
 
 export default function UserDashboardPage() {
   const t = useTranslations();
-
+  const locale = useLocale();
+  const isArabic = locale === "ar";
   // Single API call for all dashboard data instead of 3 separate calls
   const { data: dashboard, isLoading, isError } = useGetDashboardQuery();
 
@@ -81,9 +82,7 @@ export default function UserDashboardPage() {
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">
-          {t("dashboard.user.title")}
-        </h1>
+        <h1 className="text-3xl font-bold mb-2">{t("dashboard.user.title")}</h1>
         {isLoading ? (
           <div className="h-5 w-48 bg-muted animate-pulse rounded" />
         ) : (
@@ -177,7 +176,7 @@ export default function UserDashboardPage() {
                   <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>{t("dashboard.user.noSolvedYet")}</p>
                   <Link
-                    href="/problems"
+                    href="/stages"
                     className="text-primary hover:underline mt-2 inline-block font-medium"
                   >
                     {t("dashboard.user.startSolving")}
@@ -230,10 +229,10 @@ export default function UserDashboardPage() {
                   <Heart className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>{t("dashboard.user.noFavoritesYet")}</p>
                   <Link
-                    href="/problems"
+                    href="/stages"
                     className="text-primary hover:underline mt-2 inline-block font-medium"
                   >
-                    {t("dashboard.user.exploreProblems")}
+                      {t("hero.browseStages")}
                   </Link>
                 </CardContent>
               </Card>
@@ -273,12 +272,15 @@ export default function UserDashboardPage() {
                       <Calendar className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate text-foreground">
-                        {t("dashboard.user.solvedProblemActivity", {
+                      <RichText
+                        text={t("dashboard.user.solvedProblemActivity", {
                           title: activity.Title,
                           category: activity.CategoryName,
                         })}
-                      </p>
+                           inline
+                        isArabic={isArabic}
+                        className="font-medium text-foreground truncate"
+                      />
                       <p className="text-sm text-muted-foreground">
                         {getRelativeTime(activity.SolvedAt, t)}
                       </p>
