@@ -42,7 +42,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${outfit.variable} ${almarai.variable}`}
     >
-      <body className="min-h-screen bg-background antialiased">{children}</body>
+      <body suppressHydrationWarning className="min-h-screen bg-background antialiased"
+       data-gramm="false"        
+        data-gramm_editor="false"  
+        data-enable-grammarly="false" 
+      >{children}</body>
     </html>
   );
 }

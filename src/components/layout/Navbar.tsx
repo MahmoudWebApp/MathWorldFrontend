@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
@@ -26,7 +27,6 @@ import { problemsApi } from '@/store/api/problemsApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
 import { useSearchParams } from 'next/navigation'; 
 
-// 1. Rename the main component and remove 'export'
 function NavbarContent() {
   const t = useTranslations();
   const locale = useLocale();
@@ -43,13 +43,13 @@ function NavbarContent() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [navSearch, setNavSearch] = useState('');
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false); // [CHANGED] Added mounted flag to prevent hydration mismatch
   const [stagesMenuOpen, setStagesMenuOpen] = useState(false);
   const stagesMenuRef = useRef<HTMLDivElement>(null);
   const stagesMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    setMounted(true); // [CHANGED] Set mounted to true after client-side hydration completes
     dispatch(setLocale(locale));
   }, [dispatch, locale]);
 
@@ -232,8 +232,9 @@ function NavbarContent() {
             {locale === 'ar' ? 'EN' : 'عربي'}
           </Button>
 
-          {/* Auth */}
-          {isLoading ? (
+          {/* Auth Section */}
+          {/* [CHANGED] Replaced isLoading with !mounted || isLoading so server and client render the same skeleton on first paint */}
+          {!mounted || isLoading ? (
             <div className="h-8 w-24 rounded-lg bg-muted animate-pulse" />
           ) : isAuthenticated && user ? (
             <div className="relative">
@@ -311,8 +312,9 @@ function NavbarContent() {
             {t('nav.about')}
           </Link>
 
-          {/* Auth */}
-          {isLoading ? (
+          {/* Mobile Auth Section */}
+          {/* [CHANGED] Replaced isLoading with !mounted || isLoading to match server/client first render */}
+          {!mounted || isLoading ? (
             <div className="pt-4 border-t mt-4"><div className="h-8 w-full rounded-lg bg-muted animate-pulse" /></div>
           ) : isAuthenticated && user ? (
             <div className="pt-4 border-t mt-4 space-y-2">
@@ -335,7 +337,6 @@ function NavbarContent() {
   );
 }
 
-// 2. Export the new Navbar wrapped in Suspense
 export function Navbar() {
   return (
     <Suspense 
@@ -347,4 +348,3 @@ export function Navbar() {
     </Suspense>
   );
 }
-
