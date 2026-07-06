@@ -332,7 +332,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-8">
             {sortedCategories.map((category, index) => {
               const math = mathSymbols[category.Id % mathSymbols.length];
               const style = categoryStyles[category.Id % categoryStyles.length];
