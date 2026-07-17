@@ -8,6 +8,7 @@ import {
   useCreateProblemMutation,
   useUpdateProblemMutation,
   useDeleteProblemMutation,
+  type CreateProblemRequest,
   type ProblemAdminDetail,
 } from "@/store/api/problemsApi";
 import { useGetAdminCategoriesQuery } from "@/store/api/categoriesApi";
@@ -29,7 +30,6 @@ import {
   ListChecks,
   HelpCircle,
   Lightbulb,
-  ArrowRight,
   ArrowLeft,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -54,7 +54,7 @@ import {
 import { Textarea } from "@/components/ui/Textarea";
 import { LatexToolbarAdvanced } from "@/components/problems/Latextoolbaradvanced";
 import { RichText } from "@/components/ui/RichText";
-// ✅ تم إزالة TooltipProvider لأنه أصبح في الـ Providers
+// TooltipProvider is configured at the application provider level.
 import {
   Tooltip,
   TooltipContent,
@@ -76,21 +76,7 @@ type ActiveField =
   | `opt_${number}`
   | null;
 
-interface ExtendedCreateProblemRequest {
-  QuestionTextAr: string;
-  QuestionTextEn: string;
-  DetailedSolutionAr: string;
-  DetailedSolutionEn: string;
-  YoutubeSolutionUrl?: string;
-  StageId: number;
-  Points: number;
-  CategoryId: number;
-  Options: {
-    LatexCode: string;
-    IsCorrect: boolean;
-    Order: number;
-  }[];
-}
+type ExtendedCreateProblemRequest = CreateProblemRequest;
 
 /* ────────────────────────────────────────────
    CONSTANTS
@@ -127,7 +113,6 @@ const defaultFilters = {
 export default function AdminProblemsPage() {
   const t = useTranslations();
   const locale = useLocale();
-  const isRtl = locale === "ar";
 
   const [view, setView] = useState<"list" | "form">("list");
   const [searchText, setSearchText] = useState("");
@@ -140,8 +125,8 @@ export default function AdminProblemsPage() {
   ] = useLazyGetAdminProblemsQuery();
 
   const problems: ProblemAdminDetail[] = searchResult?.Results || [];
-  const totalPages = (searchResult as any)?.TotalPages || 1;
-  const totalProblems = (searchResult as any)?.Total || 0;
+  const totalPages = searchResult?.TotalPages || 1;
+  const totalProblems = searchResult?.Total || 0;
 
   const { data: allCategories } = useGetAdminCategoriesQuery();
   const { data: stages } = useGetAdminStagesQuery();
@@ -252,11 +237,11 @@ export default function AdminProblemsPage() {
         QuestionTextEn: problem.QuestionTextEn,
         DetailedSolutionAr: problem.DetailedSolutionAr || "",
         DetailedSolutionEn: problem.DetailedSolutionEn || "",
-        YoutubeSolutionUrl: (problem as any).YoutubeSolutionUrl || "",
+        YoutubeSolutionUrl: problem.YoutubeSolutionUrl || "",
         StageId: problem.StageId,
         Points: problem.Points,
         CategoryId: problem.CategoryId,
-        Options: problem.Options.map((opt: any) => ({
+        Options: problem.Options.map((opt) => ({
           LatexCode: opt.LatexCode || "",
           IsCorrect: opt.IsCorrect,
           Order: opt.Order,
@@ -296,9 +281,9 @@ export default function AdminProblemsPage() {
       if (editingId)
         await updateProblem({
           Id: editingId,
-          Data: cleanedForm as any,
+          Data: cleanedForm,
         }).unwrap();
-      else await createProblem(cleanedForm as any).unwrap();
+      else await createProblem(cleanedForm).unwrap();
       closeForm();
     } catch (err) {
       console.error("Failed to save problem", err);
@@ -420,11 +405,7 @@ export default function AdminProblemsPage() {
                 onClick={closeForm}
                 className="rounded-full"
               >
-                {isRtl ? (
-                  <ArrowRight className="h-5 w-5" />
-                ) : (
-                  <ArrowLeft className="h-5 w-5" />
-                )}
+                <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-primary">
@@ -597,7 +578,7 @@ export default function AdminProblemsPage() {
               </div>
 
               <div className="space-y-8">
-                {/* سؤال عربي */}
+                {/* Arabic question */}
                 <div id="field-QuestionTextAr">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.questionAr")}{" "}
@@ -618,7 +599,7 @@ export default function AdminProblemsPage() {
                   />
                   <FieldError id="QuestionTextAr" />
 
-                  {/* ✅ عرض مباشر للسؤال العربي */}
+                  {/* Arabic question preview */}
                   {form.QuestionTextAr && (
                     <div className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-primary/20">
                       <div className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2">
@@ -629,7 +610,7 @@ export default function AdminProblemsPage() {
                   )}
                 </div>
 
-                {/* سؤال إنجليزي */}
+                {/* English question */}
                 <div id="field-QuestionTextEn">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.questionEn")}{" "}
@@ -650,7 +631,7 @@ export default function AdminProblemsPage() {
                   />
                   <FieldError id="QuestionTextEn" />
 
-                  {/* ✅ عرض مباشر للسؤال الإنجليزي */}
+                  {/* English question preview */}
                   {form.QuestionTextEn && (
                     <div
                       className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-primary/20"
@@ -734,7 +715,7 @@ export default function AdminProblemsPage() {
                       </label>
                       <TextareaWithToolbar
                         fieldKey={`opt_${idx}`}
-                        textareaRef={refOptLatex[idx] as any}
+                        textareaRef={refOptLatex[idx]}
                         value={opt.LatexCode}
                         onChange={(v) => updateOption(idx, "LatexCode", v)}
                         dir="ltr"
@@ -792,7 +773,7 @@ export default function AdminProblemsPage() {
                 </p>
               </div>
               <div className="space-y-8">
-                {/* حل عربي */}
+                {/* Arabic solution */}
                 <div id="field-DetailedSolutionAr">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.detailedSolutionAr")}{" "}
@@ -812,7 +793,7 @@ export default function AdminProblemsPage() {
                   />
                   <FieldError id="DetailedSolutionAr" />
 
-                  {/* ✅ عرض مباشر للحل العربي */}
+                  {/* Arabic solution preview */}
                   {form.DetailedSolutionAr && (
                     <div className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-green-500/30">
                       <div className="text-xs font-bold text-green-600 dark:text-green-500 mb-3 flex items-center gap-2">
@@ -826,7 +807,7 @@ export default function AdminProblemsPage() {
                   )}
                 </div>
 
-                {/* حل إنجليزي */}
+                {/* English solution */}
                 <div id="field-DetailedSolutionEn">
                   <label className="block mb-2 text-sm font-semibold">
                     {t("admin.problems.detailedSolutionEn")}{" "}
@@ -846,7 +827,7 @@ export default function AdminProblemsPage() {
                   />
                   <FieldError id="DetailedSolutionEn" />
 
-                  {/* ✅ عرض مباشر للحل الإنجليزي */}
+                  {/* English solution preview */}
                   {form.DetailedSolutionEn && (
                     <div
                       className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-green-500/30"
@@ -874,7 +855,7 @@ export default function AdminProblemsPage() {
      RENDER LIST VIEW
      ══════════════════════════════════════════ */
   return (
-    // ✅ تم إزالة <TooltipProvider> من هنا بالكامل
+    // TooltipProvider is configured globally.
     <div className="mx-auto lg:px-24 md:px-16 px-4 py-8 space-y-6">
       <Breadcrumbs
         items={[
@@ -1165,11 +1146,7 @@ export default function AdminProblemsPage() {
                   setFilters((prev) => ({ ...prev, Page: prev.Page - 1 }))
                 }
               >
-                {isRtl ? (
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                ) : (
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                )}
+                <ChevronLeft className="me-1 h-4 w-4 rtl:rotate-180" />
                 {t("common.previous")}
               </Button>
               <Button
@@ -1181,18 +1158,14 @@ export default function AdminProblemsPage() {
                 }
               >
                 {t("common.next")}
-                {isRtl ? (
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                )}
+                <ChevronRight className="ms-1 h-4 w-4 rtl:rotate-180" />
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* ✅ Dialog العرض المحسّن */}
+      {/* Problem details dialog */}
       <Dialog
         open={!!viewingProblem}
         onOpenChange={() => setViewingProblem(null)}
@@ -1247,7 +1220,7 @@ export default function AdminProblemsPage() {
               </div>
             </div>
 
-            {(viewingProblem as any)?.YoutubeSolutionUrl && (
+            {viewingProblem?.YoutubeSolutionUrl && (
               <div className="bg-red-50/50 dark:bg-red-900/10 p-4 rounded-xl border border-red-200 dark:border-red-800/50 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-sm">
                   <svg
@@ -1260,7 +1233,7 @@ export default function AdminProblemsPage() {
                   {t("admin.problems.youtubeVideoExists")}
                 </div>
                 <a
-                  href={(viewingProblem as any).YoutubeSolutionUrl}
+                  href={viewingProblem.YoutubeSolutionUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm text-blue-600 underline"

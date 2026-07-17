@@ -5,7 +5,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
 import { Search, BookOpen, Trophy, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { ArrowLeft } from "iconsax-reactjs";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { motion, useMotionValue, useSpring, useTransform, Variants, MotionValue } from "framer-motion";
@@ -261,7 +260,7 @@ export function HeroSection() {
                   <Link href={isAuthenticated ? "/problems" : "/register"}>
                     <Trophy className="h-5 w-5" />
                     {t("hero.startChallenge")}
-                    {isRtl ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                    <ArrowRight className="h-4 w-4 rtl:rotate-180" />
                   </Link>
                 </Button>
               </motion.div>

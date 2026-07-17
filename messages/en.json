@@ -50,7 +50,7 @@
       "3": "University-level linear algebra and real analysis"
     },
     "exploreOtherLevels": "Explore Other Levels",
-      "exploreOtherLevelsDesc": "Navigate to another level to continue your learning journey"
+    "exploreOtherLevelsDesc": "Navigate to another level to continue your learning journey"
   },
   "categories": {
     "title": "Categories",
@@ -130,7 +130,7 @@
     "submit": "Submit Solution",
     "submitting": "Submitting...",
     "correct": "Correct answer! Well done",
-    "wrong": "Wrong answer, try again",
+    "wrong": "Incorrect answer",
     "loginToSolve": "Login to solve this problem",
     "hint": "Hint",
     "hints": "Hints",
@@ -331,7 +331,6 @@
       "order": "Order",
       "noStages": "No stages found.",
       "confirmDelete": "Delete this stage?"
-      
     },
     "guide": {
       "title": "Math Problems Data Entry Guide",
@@ -458,7 +457,10 @@
           "title": "Innovation",
           "description": "New ways to make learning fun."
         },
-        { "title": "Community", "description": "Collaborative learning." }
+        {
+          "title": "Community",
+          "description": "Collaborative learning."
+        }
       ]
     },
     "stats": {
@@ -483,8 +485,14 @@
           "title": "Detailed Solutions",
           "description": "Step-by-step explanations."
         },
-        { "title": "Gamified", "description": "Points and badges." },
-        { "title": "Bilingual", "description": "Arabic & English support." }
+        {
+          "title": "Gamified",
+          "description": "Points and badges."
+        },
+        {
+          "title": "Bilingual",
+          "description": "Arabic & English support."
+        }
       ]
     },
     "cta": {
@@ -561,7 +569,10 @@
           "Withdraw consent"
         ]
       },
-      "contact": { "title": "Contact Us", "content": "Questions? Contact us." }
+      "contact": {
+        "title": "Contact Us",
+        "content": "Questions? Contact us."
+      }
     }
   },
   "contact": {
@@ -580,7 +591,10 @@
       "button": "Send Email",
       "address": "support@mathworld.com"
     },
-    "social": { "title": "Follow Us", "description": "Stay connected" },
+    "social": {
+      "title": "Follow Us",
+      "description": "Stay connected"
+    },
     "response": {
       "title": "Response Time",
       "description": "We respond within 24-48 hours."
@@ -593,7 +607,9 @@
     },
     "title": "Solved Problems",
     "subtitle": "Problems you've successfully solved",
-    "stats": { "total": "Total Solved" },
+    "stats": {
+      "total": "Total Solved"
+    },
     "empty": {
       "title": "No solved problems yet",
       "description": "Start solving!",
@@ -607,7 +623,9 @@
     },
     "title": "Favorite Problems",
     "subtitle": "Problems you've saved",
-    "stats": { "total": "Total Favorites" },
+    "stats": {
+      "total": "Total Favorites"
+    },
     "empty": {
       "title": "No favorites yet",
       "description": "Save problems you like!",

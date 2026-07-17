@@ -84,12 +84,15 @@ export function ProblemCard({ problem }: ProblemCardProps) {
                   <span className="font-medium">{problem.ViewsCount}</span>
                 </div>
 
-                <div className="w-px h-4 bg-border"></div>
-
-                <div className="inline-flex items-center gap-1.5 text-sm">
-                  <Star className="h-4 w-4 text-primary/70" />
-                  <span className="font-medium">{problem.Points}</span>
-                </div>
+                {typeof problem.Points === 'number' && (
+                  <>
+                    <div className="h-4 w-px bg-border" />
+                    <div className="inline-flex items-center gap-1.5 text-sm">
+                      <Star className="h-4 w-4 text-primary/70" />
+                      <span className="font-medium">{problem.Points}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-1 font-medium group-hover:text-primary transition-colors">

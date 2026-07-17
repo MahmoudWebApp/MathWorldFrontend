@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { LatexPreview } from "@/components/ui/LatexPreview";
-import { cn } from "@/lib/utils";
+import { LatexPreview } from '@/components/ui/LatexPreview';
+import { cn } from '@/lib/utils';
 
 interface RichTextProps {
   text: string;
@@ -11,48 +11,60 @@ interface RichTextProps {
   inline?: boolean;
 }
 
-// [IMPROVED] Define the Regex outside the component to avoid recreating it on every render (Better Performance)
 const LATEX_TOKEN_REGEX = /(\$\$[\s\S]+?\$\$|\$[^\n$]+?\$)/g;
 
-export function RichText({ 
-  text, 
-  isArabic = false, 
+/**
+ * Renders mixed text and LaTeX content.
+ * Inline math must be wrapped with $...$ and block math with $$...$$.
+ */
+export function RichText({
+  text,
+  isArabic = false,
   className,
   blockClassName,
-  inline = false 
+  inline = false,
 }: RichTextProps) {
-  if (!text) return null;
+  if (!text) {
+    return null;
+  }
 
   const parts = text.split(LATEX_TOKEN_REGEX);
-
-  const Container = inline ? "span" : "div";
+  const Container = inline ? 'span' : 'div';
 
   return (
     <Container
-      dir={isArabic ? "rtl" : "ltr"}
+      dir={isArabic ? 'rtl' : 'ltr'}
       className={cn(
-        inline 
-          ? "text-base" 
-          : "prose max-w-none text-base leading-loose dark:prose-invert", 
-        isArabic ? "text-right" : "text-left",
-        className
+        'whitespace-pre-wrap',
+        inline
+          ? 'text-base'
+          : 'prose max-w-none text-base leading-loose dark:prose-invert',
+        isArabic ? 'text-right' : 'text-left',
+        className,
       )}
     >
-      {parts.map((part, i) => {
-        if (part.startsWith("$$") && part.endsWith("$$")) {
+      {parts.map((part, index) => {
+        if (part.startsWith('$$') && part.endsWith('$$')) {
           return (
-            <LatexPreview 
-              key={i} 
-              latex={part.slice(2, -2).trim()} 
-              block 
+            <LatexPreview
+              key={`${index}-${part}`}
+              latex={part.slice(2, -2).trim()}
+              block
               className={blockClassName}
             />
           );
         }
-        if (part.startsWith("$") && part.endsWith("$") && part.length > 2) {
-          return <LatexPreview key={i} latex={part.slice(1, -1).trim()} />;
+
+        if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
+          return (
+            <LatexPreview
+              key={`${index}-${part}`}
+              latex={part.slice(1, -1).trim()}
+            />
+          );
         }
-        return <span key={i}>{part}</span>;
+
+        return <span key={`${index}-${part}`}>{part}</span>;
       })}
     </Container>
   );

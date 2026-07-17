@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useMemo } from "react";
-import katex from "katex";
-import "katex/dist/katex.min.css";
-import { cn } from "@/lib/utils";
+import { useMemo } from 'react';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+import { cn } from '@/lib/utils';
 
 interface LatexPreviewProps {
   latex: string;
@@ -11,39 +11,60 @@ interface LatexPreviewProps {
   className?: string;
 }
 
+/** Renders trusted KaTeX output and falls back to the original expression. */
 export function LatexPreview({
   latex,
   block = false,
   className,
 }: LatexPreviewProps) {
+  const normalizedLatex = latex?.trim() || '';
+
   const html = useMemo(() => {
-    if (!latex?.trim()) return "";
-    try {
-      return katex.renderToString(latex, {
-        displayMode: block,
-        throwOnError: false,
-        errorColor: "#ef4444",
-        strict: false,
-        output: "html",
-      });
-    } catch (error) {
-      console.error("KaTeX rendering error:", error);
-      return `<span class="text-xs text-red-500 font-mono">⚠️ خطأ في صيغة LaTeX</span>`;
+    if (!normalizedLatex) {
+      return null;
     }
-  }, [latex, block]);
 
-  if (!html) return null;
+    try {
+      return katex.renderToString(normalizedLatex, {
+        displayMode: block,
+        throwOnError: true,
+        strict: false,
+        output: 'html',
+      });
+    } catch {
+      return null;
+    }
+  }, [normalizedLatex, block]);
 
-  const Component = block ? "div" : "span";
+  if (!normalizedLatex) {
+    return null;
+  }
+
+  const Component = block ? 'div' : 'span';
+
+  if (!html) {
+    return (
+      <Component
+        dir="ltr"
+        className={cn(
+          block ? 'my-4 block text-center' : 'inline-block',
+          'rounded bg-destructive/10 px-1 font-mono text-sm text-destructive',
+          className,
+        )}
+      >
+        {normalizedLatex}
+      </Component>
+    );
+  }
 
   return (
     <Component
+      dir="ltr"
       className={cn(
-        block ? "my-4 block text-center text-lg" : "inline-block",
+        block ? 'my-4 block overflow-x-auto text-center text-lg' : 'inline-block',
         className,
       )}
       dangerouslySetInnerHTML={{ __html: html }}
-      dir="ltr"
     />
   );
 }

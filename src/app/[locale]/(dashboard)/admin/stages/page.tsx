@@ -7,6 +7,7 @@ import {
   useCreateStageMutation,
   useUpdateStageMutation,
   useDeleteStageMutation,
+  type Stage,
 } from "@/store/api/stagesApi";
 import { Add, Edit, Trash, CloseCircle } from "iconsax-reactjs";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -76,7 +77,7 @@ export default function AdminStagesPage() {
     }
   };
 
-  const openModal = (stage: any = null) => {
+  const openModal = (stage: Stage | null = null) => {
     if (stage) {
       setFormData({
         Id: stage.Id,

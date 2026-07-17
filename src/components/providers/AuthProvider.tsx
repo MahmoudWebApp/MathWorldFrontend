@@ -2,91 +2,52 @@
 
 import { useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { setCredentials, logout, setLoading } from '@/store/slices/authSlice';
+
+import type { AppDispatch } from '@/store';
 import { authApi } from '@/store/api/authApi';
+import { logout, setCredentials, setLoading } from '@/store/slices/authSlice';
+import {
+  clearAuthSession,
+  getClientCookie,
+} from '@/lib/authSession';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [getMe] = authApi.useLazyGetMeQuery();
-
-  // Ref flag prevents the effect from running twice in React Strict Mode
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (initialized.current) return;
+    if (initialized.current) {
+      return;
+    }
+
     initialized.current = true;
 
-    const initializeAuth = async () => {
-      /**
-       * Helper: read a cookie value by name from document.cookie.
-       * Returns null if the cookie doesn't exist.
-       */
-      const getCookie = (name: string): string | null => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-        return null;
-      };
+    async function initializeAuth() {
+      const token = getClientCookie('token');
 
-      const token = getCookie('token');
-
-      /**
-       * Extra client-side token sanity check.
-       * The middleware already blocks invalid tokens server-side,
-       * but we repeat it here to keep Redux state clean on hydration.
-       */
-      const isValidToken =
-        token &&
-        token !== 'undefined' &&
-        token !== 'null' &&
-        token.trim().length >= 10;
-
-      if (isValidToken) {
-        try {
-          // Fetch the current user's profile using the stored token
-          const result = await getMe().unwrap();
-
-          // API may wrap data inside a "Data" key — handle both shapes
-          const userData = (result as any).Data || result;
-
-          const user = {
-            Id: userData.Id,
-            FullName: userData.FullName,
-            Email: userData.Email,
-            Role: userData.Role,
-            Token: token,
-            SubscriptionType: userData.SubscriptionType,
-          };
-
-          // Hydrate Redux auth state
-          dispatch(setCredentials({ user, token }));
-
-          // Keep the userRole cookie in sync with the server-confirmed role
-          // (7 days expiry, same as the token cookie set at login)
-          document.cookie = `userRole=${user.Role}; path=/; max-age=604800; SameSite=Lax`;
-
-        } catch (error) {
-          // Token exists but the server rejected it (expired, tampered, etc.)
-          // Clear everything so the middleware redirects correctly on next navigation
-          console.error('Auth init failed — clearing session:', error);
-          dispatch(logout());
-          document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
-          document.cookie = 'userRole=; path=/; max-age=0; SameSite=Lax';
-        }
-      } else {
-        // No valid token found — mark auth as done (not loading) without a user
+      if (!token || token === 'undefined' || token === 'null') {
+        clearAuthSession();
         dispatch(setLoading(false));
-
-        // Clean up any leftover junk cookies to prevent false positives
-        if (token !== null) {
-          document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
-          document.cookie = 'userRole=; path=/; max-age=0; SameSite=Lax';
-        }
+        return;
       }
-    };
 
-    initializeAuth();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally runs once
+      try {
+        const profile = await getMe().unwrap();
+        const user = {
+          ...profile,
+          Token: token,
+        };
+
+        dispatch(setCredentials({ user, token }));
+      } catch {
+        clearAuthSession();
+        dispatch(logout());
+      }
+    }
+
+    void initializeAuth();
+  }, [dispatch, getMe]);
 
   return <>{children}</>;
 }

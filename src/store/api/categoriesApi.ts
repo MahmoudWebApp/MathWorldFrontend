@@ -26,7 +26,7 @@ export interface CategoryDto {
   Id: number;
   NameAr: string;
   NameEn: string;
-  Name: string;
+  Name?: string;
   Icon: string;
   StageId: number;
   Order: number;

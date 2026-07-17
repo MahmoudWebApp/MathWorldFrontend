@@ -1,0 +1,7 @@
+Copy the src folder into the project root and replace the three files.
+
+Then run:
+
+pnpm lint
+pnpm typecheck
+pnpm build

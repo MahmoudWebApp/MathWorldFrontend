@@ -1,16 +1,43 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { useGetStagesQuery } from '@/store/api/stagesApi';
-import { Loader2, AlertCircle, ArrowRight } from 'lucide-react';
-// 1. Import professional math icons
-import { Calculator, Compass, FunctionSquare, Infinity as InfinityIcon } from 'lucide-react';
+import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
+import {
+  AlertCircle,
+  ArrowRight,
+  Calculator,
+  Compass,
+  FunctionSquare,
+  Infinity as InfinityIcon,
+  Loader2,
+  type LucideIcon,
+} from 'lucide-react';
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
 
 // ==========================================
 // Premium 3D Card Component (Spotlight & Depth)
 // ==========================================
-function StagePremiumCard({ stage, index, colors, icon: Icon, locale, t }: any) {
+interface StageCardStyle {
+  from: string;
+  to: string;
+  bg: string;
+  iconColor: string;
+  hoverText: string;
+  hoverBg: string;
+  hoverShadow: string;
+  spotlight: string;
+}
+
+interface StagePremiumCardProps {
+  stage: Stage;
+  index: number;
+  colors: StageCardStyle;
+  icon: LucideIcon;
+  locale: string;
+}
+
+function StagePremiumCard({ stage, index, colors, icon: Icon, locale }: StagePremiumCardProps) {
+  const t = useTranslations();
   const isRtl = locale === 'ar';
   
   // Normalized mouse coordinates (-0.5 to 0.5) for 3D tilt
@@ -259,8 +286,7 @@ export default function StagesPageClient() {
                   colors={style} 
                   icon={style.icon} 
                   locale={locale} 
-                  t={t} 
-                />
+                  />
               );
             })}
           </div>

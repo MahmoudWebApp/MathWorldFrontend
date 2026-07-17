@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { useGetStatsQuery } from '@/store/api/statsApi';
+import { useGetAdminStatsQuery } from '@/store/api/statsApi';
 import { useGetAdminUsersQuery } from '@/store/api/usersApi';
 import { useGetAdminCategoriesQuery } from '@/store/api/categoriesApi';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
@@ -27,8 +27,8 @@ interface AdminUser {
 export default function AdminDashboardPage() {
   const t = useTranslations();
   
-  // Fetch data from the APIs (بدون tagsApi)
-  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetStatsQuery();
+  // Fetch dashboard data from the supported admin APIs.
+  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStatsQuery();
   const { data: users, isLoading: usersLoading, isError: usersError } = useGetAdminUsersQuery({ PageSize: 5 });
   const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useGetAdminCategoriesQuery();
   const { data: stages, isLoading: stagesLoading, isError: stagesError } = useGetAdminStagesQuery();
@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
   const isCardsLoading = statsLoading || categoriesLoading || stagesLoading;
   const hasCardsError = statsError || categoriesError || stagesError;
 
-  // Dashboard cards configuration (4 بطاقات فقط - بدون تاغات)
+  // Configure the four supported dashboard summary cards.
   const adminCards = [
     {
       icon: People,
@@ -171,8 +171,8 @@ export default function AdminDashboardPage() {
                   <Warning2 className="h-8 w-8" />
                   <p>{t('common.errorLoadingUsers')}</p>
                 </div>
-              ) : users?.Data?.Users && users?.Data?.Users?.length > 0 ? (
-                users?.Data?.Users?.map((user: AdminUser) => (
+              ) : users?.Users && users.Users.length > 0 ? (
+                users.Users.map((user: AdminUser) => (
                   <div key={user.Id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 transition-colors hover:bg-muted">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                       <People className="h-5 w-5 text-primary" />

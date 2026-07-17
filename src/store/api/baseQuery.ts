@@ -1,116 +1,256 @@
-import { fetchBaseQuery, BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
+import {
+  fetchBaseQuery,
+  type BaseQueryFn,
+  type FetchArgs,
+  type FetchBaseQueryError,
+} from '@reduxjs/toolkit/query/react';
 
-// API base URL - production backend
- const API_BASE_URL = 'https://mathwordbackend.onrender.com/api';
-//const API_BASE_URL = 'http://localhost:5229/api';
+import { clearAuthSession } from '@/lib/authSession';
+import { logout } from '@/store/slices/authSlice';
 
-// Safe cookie reader (works in SSR and CSR)
-const getCookie = (name: string): string | undefined => {
-  if (typeof document === 'undefined') return undefined;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift();
-  return undefined;
-};
+const DEFAULT_API_BASE_URL = 'https://mathwordbackend.onrender.com/api';
 
-// Backend response wrapper interface
-export interface ApiResponse<T> {
-  Success: boolean;
-  Message: string;
-  StatusCode: number;
-  Data?: T;
-  Meta?: {
-    Total?: number;
-    Page?: number;
-    PageSize?: number;
-    TotalPages?: number;
+export const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL
+).replace(/\/$/, '');
+
+interface ApiState {
+  auth?: {
+    token?: string | null;
   };
-  Errors?: Record<string, string[]>;
-  Timestamp: string;
+  locale?: {
+    current?: string | null;
+  };
 }
 
-// Base query with interceptor - sends locale header to backend
-const baseQueryWithInterceptor = fetchBaseQuery({
+export interface ApiMeta {
+  Total?: number;
+  Page?: number;
+  PageSize?: number;
+  TotalPages?: number;
+  SearchType?: string;
+  Query?: string;
+}
+
+export interface ApiResponse<T> {
+  Success: boolean;
+  Message?: string;
+  StatusCode?: number;
+  Data?: T;
+  Meta?: ApiMeta;
+  Errors?: Record<string, string[]>;
+  Timestamp?: string;
+}
+
+export interface ApiErrorData {
+  message: string;
+  errors?: Record<string, string[]>;
+}
+
+/**
+ * Normalized error shape returned by the application's RTK Query base query.
+ * It keeps the original RTK Query status while always exposing ApiErrorData.
+ */
+export type ApiBaseQueryError =
+  | {
+      status: number;
+      data: ApiErrorData;
+    }
+  | {
+      status: 'FETCH_ERROR' | 'TIMEOUT_ERROR' | 'CUSTOM_ERROR';
+      error: string;
+      data: ApiErrorData;
+    }
+  | {
+      status: 'PARSING_ERROR';
+      originalStatus: number;
+      error: string;
+      data: ApiErrorData;
+    };
+
+function getCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') {
+    return undefined;
+  }
+
+  const prefix = `${name}=`;
+  const cookie = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix));
+
+  if (!cookie) {
+    return undefined;
+  }
+
+  try {
+    return decodeURIComponent(cookie.slice(prefix.length));
+  } catch {
+    return cookie.slice(prefix.length);
+  }
+}
+
+function isApiResponse(value: unknown): value is ApiResponse<unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'Success' in value &&
+    typeof (value as { Success?: unknown }).Success === 'boolean'
+  );
+}
+
+function normalizeErrorData(
+  value: unknown,
+  fallbackMessage: string,
+): ApiErrorData {
+  if (isApiResponse(value)) {
+    return {
+      message: value.Message?.trim() || fallbackMessage,
+      errors: value.Errors,
+    };
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    const record = value as Record<string, unknown>;
+    const message = record.message ?? record.Message ?? record.title;
+
+    return {
+      message:
+        typeof message === 'string' && message.trim()
+          ? message
+          : fallbackMessage,
+      errors:
+        typeof record.errors === 'object' && record.errors !== null
+          ? (record.errors as Record<string, string[]>)
+          : undefined,
+    };
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return { message: value };
+  }
+
+  return { message: fallbackMessage };
+}
+
+function normalizeBaseQueryError(
+  error: FetchBaseQueryError,
+): ApiBaseQueryError {
+  if (typeof error.status === 'number') {
+    return {
+      status: error.status,
+      data: normalizeErrorData(
+        error.data,
+        'An unexpected error occurred',
+      ),
+    };
+  }
+
+  if (error.status === 'PARSING_ERROR') {
+    return {
+      status: 'PARSING_ERROR',
+      originalStatus: error.originalStatus,
+      error: error.error,
+      data: normalizeErrorData(
+        error.data,
+        error.error || 'Unable to parse the server response',
+      ),
+    };
+  }
+
+  return {
+    status: error.status,
+    error: error.error,
+    data: normalizeErrorData(
+      'data' in error ? error.data : undefined,
+      error.error || 'Unable to reach the server',
+    ),
+  };
+}
+
+const rawBaseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,
   prepareHeaders: (headers, { getState }) => {
-    // 1. Access Redux state directly
-    const reduxState = getState() as any;
-    
-    // 2. Extract Token
-    const token = reduxState?.auth?.token || getCookie('token');
+    const state = getState() as ApiState;
+    const token = state.auth?.token || getCookie('token');
+    const locale =
+      state.locale?.current || getCookie('NEXT_LOCALE') || 'ar';
 
-    // 3. Extract exact current Locale
-    // Since we call dispatch(setLocale) right before fetching, reduxState.locale.current will always be 100% accurate.
-    // We fallback to cookie for the first ever page load.
-    const currentLocale = reduxState?.locale?.current || getCookie('NEXT_LOCALE') || 'ar';
-
-    // 4. Attach Authorization token
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    // 5. Attach Language header for backend translations
-    headers.set('Accept-Language', currentLocale);
+    headers.set('Accept-Language', locale);
     headers.set('Accept', 'application/json');
 
     return headers;
   },
 });
 
-// Custom baseQuery: unwraps ApiResponse<T> with full edge-case handling
+/**
+ * Unwraps the backend ApiResponse<T> envelope so every endpoint receives T.
+ * Transport errors and business errors are normalized to one error shape.
+ */
 export const baseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
-  FetchBaseQueryError
+  ApiBaseQueryError
 > = async (args, api, extraOptions) => {
-  const result = await baseQueryWithInterceptor(args, api, extraOptions);
+  const result = await rawBaseQuery(args, api, extraOptions);
 
-  // 1. Network/fetch errors
   if (result.error) {
-    return result;
+    if (result.error.status === 401) {
+      clearAuthSession();
+      api.dispatch(logout());
+    }
+
+    return {
+      error: normalizeBaseQueryError(result.error),
+    };
   }
 
-  // 2. Empty response body (e.g., 204 No Content)
   if (result.data === undefined || result.data === null) {
     return { data: null };
   }
 
-  const response = result.data as ApiResponse<unknown>;
-
-  // 3. Successful response (Success: true)
-  if (response?.Success) {
-    // Case A: Response has Meta (pagination)
-    if (response.Meta) {
-      return {
-        data: {
-          Data: response.Data ?? null,
-          Meta: response.Meta
-        }
-      };
-    }
-    // Case B: Response has Data (even if null/undefined)
-    return { data: response.Data ?? null };
+  if (!isApiResponse(result.data)) {
+    return { data: result.data };
   }
 
-  // 4. Business logic error (Success: false)
+  if (result.data.Success) {
+    return { data: result.data.Data ?? null };
+  }
+
+  const status = result.data.StatusCode || 400;
+
+  if (status === 401) {
+    clearAuthSession();
+    api.dispatch(logout());
+  }
+
   return {
     error: {
-      status: response?.StatusCode || 400,
-      data: {
-        message: response?.Message || 'An unexpected error occurred',
-        errors: response?.Errors,
-      },
-    } as FetchBaseQueryError,
+      status,
+      data: normalizeErrorData(
+        result.data,
+        'An unexpected error occurred',
+      ),
+    },
   };
 };
 
-// Helper for FormData uploads (browser sets Content-Type with boundary)
-export const createFormDataQuery = (
+/**
+ * Creates a request for multipart form data.
+ * The browser sets the multipart boundary automatically.
+ */
+export function createFormDataQuery(
   url: string,
   method: 'POST' | 'PUT' | 'PATCH',
-  formData: FormData
-): FetchArgs => ({
-  url,
-  method,
-  body: formData,
-});
+  formData: FormData,
+): FetchArgs {
+  return {
+    url,
+    method,
+    body: formData,
+  };
+}

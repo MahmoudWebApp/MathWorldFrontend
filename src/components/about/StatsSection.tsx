@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Users, FileText, CircleCheckBig, Globe } from 'lucide-react';
+import { CircleCheckBig, FileText, Globe, Users, type LucideIcon } from 'lucide-react';
 
 import { motion, useSpring, AnimatePresence, useMotionValueEvent } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
@@ -30,8 +30,19 @@ function PhysicsCounter({ value, suffix }: { value: number; suffix: string }) {
   );
 }
 
+interface StatItem {
+  icon: LucideIcon;
+  value: number;
+  suffix: string;
+  mathEasterEgg: string;
+  labelKey: string;
+  mathSymbol: string;
+  mathBg: string;
+}
+
 // Math Easter Egg Component (Swaps standard number with Math representation on hover)
-function StatCard({ stat, index, t }: any) {
+function StatCard({ stat, index }: { stat: StatItem; index: number }) {
+  const t = useTranslations('about');
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -165,7 +176,7 @@ export function StatsSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
           {stats.map((stat, index) => (
-            <StatCard key={stat.labelKey} stat={stat} index={index} t={t} />
+            <StatCard key={stat.labelKey} stat={stat} index={index} />
           ))}
         </div>
       </div>

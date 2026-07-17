@@ -1,16 +1,18 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { ApiResponse, baseQuery } from './baseQuery';
-import { ProblemPreview, PagedProblemsResponse, PagedResponse } from './types';
-
-// ============================================
-// DTOs - Frontend interfaces matching backend
-// ============================================
+import { baseQuery } from './baseQuery';
+import type { PagedProblemsResponse, ProblemPreview } from './types';
 
 export interface OptionForStudent {
   Id: number;
   LatexCode: string;
   Order: number;
-  IsCorrect?: boolean;
+}
+
+export interface AdminProblemOption {
+  Id?: number;
+  LatexCode: string;
+  Order: number;
+  IsCorrect: boolean;
 }
 
 export interface QuestionOptionDto {
@@ -25,14 +27,20 @@ export interface ProblemForStudent {
   QuestionText: string;
   StageId: number;
   StageName: string;
-  Points: number;
+  CategoryId: number;
   CategoryName: string;
-  CategoryIcon: string;
-  DetailedSolution?: string;
-  YoutubeSolutionUrl?: string;
-  Options: OptionForStudent[];
+  CategoryIcon?: string | null;
+  Points: number;
+  ViewsCount: number;
   IsSolved: boolean;
+  HasAttempted: boolean;
+  WasCorrect?: boolean | null;
+  SelectedOptionId?: number | null;
+  CorrectOptionId?: number | null;
   IsFavorite: boolean;
+  DetailedSolution?: string | null;
+  YoutubeSolutionUrl?: string | null;
+  Options: OptionForStudent[];
 }
 
 export interface ProblemForPublic {
@@ -41,8 +49,9 @@ export interface ProblemForPublic {
   QuestionText: string;
   StageId: number;
   StageName: string;
+  CategoryId: number;
   CategoryName: string;
-  CategoryIcon: string;
+  CategoryIcon?: string | null;
   Message: string;
 }
 
@@ -54,18 +63,16 @@ export interface ProblemAdminDetail {
   QuestionTextEn: string;
   DetailedSolutionAr: string;
   DetailedSolutionEn: string;
-  YoutubeSolutionUrl?: string;
+  YoutubeSolutionUrl?: string | null;
   StageId: number;
   StageName?: string;
   Points: number;
   CategoryId: number;
   CategoryName?: string;
-  Options: OptionForStudent[];
+  CategoryIcon?: string | null;
+  Options: AdminProblemOption[];
 }
 
-// ============================================
-// Create/Update Problem DTO (matches CreateProblemDto in backend)
-// ============================================
 export interface CreateProblemRequest {
   QuestionTextAr: string;
   QuestionTextEn: string;
@@ -86,7 +93,10 @@ export interface AdminProblemsPagedResponse {
   TotalPages: number;
 }
 
-export type ProblemDetail = ProblemForStudent | ProblemForPublic | ProblemAdminDetail;
+export type ProblemDetail =
+  | ProblemForStudent
+  | ProblemForPublic
+  | ProblemAdminDetail;
 
 export interface SearchResponse {
   Query: string;
@@ -97,6 +107,16 @@ export interface SearchResponse {
   Results: ProblemPreview[];
 }
 
+export interface SearchProblemsParams {
+  Q?: string;
+  CategoryId?: number;
+  StageId?: number;
+  Engine?: 'meilisearch' | 'postgresql';
+  Page?: number;
+  PageSize?: number;
+  locale?: string;
+}
+
 export interface SubmitAnswerRequest {
   ProblemId: number;
   SelectedOptionId: number;
@@ -105,102 +125,90 @@ export interface SubmitAnswerRequest {
 
 export interface AnswerResult {
   IsCorrect: boolean;
+  IsSolved: boolean;
+  SelectedOptionId: number;
+  CorrectOptionId: number;
   PointsEarned: number;
   DetailedSolution: string;
   CorrectOptionText: string;
-  IsSolved: boolean;
-  YoutubeSolutionUrl?: string;
+  YoutubeSolutionUrl?: string | null;
 }
-
-// ============================================
-// API Definition
-// ============================================
 
 export const problemsApi = createApi({
   reducerPath: 'problemsApi',
   baseQuery,
   tagTypes: ['Problem', 'Category'],
   endpoints: (builder) => ({
-
-    // Search problems with filters - returns translated data based on Accept-Language header
-    searchProblems: builder.query<ApiResponse<SearchResponse>, {
-      Q?: string;
-      CategoryId?: number;
-      StageId?: number;
-      Engine?: 'meilisearch' | 'postgresql';
-      Page?: number;
-      PageSize?: number;
-      locale?: string; 
-    }>({
+    searchProblems: builder.query<SearchResponse, SearchProblemsParams>({
       query: (params) => ({
-        url: '/Problems/search',
+        url: '/problems/search',
         params: {
-          q: params.Q || '', // Ensure empty string instead of undefined
-          categoryId: params.CategoryId || undefined,
-          stageId: params.StageId || undefined,
-          engine: params.Engine || 'meilisearch',
+          q: params.Q?.trim() || '',
+          categoryId: params.CategoryId,
+          stageId: params.StageId,
+          engine: params.Engine || 'postgresql',
           page: params.Page || 1,
           pageSize: params.PageSize || 10,
         },
       }),
       providesTags: ['Problem'],
-    }), // 👈 THIS CLOSING BRACKET WAS MISSING
-
-    // Get single problem by ID - returns different data based on auth & role
-    getProblem: builder.query<ProblemDetail,{ Id: number, locale?: string }>({
-      query: (data) => `/Problems/${data.Id}`,
-     providesTags: (_result, _error, params) => [{ type: 'Problem', id: params.Id }],
     }),
 
-    // Submit answer for a problem
+    getProblem: builder.query<
+      ProblemDetail,
+      { Id: number; locale?: string }
+    >({
+      query: ({ Id }) => `/problems/${Id}`,
+      providesTags: (_result, _error, params) => [
+        { type: 'Problem', id: params.Id },
+      ],
+    }),
+
     submitAnswer: builder.mutation<AnswerResult, SubmitAnswerRequest>({
       query: (body) => ({
         url: '/problems/submit',
         method: 'POST',
         body,
       }),
-      invalidatesTags: (_result, _error, { ProblemId }) =>
-        [{ type: 'Problem', id: ProblemId }],
+      invalidatesTags: (_result, _error, { ProblemId }) => [
+        { type: 'Problem', id: ProblemId },
+      ],
     }),
 
-    // Get problems by category - returns translated content
     getCategoryProblems: builder.query<
-      PagedResponse<PagedProblemsResponse>,
+      PagedProblemsResponse,
       { Id: number; Page?: number; PageSize?: number }
     >({
       query: ({ Id, Page = 1, PageSize = 20 }) => ({
-        url: `/Categories/${Id}/problems`,
-        params: { Page, PageSize },
+        url: `/categories/${Id}/problems`,
+        params: { page: Page, pageSize: PageSize },
       }),
       providesTags: ['Problem', 'Category'],
     }),
 
-    // ============================================
-    // Admin Endpoints
-    // ============================================
-
-    // Admin: Get all problems (bilingual - returns both Ar/En fields)
-    getAdminProblems: builder.query<AdminProblemsPagedResponse, {
-      q?: string;
-      categoryId?: number;
-      stageId?: number;
-      page?: number;
-      pageSize?: number;
-    }>({
+    getAdminProblems: builder.query<
+      AdminProblemsPagedResponse,
+      {
+        q?: string;
+        categoryId?: number;
+        stageId?: number;
+        page?: number;
+        pageSize?: number;
+      }
+    >({
       query: (params) => ({
         url: '/admin/problems',
         params: {
-          q: params?.q,
-          categoryId: params?.categoryId,
-          stageId: params?.stageId,
-          page: params?.page || 1,
-          pageSize: params?.pageSize || 10,
+          q: params.q,
+          categoryId: params.categoryId,
+          stageId: params.stageId,
+          page: params.page || 1,
+          pageSize: params.pageSize || 10,
         },
       }),
       providesTags: ['Problem'],
     }),
 
-    // Admin: Create new problem (title is auto-extracted from question text)
     createProblem: builder.mutation<{ Id: number }, CreateProblemRequest>({
       query: (body) => ({
         url: '/admin/problems',
@@ -210,17 +218,20 @@ export const problemsApi = createApi({
       invalidatesTags: ['Problem'],
     }),
 
-    // Admin: Update existing problem
-    updateProblem: builder.mutation<void, { Id: number; Data: CreateProblemRequest }>({
+    updateProblem: builder.mutation<
+      void,
+      { Id: number; Data: CreateProblemRequest }
+    >({
       query: ({ Id, Data }) => ({
         url: `/admin/problems/${Id}`,
         method: 'PUT',
         body: Data,
       }),
-      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Problem', id: Id }],
+      invalidatesTags: (_result, _error, { Id }) => [
+        { type: 'Problem', id: Id },
+      ],
     }),
 
-    // Admin: Delete problem
     deleteProblem: builder.mutation<void, number>({
       query: (Id) => ({
         url: `/admin/problems/${Id}`,

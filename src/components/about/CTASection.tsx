@@ -1,16 +1,13 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/Button';
 import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
-import { ArrowLeft } from 'iconsax-reactjs';
 import { useInView } from '@/lib/useInView';
 
 export function CTASection() {
   const t = useTranslations('about');
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
   const { ref: sectionRef, isInView } = useInView(0.1);
 
   return (
@@ -55,7 +52,7 @@ export function CTASection() {
             >
               <Link href="/register">
                 {t('cta.secondaryButton')}
-                {isRtl ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
               </Link>
             </Button>
           </div>

@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
 import { useTheme } from 'next-themes';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '@/store';
+import type { AppDispatch, RootState } from '@/store';
 import { logout } from '@/store/slices/authSlice';
 import { setLocale } from '@/store/slices/localeSlice';
 import { useGetStagesQuery } from '@/store/api/stagesApi';
@@ -17,8 +17,13 @@ import {
 import { Menu, Search, ChevronDown, Boxes, Sigma, FunctionSquare, Pi } from 'lucide-react'; // Better math icons
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-import { problemsApi } from '@/store/api/problemsApi';
+import { authApi } from '@/store/api/authApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
+import { problemsApi } from '@/store/api/problemsApi';
+import { stagesApi } from '@/store/api/stagesApi';
+import { statsApi } from '@/store/api/statsApi';
+import { usersApi } from '@/store/api/usersApi';
+import { clearAuthSession } from '@/lib/authSession';
 import { useSearchParams } from 'next/navigation'; 
 
 // Awesome Geometry icons for stages to replace boring numbers
@@ -31,7 +36,7 @@ function NavbarContent() {
   const router = useRouter();
   const searchParams = useSearchParams(); 
   const { theme, setTheme } = useTheme();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   const { user, isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
   const { data: stages } = useGetStagesQuery();
@@ -71,8 +76,13 @@ function NavbarContent() {
 
   const handleLogout = () => {
     dispatch(logout());
-    document.cookie = 'token=; path=/; max-age=0';
-    document.cookie = 'userRole=; path=/; max-age=0';
+    clearAuthSession();
+    dispatch(authApi.util.resetApiState());
+    dispatch(problemsApi.util.resetApiState());
+    dispatch(categoriesApi.util.resetApiState());
+    dispatch(stagesApi.util.resetApiState());
+    dispatch(statsApi.util.resetApiState());
+    dispatch(usersApi.util.resetApiState());
     setUserMenuOpen(false);
     router.push('/');
   };
@@ -84,7 +94,7 @@ function NavbarContent() {
     dispatch(categoriesApi.util.invalidateTags(['Category']));
     const currentQuery = searchParams.toString();
     const newPath = currentQuery ? `${pathname}?${currentQuery}` : pathname;
-    router.replace(newPath as any, { locale: newLocale });
+    window.location.assign(`/${newLocale}${newPath}`);
   };
 
   const handleNavSearch = (e: React.FormEvent) => {

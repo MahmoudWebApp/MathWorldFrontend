@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getMessages, getTimeZone, setRequestLocale } from 'next-intl/server';
-import { routing } from '@/i18n/routing';
+import { isAppLocale, routing } from '@/i18n/routing';
 import { Providers } from '@/components/providers/Providers';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
@@ -18,7 +18,7 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as any)) {
+  if (!isAppLocale(locale)) {
     notFound();
   }
 

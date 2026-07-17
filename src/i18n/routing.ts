@@ -6,4 +6,10 @@ export const routing = defineRouting({
   defaultLocale: 'ar',
 });
 
+export type AppLocale = (typeof routing.locales)[number];
+
+export function isAppLocale(value: string): value is AppLocale {
+  return routing.locales.some((locale) => locale === value);
+}
+
 export const { Link, redirect, usePathname, useRouter, getPathname } = createNavigation(routing);

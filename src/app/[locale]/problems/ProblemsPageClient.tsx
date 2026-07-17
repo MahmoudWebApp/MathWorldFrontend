@@ -94,10 +94,10 @@ function ProblemsPageClient() {
   );
 
   // ── Derived data ────────────────────────────────────────
-  const problems: ProblemPreview[] = searchResults?.Data?.Results || [];
-  const totalResults = searchResults?.Data?.Total || 0;
-  const totalPages = searchResults?.Data?.TotalPages || 0;
-  const currentPage = searchResults?.Data?.Page || page;
+  const problems: ProblemPreview[] = searchResults?.Results || [];
+  const totalResults = searchResults?.Total || 0;
+  const totalPages = searchResults?.TotalPages || 0;
+  const currentPage = searchResults?.Page || page;
 
   // Get names for display
   const stageName =
@@ -117,7 +117,7 @@ function ProblemsPageClient() {
   // Reset page when search changes
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, stageId, categoryId]);
 
   // ── Helper functions ────────────────────────────────────
   const clearSearch = () => {

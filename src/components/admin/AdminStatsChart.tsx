@@ -24,13 +24,19 @@ interface AdminStatsChartProps {
   isLoading?: boolean;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ value?: number }>;
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload?.length) {
     return (
       <div className="bg-background border border-border rounded-lg shadow-lg p-3 pointer-events-none">
         <p className="font-medium text-foreground mb-1">{label}</p>
         <p className="text-primary text-lg font-bold">
-          {payload[0].value.toLocaleString()}
+          {Number(payload[0].value ?? 0).toLocaleString()}
         </p>
       </div>
     );
@@ -60,7 +66,7 @@ export default function AdminStatsChart({ data, isLoading = false }: AdminStatsC
         <CardTitle>{t('dashboard.admin.statsOverview')}</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* dir="ltr" لضمان عرض الأعمدة بشكل صحيح حتى في الواجهات العربية */}
+        {/* Keep chart axes left-to-right for predictable numeric layout. */}
         <div className="h-[300px] w-full" dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart

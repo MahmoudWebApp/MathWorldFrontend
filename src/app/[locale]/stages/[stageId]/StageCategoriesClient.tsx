@@ -1,10 +1,21 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { useGetCategoriesQuery } from '@/store/api/categoriesApi';
-import { useGetStagesQuery } from '@/store/api/stagesApi';
-import { Loader2, AlertCircle, ArrowLeft, Filter, ChevronRight, ArrowRight } from 'lucide-react';
-import { Calculator, Compass, FunctionSquare, Infinity as InfinityIcon } from 'lucide-react';
+import { useGetCategoriesQuery, type CategoryDto } from '@/store/api/categoriesApi';
+import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Calculator,
+  ChevronRight,
+  Compass,
+  Filter,
+  FunctionSquare,
+  Infinity as InfinityIcon,
+  Loader2,
+  type LucideIcon,
+} from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
@@ -70,10 +81,60 @@ const otherStageStyles = [
   },
 ];
 
+interface MathSymbol {
+  symbol: string;
+  equation: string;
+}
+
+interface CategoryCardStyle {
+  from: string;
+  to: string;
+  bg: string;
+  hoverText: string;
+  hoverShadow: string;
+  spotlight: string;
+}
+
+interface OtherStageStyle {
+  from: string;
+  to: string;
+  bg: string;
+  iconColor: string;
+  hoverText: string;
+  hoverBg: string;
+  spotlight: string;
+  icon: LucideIcon;
+}
+
+interface CategoryPremiumCardProps {
+  category: CategoryDto;
+  index: number;
+  math: MathSymbol;
+  style: CategoryCardStyle;
+  locale: string;
+  stageId: number;
+  iconUrl?: string | null;
+}
+
+interface OtherStagePremiumCardProps {
+  stage: Stage;
+  index: number;
+  style: OtherStageStyle;
+  locale: string;
+}
+
 // ==========================================
 // 2. Main Category 3D Card
 // ==========================================
-function CategoryPremiumCard({ category, index, math, locale, stageId, iconUrl}: any) {
+function CategoryPremiumCard({
+  category,
+  index,
+  math,
+  style,
+  locale,
+  stageId,
+  iconUrl,
+}: CategoryPremiumCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.8 }}
@@ -83,15 +144,18 @@ function CategoryPremiumCard({ category, index, math, locale, stageId, iconUrl}:
     >
       <Link
         href={`/problems?categoryId=${category.Id}&stageId=${stageId}`}
-        className="group relative flex flex-col justify-between h-[240px] p-8 rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-2xl shadow-2xl hover:border-primary/50 transition-all duration-500 hover:-translate-y-2"
+        className={`group relative flex h-[240px] flex-col justify-between rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-8 shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
-        <div className="absolute inset-0 bg-primary/5 rounded-[2.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl" />
+        <div
+          className="absolute inset-0 rounded-[2.5rem] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+          style={{ background: style.spotlight }}
+        />
 
         {/* Header: Icon & Name */}
         <div className="relative z-10 flex flex-col gap-6">
           <div className="flex items-center justify-between">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-background/50 border border-border/50 shadow-inner group-hover:scale-110 transition-transform duration-500">
+            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
               {iconUrl ? (
                 iconUrl.startsWith('http') || iconUrl.startsWith('/') ? (
                   <Image src={iconUrl} alt="icon" width={32} height={32} className="h-8 w-8 object-contain" />
@@ -108,7 +172,7 @@ function CategoryPremiumCard({ category, index, math, locale, stageId, iconUrl}:
             </div>
           </div>
           
-          <h3 className="text-2xl font-bold leading-tight group-hover:text-primary transition-colors mb-4">
+          <h3 className={`mb-4 text-2xl font-bold leading-tight transition-colors ${style.hoverText}`}>
             {locale === 'ar' ? category.NameAr : category.NameEn}
           </h3>
         </div>
@@ -126,7 +190,12 @@ function CategoryPremiumCard({ category, index, math, locale, stageId, iconUrl}:
 // ==========================================
 // 3. Other Stages 3D Card
 // ==========================================
-function OtherStagePremiumCard({ stage, index, style, locale }: any) {
+function OtherStagePremiumCard({
+  stage,
+  index,
+  style,
+  locale,
+}: OtherStagePremiumCardProps) {
   const isRtl = locale === 'ar';
   const stageName = isRtl ? stage.NameAr : stage.NameEn;
   const Icon = style.icon;
@@ -343,12 +412,11 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   key={category.Id}
                   category={category}
                   index={index}
-                  style={style}
                   math={math}
+                  style={style}
                   locale={locale}
                   stageId={stageId}
                   iconUrl={iconUrl}
-                  t={t}
                 />
               );
             })}

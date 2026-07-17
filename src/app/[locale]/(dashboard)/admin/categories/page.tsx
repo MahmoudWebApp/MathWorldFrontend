@@ -7,9 +7,17 @@ import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
+  type CategoryDto,
 } from "@/store/api/categoriesApi";
 import { useGetAdminStagesQuery } from "@/store/api/stagesApi";
-import { Add, Edit, Trash, Image, CloseCircle, Filter } from "iconsax-reactjs";
+import {
+  Add,
+  Edit,
+  Trash,
+  Image as ImageIcon,
+  CloseCircle,
+  Filter,
+} from "iconsax-reactjs";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
@@ -21,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/Select";
 import { AlertCircle } from "lucide-react";
-// ✅ استيراد مكونات Tooltip
+// Tooltip components are configured globally.
 import {
   Tooltip,
   TooltipContent,
@@ -61,7 +69,7 @@ export default function AdminCategoriesPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ تحديد أول مرحلة بشكل افتراضي عند تحميل البيانات
+  // Select the first stage after the stage list loads.
   useEffect(() => {
     if (stages && stages.length > 0 && !selectedStageId) {
       setSelectedStageId(stages[0].Id);
@@ -76,7 +84,7 @@ export default function AdminCategoriesPage() {
     };
   }, [previewUrl]);
 
-  // ✅ دالة مساعدة لمعرفة هل الأيقونة رابط صورة أم إيموجي/نص
+  // Detect whether the icon value is an image URL or a text symbol.
   const isImageUrl = (str: string | null) => {
     if (!str) return false;
     return (
@@ -152,7 +160,7 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const openEditModal = (category: any) => {
+  const openEditModal = (category: CategoryDto) => {
     setFormData({
       Id: category.Id,
       NameAr: category.NameAr,
@@ -282,21 +290,28 @@ export default function AdminCategoriesPage() {
                     className="border-b hover:bg-muted/20 transition-colors"
                   >
                     <td className="p-4">
-                      {/* ✅ معالجة الأيقونة سواء كانت رابط صورة أو إيموجي/نص */}
+                      {/* Render image URLs and text symbols safely. */}
                       {category.Icon ? (
                         isImageUrl(category.Icon) ? (
-                          <img
-                            src={category.Icon}
-                            alt={category.NameAr}
-                            className="w-10 h-10 rounded-lg object-cover border mx-auto shadow-sm"
-                          />
+                          <>
+                            {/* A native image is used because icon URLs can be dynamic. */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={category.Icon}
+                              alt={category.NameAr}
+                              className="w-10 h-10 rounded-lg object-cover border mx-auto shadow-sm"
+                            />
+                          </>
                         ) : (
                           <div className="w-10 h-10 flex items-center justify-center text-2xl mx-auto border rounded-lg bg-primary/10 shadow-sm">
                             {category.Icon}
                           </div>
                         )
                       ) : (
-                        <Image className="h-5 w-5 text-muted-foreground mx-auto" />
+                        <ImageIcon
+                          aria-hidden="true"
+                          className="h-5 w-5 text-muted-foreground mx-auto"
+                        />
                       )}
                     </td>
                     <td className="p-4 font-bold text-start">
@@ -314,7 +329,7 @@ export default function AdminCategoriesPage() {
                       </span>
                     </td>
                     <td className="p-4 space-x-2 rtl:space-x-reverse whitespace-nowrap">
-                      {/* ✅ Tooltip لتعديل */}
+                      {/* Edit action */}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
@@ -335,7 +350,7 @@ export default function AdminCategoriesPage() {
                         </TooltipContent>
                       </Tooltip>
 
-                      {/* ✅ Tooltip لحذف */}
+                      {/* Delete action */}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="inline-block">
@@ -439,14 +454,18 @@ export default function AdminCategoriesPage() {
                 </label>
                 <div className="flex items-center gap-4 bg-muted/30 p-3 rounded-xl border">
                   <div className="relative shrink-0">
-                    {/* ✅ معالجة العرض داخل المودال */}
+                    {/* Icon preview */}
                     {previewUrl ? (
                       isImageUrl(previewUrl) ? (
-                        <img
-                          src={previewUrl}
-                          alt="Preview"
-                          className="w-14 h-14 rounded-lg object-cover border shadow-sm bg-background"
-                        />
+                        <>
+                          {/* Blob previews are not supported by the Next.js image optimizer. */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="w-14 h-14 rounded-lg object-cover border shadow-sm bg-background"
+                          />
+                        </>
                       ) : (
                         <div className="w-14 h-14 flex items-center justify-center text-3xl border rounded-lg bg-background shadow-sm">
                           {previewUrl}
@@ -454,7 +473,10 @@ export default function AdminCategoriesPage() {
                       )
                     ) : (
                       <div className="w-14 h-14 rounded-lg border flex items-center justify-center bg-background shadow-sm">
-                        <Image className="h-6 w-6 text-muted-foreground/50" />
+                        <ImageIcon
+                          aria-hidden="true"
+                          className="h-6 w-6 text-muted-foreground/50"
+                        />
                       </div>
                     )}
                   </div>

@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
+
 import { baseQuery } from './baseQuery';
-import { User } from './types';
+import type { User } from './types';
 
 export interface LoginRequest {
   Email: string;
@@ -17,6 +18,8 @@ export interface SocialLoginRequest {
   Provider?: string;
   AccessToken: string;
 }
+
+export type AuthProfile = Omit<User, 'Token'>;
 
 export const authApi = createApi({
   reducerPath: 'authApi',
@@ -55,7 +58,7 @@ export const authApi = createApi({
       }),
     }),
 
-    getMe: builder.query<User, void>({
+    getMe: builder.query<AuthProfile, void>({
       query: () => '/users/profile',
       providesTags: ['User'],
     }),

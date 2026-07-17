@@ -1,4 +1,4 @@
-// components/AuthGuard.tsx (ملف جديد)
+// Route guard for authenticated and role-restricted content.
 'use client';
 
 import { useSelector } from 'react-redux';

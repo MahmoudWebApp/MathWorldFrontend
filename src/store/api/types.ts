@@ -1,12 +1,8 @@
-// ============================================
-// Central type definitions for API services
-// ============================================
-
 export interface Category {
   Id: number;
   NameAr: string;
   NameEn: string;
-  Name: string;
+  Name?: string;
   Icon: string;
   Order?: number;
   StageId?: number;
@@ -17,26 +13,23 @@ export interface ProblemPreview {
   Title: string;
   StageId?: number;
   StageName?: string;
+  CategoryId?: number;
   CategoryName: string;
   ViewsCount: number;
   RequiresLogin: boolean;
-  Points: number;
-}
-
-export interface PagedResponse<T> {
-  Data: T;
-  Meta: {
-    Total: number;
-    Page: number;
-    PageSize: number;
-    TotalPages: number;
-  };
+  Points?: number;
+  IsSolved?: boolean;
+  IsFavorite?: boolean;
 }
 
 export interface PagedProblemsResponse {
   CategoryName?: string;
   CategoryIcon?: string;
   Items: ProblemPreview[];
+  Total?: number;
+  Page?: number;
+  PageSize?: number;
+  TotalPages?: number;
 }
 
 export interface User {
@@ -46,9 +39,8 @@ export interface User {
   Role: 'Admin' | 'Student';
   Token: string;
   SubscriptionType: string;
+  ProfilePicture?: string | null;
 }
-
-// --- DASHBOARD TYPES ---
 
 export interface RecentActivityItem {
   ProblemId: number;

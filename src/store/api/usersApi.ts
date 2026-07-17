@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { ApiResponse, baseQuery } from './baseQuery';
-import { DashboardData, ProblemPreview } from './types';
+import { baseQuery } from './baseQuery';
+import type { DashboardData, ProblemPreview } from './types';
 
 export interface UserProfile {
   Id: number;
@@ -11,6 +11,7 @@ export interface UserProfile {
   SolvedProblemsCount: number;
   TotalPoints: number;
   MemberSince: string;
+  ProfilePicture?: string | null;
 }
 
 export interface UserListItem {
@@ -46,7 +47,6 @@ export const usersApi = createApi({
   baseQuery,
   tagTypes: ['User', 'Favorite', 'Solved', 'Dashboard', 'Problem'],
   endpoints: (builder) => ({
-
     getProfile: builder.query<UserProfile, void>({
       query: () => '/users/profile',
       providesTags: ['User'],
@@ -73,12 +73,20 @@ export const usersApi = createApi({
         method: 'POST',
         body,
       }),
-      async onQueryStarted({ ProblemId, IsFavorite }, { dispatch, queryFulfilled }) {
+      async onQueryStarted(
+        { ProblemId, IsFavorite },
+        { dispatch, queryFulfilled },
+      ) {
         const patchResult = dispatch(
-          usersApi.util.updateQueryData('checkFavorite', ProblemId, (draft) => {
-            draft.IsFavorite = IsFavorite;
-          })
+          usersApi.util.updateQueryData(
+            'checkFavorite',
+            ProblemId,
+            (draft) => {
+              draft.IsFavorite = IsFavorite;
+            },
+          ),
         );
+
         try {
           await queryFulfilled;
         } catch {
@@ -94,48 +102,20 @@ export const usersApi = createApi({
 
     checkFavorite: builder.query<FavoriteCheck, number>({
       query: (ProblemId) => `/users/favorite/check/${ProblemId}`,
-      providesTags: (_result, _error, ProblemId) => [{ type: 'Problem', id: ProblemId }],
+      providesTags: (_result, _error, ProblemId) => [
+        { type: 'Problem', id: ProblemId },
+      ],
     }),
 
-    getAdminUsers: builder.query<ApiResponse<PagedUserList>, { Page?: number; PageSize?: number }>({
+    getAdminUsers: builder.query<
+      PagedUserList,
+      { Page?: number; PageSize?: number }
+    >({
       query: ({ Page = 1, PageSize = 20 } = {}) => ({
         url: '/admin/users',
         params: { page: Page, pageSize: PageSize },
       }),
       providesTags: ['User'],
-    }),
-
-    updateUser: builder.mutation<UserProfile, { Id: number; Data: Partial<UserProfile> }>({
-      query: ({ Id, Data }) => ({
-        url: `/admin/users/${Id}`,
-        method: 'PUT',
-        body: Data,
-      }),
-      invalidatesTags: ['User'],
-    }),
-
-    deleteUser: builder.mutation<void, number>({
-      query: (Id) => ({
-        url: `/admin/users/${Id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['User'],
-    }),
-
-    activateUser: builder.mutation<void, number>({
-      query: (Id) => ({
-        url: `/admin/users/${Id}/activate`,
-        method: 'POST',
-      }),
-      invalidatesTags: ['User'],
-    }),
-
-    deactivateUser: builder.mutation<void, number>({
-      query: (Id) => ({
-        url: `/admin/users/${Id}/deactivate`,
-        method: 'POST',
-      }),
-      invalidatesTags: ['User'],
     }),
   }),
 });
@@ -147,9 +127,5 @@ export const {
   useToggleFavoriteMutation,
   useCheckFavoriteQuery,
   useGetAdminUsersQuery,
-  useUpdateUserMutation,
-  useDeleteUserMutation,
-  useActivateUserMutation,
-  useDeactivateUserMutation,
   useGetDashboardQuery,
 } = usersApi;

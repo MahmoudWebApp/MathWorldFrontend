@@ -1,268 +1,346 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
-import { useGetProblemQuery, useSubmitAnswerMutation } from '@/store/api/problemsApi';
-import { useToggleFavoriteMutation, useCheckFavoriteQuery } from '@/store/api/usersApi';
+import { useLocale, useTranslations } from 'next-intl';
 import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { LatexPreview } from '@/components/ui/LatexPreview';
-import { RichText } from '@/components/ui/RichText';
-import type { ProblemDetail, ProblemForStudent, ProblemForPublic, ProblemAdminDetail } from '@/store/api/problemsApi';
-
 import {
   ArrowLeft,
-  Heart,
   BookOpen,
   CheckCircle,
-  XCircle,
-  Send,
-  Loader2,
   GraduationCap,
+  Heart,
+  Loader2,
   Lock,
   PlayCircle,
+  Send,
   Star,
+  XCircle,
 } from 'lucide-react';
 
-/* ────────────────────────────────────────────
-   TYPE GUARDS
-   ──────────────────────────────────────────── */
+import { Link } from '@/i18n/routing';
+import type { RootState } from '@/store';
+import {
+  type AdminProblemOption,
+  type AnswerResult,
+  type OptionForStudent,
+  type ProblemAdminDetail,
+  type ProblemDetail,
+  type ProblemForPublic,
+  type ProblemForStudent,
+  useGetProblemQuery,
+  useSubmitAnswerMutation,
+} from '@/store/api/problemsApi';
+import {
+  useCheckFavoriteQuery,
+  useToggleFavoriteMutation,
+} from '@/store/api/usersApi';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { LatexPreview } from '@/components/ui/LatexPreview';
+import { RichText } from '@/components/ui/RichText';
 
-function isStudentProblem(problem: ProblemDetail | undefined): problem is ProblemForStudent {
-  return !!problem && 'Options' in problem && 'IsSolved' in problem;
+function isStudentProblem(
+  problem: ProblemDetail | undefined,
+): problem is ProblemForStudent {
+  return !!problem && 'HasAttempted' in problem && 'Options' in problem;
 }
 
-function isPublicProblem(problem: ProblemDetail | undefined): problem is ProblemForPublic {
+function isPublicProblem(
+  problem: ProblemDetail | undefined,
+): problem is ProblemForPublic {
   return !!problem && 'Message' in problem && !('Options' in problem);
 }
 
-function isAdminProblem(problem: ProblemDetail | undefined): problem is ProblemAdminDetail {
-  return (
-    !!problem &&
-    'TitleAr' in problem &&
-    'TitleEn' in problem &&
-    'Options' in problem &&
-    Array.isArray((problem as ProblemAdminDetail).Options)
-  );
+function isAdminProblem(
+  problem: ProblemDetail | undefined,
+): problem is ProblemAdminDetail {
+  return !!problem && 'TitleAr' in problem && 'TitleEn' in problem;
 }
 
-/* ────────────────────────────────────────────
-   YOUTUBE EMBED COMPONENT
-   ──────────────────────────────────────────── */
+function getYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
 
 function YoutubeEmbed({ url }: { url: string }) {
-  const getVideoId = (youtubeUrl: string): string | null => {
-    // [IMPROVED] Better Regex to support YouTube Shorts and standard URLs
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-      /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
-    ];
-    for (const pattern of patterns) {
-      const match = youtubeUrl.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
+  const videoId = getYouTubeVideoId(url);
 
-  const videoId = getVideoId(url);
-  if (!videoId) return null;
+  if (!videoId) {
+    return null;
+  }
 
   return (
-    <div className="aspect-video w-full rounded-xl overflow-hidden bg-black">
+    <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
       <iframe
         src={`https://www.youtube.com/embed/${videoId}`}
         title="YouTube video player"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
-        className="w-full h-full"
+        className="h-full w-full"
       />
     </div>
   );
 }
 
-/* ────────────────────────────────────────────
-   MAIN COMPONENT
-   ──────────────────────────────────────────── */
+type OptionState = 'idle' | 'selected' | 'correct' | 'wrong';
 
 export default function ProblemPage() {
-  const { id } = useParams();
+  const params = useParams<{ id: string }>();
   const t = useTranslations();
   const locale = useLocale();
+  const isArabic = locale === 'ar';
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const problemId = parseInt(id as string);
+  const problemId = Number.parseInt(params.id, 10);
   const solutionRef = useRef<HTMLDivElement>(null);
 
-  // ── API hooks ──────────────────────────────
-  const { data: problem, isLoading, error, refetch: refetchProblem } = useGetProblemQuery( { Id: problemId, locale: locale }, {
-    skip: isNaN(problemId),
-  });
+  const {
+    data: problem,
+    isLoading,
+    error,
+    refetch: refetchProblem,
+  } = useGetProblemQuery(
+    { Id: problemId, locale },
+    { skip: Number.isNaN(problemId) },
+  );
 
   const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
-    skip: !isAuthenticated || isNaN(problemId),
+    skip: !isAuthenticated || Number.isNaN(problemId),
   });
 
   const [toggleFavorite] = useToggleFavoriteMutation();
-  const [submitAnswer, { isLoading: isSubmitting, data: answerResult }] = useSubmitAnswerMutation();
+  const [submitAnswer, { isLoading: isSubmitting }] =
+    useSubmitAnswerMutation();
 
-  // ── Local state ────────────────────────────
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
+  const [localAnswerResult, setLocalAnswerResult] =
+    useState<AnswerResult | null>(null);
   const [submissionDone, setSubmissionDone] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [activeTab, setActiveTab] = useState<'question' | 'video'>('question');
-  const [startTime] = useState(Date.now());
+  const [startTime] = useState(() => Date.now());
 
-  // ── Auto-scroll to solution ──
   useEffect(() => {
-    if (answerResult?.IsCorrect || (isStudentProblem(problem) && problem.IsSolved)) {
-      setTimeout(() => {
-        solutionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 200);
+    if (!isStudentProblem(problem)) {
+      return;
     }
-  }, [answerResult, problem]);
 
-  // ── Derived data ───────────────────────────
+    if (problem.HasAttempted) {
+      setSelectedOptionId(problem.SelectedOptionId ?? null);
+      setSubmissionDone(true);
+      return;
+    }
+
+    if (!localAnswerResult) {
+      setSelectedOptionId(null);
+      setSubmissionDone(false);
+    }
+  }, [problem, localAnswerResult]);
+
+  useEffect(() => {
+    if (!localAnswerResult) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      solutionRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 200);
+
+    return () => window.clearTimeout(timer);
+  }, [localAnswerResult]);
+
   const problemData = useMemo(() => {
-    if (!problem) return null;
-    let title: string;
-    let questionText: string;
-    let categoryName: string = '';
-    let points: number = 0;
-    
-    // [NEW] Added variables to store IDs for the dynamic breadcrumbs
-    let categoryId: number | null = null;
-    let stageId: number | null = null;
-    let stageName: string = '';
+    if (!problem) {
+      return null;
+    }
 
     if (isAdminProblem(problem)) {
-      title = locale === 'ar' ? problem.TitleAr : problem.TitleEn;
-      questionText = locale === 'ar' ? problem.QuestionTextAr : problem.QuestionTextEn;
-      categoryName = problem.CategoryName || '';
-    } else if (isStudentProblem(problem)) {
-      title = problem.Title;
-      questionText = problem.QuestionText;
-      categoryName = problem.CategoryName;
-    } else {
-      const pub = problem as ProblemForPublic;
-      title = pub.Title;
-      questionText = pub.QuestionText;
-      categoryName = pub.CategoryName;
+      return {
+        title: locale === 'ar' ? problem.TitleAr : problem.TitleEn,
+        questionText:
+          locale === 'ar' ? problem.QuestionTextAr : problem.QuestionTextEn,
+        categoryId: problem.CategoryId,
+        categoryName: problem.CategoryName || '',
+        stageId: problem.StageId,
+        stageName: problem.StageName || '',
+        points: problem.Points,
+      };
     }
 
-    // [NEW] Extracting IDs safely if they exist in the problem object
-    if ('Points' in problem) points = (problem as any).Points;
-    if ('StageName' in problem) stageName = (problem as any).StageName;
-    if ('CategoryId' in problem) categoryId = (problem as any).CategoryId;
-    if ('StageId' in problem) stageId = (problem as any).StageId;
-
-    return { title, questionText, categoryName, points, categoryId, stageId, stageName };
+    return {
+      title: problem.Title,
+      questionText: problem.QuestionText,
+      categoryId: problem.CategoryId,
+      categoryName: problem.CategoryName,
+      stageId: problem.StageId,
+      stageName: problem.StageName,
+      points: 'Points' in problem ? problem.Points : 0,
+    };
   }, [problem, locale]);
 
+  const studentProblem = isStudentProblem(problem) ? problem : null;
+  const adminProblem = isAdminProblem(problem) ? problem : null;
+
+  const hasAttempted =
+    !!studentProblem &&
+    (studentProblem.HasAttempted || submissionDone || !!localAnswerResult);
+
+  const effectiveSelectedOptionId =
+    localAnswerResult?.SelectedOptionId ??
+    selectedOptionId ??
+    studentProblem?.SelectedOptionId ??
+    null;
+
+  const effectiveCorrectOptionId =
+    localAnswerResult?.CorrectOptionId ??
+    studentProblem?.CorrectOptionId ??
+    null;
+
+  const isCorrect =
+    localAnswerResult?.IsCorrect ??
+    studentProblem?.WasCorrect ??
+    studentProblem?.IsSolved ??
+    false;
+
+  const canAnswer =
+    isAuthenticated && !!studentProblem && !hasAttempted && !isSubmitting;
+
   const solutionText = useMemo(() => {
-    if (answerResult?.DetailedSolution) return answerResult.DetailedSolution;
-    if (isStudentProblem(problem)) return problem.DetailedSolution;
-    if (isAdminProblem(problem)) {
-      return locale === 'ar' ? problem.DetailedSolutionAr : problem.DetailedSolutionEn;
+    if (localAnswerResult?.DetailedSolution) {
+      return localAnswerResult.DetailedSolution;
     }
+
+    if (studentProblem?.DetailedSolution) {
+      return studentProblem.DetailedSolution;
+    }
+
+    if (adminProblem) {
+      return locale === 'ar'
+        ? adminProblem.DetailedSolutionAr
+        : adminProblem.DetailedSolutionEn;
+    }
+
     return null;
-  }, [problem, answerResult, locale]);
+  }, [localAnswerResult, studentProblem, adminProblem, locale]);
 
   const youtubeUrl = useMemo(() => {
-    const url =
-      answerResult?.YoutubeSolutionUrl ||
-      (isStudentProblem(problem) ? problem.YoutubeSolutionUrl : null) ||
-      (isAdminProblem(problem) ? problem.YoutubeSolutionUrl : null);
-    if (!url) return null;
-    if (!url.includes('youtube') && !url.includes('youtu.be')) return null;
-    return url;
-  }, [problem, answerResult]);
+    const value =
+      localAnswerResult?.YoutubeSolutionUrl ||
+      studentProblem?.YoutubeSolutionUrl ||
+      adminProblem?.YoutubeSolutionUrl;
 
-  // ── Safe access ──
-  const problemIsSolved = isStudentProblem(problem) ? problem.IsSolved : false;
-  
-  // [FIXED UX] User can only answer if they haven't submitted yet and are not currently submitting
-  const canAnswer =
-    isAuthenticated &&
-    isStudentProblem(problem) &&
-    !problemIsSolved &&
-    !submissionDone &&
-    !answerResult;
+    if (!value || !getYouTubeVideoId(value)) {
+      return null;
+    }
 
-  const showResult = !!(answerResult || problemIsSolved);
-  const isCorrect = answerResult?.IsCorrect ?? problemIsSolved;
-  const showSolutionSection = (solutionText || youtubeUrl) && (isCorrect || isAdminProblem(problem));
-  const showVideoTab = isAuthenticated && !!youtubeUrl;
+    return value;
+  }, [localAnswerResult, studentProblem, adminProblem]);
 
-  // ── Handlers ───────────────────────────────
-  const handleFavorite = async () => {
-    if (!problem) return;
+  const showResult = hasAttempted;
+  const showSolutionSection =
+    !!solutionText && (hasAttempted || !!adminProblem);
+  const showVideoTab =
+    !!youtubeUrl && (hasAttempted || !!adminProblem);
+  const isFavorite =
+    favoriteData?.IsFavorite ?? studentProblem?.IsFavorite ?? false;
+
+  async function handleFavorite() {
+    if (!problem) {
+      return;
+    }
+
     try {
       await toggleFavorite({
         ProblemId: problem.Id,
-        IsFavorite: !favoriteData?.IsFavorite,
+        IsFavorite: !isFavorite,
       }).unwrap();
-      refetchProblem();
-    } catch (err) {
-      console.error('Failed to toggle favorite:', err);
+      await refetchProblem();
+    } catch (favoriteError) {
+      console.error('Failed to update favorite:', favoriteError);
     }
-  };
+  }
 
-  const handleSubmit = async () => {
-    // [FIXED UX] Prevent multiple submissions
-    if (!selectedOptionId || !problem || submissionDone || isSubmitting) return;
-    
-    const timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
-    
+  async function handleSubmit() {
+    if (
+      !studentProblem ||
+      !canAnswer ||
+      effectiveSelectedOptionId === null
+    ) {
+      return;
+    }
+
+    setSubmitError('');
+
     try {
-      // [FIXED UX] Wait for the API response BEFORE changing UI state
-      await submitAnswer({
-        ProblemId: problem.Id,
-        SelectedOptionId: selectedOptionId,
-        TimeSpentSeconds: timeSpentSeconds,
+      const result = await submitAnswer({
+        ProblemId: studentProblem.Id,
+        SelectedOptionId: effectiveSelectedOptionId,
+        TimeSpentSeconds: Math.max(
+          0,
+          Math.floor((Date.now() - startTime) / 1000),
+        ),
       }).unwrap();
 
-      // [FIXED UX] Update state only after successful API call
+      setLocalAnswerResult(result);
+      setSelectedOptionId(result.SelectedOptionId);
       setSubmissionDone(true);
-    } catch (err) {
-      console.error('Submit failed:', err);
+    } catch (submitFailure) {
+      const normalized = submitFailure as {
+        data?: { message?: string };
+      };
+
+      setSubmitError(
+        normalized.data?.message || t('common.error'),
+      );
     }
-  };
+  }
 
-  // [IMPROVED] Smart logic to handle correct/wrong colors based on API result
-  const getOptionState = (option: { Id: number; LatexCode: string; IsCorrect?: boolean }) => {
-    const isSelected = selectedOptionId === option.Id;
-    const showCorrectness = problemIsSolved || (submissionDone && !!answerResult);
+  function getOptionState(option: OptionForStudent): OptionState {
+    const isSelected = effectiveSelectedOptionId === option.Id;
 
-    if (!showCorrectness) return isSelected ? 'selected' : 'idle';
-
-    if (problemIsSolved && option.IsCorrect === true) return 'correct';
-    
-    if (submissionDone && answerResult) {
-       if (isSelected) {
-          return answerResult.IsCorrect ? 'correct' : 'wrong';
-       }
-       if ((answerResult as any).CorrectOptionId === option.Id) {
-          return 'correct';
-       }
+    if (!hasAttempted) {
+      return isSelected ? 'selected' : 'idle';
     }
 
-    if (isSelected) return 'wrong';
+    if (effectiveCorrectOptionId === option.Id) {
+      return 'correct';
+    }
+
+    if (isSelected && !isCorrect) {
+      return 'wrong';
+    }
+
+    if (isSelected && isCorrect) {
+      return 'correct';
+    }
+
     return 'idle';
-  };
+  }
 
-  // ── Early returns ──────────────────────────
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 md:px-16 lg:px-24 animate-pulse">
-        <div className="h-6 w-48 bg-muted rounded mb-8" />
-        <div className="h-10 w-3/4 bg-muted rounded mb-4" />
-        <div className="flex gap-2 mb-8">
-          <div className="h-6 w-16 bg-muted rounded-full" />
-          <div className="h-6 w-24 bg-muted rounded-full" />
+      <div className="container mx-auto animate-pulse px-4 py-8 md:px-16 lg:px-24">
+        <div className="mb-8 h-6 w-48 rounded bg-muted" />
+        <div className="mb-4 h-10 w-3/4 rounded bg-muted" />
+        <div className="mb-8 flex gap-2">
+          <div className="h-6 w-16 rounded-full bg-muted" />
+          <div className="h-6 w-24 rounded-full bg-muted" />
         </div>
-        <div className="h-40 bg-muted rounded-xl" />
+        <div className="h-40 rounded-xl bg-muted" />
       </div>
     );
   }
@@ -270,108 +348,147 @@ export default function ProblemPage() {
   if (error || !problem || !problemData) {
     return (
       <div className="container mx-auto px-4 py-8 text-center md:px-16 lg:px-24">
-        <XCircle className="mx-auto h-12 w-12 text-destructive/70 mb-4" />
-        <p className="text-muted-foreground text-lg mb-4">{t('errors.problemNotFound')}</p>
-        <Link href="/problems" className="inline-flex items-center gap-1 text-primary font-medium hover:underline">
-          <ArrowLeft className="h-4 w-4" />
+        <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive/70" />
+        <p className="mb-4 text-lg text-muted-foreground">
+          {t('errors.problemNotFound')}
+        </p>
+        <Link
+          href="/problems"
+          className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+        >
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           {t('problem.backToProblems')}
         </Link>
       </div>
     );
   }
 
-  const { title, questionText, categoryName, points } = problemData;
-  const isArabic = locale === 'ar';
+  const {
+    title,
+    questionText,
+    categoryId,
+    categoryName,
+    stageId,
+    stageName,
+    points,
+  } = problemData;
 
   return (
-    <div className="container mx-auto px-4 py-8 lg:px-24 md:px-16">
-      
-      {/* 
-        [NEW] Hierarchical Breadcrumbs 
-        Displays Home / Stages / Stage Name / Category Name / Question Title
-        Clicking Category Name retains the URL parameters so filters are preserved! 
-      */}
+    <div className="container mx-auto px-4 py-8 md:px-16 lg:px-24">
       <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/" className="hover:text-primary transition-colors">
-          {t('nav.home') || 'الرئيسية'}
+        <Link href="/" className="transition-colors hover:text-primary">
+          {t('nav.home')}
         </Link>
         <span className="mx-1 opacity-50">/</span>
-
-        <Link href="/stages" className="hover:text-primary transition-colors">
-          {t('nav.stages') || 'المستويات'}
+        <Link
+          href="/stages"
+          className="transition-colors hover:text-primary"
+        >
+          {t('nav.stages')}
         </Link>
 
-        {problemData?.stageName && (
+        {stageName && (
           <>
             <span className="mx-1 opacity-50">/</span>
-            <Link 
-              href={`/problems?stageId=${problemData.stageId || ''}`} 
-              className="hover:text-primary transition-colors"
+            <Link
+              href={`/problems?stageId=${stageId}`}
+              className="transition-colors hover:text-primary"
             >
-              {problemData.stageName}
+              {stageName}
             </Link>
           </>
         )}
 
-        {problemData?.categoryName && (
+        {categoryName && (
           <>
             <span className="mx-1 opacity-50">/</span>
-            <Link 
-              href={`/problems?stageId=${problemData.stageId || ''}&categoryId=${problemData.categoryId || ''}`} 
-              className="hover:text-primary transition-colors font-medium text-foreground"
+            <Link
+              href={`/problems?stageId=${stageId}&categoryId=${categoryId}`}
+              className="font-medium text-foreground transition-colors hover:text-primary"
             >
-              {problemData.categoryName}
+              {categoryName}
             </Link>
           </>
         )}
 
         <span className="mx-1 opacity-50">/</span>
-        <span className="text-muted-foreground truncate max-w-[150px] sm:max-w-[250px]" title={title}>
-          <RichText text={title} isArabic={isArabic} />
-    
+        <span
+          className="max-w-[150px] truncate text-muted-foreground sm:max-w-[250px]"
+          title={title}
+        >
+          <RichText text={title} isArabic={isArabic} inline />
         </span>
       </div>
 
-      {/* Header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <h1 className={`text-3xl sm:text-4xl font-bold mb-3 ${isArabic ? 'text-right' : 'text-left'}`}>
-            <RichText text={title} isArabic={isArabic} className="text-inherit" />
+          <h1
+            className={`mb-3 text-3xl font-bold sm:text-4xl ${
+              isArabic ? 'text-right' : 'text-left'
+            }`}
+          >
+            <RichText
+              text={title}
+              isArabic={isArabic}
+              className="text-inherit"
+            />
           </h1>
-          <div className={`flex flex-wrap items-center gap-2 ${isArabic ? 'justify-end' : 'justify-start'}`}>
+
+          <div
+            className={`flex flex-wrap items-center gap-2 ${
+              isArabic ? 'justify-end' : 'justify-start'
+            }`}
+          >
             {points > 0 && (
-              <Badge variant="outline" className="gap-1 border-primary/30 bg-primary/5 text-primary">
-                <Star className="h-4 w-4 text-primary/70 fill-primary/20" />
+              <Badge
+                variant="outline"
+                className="gap-1 border-primary/30 bg-primary/5 text-primary"
+              >
+                <Star className="h-4 w-4 fill-primary/20 text-primary/70" />
                 <span className="font-semibold">{points}</span>
               </Badge>
             )}
-            {problemData?.stageName && (
-              <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 gap-1">
+
+            {stageName && (
+              <Badge className="gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                 <GraduationCap className="h-3.5 w-3.5" />
-                {problemData.stageName}
+                {stageName}
               </Badge>
             )}
-            {categoryName && <Badge variant="secondary">{categoryName}</Badge>}
+
+            {categoryName && (
+              <Badge variant="secondary">{categoryName}</Badge>
+            )}
           </div>
         </div>
 
-        {isAuthenticated && (
+        {isAuthenticated && studentProblem && (
           <Button
             variant="ghost"
             size="icon"
             onClick={handleFavorite}
-            className={favoriteData?.IsFavorite ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-foreground'}
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            className={
+              isFavorite
+                ? 'text-red-500 hover:text-red-600'
+                : 'text-muted-foreground hover:text-foreground'
+            }
           >
-            <Heart className={`h-5 w-5 transition-transform ${favoriteData?.IsFavorite ? 'fill-current scale-110' : ''}`} />
+            <Heart
+              className={`h-5 w-5 transition-transform ${
+                isFavorite ? 'scale-110 fill-current' : ''
+              }`}
+            />
           </Button>
         )}
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
           {showVideoTab && (
             <div className="flex border-b">
               <button
+                type="button"
                 onClick={() => setActiveTab('question')}
                 className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'question'
@@ -383,6 +500,7 @@ export default function ProblemPage() {
                 {t('problem.question')}
               </button>
               <button
+                type="button"
                 onClick={() => setActiveTab('video')}
                 className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'video'
@@ -396,20 +514,19 @@ export default function ProblemPage() {
             </div>
           )}
 
-          {/* ── Question Tab ── */}
           {activeTab === 'question' && (
             <div className="p-6">
-              <RichText 
-                text={questionText} 
-                isArabic={isArabic} 
+              <RichText
+                text={questionText}
+                isArabic={isArabic}
                 className="mb-6 text-lg"
               />
 
               {!isAuthenticated && isPublicProblem(problem) && (
-                <div className="text-center py-8 border-t">
-                  <Lock className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground mb-4">
-                    {(problem as ProblemForPublic).Message || t('problem.loginToSolve')}
+                <div className="border-t py-8 text-center">
+                  <Lock className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+                  <p className="mb-4 text-muted-foreground">
+                    {problem.Message || t('problem.loginToSolve')}
                   </p>
                   <Button asChild>
                     <Link href="/login">{t('nav.login')}</Link>
@@ -417,72 +534,84 @@ export default function ProblemPage() {
                 </div>
               )}
 
-              {isAuthenticated && isStudentProblem(problem) && (
+              {studentProblem && (
                 <>
-                  <div className="space-y-3 mb-6">
-                    {problem.Options.map((option) => {
-                      const state = getOptionState(option);
-                      
-                      // [FIXED UX] Disable radio buttons while submitting to prevent double-clicks
-                      const isOptionDisabled = !canAnswer || isSubmitting;
+                  <div className="mb-6 space-y-3">
+                    {studentProblem.Options.map((option) => {
+                      const optionState = getOptionState(option);
+                      const isOptionDisabled = !canAnswer;
 
                       return (
                         <label
                           key={option.Id}
                           className={`flex items-start gap-3 rounded-xl border p-4 transition-all ${
-                            state === 'correct'
-                              ? 'bg-green-50 border-green-300 dark:bg-green-900/20 dark:border-green-800'
-                              : state === 'wrong'
-                              ? 'bg-red-50 border-red-300 dark:bg-red-900/20 dark:border-red-800'
-                              : state === 'selected'
-                              ? 'border-primary bg-primary/5'
-                              : 'hover:border-primary/50'
-                          } ${isOptionDisabled ? 'cursor-default opacity-90' : 'cursor-pointer'}`}
+                            optionState === 'correct'
+                              ? 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                              : optionState === 'wrong'
+                                ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                                : optionState === 'selected'
+                                  ? 'border-primary bg-primary/5'
+                                  : 'hover:border-primary/50'
+                          } ${
+                            isOptionDisabled
+                              ? 'cursor-default opacity-90'
+                              : 'cursor-pointer'
+                          }`}
                         >
-                          {(canAnswer || isSubmitting) && (
+                          {!hasAttempted && (
                             <input
                               type="radio"
                               name="option"
                               value={option.Id}
-                              checked={selectedOptionId === option.Id}
+                              checked={effectiveSelectedOptionId === option.Id}
                               onChange={() => setSelectedOptionId(option.Id)}
-                              disabled={isOptionDisabled} 
+                              disabled={isOptionDisabled}
                               className="mt-1.5 accent-primary disabled:opacity-50"
                             />
                           )}
-                          {state === 'correct' && (
-                            <CheckCircle className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+
+                          {optionState === 'correct' && (
+                            <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
                           )}
-                          {state === 'wrong' && (
-                            <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                          {optionState === 'wrong' && (
+                            <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                           )}
-                          <div className="flex-1">
-                            {option.LatexCode && (
-                              <LatexPreview latex={option.LatexCode} className="mt-1" />
-                            )}
+
+                          <div className="min-w-0 flex-1">
+                            <LatexPreview
+                              latex={option.LatexCode}
+                              className="mt-1"
+                            />
                           </div>
                         </label>
                       );
                     })}
                   </div>
 
+                  {submitError && (
+                    <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                      {submitError}
+                    </div>
+                  )}
+
                   {canAnswer && (
                     <div className="flex justify-end">
                       <Button
                         onClick={handleSubmit}
-                        disabled={isSubmitting || !selectedOptionId}
+                        disabled={
+                          isSubmitting || effectiveSelectedOptionId === null
+                        }
                         className="gap-2 transition-all"
                         size="lg"
                       >
-                        {/* [FIXED UX] Loader now displays correctly during API call */}
                         {isSubmitting ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            {t('common.loading') || 'Loading...'}
+                            {t('common.loading')}
                           </>
                         ) : (
                           <>
-                            <Send className="h-4 w-4" />
+                            <Send className="h-4 w-4 rtl:rotate-180" />
                             {t('problem.submit')}
                           </>
                         )}
@@ -490,36 +619,65 @@ export default function ProblemPage() {
                     </div>
                   )}
 
-                  {/* [IMPROVED] Smooth fade-in animation for result message */}
                   {showResult && (
-                    <div className={`mt-6 rounded-xl p-5 animate-in fade-in zoom-in duration-300 ${
-                      isCorrect
-                        ? 'bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800'
-                        : 'bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800'
-                    }`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        {isCorrect
-                          ? <CheckCircle className="h-5 w-5 text-green-600" />
-                          : <XCircle className="h-5 w-5 text-red-600" />}
+                    <div
+                      className={`mt-6 animate-in rounded-xl border p-5 duration-300 fade-in zoom-in ${
+                        isCorrect
+                          ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                          : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center gap-2">
+                        {isCorrect ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-600" />
+                        )}
                         <span className="font-semibold">
-                          {isCorrect ? t('problem.correct') : t('problem.wrong')}
+                          {isCorrect
+                            ? t('problem.correct')
+                            : t('problem.wrong')}
                         </span>
                       </div>
-                      {!isCorrect && (answerResult as any)?.CorrectOptionText && (
-                        <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                          {t('problem.correctAnswerWas')}: {(answerResult as any).CorrectOptionText}
-                        </p>
+
+                      {!isCorrect && localAnswerResult?.CorrectOptionText && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                          <span>{t('problem.correctAnswerWas')}:</span>
+                          <LatexPreview
+                            latex={localAnswerResult.CorrectOptionText}
+                          />
+                        </div>
                       )}
                     </div>
                   )}
                 </>
+              )}
+
+              {adminProblem && (
+                <div className="mt-6 space-y-3">
+                  {adminProblem.Options.map((option: AdminProblemOption) => (
+                    <div
+                      key={`${option.Order}-${option.LatexCode}`}
+                      className={`flex items-start gap-3 rounded-xl border p-4 ${
+                        option.IsCorrect
+                          ? 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                          : ''
+                      }`}
+                    >
+                      {option.IsCorrect && (
+                        <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+                      )}
+                      <LatexPreview latex={option.LatexCode} />
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}
 
           {activeTab === 'video' && showVideoTab && youtubeUrl && (
             <div className="p-6">
-              <h3 className={`text-lg font-semibold flex items-center gap-2 mb-4 ${isArabic ? 'flex-row-reverse' : ''}`}>
+              <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
                 <PlayCircle className="h-5 w-5" />
                 {t('problem.videoSolution')}
               </h3>
@@ -528,17 +686,13 @@ export default function ProblemPage() {
           )}
         </div>
 
-        {/* ═══════════════════════════════════════
-            SOLUTION SECTION
-            ═══════════════════════════════════════ */}
         {showSolutionSection && solutionText && (
           <div
             ref={solutionRef}
             id="solution-section"
-            // [IMPROVED] Smooth slide-in animation when solution is revealed
-            className="rounded-2xl border border-green-200 bg-green-50/30 dark:bg-green-900/10 shadow-sm p-6 scroll-mt-20 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            className="scroll-mt-20 animate-in rounded-2xl border border-green-200 bg-green-50/30 p-6 shadow-sm duration-500 fade-in slide-in-from-bottom-4 dark:bg-green-900/10"
           >
-            <h3 className="text-lg font-semibold flex items-center gap-2 mb-4 text-green-800 dark:text-green-300">
+            <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-green-800 dark:text-green-300">
               <CheckCircle className="h-5 w-5" />
               {t('problem.solution')}
             </h3>

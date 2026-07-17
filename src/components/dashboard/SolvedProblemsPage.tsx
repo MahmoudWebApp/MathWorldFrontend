@@ -1,20 +1,17 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetSolvedProblemsQuery } from '@/store/api/usersApi';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Target, ArrowRight,  AlertCircle } from 'lucide-react';
-import { ArrowLeft } from 'iconsax-reactjs';
+import { AlertCircle, ArrowLeft, ArrowRight, Target } from 'lucide-react';
 import { AnimatedCounter } from '@/components/home/AnimatedCounter';
 import { useState, useEffect } from 'react';
 
 export function SolvedProblemsPage() {
   const t = useTranslations();
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -47,7 +44,7 @@ export function SolvedProblemsPage() {
           href="/dashboard" 
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
         >
-          {isRtl ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           {t('dashboard.user.title')}
         </Link>
         

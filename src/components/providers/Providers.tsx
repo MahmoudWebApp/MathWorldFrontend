@@ -3,7 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { ThemeProvider } from 'next-themes';
-import { NextIntlClientProvider } from 'next-intl';
+import { NextIntlClientProvider, type AbstractIntlMessages } from 'next-intl';
 import { store } from '@/store';
 import { AuthProvider } from './AuthProvider';
 import { useLocale } from 'next-intl';
@@ -13,7 +13,7 @@ import { TooltipProvider } from '@/components/ui/Tooltip';
 interface ProvidersProps {
   children: ReactNode;
   locale: string;
-  messages: Record<string, any>;
+  messages: AbstractIntlMessages;
   timeZone: string;
 }
 

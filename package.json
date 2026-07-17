@@ -6,7 +6,8 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@fontsource/almarai": "^5.2.8",
@@ -39,8 +40,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.1.7",
+    "eslint": "8.57.1",
+    "eslint-config-next": "15.1.11",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

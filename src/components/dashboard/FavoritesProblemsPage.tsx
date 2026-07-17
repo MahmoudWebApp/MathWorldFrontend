@@ -1,20 +1,17 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetFavoritesQuery, useToggleFavoriteMutation } from '@/store/api/usersApi';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Heart, ArrowRight, AlertCircle, X } from 'lucide-react';
-import { ArrowLeft } from 'iconsax-reactjs';
+import { AlertCircle, ArrowLeft, ArrowRight, Heart, X } from 'lucide-react';
 import { AnimatedCounter } from '@/components/home/AnimatedCounter';
 import { useState, useEffect } from 'react';
 
 export function FavoritesProblemsPage() {
   const t = useTranslations();
-  const locale = useLocale();
-  const isRtl = locale === 'ar';
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -59,7 +56,7 @@ export function FavoritesProblemsPage() {
           href="/dashboard" 
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
         >
-          {isRtl ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
           {t('dashboard.user.title')}
         </Link>
         
