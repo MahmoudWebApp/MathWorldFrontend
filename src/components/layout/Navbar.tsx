@@ -106,11 +106,19 @@ function NavbarContent() {
 
   const toggleLocale = () => {
     const newLocale = locale === 'ar' ? 'en' : 'ar';
+    
+    // FIX: Set the NEXT_LOCALE cookie explicitly BEFORE calling window.location.assign.
+    // This ensures that when the page reloads, the new API calls read the correct language cookie immediately.
+    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    
     dispatch(setLocale(newLocale));
     dispatch(problemsApi.util.invalidateTags(['Problem', 'Category']));
     dispatch(categoriesApi.util.invalidateTags(['Category']));
+    
     const currentQuery = searchParams.toString();
     const newPath = currentQuery ? `${pathname}?${currentQuery}` : pathname;
+    
+    // Hard refresh to the new locale URL
     window.location.assign(`/${newLocale}${newPath}`);
   };
 

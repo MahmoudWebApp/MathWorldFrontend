@@ -47,10 +47,6 @@ export interface ApiErrorData {
   errors?: Record<string, string[]>;
 }
 
-/**
- * Normalized error shape returned by the application's RTK Query base query.
- * It keeps the original RTK Query status while always exposing ApiErrorData.
- */
 export type ApiBaseQueryError =
   | {
       status: number;
@@ -173,8 +169,19 @@ const rawBaseQuery = fetchBaseQuery({
   prepareHeaders: (headers, { getState }) => {
     const state = getState() as ApiState;
     const token = state.auth?.token || getCookie('token');
-    const locale =
-      state.locale?.current || getCookie('NEXT_LOCALE') || 'ar';
+    
+    // FIX: Read locale from URL directly (e.g., from /en/problems/13)
+    // This prevents the race condition when the page reloads and Redux hasn't initialized yet.
+    let urlLocale: string | undefined = undefined;
+    if (typeof window !== 'undefined') {
+      const pathSegment = window.location.pathname.split('/')[1];
+      if (pathSegment === 'ar' || pathSegment === 'en') {
+        urlLocale = pathSegment;
+      }
+    }
+
+    // FIX: Priority -> 1. Redux State | 2. Current URL | 3. Cookie | 4. Default 'ar'
+    const locale = state.locale?.current || urlLocale || getCookie('NEXT_LOCALE') || 'ar';
 
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
@@ -187,10 +194,6 @@ const rawBaseQuery = fetchBaseQuery({
   },
 });
 
-/**
- * Unwraps the backend ApiResponse<T> envelope so every endpoint receives T.
- * Transport errors and business errors are normalized to one error shape.
- */
 export const baseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
@@ -239,10 +242,6 @@ export const baseQuery: BaseQueryFn<
   };
 };
 
-/**
- * Creates a request for multipart form data.
- * The browser sets the multipart boundary automatically.
- */
 export function createFormDataQuery(
   url: string,
   method: 'POST' | 'PUT' | 'PATCH',
