@@ -164,7 +164,7 @@ export default function StagesPageClient() {
   const t = useTranslations();
   const locale = useLocale();
   
-  const { data: stages, isLoading, error } = useGetStagesQuery();
+  const { data: stages, isLoading, error } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   // Custom premium styles matching the spotlight effect & hover states
   const stageStyles = [

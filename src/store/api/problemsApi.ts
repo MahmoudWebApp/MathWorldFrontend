@@ -218,10 +218,13 @@ export const problemsApi = createApi({
       ],
     }),
 
-    getProblemAttempts: builder.query<ProblemAttemptHistory, number>({
-      query: (problemId) => `/problems/${problemId}/attempts`,
-      providesTags: (_result, _error, problemId) => [
-        { type: 'AttemptHistory', id: problemId },
+    getProblemAttempts: builder.query<
+      ProblemAttemptHistory,
+      { ProblemId: number; Locale: string }
+    >({
+      query: ({ ProblemId }) => `/problems/${ProblemId}/attempts`,
+      providesTags: (_result, _error, { ProblemId }) => [
+        { type: 'AttemptHistory', id: ProblemId },
       ],
     }),
 

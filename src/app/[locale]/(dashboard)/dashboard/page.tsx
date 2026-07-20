@@ -41,7 +41,9 @@ export default function UserDashboardPage() {
   const locale = useLocale();
   const isArabic = locale === "ar";
   // Single API call for all dashboard data instead of 3 separate calls
-  const { data: dashboard, isLoading, isError } = useGetDashboardQuery();
+  const { data: dashboard, isLoading, isError } = useGetDashboardQuery(locale, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const stats = [
     {

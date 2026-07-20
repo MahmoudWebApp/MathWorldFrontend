@@ -180,8 +180,14 @@ const rawBaseQuery = fetchBaseQuery({
       }
     }
 
-    // FIX: Priority -> 1. Redux State | 2. Current URL | 3. Cookie | 4. Default 'ar'
-    const locale = state.locale?.current || urlLocale || getCookie('NEXT_LOCALE') || 'ar';
+    // The locale segment in the current URL is the source of truth.
+    // Redux may still contain the previous language during the first request
+    // immediately after switching locales.
+    const locale =
+      urlLocale ||
+      state.locale?.current ||
+      getCookie('NEXT_LOCALE') ||
+      'ar';
 
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);

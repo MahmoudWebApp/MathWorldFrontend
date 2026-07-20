@@ -56,7 +56,7 @@ function NavbarContent() {
   const dispatch = useDispatch<AppDispatch>();
 
   const { user, isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
-  const { data: stages } = useGetStagesQuery();
+  const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -104,28 +104,28 @@ function NavbarContent() {
     router.push('/');
   };
 
-const toggleLocale = () => {
+  const toggleLocale = () => {
     const newLocale = locale === 'ar' ? 'en' : 'ar';
     
-    // 1. تحديث الكوكيز أولاً لتستخدمه الطلبات القادمة
+    // FIX: Set the NEXT_LOCALE cookie explicitly BEFORE calling window.location.assign.
+    // This ensures that when the page reloads, the new API calls read the correct language cookie immediately.
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
     
-    // 2. تحديث لغة التطبيق في Redux
     dispatch(setLocale(newLocale));
-    
-    // 3. مسح الكاش بالكامل من RTK Query لضمان عدم عرض أي بيانات عربية قديمة
-    // resetApiState() أقوى من invalidateTags لأنها تمسح البيانات من الذاكرة فوراً
+
+    // Clear localized API responses before loading the other language.
+    // This prevents Arabic API data from appearing on English pages and vice versa.
     dispatch(problemsApi.util.resetApiState());
     dispatch(categoriesApi.util.resetApiState());
     dispatch(stagesApi.util.resetApiState());
+    dispatch(statsApi.util.resetApiState());
+    dispatch(usersApi.util.resetApiState());
     
-    // 4. استخدام راوتر next-intl لتغيير اللغة بسلاسة بدون Refresh عنيف
     const currentQuery = searchParams.toString();
-    const querySuffix = currentQuery ? `?${currentQuery}` : '';
+    const newPath = currentQuery ? `${pathname}?${currentQuery}` : pathname;
     
-    router.replace(`${pathname}${querySuffix}`, { locale: newLocale });
-    
-    router.refresh();
+    // Hard refresh to the new locale URL
+    window.location.assign(`/${newLocale}${newPath}`);
   };
 
   const handleNavSearch = (e: React.FormEvent) => {

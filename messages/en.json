@@ -348,7 +348,9 @@
       "stage": "Stage",
       "stageRequired": "You must select an educational stage",
       "selectStageFirst": "Select stage first",
-      "viewDetails": "View Details"
+      "viewDetails": "View Details",
+      "questionPreview": "Question Preview",
+      "solutionPreview": "Solution Preview"
     },
     "stages": {
       "title": "Educational Stages",
@@ -448,7 +450,8 @@
     "select": "Select...",
     "view": "View",
     "required": "Required",
-    "explore": "Explore"
+    "explore": "Explore",
+    "close": "Close"
   },
   "about": {
     "metadata": {

@@ -144,7 +144,10 @@ export default function ProblemPage() {
     refetch: refetchProblem,
   } = useGetProblemQuery(
     { Id: problemId, locale },
-    { skip: Number.isNaN(problemId) },
+    {
+      skip: Number.isNaN(problemId),
+      refetchOnMountOrArgChange: true,
+    },
   );
 
   const studentProblem = isStudentProblem(problem) ? problem : null;
@@ -154,7 +157,7 @@ export default function ProblemPage() {
     data: attemptHistory,
     isFetching: isAttemptHistoryLoading,
     refetch: refetchAttemptHistory,
-  } = useGetProblemAttemptsQuery(problemId, {
+  } = useGetProblemAttemptsQuery({ ProblemId: problemId, Locale: locale }, {
     skip:
       !isAuthenticated ||
       Number.isNaN(problemId) ||
@@ -482,8 +485,55 @@ export default function ProblemPage() {
 
     return "idle";
   }
-  function cleanMathSymbols(text: string): string {
-    return text.replace(/\$\$/g, "").replace(/\$/g, "");
+  function getBreadcrumbProblemLabel(text: string): string {
+    const superscripts: Record<string, string> = {
+      "0": "⁰",
+      "1": "¹",
+      "2": "²",
+      "3": "³",
+      "4": "⁴",
+      "5": "⁵",
+      "6": "⁶",
+      "7": "⁷",
+      "8": "⁸",
+      "9": "⁹",
+      "+": "⁺",
+      "-": "⁻",
+    };
+
+    const toSuperscript = (value: string) =>
+      value
+        .split("")
+        .map((character) => superscripts[character] ?? character)
+        .join("");
+
+    const normalized = text
+      .replace(/\$\$/g, "")
+      .replace(/\$/g, "")
+      .replace(/\\text\{([^{}]*)\}/g, "$1")
+      .replace(/\\times/g, "×")
+      .replace(/\\cdot/g, "·")
+      .replace(/\\div/g, "÷")
+      .replace(/\\pm/g, "±")
+      .replace(/\\neq/g, "≠")
+      .replace(/\\leq?/g, "≤")
+      .replace(/\\geq?/g, "≥")
+      .replace(/\\left|\\right/g, "")
+      .replace(/\^\{([0-9+-]+)\}/g, (_, exponent: string) =>
+        toSuperscript(exponent),
+      )
+      .replace(/\^([0-9])/g, (_, exponent: string) =>
+        toSuperscript(exponent),
+      )
+      .replace(/[{}]/g, "")
+      .replace(/\\[a-zA-Z]+/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const maxLength = 54;
+    return normalized.length > maxLength
+      ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
+      : normalized;
   }
   if (isLoading) {
     return (
@@ -552,7 +602,7 @@ export default function ProblemPage() {
               ]
             : []),
           {
-            label: cleanMathSymbols(title),
+            label: getBreadcrumbProblemLabel(title),
             truncate: true,
           },
         ]}
@@ -743,7 +793,7 @@ export default function ProblemPage() {
                 <div className="border-t py-8 text-center">
                   <Lock className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
                   <p className="mb-4 text-muted-foreground">
-                    {problem.Message || t("problem.loginToSolve")}
+                    {t("problem.loginToSolve")}
                   </p>
                   <Button asChild>
                     <Link href="/login">{t("nav.login")}</Link>

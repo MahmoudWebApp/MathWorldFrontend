@@ -348,7 +348,9 @@
       "stage": "المستوى التعليمي",
       "stageRequired": "يجب اختيار مستوى تعليمي",
       "selectStageFirst": "اختر المستوى أولاً",
-      "viewDetails": "عرض التفاصيل"
+      "viewDetails": "عرض التفاصيل",
+      "questionPreview": "معاينة السؤال",
+      "solutionPreview": "معاينة الحل"
     },
     "stages": {
       "title": "المستويات التعليمية",
@@ -448,7 +450,8 @@
     "select": "اختر...",
     "view": "عرض",
     "required": "هذا الحقل مطلوب",
-    "explore": "استكشف"
+    "explore": "استكشف",
+    "close": "إغلاق"
   },
   "about": {
     "metadata": {

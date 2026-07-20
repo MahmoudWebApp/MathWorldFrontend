@@ -603,7 +603,7 @@ export default function AdminProblemsPage() {
                   {form.QuestionTextAr && (
                     <div className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-primary/20">
                       <div className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2">
-                        <Eye className="w-4 h-4 text-primary" /> معاينة السؤال
+                        <Eye className="w-4 h-4 text-primary" /> {t("admin.problems.questionPreview")}
                       </div>
                       <RichText text={form.QuestionTextAr} isArabic={true} />
                     </div>
@@ -638,7 +638,7 @@ export default function AdminProblemsPage() {
                       dir="ltr"
                     >
                       <div className="text-xs font-bold text-muted-foreground mb-3 flex items-center gap-2">
-                        <Eye className="w-4 h-4 text-primary" /> Preview
+                        <Eye className="w-4 h-4 text-primary" /> {t("admin.problems.questionPreview")}
                       </div>
                       <RichText text={form.QuestionTextEn} isArabic={false} />
                     </div>
@@ -797,7 +797,7 @@ export default function AdminProblemsPage() {
                   {form.DetailedSolutionAr && (
                     <div className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-green-500/30">
                       <div className="text-xs font-bold text-green-600 dark:text-green-500 mb-3 flex items-center gap-2">
-                        <Eye className="w-4 h-4" /> معاينة الحل
+                        <Eye className="w-4 h-4" /> {t("admin.problems.solutionPreview")}
                       </div>
                       <RichText
                         text={form.DetailedSolutionAr}

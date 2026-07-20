@@ -296,8 +296,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const locale = useLocale();
 
   
-  const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery();
-  const { data: stages, isLoading: stagesLoading } = useGetStagesQuery();
+  const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
+  const { data: stages, isLoading: stagesLoading } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const currentStage = stages?.find(s => s.Id === stageId);
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];

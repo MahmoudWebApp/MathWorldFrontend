@@ -141,7 +141,7 @@ function StagePremiumCard({ stage, index, colors, icon: Icon, locale }: StagePre
 export function StagesSection() {
   const t = useTranslations();
   const locale = useLocale();
-  const { data: stages, isLoading } = useGetStagesQuery();
+  const { data: stages, isLoading } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
 // Custom premium styles matching the spotlight effect & hover states
   const stageStyles = [

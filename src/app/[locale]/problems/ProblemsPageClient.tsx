@@ -34,16 +34,20 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // Wrapper to provide Suspense boundary for useSearchParams
+function ProblemsLoadingFallback() {
+  const t = useTranslations();
+
+  return (
+    <div className="mx-auto flex flex-col items-center justify-center gap-4 px-4 py-20 md:px-16 lg:px-24">
+      <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      <p className="animate-pulse text-muted-foreground">{t('common.loading')}</p>
+    </div>
+  );
+}
+
 export default function ProblemsPageClientWrapper() {
   return (
-    <Suspense
-      fallback={
-        <div className="mx-auto lg:px-24 md:px-16 px-4 py-20 flex flex-col justify-center items-center gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-muted-foreground animate-pulse">Loading...</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<ProblemsLoadingFallback />}>
       <ProblemsPageClient />
     </Suspense>
   );
@@ -73,8 +77,8 @@ function ProblemsPageClient() {
   const categoryId = urlCategoryId;
 
   // ── API queries ─────────────────────────────────────────
-  const { data: categories } = useGetCategoriesQuery();
-  const { data: stages } = useGetStagesQuery();
+  const { data: categories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
+  const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const {
     data: searchResults,

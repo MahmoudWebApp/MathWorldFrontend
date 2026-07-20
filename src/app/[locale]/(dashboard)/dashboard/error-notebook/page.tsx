@@ -39,7 +39,10 @@ export default function ErrorNotebookPage() {
     isLoading,
     isError,
     refetch,
-  } = useGetErrorNotebookQuery({ IncludeArchived: true });
+  } = useGetErrorNotebookQuery(
+    { IncludeArchived: true, Locale: locale },
+    { refetchOnMountOrArgChange: true },
+  );
 
   const [setArchiveStatus] = useSetErrorNotebookArchiveMutation();
 

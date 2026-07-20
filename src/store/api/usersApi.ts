@@ -86,24 +86,24 @@ export const usersApi = createApi({
       providesTags: ['User'],
     }),
 
-    getDashboard: builder.query<DashboardData, void>({
+    getDashboard: builder.query<DashboardData, string>({
       query: () => '/users/dashboard',
       providesTags: ['Dashboard'],
     }),
 
-    getFavorites: builder.query<ProblemPreview[], void>({
+    getFavorites: builder.query<ProblemPreview[], string>({
       query: () => '/users/favorites',
       providesTags: ['Favorite'],
     }),
 
-    getSolvedProblems: builder.query<ProblemPreview[], void>({
+    getSolvedProblems: builder.query<ProblemPreview[], string>({
       query: () => '/users/solved',
       providesTags: ['Solved'],
     }),
 
     getErrorNotebook: builder.query<
       ErrorNotebookProblem[],
-      { IncludeArchived?: boolean } | undefined
+      { IncludeArchived?: boolean; Locale: string }
     >({
       query: (params) => ({
         url: '/users/error-notebook',

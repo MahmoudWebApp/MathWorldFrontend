@@ -31,15 +31,27 @@ export function RichText({
   const parts = text.split(LATEX_TOKEN_REGEX);
   const Container = inline ? 'span' : 'div';
 
+  // Detect direction from the natural-language part of the content. This keeps
+  // English content LTR and Arabic content RTL even while a locale switch is
+  // still refreshing localized API data. LaTeX tokens are ignored so an
+  // equation that starts with x does not force an Arabic sentence to LTR.
+  const plainText = text.replace(LATEX_TOKEN_REGEX, ' ');
+  const containsArabic = /[\u0600-\u06FF]/.test(plainText);
+  const containsLatin = /[A-Za-z]/.test(plainText);
+  const contentIsArabic = containsArabic
+    ? true
+    : containsLatin
+      ? false
+      : isArabic;
+
   return (
     <Container
-      dir={isArabic ? 'rtl' : 'ltr'}
+      dir={contentIsArabic ? 'rtl' : 'ltr'}
       className={cn(
-        'whitespace-pre-wrap',
+        'whitespace-pre-wrap text-start',
         inline
           ? 'text-base'
           : 'prose max-w-none text-base leading-loose dark:prose-invert',
-        isArabic ? 'text-right' : 'text-left',
         className,
       )}
     >

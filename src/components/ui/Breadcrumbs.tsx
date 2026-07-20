@@ -37,7 +37,7 @@ export function Breadcrumbs({
           const isLast = index === items.length - 1;
           const shouldTruncate = item.truncate || isLast;
           const labelClassName = cn(
-            "block min-w-0",
+            "block min-w-0 text-start [unicode-bidi:plaintext]",
             shouldTruncate &&
               "max-w-[42vw] truncate sm:max-w-[20rem] lg:max-w-[34rem]",
           );
@@ -58,10 +58,11 @@ export function Breadcrumbs({
                   aria-label={item.label}
                 >
                   {index === 0 && <Home className="h-4 w-4 shrink-0" />}
-                  <span className={labelClassName}>{item.label}</span>
+                  <span dir="auto" className={labelClassName}>{item.label}</span>
                 </Link>
               ) : (
                 <span
+                  dir="auto"
                   className={cn(labelClassName, "font-bold text-foreground")}
                   title={item.label}
                   aria-label={item.label}

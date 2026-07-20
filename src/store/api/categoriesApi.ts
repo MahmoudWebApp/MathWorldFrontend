@@ -43,7 +43,7 @@ export const categoriesApi = createApi({
   endpoints: (builder) => ({
 
     // Public: Get all categories - returns translated names based on Accept-Language
-    getCategories: builder.query<CategoryDto[], void>({
+    getCategories: builder.query<CategoryDto[], string>({
       query: () => '/categories',
       providesTags: ['Category'],
     }),

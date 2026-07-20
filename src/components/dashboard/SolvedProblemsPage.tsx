@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetSolvedProblemsQuery } from '@/store/api/usersApi';
 import { ProblemCard } from '@/components/problems/ProblemCard';
@@ -12,13 +12,16 @@ import { useState, useEffect } from 'react';
 
 export function SolvedProblemsPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const { data: solvedProblems, isLoading, error } = useGetSolvedProblemsQuery();
+  const { data: solvedProblems, isLoading, error } = useGetSolvedProblemsQuery(locale, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const totalCount = solvedProblems?.length ?? 0;
 

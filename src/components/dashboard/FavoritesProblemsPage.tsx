@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetFavoritesQuery, useToggleFavoriteMutation } from '@/store/api/usersApi';
 import { ProblemCard } from '@/components/problems/ProblemCard';
@@ -12,13 +12,16 @@ import { useState, useEffect } from 'react';
 
 export function FavoritesProblemsPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const { data: favorites, isLoading, error } = useGetFavoritesQuery();
+  const { data: favorites, isLoading, error } = useGetFavoritesQuery(locale, {
+    refetchOnMountOrArgChange: true,
+  });
   const [toggleFavorite] = useToggleFavoriteMutation();
 
   const totalCount = favorites?.length ?? 0;
@@ -102,7 +105,7 @@ export function FavoritesProblemsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute top-4 right-4 z-10 opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="absolute top-4 end-4 z-10 opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
