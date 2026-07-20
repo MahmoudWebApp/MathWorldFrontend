@@ -7,14 +7,22 @@ import { useSelector } from 'react-redux';
 import {
   ArrowLeft,
   BookOpen,
+  CalendarClock,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Clock3,
   GraduationCap,
   Heart,
+  History,
   Loader2,
   Lock,
+  NotebookTabs,
   PlayCircle,
+  RotateCcw,
   Send,
   Star,
+  Target,
   XCircle,
 } from 'lucide-react';
 
@@ -23,11 +31,13 @@ import type { RootState } from '@/store';
 import {
   type AdminProblemOption,
   type AnswerResult,
+  type MasteryStatus,
   type OptionForStudent,
   type ProblemAdminDetail,
   type ProblemDetail,
   type ProblemForPublic,
   type ProblemForStudent,
+  useGetProblemAttemptsQuery,
   useGetProblemQuery,
   useSubmitAnswerMutation,
 } from '@/store/api/problemsApi';
@@ -36,6 +46,7 @@ import {
   useToggleFavoriteMutation,
 } from '@/store/api/usersApi';
 import { Badge } from '@/components/ui/Badge';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Button } from '@/components/ui/Button';
 import { LatexPreview } from '@/components/ui/LatexPreview';
 import { RichText } from '@/components/ui/RichText';
@@ -96,6 +107,25 @@ function YoutubeEmbed({ url }: { url: string }) {
 
 type OptionState = 'idle' | 'selected' | 'correct' | 'wrong';
 
+function formatDuration(
+  seconds: number | null | undefined,
+  fallback: string,
+  minuteUnit: string,
+  secondUnit: string,
+) {
+  if (seconds === null || seconds === undefined) {
+    return fallback;
+  }
+
+  if (seconds < 60) {
+    return `${seconds} ${secondUnit}`;
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes} ${minuteUnit} ${remainingSeconds} ${secondUnit}`;
+}
+
 export default function ProblemPage() {
   const params = useParams<{ id: string }>();
   const t = useTranslations();
@@ -104,6 +134,8 @@ export default function ProblemPage() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const problemId = Number.parseInt(params.id, 10);
   const solutionRef = useRef<HTMLDivElement>(null);
+  const questionCardRef = useRef<HTMLDivElement>(null);
+  const attemptStartedAtRef = useRef(Date.now());
 
   const {
     data: problem,
@@ -114,6 +146,20 @@ export default function ProblemPage() {
     { Id: problemId, locale },
     { skip: Number.isNaN(problemId) },
   );
+
+  const studentProblem = isStudentProblem(problem) ? problem : null;
+  const adminProblem = isAdminProblem(problem) ? problem : null;
+
+  const {
+    data: attemptHistory,
+    isFetching: isAttemptHistoryLoading,
+    refetch: refetchAttemptHistory,
+  } = useGetProblemAttemptsQuery(problemId, {
+    skip:
+      !isAuthenticated ||
+      Number.isNaN(problemId) ||
+      !studentProblem?.HasAttempted,
+  });
 
   const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
     skip: !isAuthenticated || Number.isNaN(problemId),
@@ -127,17 +173,18 @@ export default function ProblemPage() {
   const [localAnswerResult, setLocalAnswerResult] =
     useState<AnswerResult | null>(null);
   const [submissionDone, setSubmissionDone] = useState(false);
+  const [retryMode, setRetryMode] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [activeTab, setActiveTab] = useState<'question' | 'video'>('question');
-  const [startTime] = useState(() => Date.now());
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   useEffect(() => {
-    if (!isStudentProblem(problem)) {
+    if (!studentProblem || retryMode) {
       return;
     }
 
-    if (problem.HasAttempted) {
-      setSelectedOptionId(problem.SelectedOptionId ?? null);
+    if (studentProblem.HasAttempted) {
+      setSelectedOptionId(studentProblem.SelectedOptionId ?? null);
       setSubmissionDone(true);
       return;
     }
@@ -145,11 +192,12 @@ export default function ProblemPage() {
     if (!localAnswerResult) {
       setSelectedOptionId(null);
       setSubmissionDone(false);
+      attemptStartedAtRef.current = Date.now();
     }
-  }, [problem, localAnswerResult]);
+  }, [studentProblem, localAnswerResult, retryMode]);
 
   useEffect(() => {
-    if (!localAnswerResult) {
+    if (!localAnswerResult || retryMode) {
       return;
     }
 
@@ -161,7 +209,7 @@ export default function ProblemPage() {
     }, 200);
 
     return () => window.clearTimeout(timer);
-  }, [localAnswerResult]);
+  }, [localAnswerResult, retryMode]);
 
   const problemData = useMemo(() => {
     if (!problem) {
@@ -192,23 +240,18 @@ export default function ProblemPage() {
     };
   }, [problem, locale]);
 
-  const studentProblem = isStudentProblem(problem) ? problem : null;
-  const adminProblem = isAdminProblem(problem) ? problem : null;
-
   const hasAttempted =
     !!studentProblem &&
     (studentProblem.HasAttempted || submissionDone || !!localAnswerResult);
 
-  const effectiveSelectedOptionId =
-    localAnswerResult?.SelectedOptionId ??
-    selectedOptionId ??
-    studentProblem?.SelectedOptionId ??
-    null;
+  const showResult = hasAttempted && !retryMode;
 
-  const effectiveCorrectOptionId =
-    localAnswerResult?.CorrectOptionId ??
-    studentProblem?.CorrectOptionId ??
-    null;
+  const effectiveSelectedOptionId = retryMode
+    ? selectedOptionId
+    : (localAnswerResult?.SelectedOptionId ??
+      selectedOptionId ??
+      studentProblem?.SelectedOptionId ??
+      null);
 
   const isCorrect =
     localAnswerResult?.IsCorrect ??
@@ -216,16 +259,58 @@ export default function ProblemPage() {
     studentProblem?.IsSolved ??
     false;
 
+  const effectiveCorrectOptionId = showResult && isCorrect
+    ? (localAnswerResult?.CorrectOptionId ??
+      studentProblem?.CorrectOptionId ??
+      null)
+    : null;
+
+  const canRetry =
+    localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
+
   const canAnswer =
-    isAuthenticated && !!studentProblem && !hasAttempted && !isSubmitting;
+    isAuthenticated &&
+    !!studentProblem &&
+    (!hasAttempted || (retryMode && canRetry));
+
+  const currentMastery =
+    localAnswerResult?.MasteryStatus ??
+    attemptHistory?.MasteryStatus ??
+    studentProblem?.MasteryStatus ??
+    'New';
+
+  const currentAttemptCount =
+    localAnswerResult?.TotalAttempts ??
+    attemptHistory?.TotalAttempts ??
+    studentProblem?.AttemptCount ??
+    0;
+
+  const bestTime =
+    localAnswerResult?.BestTimeSeconds ??
+    attemptHistory?.BestTimeSeconds ??
+    studentProblem?.BestTimeSeconds ??
+    null;
+
+  const averageTime =
+    attemptHistory?.AverageTimeSeconds ??
+    studentProblem?.AverageTimeSeconds ??
+    null;
+
+  const nextReviewAt =
+    localAnswerResult?.NextReviewAt ??
+    attemptHistory?.NextReviewAt ??
+    studentProblem?.NextReviewAt ??
+    null;
+
+  const isInErrorNotebook =
+    localAnswerResult?.IsInErrorNotebook ??
+    attemptHistory?.IsInErrorNotebook ??
+    studentProblem?.IsInErrorNotebook ??
+    false;
 
   const solutionText = useMemo(() => {
-    if (localAnswerResult?.DetailedSolution) {
-      return localAnswerResult.DetailedSolution;
-    }
-
-    if (studentProblem?.DetailedSolution) {
-      return studentProblem.DetailedSolution;
+    if (retryMode) {
+      return null;
     }
 
     if (adminProblem) {
@@ -234,10 +319,29 @@ export default function ProblemPage() {
         : adminProblem.DetailedSolutionEn;
     }
 
-    return null;
-  }, [localAnswerResult, studentProblem, adminProblem, locale]);
+    if (!isCorrect) {
+      return null;
+    }
+
+    if (localAnswerResult?.DetailedSolution) {
+      return localAnswerResult.DetailedSolution;
+    }
+
+    return studentProblem?.DetailedSolution ?? null;
+  }, [
+    localAnswerResult,
+    studentProblem,
+    adminProblem,
+    locale,
+    retryMode,
+    isCorrect,
+  ]);
 
   const youtubeUrl = useMemo(() => {
+    if (retryMode || (!adminProblem && !isCorrect)) {
+      return null;
+    }
+
     const value =
       localAnswerResult?.YoutubeSolutionUrl ||
       studentProblem?.YoutubeSolutionUrl ||
@@ -248,15 +352,34 @@ export default function ProblemPage() {
     }
 
     return value;
-  }, [localAnswerResult, studentProblem, adminProblem]);
+  }, [
+    localAnswerResult,
+    studentProblem,
+    adminProblem,
+    retryMode,
+    isCorrect,
+  ]);
 
-  const showResult = hasAttempted;
   const showSolutionSection =
-    !!solutionText && (hasAttempted || !!adminProblem);
-  const showVideoTab =
-    !!youtubeUrl && (hasAttempted || !!adminProblem);
+    !!solutionText && (showResult || !!adminProblem);
+  const showVideoTab = !!youtubeUrl && (showResult || !!adminProblem);
   const isFavorite =
     favoriteData?.IsFavorite ?? studentProblem?.IsFavorite ?? false;
+
+  function getMasteryLabel(status: MasteryStatus) {
+    return t(`problem.mastery.${status}`);
+  }
+
+  function formatDate(value: string | null | undefined) {
+    if (!value) {
+      return t('common.unknown');
+    }
+
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(value));
+  }
 
   async function handleFavorite() {
     if (!problem) {
@@ -274,10 +397,40 @@ export default function ProblemPage() {
     }
   }
 
+  function handleStartRetry() {
+    if (!canRetry) {
+      return;
+    }
+
+    setRetryMode(true);
+    setSubmissionDone(false);
+    setLocalAnswerResult(null);
+    setSelectedOptionId(null);
+    setSubmitError('');
+    setActiveTab('question');
+    attemptStartedAtRef.current = Date.now();
+
+    window.setTimeout(() => {
+      questionCardRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 50);
+  }
+
+  function handleCancelRetry() {
+    setRetryMode(false);
+    setSubmissionDone(true);
+    setLocalAnswerResult(null);
+    setSelectedOptionId(studentProblem?.SelectedOptionId ?? null);
+    setSubmitError('');
+  }
+
   async function handleSubmit() {
     if (
       !studentProblem ||
       !canAnswer ||
+      isSubmitting ||
       effectiveSelectedOptionId === null
     ) {
       return;
@@ -291,28 +444,34 @@ export default function ProblemPage() {
         SelectedOptionId: effectiveSelectedOptionId,
         TimeSpentSeconds: Math.max(
           0,
-          Math.floor((Date.now() - startTime) / 1000),
+          Math.floor((Date.now() - attemptStartedAtRef.current) / 1000),
         ),
       }).unwrap();
 
       setLocalAnswerResult(result);
       setSelectedOptionId(result.SelectedOptionId);
       setSubmissionDone(true);
+      setRetryMode(false);
+      setHistoryExpanded(true);
+
+      await refetchProblem();
+
+      if (studentProblem.HasAttempted) {
+        await refetchAttemptHistory();
+      }
     } catch (submitFailure) {
       const normalized = submitFailure as {
         data?: { message?: string };
       };
 
-      setSubmitError(
-        normalized.data?.message || t('common.error'),
-      );
+      setSubmitError(normalized.data?.message || t('common.error'));
     }
   }
 
   function getOptionState(option: OptionForStudent): OptionState {
     const isSelected = effectiveSelectedOptionId === option.Id;
 
-    if (!hasAttempted) {
+    if (!showResult) {
       return isSelected ? 'selected' : 'idle';
     }
 
@@ -375,55 +534,36 @@ export default function ProblemPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-16 lg:px-24">
-      <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-        <Link href="/" className="transition-colors hover:text-primary">
-          {t('nav.home')}
-        </Link>
-        <span className="mx-1 opacity-50">/</span>
-        <Link
-          href="/stages"
-          className="transition-colors hover:text-primary"
-        >
-          {t('nav.stages')}
-        </Link>
-
-        {stageName && (
-          <>
-            <span className="mx-1 opacity-50">/</span>
-            <Link
-              href={`/problems?stageId=${stageId}`}
-              className="transition-colors hover:text-primary"
-            >
-              {stageName}
-            </Link>
-          </>
-        )}
-
-        {categoryName && (
-          <>
-            <span className="mx-1 opacity-50">/</span>
-            <Link
-              href={`/problems?stageId=${stageId}&categoryId=${categoryId}`}
-              className="font-medium text-foreground transition-colors hover:text-primary"
-            >
-              {categoryName}
-            </Link>
-          </>
-        )}
-
-        <span className="mx-1 opacity-50">/</span>
-        <span
-          className="max-w-[150px] truncate text-muted-foreground sm:max-w-[250px]"
-          title={title}
-        >
-          <RichText text={title} isArabic={isArabic} inline />
-        </span>
-      </div>
+      <Breadcrumbs
+        surface
+        className="mb-6"
+        items={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('nav.stages'), href: '/stages' },
+          ...(stageName
+            ? [
+                {
+                  label: stageName,
+                  href: `/problems?stageId=${stageId}`,
+                },
+              ]
+            : []),
+          ...(categoryName
+            ? [
+                {
+                  label: categoryName,
+                  href: `/problems?stageId=${stageId}&categoryId=${categoryId}`,
+                },
+              ]
+            : []),
+          { label: title, truncate: true },
+        ]}
+      />
 
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
           <h1
-            className={`mb-3 text-3xl font-bold sm:text-4xl ${
+            className={`brand-display-title mb-3 text-3xl font-bold sm:text-4xl ${
               isArabic ? 'text-right' : 'text-left'
             }`}
           >
@@ -459,6 +599,13 @@ export default function ProblemPage() {
             {categoryName && (
               <Badge variant="secondary">{categoryName}</Badge>
             )}
+
+            {studentProblem?.HasAttempted && (
+              <Badge variant="outline" className="gap-1">
+                <Target className="h-3.5 w-3.5" />
+                {getMasteryLabel(currentMastery)}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -467,7 +614,11 @@ export default function ProblemPage() {
             variant="ghost"
             size="icon"
             onClick={handleFavorite}
-            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            aria-label={
+              isFavorite
+                ? t('favorites.removeFromFavorites')
+                : t('favorites.addToFavorites')
+            }
             className={
               isFavorite
                 ? 'text-red-500 hover:text-red-600'
@@ -483,8 +634,76 @@ export default function ProblemPage() {
         )}
       </div>
 
+      {studentProblem?.HasAttempted && (
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="rounded-xl border bg-card p-4">
+            <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+              <History className="h-4 w-4" />
+              {t('problem.totalAttempts')}
+            </div>
+            <p className="text-xl font-bold">{currentAttemptCount}</p>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock3 className="h-4 w-4" />
+              {t('problem.bestTime')}
+            </div>
+            <p className="text-xl font-bold">
+              {formatDuration(
+                bestTime,
+                t('common.noData'),
+                t('problem.minutesShort'),
+                t('problem.secondsShort'),
+              )}
+            </p>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock3 className="h-4 w-4" />
+              {t('problem.averageTime')}
+            </div>
+            <p className="text-xl font-bold">
+              {formatDuration(
+                averageTime,
+                t('common.noData'),
+                t('problem.minutesShort'),
+                t('problem.secondsShort'),
+              )}
+            </p>
+          </div>
+          <div className="rounded-xl border bg-card p-4">
+            <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarClock className="h-4 w-4" />
+              {t('problem.nextReview')}
+            </div>
+            <p className="text-sm font-semibold">
+              {nextReviewAt ? formatDate(nextReviewAt) : t('problem.noReviewScheduled')}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {retryMode && (
+        <div className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-primary">
+              {t('problem.trainingModeTitle')}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t('problem.trainingModeDescription')}
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleCancelRetry}>
+            {t('common.cancel')}
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-8">
-        <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <div
+          ref={questionCardRef}
+          className="scroll-mt-20 overflow-hidden rounded-2xl border bg-card shadow-sm"
+        >
           {showVideoTab && (
             <div className="flex border-b">
               <button
@@ -535,11 +754,31 @@ export default function ProblemPage() {
               )}
 
               {studentProblem && (
-                <>
+                <div className="relative" aria-busy={isSubmitting}>
+                  <div aria-live="polite" aria-atomic="true">
+                    {isSubmitting && (
+                      <div
+                        role="status"
+                        className="mb-5 flex items-center gap-3 rounded-xl border border-[#8FC9E0] bg-[#EAF7FB] p-4 text-[#214F6A] shadow-sm dark:border-[#3C728B] dark:bg-[#102D40] dark:text-[#BFE8F6]"
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#53B2D826]">
+                          <Loader2 className="h-5 w-5 animate-spin text-[#2F73A3] dark:text-[#78CBE8]" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">
+                            {t('problem.checkingAnswer')}
+                          </p>
+                          <p className="mt-0.5 text-sm opacity-80">
+                            {t('problem.checkingAnswerHint')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <div className="mb-6 space-y-3">
                     {studentProblem.Options.map((option) => {
                       const optionState = getOptionState(option);
-                      const isOptionDisabled = !canAnswer;
+                      const isOptionDisabled = !canAnswer || isSubmitting;
 
                       return (
                         <label
@@ -558,7 +797,7 @@ export default function ProblemPage() {
                               : 'cursor-pointer'
                           }`}
                         >
-                          {!hasAttempted && (
+                          {canAnswer && (
                             <input
                               type="radio"
                               name="option"
@@ -607,12 +846,14 @@ export default function ProblemPage() {
                         {isSubmitting ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            {t('common.loading')}
+                            {t('problem.checkingAnswer')}
                           </>
                         ) : (
                           <>
                             <Send className="h-4 w-4 rtl:rotate-180" />
-                            {t('problem.submit')}
+                            {retryMode
+                              ? t('problem.submitTrainingAttempt')
+                              : t('problem.submit')}
                           </>
                         )}
                       </Button>
@@ -627,30 +868,84 @@ export default function ProblemPage() {
                           : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
                       }`}
                     >
-                      <div className="mb-2 flex items-center gap-2">
-                        {isCorrect ? (
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                        ) : (
-                          <XCircle className="h-5 w-5 text-red-600" />
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          {isCorrect ? (
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                          ) : (
+                            <XCircle className="h-5 w-5 text-red-600" />
+                          )}
+                          <span className="font-semibold">
+                            {isCorrect
+                              ? t('problem.correct')
+                              : t('problem.wrong')}
+                          </span>
+                        </div>
+
+                        {localAnswerResult && (
+                          <Badge variant="outline">
+                            {localAnswerResult.IsOfficialAttempt
+                              ? t('problem.officialAttempt')
+                              : t('problem.trainingAttempt')}
+                          </Badge>
                         )}
-                        <span className="font-semibold">
-                          {isCorrect
-                            ? t('problem.correct')
-                            : t('problem.wrong')}
-                        </span>
                       </div>
 
-                      {!isCorrect && localAnswerResult?.CorrectOptionText && (
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-red-700 dark:text-red-300">
-                          <span>{t('problem.correctAnswerWas')}:</span>
-                          <LatexPreview
-                            latex={localAnswerResult.CorrectOptionText}
-                          />
+                      {!isCorrect && (
+                        <p className="mt-2 text-sm leading-relaxed text-red-700 dark:text-red-300">
+                          {t('problem.retryWithoutReveal')}
+                        </p>
+                      )}
+
+                      {localAnswerResult && (
+                        <div className="mt-4 flex flex-wrap gap-2 text-sm">
+                          <Badge variant="secondary">
+                            {t('problem.attemptNumber', {
+                              number: localAnswerResult.AttemptNumber,
+                            })}
+                          </Badge>
+                          <Badge variant="secondary">
+                            {formatDuration(
+                              localAnswerResult.AttemptTimeSeconds,
+                              t('common.noData'),
+                              t('problem.minutesShort'),
+                              t('problem.secondsShort'),
+                            )}
+                          </Badge>
+                          {localAnswerResult.PointsEarned > 0 && (
+                            <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                              +{localAnswerResult.PointsEarned}{' '}
+                              {t('dashboard.user.totalPoints')}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+
+                      {canRetry && (
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                          <Button
+                            variant="outline"
+                            className="gap-2"
+                            onClick={handleStartRetry}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                            {t('problem.tryAgain')}
+                          </Button>
+
+                          {isInErrorNotebook && (
+                            <Link
+                              href="/dashboard/error-notebook"
+                              className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+                            >
+                              <NotebookTabs className="h-4 w-4" />
+                              {t('problem.openErrorNotebook')}
+                            </Link>
+                          )}
                         </div>
                       )}
                     </div>
                   )}
-                </>
+                </div>
               )}
 
               {adminProblem && (
@@ -697,6 +992,104 @@ export default function ProblemPage() {
               {t('problem.solution')}
             </h3>
             <RichText text={solutionText} isArabic={isArabic} />
+          </div>
+        )}
+
+        {studentProblem?.HasAttempted && (
+          <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+            <button
+              type="button"
+              onClick={() => setHistoryExpanded((value) => !value)}
+              className="flex w-full items-center justify-between gap-3 p-5 text-start hover:bg-muted/40"
+            >
+              <span className="flex items-center gap-2 font-semibold">
+                <History className="h-5 w-5 text-primary" />
+                {t('problem.attemptHistory')}
+              </span>
+              {historyExpanded ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </button>
+
+            {historyExpanded && (
+              <div className="border-t p-5">
+                {isAttemptHistoryLoading ? (
+                  <div className="flex items-center justify-center py-8 text-muted-foreground">
+                    <Loader2 className="me-2 h-5 w-5 animate-spin" />
+                    {t('common.loading')}
+                  </div>
+                ) : attemptHistory?.Attempts.length ? (
+                  <div className="space-y-3">
+                    {attemptHistory.Attempts.map((attempt) => (
+                      <div
+                        key={attempt.Id}
+                        className={`rounded-xl border p-4 ${
+                          attempt.IsCorrect
+                            ? 'border-green-200 bg-green-50/40 dark:border-green-900 dark:bg-green-900/10'
+                            : 'border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-900/10'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {attempt.IsCorrect ? (
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <XCircle className="h-5 w-5 text-red-600" />
+                            )}
+                            <span className="font-semibold">
+                              {t('problem.attemptNumber', {
+                                number: attempt.AttemptNumber,
+                              })}
+                            </span>
+                            <Badge variant="outline">
+                              {attempt.IsOfficial
+                                ? t('problem.officialAttempt')
+                                : t('problem.trainingAttempt')}
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(attempt.SubmittedAt)}
+                          </span>
+                        </div>
+
+                        <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                          <div>
+                            <span className="text-muted-foreground">
+                              {t('problem.selectedAnswer')}:
+                            </span>
+                            <div className="mt-1">
+                              <LatexPreview latex={attempt.SelectedOptionText} />
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                            <Badge variant="secondary">
+                              <Clock3 className="me-1 h-3.5 w-3.5" />
+                              {formatDuration(
+                                attempt.TimeSpentSeconds,
+                                t('common.noData'),
+                                t('problem.minutesShort'),
+                                t('problem.secondsShort'),
+                              )}
+                            </Badge>
+                            {attempt.PointsEarned > 0 && (
+                              <Badge variant="secondary">
+                                +{attempt.PointsEarned}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="py-6 text-center text-muted-foreground">
+                    {t('problem.noAttemptHistory')}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

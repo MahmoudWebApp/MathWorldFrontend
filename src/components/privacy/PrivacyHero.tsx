@@ -50,7 +50,7 @@ export function PrivacyHero() {
             <span>{t('hero.badge')}</span>
           </div>
 
-          <h1 className="hero-anim hero-delay-2 text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-gradient-math">
+          <h1 className="brand-display-title hero-anim hero-delay-2 text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-gradient-math">
             {t('hero.title')}
           </h1>
 

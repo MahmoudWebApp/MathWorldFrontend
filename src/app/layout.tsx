@@ -29,6 +29,16 @@ export async function generateMetadata({
   return {
     title: t("metadata.title"),
     description: t("metadata.description"),
+    icons: {
+      icon: [
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      ],
+      apple: [
+        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      ],
+    },
   };
 }
 
@@ -42,7 +52,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${outfit.variable} ${almarai.variable}`}
     >
-      <body suppressHydrationWarning className="min-h-screen bg-background antialiased"
+      <body suppressHydrationWarning className="min-h-screen bg-background antialiased brand-page-bg"
        data-gramm="false"        
         data-gramm_editor="false"  
         data-enable-grammarly="false" 

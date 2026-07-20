@@ -18,7 +18,11 @@
     "dashboard": "Dashboard",
     "admin": "Admin Panel",
     "guide": "Entry Guide",
-    "about": "About"
+    "about": "About",
+    "favorites": "Favorites",
+    "solved": "Solved Problems",
+    "errorNotebook": "Error Notebook",
+    "user": "User"
   },
   "hero": {
     "title": "Discover the World of Mathematics",
@@ -139,7 +143,34 @@
     "problem": "Problem",
     "correctAnswerWas": "The correct answer was:",
     "question": "Question",
-    "videoSolution": "Video Solution"
+    "videoSolution": "Video Solution",
+    "totalAttempts": "Total attempts",
+    "bestTime": "Best time",
+    "averageTime": "Average time",
+    "nextReview": "Next review",
+    "noReviewScheduled": "No review scheduled",
+    "trainingModeTitle": "Training attempt",
+    "trainingModeDescription": "This retry improves your mastery without replacing your official first result.",
+    "submitTrainingAttempt": "Submit training attempt",
+    "officialAttempt": "Official attempt",
+    "trainingAttempt": "Training attempt",
+    "attemptNumber": "Attempt #{number}",
+    "tryAgain": "Try again",
+    "openErrorNotebook": "Open error notebook",
+    "attemptHistory": "Attempt history",
+    "selectedAnswer": "Selected answer",
+    "noAttemptHistory": "No attempts recorded yet.",
+    "mastery": {
+      "New": "New",
+      "NeedsReview": "Needs review",
+      "Practicing": "Practicing",
+      "Mastered": "Mastered"
+    },
+    "minutesShort": "min",
+    "secondsShort": "sec",
+    "checkingAnswer": "Checking your answer...",
+    "checkingAnswerHint": "Please wait a moment. Your result will appear as soon as the request is complete.",
+    "retryWithoutReveal": "The correct answer and solution stay hidden so you can retry and benefit from the training."
   },
   "auth": {
     "login": {
@@ -631,10 +662,31 @@
       "description": "Save problems you like!",
       "button": "Browse Problems"
     },
-    "remove": "Remove from favorites"
+    "remove": "Remove from favorites",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites"
   },
   "errors": {
     "passwordMismatch": "Passwords do not match",
     "problemNotFound": "Problem not found"
+  },
+  "errorNotebook": {
+    "learningTool": "Learning tool",
+    "title": "Error Notebook",
+    "description": "Review problems you answered incorrectly, retry them, and track your progress toward mastery.",
+    "active": "Needs review",
+    "archived": "Archived",
+    "emptyActiveTitle": "Your error notebook is clear",
+    "emptyActiveDescription": "Problems answered incorrectly will appear here automatically so you can practice them later.",
+    "emptyArchivedTitle": "No archived problems",
+    "emptyArchivedDescription": "Problems you archive from the active notebook will appear here.",
+    "attempts": "Attempts",
+    "incorrect": "Incorrect",
+    "correct": "Correct",
+    "nextReview": "Next review",
+    "noReviewDate": "No review date scheduled",
+    "practiceNow": "Practice now",
+    "archive": "Archive",
+    "restore": "Restore"
   }
 }

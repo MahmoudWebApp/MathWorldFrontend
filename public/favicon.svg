@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">MathWorld</title>
+  <defs>
+    <linearGradient id="mathworldGradient" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#53B2D8" />
+      <stop offset="0.52" stop-color="#3491C3" />
+      <stop offset="1" stop-color="#213550" />
+    </linearGradient>
+  </defs>
+  <path d="M7 55V9h12l13 25L45 9h12v46H47V27L37 48H27L17 27v28H7Z" fill="url(#mathworldGradient)" />
+</svg>

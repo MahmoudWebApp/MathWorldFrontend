@@ -12,7 +12,7 @@ import {
   ArrowRight2,
   Warning2,
 } from "iconsax-reactjs";
-import { Trophy, Target } from "lucide-react";
+import { NotebookTabs, Trophy, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
@@ -133,6 +133,27 @@ export default function UserDashboardPage() {
               </Card>
             ))}
       </div>
+
+      <Link
+        href="/dashboard/error-notebook"
+        className="mb-8 flex flex-col gap-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-5 transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-amber-900 dark:bg-amber-900/10 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+            <NotebookTabs className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="font-semibold">{t("errorNotebook.title")}</h2>
+            <p className="text-sm text-muted-foreground">
+              {t("errorNotebook.description")}
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+          {t("common.view")}
+          <ArrowRight2 className="h-4 w-4 rtl:rotate-180" />
+        </span>
+      </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Solved Problems */}

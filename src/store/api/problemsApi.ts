@@ -21,6 +21,8 @@ export interface QuestionOptionDto {
   Order: number;
 }
 
+export type MasteryStatus = 'New' | 'NeedsReview' | 'Practicing' | 'Mastered';
+
 export interface ProblemForStudent {
   Id: number;
   Title: string;
@@ -38,6 +40,15 @@ export interface ProblemForStudent {
   SelectedOptionId?: number | null;
   CorrectOptionId?: number | null;
   IsFavorite: boolean;
+  AttemptCount: number;
+  FirstAttemptCorrect?: boolean | null;
+  CanRetry: boolean;
+  MasteryStatus: MasteryStatus;
+  BestTimeSeconds?: number | null;
+  AverageTimeSeconds?: number | null;
+  IsInErrorNotebook: boolean;
+  IsErrorNotebookArchived: boolean;
+  NextReviewAt?: string | null;
   DetailedSolution?: string | null;
   YoutubeSolutionUrl?: string | null;
   Options: OptionForStudent[];
@@ -127,17 +138,58 @@ export interface AnswerResult {
   IsCorrect: boolean;
   IsSolved: boolean;
   SelectedOptionId: number;
-  CorrectOptionId: number;
+  CorrectOptionId?: number | null;
   PointsEarned: number;
-  DetailedSolution: string;
-  CorrectOptionText: string;
+  DetailedSolution?: string | null;
+  CorrectOptionText?: string | null;
   YoutubeSolutionUrl?: string | null;
+  AttemptId: number;
+  AttemptNumber: number;
+  IsOfficialAttempt: boolean;
+  FirstAttemptCorrect: boolean;
+  AttemptTimeSeconds: number;
+  BestTimeSeconds?: number | null;
+  TotalAttempts: number;
+  CanRetry: boolean;
+  MasteryStatus: MasteryStatus;
+  IsInErrorNotebook: boolean;
+  NextReviewAt?: string | null;
+}
+
+export interface ProblemAttempt {
+  Id: number;
+  AttemptNumber: number;
+  IsOfficial: boolean;
+  SelectedOptionId: number;
+  SelectedOptionText: string;
+  CorrectOptionId?: number | null;
+  CorrectOptionText?: string | null;
+  IsCorrect: boolean;
+  TimeSpentSeconds: number;
+  PointsEarned: number;
+  UsedHint: boolean;
+  StartedAt: string;
+  SubmittedAt: string;
+}
+
+export interface ProblemAttemptHistory {
+  ProblemId: number;
+  TotalAttempts: number;
+  FirstAttemptCorrect?: boolean | null;
+  IsSolved: boolean;
+  BestTimeSeconds?: number | null;
+  AverageTimeSeconds?: number | null;
+  MasteryStatus: MasteryStatus;
+  IsInErrorNotebook: boolean;
+  IsErrorNotebookArchived: boolean;
+  NextReviewAt?: string | null;
+  Attempts: ProblemAttempt[];
 }
 
 export const problemsApi = createApi({
   reducerPath: 'problemsApi',
   baseQuery,
-  tagTypes: ['Problem', 'Category'],
+  tagTypes: ['Problem', 'Category', 'AttemptHistory'],
   endpoints: (builder) => ({
     searchProblems: builder.query<SearchResponse, SearchProblemsParams>({
       query: (params) => ({
@@ -164,6 +216,13 @@ export const problemsApi = createApi({
       ],
     }),
 
+    getProblemAttempts: builder.query<ProblemAttemptHistory, number>({
+      query: (problemId) => `/problems/${problemId}/attempts`,
+      providesTags: (_result, _error, problemId) => [
+        { type: 'AttemptHistory', id: problemId },
+      ],
+    }),
+
     submitAnswer: builder.mutation<AnswerResult, SubmitAnswerRequest>({
       query: (body) => ({
         url: '/problems/submit',
@@ -172,6 +231,7 @@ export const problemsApi = createApi({
       }),
       invalidatesTags: (_result, _error, { ProblemId }) => [
         { type: 'Problem', id: ProblemId },
+        { type: 'AttemptHistory', id: ProblemId },
       ],
     }),
 
@@ -245,6 +305,7 @@ export const problemsApi = createApi({
 export const {
   useSearchProblemsQuery,
   useGetProblemQuery,
+  useGetProblemAttemptsQuery,
   useSubmitAnswerMutation,
   useGetCategoryProblemsQuery,
   useGetAdminProblemsQuery,

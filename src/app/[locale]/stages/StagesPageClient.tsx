@@ -97,7 +97,7 @@ function StagePremiumCard({ stage, index, colors, icon: Icon, locale }: StagePre
         onMouseLeave={handleMouseLeave}
         style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
         // Dynamic card shadow matches the stage color
-        className={`group relative block h-full overflow-hidden rounded-3xl border border-primary/10 bg-card/40 backdrop-blur-xl p-6 md:p-8 transition-shadow duration-500 hover:shadow-2xl ${colors.hoverShadow}`}
+        className={`brand-surface group relative block h-full overflow-hidden rounded-3xl p-6 md:p-8 transition-shadow duration-500 hover:shadow-2xl ${colors.hoverShadow}`}
       >
         {/* Interactive spotlight effect */}
         <motion.div
@@ -169,43 +169,43 @@ export default function StagesPageClient() {
   // Custom premium styles matching the spotlight effect & hover states
   const stageStyles = [
     { 
-      from: 'from-emerald-400', to: 'to-teal-600', 
-      bg: 'from-emerald-500/20 to-teal-500/10', 
-      iconColor: 'text-emerald-500',
-      hoverText: 'group-hover:text-emerald-500',
-      hoverBg: 'group-hover:bg-emerald-500',
-      hoverShadow: 'hover:shadow-emerald-500/20',
-      spotlight: 'rgba(16, 185, 129, 0.15)', 
+      from: 'from-[#53B2D8]', to: 'to-[#3491C3]', 
+      bg: 'from-[#53B2D838] to-[#3491C31F]', 
+      iconColor: 'text-[#2F88B8]',
+      hoverText: 'group-hover:text-[#2F88B8]',
+      hoverBg: 'group-hover:bg-[#3491C3]',
+      hoverShadow: 'hover:shadow-[#53B2D833]',
+      spotlight: '#53B2D826', 
       icon: Calculator 
     },
     { 
-      from: 'from-blue-400', to: 'to-indigo-600', 
-      bg: 'from-blue-500/20 to-indigo-500/10', 
-      iconColor: 'text-blue-500',
-      hoverText: 'group-hover:text-blue-500',
-      hoverBg: 'group-hover:bg-blue-500',
-      hoverShadow: 'hover:shadow-blue-500/20',
-      spotlight: 'rgba(59, 130, 246, 0.15)', 
+      from: 'from-[#3491C3]', to: 'to-[#2F73A3]', 
+      bg: 'from-[#3491C338] to-[#2F73A31F]', 
+      iconColor: 'text-[#2F73A3]',
+      hoverText: 'group-hover:text-[#2F73A3]',
+      hoverBg: 'group-hover:bg-[#2F73A3]',
+      hoverShadow: 'hover:shadow-[#3491C333]',
+      spotlight: '#3491C326', 
       icon: Compass 
     },
     { 
-      from: 'from-amber-400', to: 'to-orange-600', 
-      bg: 'from-amber-500/20 to-orange-500/10', 
-      iconColor: 'text-amber-500',
-      hoverText: 'group-hover:text-amber-500',
-      hoverBg: 'group-hover:bg-amber-500',
-      hoverShadow: 'hover:shadow-amber-500/20',
-      spotlight: 'rgba(245, 158, 11, 0.15)', 
+      from: 'from-[#4FA6CF]', to: 'to-[#285E88]', 
+      bg: 'from-[#4FA6CF38] to-[#285E881F]', 
+      iconColor: 'text-[#285E88]',
+      hoverText: 'group-hover:text-[#285E88]',
+      hoverBg: 'group-hover:bg-[#285E88]',
+      hoverShadow: 'hover:shadow-[#2F73A333]',
+      spotlight: '#2F73A326', 
       icon: FunctionSquare 
     },
     { 
-      from: 'from-purple-400', to: 'to-fuchsia-600', 
-      bg: 'from-purple-500/20 to-fuchsia-500/10', 
-      iconColor: 'text-purple-500',
-      hoverText: 'group-hover:text-purple-500',
-      hoverBg: 'group-hover:bg-purple-500',
-      hoverShadow: 'hover:shadow-purple-500/20',
-      spotlight: 'rgba(168, 85, 247, 0.15)', 
+      from: 'from-[#69889F]', to: 'to-[#213550]', 
+      bg: 'from-[#69889F38] to-[#2135501F]', 
+      iconColor: 'text-[#365C78]',
+      hoverText: 'group-hover:text-[#365C78] dark:group-hover:text-[#8CCDE5]',
+      hoverBg: 'group-hover:bg-[#365C78]',
+      hoverShadow: 'hover:shadow-[#21355033]',
+      spotlight: '#69889F26', 
       icon: InfinityIcon 
     },
   ];
@@ -238,11 +238,11 @@ export default function StagesPageClient() {
   }
 
   return (
-    <section className="min-h-screen py-12 lg:py-20 relative overflow-hidden bg-background">
+    <section className="relative min-h-screen overflow-hidden bg-[#F7FBFD] py-12 lg:py-20 dark:bg-background">
       {/* Background Ambience */}
       <div className="absolute inset-0 math-grid-bg opacity-30" />
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/[0.03] rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-1/4 left-0 w-[400px] h-[400px] bg-secondary/[0.02] rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-[#53B2D812] blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-1/4 left-0 h-[400px] w-[400px] rounded-full bg-[#2F73A30D] blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
         
@@ -260,7 +260,7 @@ export default function StagesPageClient() {
             </span>
             <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
           </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/60 bg-clip-text text-transparent tracking-tight">
+          <h1 className="brand-display-title text-4xl md:text-5xl lg:text-6xl font-extrabold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/60 bg-clip-text text-transparent tracking-tight">
             {t('stages.heading')}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">

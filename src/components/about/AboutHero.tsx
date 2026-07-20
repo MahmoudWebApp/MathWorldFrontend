@@ -56,7 +56,7 @@ export function AboutHero() {
           </div>
 
           {/* Title */}
-          <h1 className="hero-anim hero-delay-2 text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-gradient-math leading-tight">
+          <h1 className="brand-display-title hero-anim hero-delay-2 text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-gradient-math">
             {t('hero.title')}
           </h1>
 

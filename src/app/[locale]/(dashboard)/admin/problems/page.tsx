@@ -673,7 +673,7 @@ export default function AdminProblemsPage() {
                     className={cn(
                       "p-6 border-2 rounded-xl flex flex-col gap-5 transition-all duration-300",
                       opt.IsCorrect
-                        ? "bg-green-500/5 border-green-500/40 shadow-[0_0_15px_rgba(34,197,94,0.1)]"
+                        ? "bg-green-500/5 border-green-500/40 shadow-[0_0_15px_#22C55E1A]"
                         : formErrors[`opt_${idx}_Latex`]
                           ? "bg-red-500/5 border-red-500/40"
                           : "bg-card hover:border-border/80 hover:shadow-sm",

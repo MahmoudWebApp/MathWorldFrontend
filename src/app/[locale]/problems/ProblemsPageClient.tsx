@@ -192,7 +192,7 @@ function ProblemsPageClient() {
 
       {/* Page header */}
       <div className="mb-10 text-center md:text-start">
-        <h1 className="text-4xl md:text-5xl/[65px] font-extrabold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <h1 className="brand-display-title text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           {pageTitle}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">

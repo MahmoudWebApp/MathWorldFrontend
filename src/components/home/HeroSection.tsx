@@ -120,7 +120,7 @@ export function HeroSection() {
 
   return (
     <section 
-      className={`relative min-h-[90vh] overflow-hidden cursor-crosshair transition-opacity duration-500 ${mounted ? "opacity-100" : "opacity-0"}`}
+      className={`relative min-h-[90vh] overflow-hidden cursor-default transition-opacity duration-500 ${mounted ? "opacity-100" : "opacity-0"}`}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => { mouseX.set(0); mouseY.set(0); }}
     >
@@ -139,8 +139,8 @@ export function HeroSection() {
           />
 
           {/* Background Layers */}
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.12] via-primary/[0.05] to-background dark:from-primary/[0.15] dark:via-primary/[0.08] dark:to-background -z-10" />
-          <div className="absolute inset-0 math-grid-bg opacity-60 -z-10" />
+          <div className="absolute inset-0 brand-hero-bg -z-20" />
+          <div className="absolute inset-0 math-grid-bg opacity-50 dark:opacity-30 -z-10" />
 
           {/* Magnetic Math Symbols */}
           {mathSymbols.map((sym, index) => (
@@ -155,8 +155,8 @@ export function HeroSection() {
           ))}
 
           {/* Glow Orbs */}
-          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/15 dark:bg-primary/10 rounded-full blur-[120px] animate-pulse -z-10" />
-          <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-primary/10 dark:bg-primary/[0.07] rounded-full blur-[100px] animate-pulse -z-10" style={{ animationDelay: "2s" }} />
+          <div className="absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-[#53B2D824] blur-[120px] animate-pulse -z-10 dark:bg-[#53B2D81A]" />
+          <div className="absolute bottom-1/4 -right-32 h-80 w-80 rounded-full bg-[#2F73A31F] blur-[100px] animate-pulse -z-10 dark:bg-[#3491C317]" style={{ animationDelay: "2s" }} />
 
           {/* Main Content */}
           <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10 pt-24 pb-20">
@@ -165,7 +165,7 @@ export function HeroSection() {
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/20 bg-background/50 backdrop-blur-md text-sm font-medium text-primary mb-8"
+                className="inline-flex items-center gap-2 rounded-full border border-[#C7E1EC] bg-[#FFFFFFCC] px-4 py-2 text-sm font-semibold text-[#2F73A3] shadow-sm backdrop-blur-md mb-8 dark:border-[#3B6278] dark:bg-[#0D2030CC] dark:text-[#78CBE8]"
               >
                 <Sparkles className="h-4 w-4" />
                 <span>{t("hero.tagline")}</span>
@@ -176,7 +176,7 @@ export function HeroSection() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 text-gradient-math leading-tight flex flex-wrap justify-center gap-x-4"
+                className="brand-display-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 text-gradient-math flex flex-wrap justify-center gap-x-4"
               >
                 {t("hero.title").split(" ").map((word, i) => (
                   <motion.span key={i} variants={childVariants} className="inline-block">
@@ -222,8 +222,8 @@ export function HeroSection() {
                 className="w-full max-w-2xl mx-auto mb-12 px-2 sm:px-0"
               >
                 <div className="relative group">
-                  <div className="absolute -inset-1 bg-primary/15 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500" />
-                  <div className="relative flex items-center bg-background/60 backdrop-blur-xl border border-border/50 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-primary/30 transition-all duration-300">
+                  <div className="absolute -inset-1 rounded-2xl bg-[#53B2D824] blur-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500" />
+                  <div className="brand-surface relative flex items-center overflow-hidden rounded-2xl bg-background/80 backdrop-blur-xl focus-within:border-[#53B2D8] focus-within:ring-4 focus-within:ring-[#53B2D826] transition-all duration-300">
                     <Search className="absolute start-3 sm:start-4 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
                       type="text"

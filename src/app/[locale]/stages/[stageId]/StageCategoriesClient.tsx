@@ -25,14 +25,14 @@ import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } fr
 // ==========================================
 
 const categoryStyles = [
-  { from: 'from-blue-500', to: 'to-indigo-500', bg: 'bg-blue-500/10', hoverText: 'group-hover:text-blue-500', hoverShadow: 'hover:shadow-blue-500/20', spotlight: 'rgba(59, 130, 246, 0.15)' },
-  { from: 'from-emerald-500', to: 'to-teal-500', bg: 'bg-emerald-500/10', hoverText: 'group-hover:text-emerald-500', hoverShadow: 'hover:shadow-emerald-500/20', spotlight: 'rgba(16, 185, 129, 0.15)' },
-  { from: 'from-amber-500', to: 'to-orange-500', bg: 'bg-amber-500/10', hoverText: 'group-hover:text-amber-500', hoverShadow: 'hover:shadow-amber-500/20', spotlight: 'rgba(245, 158, 11, 0.15)' },
-  { from: 'from-rose-500', to: 'to-pink-500', bg: 'bg-rose-500/10', hoverText: 'group-hover:text-rose-500', hoverShadow: 'hover:shadow-rose-500/20', spotlight: 'rgba(244, 63, 94, 0.15)' },
-  { from: 'from-violet-500', to: 'to-purple-500', bg: 'bg-violet-500/10', hoverText: 'group-hover:text-violet-500', hoverShadow: 'hover:shadow-violet-500/20', spotlight: 'rgba(139, 92, 246, 0.15)' },
-  { from: 'from-cyan-500', to: 'to-sky-500', bg: 'bg-cyan-500/10', hoverText: 'group-hover:text-cyan-500', hoverShadow: 'hover:shadow-cyan-500/20', spotlight: 'rgba(6, 182, 212, 0.15)' },
-  { from: 'from-fuchsia-500', to: 'to-pink-500', bg: 'bg-fuchsia-500/10', hoverText: 'group-hover:text-fuchsia-500', hoverShadow: 'hover:shadow-fuchsia-500/20', spotlight: 'rgba(217, 70, 239, 0.15)' },
-  { from: 'from-lime-500', to: 'to-green-500', bg: 'bg-lime-500/10', hoverText: 'group-hover:text-lime-500', hoverShadow: 'hover:shadow-lime-500/20', spotlight: 'rgba(132, 204, 22, 0.15)' },
+  { from: 'from-[#53B2D8]', to: 'to-[#3491C3]', bg: 'bg-[#53B2D81F]', hoverText: 'group-hover:text-[#2F88B8]', hoverShadow: 'hover:shadow-[#53B2D833]', spotlight: '#53B2D826' },
+  { from: 'from-[#3491C3]', to: 'to-[#2F73A3]', bg: 'bg-[#3491C31F]', hoverText: 'group-hover:text-[#2F73A3]', hoverShadow: 'hover:shadow-[#3491C333]', spotlight: '#3491C326' },
+  { from: 'from-[#4FA6CF]', to: 'to-[#285E88]', bg: 'bg-[#4FA6CF1F]', hoverText: 'group-hover:text-[#285E88]', hoverShadow: 'hover:shadow-[#2F73A333]', spotlight: '#2F73A326' },
+  { from: 'from-[#69889F]', to: 'to-[#365C78]', bg: 'bg-[#69889F1F]', hoverText: 'group-hover:text-[#365C78]', hoverShadow: 'hover:shadow-[#69889F33]', spotlight: '#69889F26' },
+  { from: 'from-[#61BEDF]', to: 'to-[#3B87B2]', bg: 'bg-[#61BEDF1F]', hoverText: 'group-hover:text-[#3B87B2]', hoverShadow: 'hover:shadow-[#61BEDF33]', spotlight: '#61BEDF26' },
+  { from: 'from-[#3B87B2]', to: 'to-[#244B6A]', bg: 'bg-[#3B87B21F]', hoverText: 'group-hover:text-[#244B6A]', hoverShadow: 'hover:shadow-[#3B87B233]', spotlight: '#3B87B226' },
+  { from: 'from-[#8CBFD5]', to: 'to-[#527F98]', bg: 'bg-[#8CBFD51F]', hoverText: 'group-hover:text-[#527F98]', hoverShadow: 'hover:shadow-[#8CBFD533]', spotlight: '#8CBFD526' },
+  { from: 'from-[#527F98]', to: 'to-[#213550]', bg: 'bg-[#527F981F]', hoverText: 'group-hover:text-[#365C78]', hoverShadow: 'hover:shadow-[#21355033]', spotlight: '#527F9826' },
 ];
 
 const mathSymbols = [
@@ -52,31 +52,31 @@ const mathSymbols = [
 
 const otherStageStyles = [
   { 
-    from: 'from-emerald-400', to: 'to-teal-600', 
-    bg: 'from-emerald-500/20 to-teal-500/10', 
-    iconColor: 'text-emerald-500', hoverText: 'group-hover:text-emerald-500', 
-    hoverBg: 'group-hover:bg-emerald-500', spotlight: 'rgba(16, 185, 129, 0.12)', 
+    from: 'from-[#53B2D8]', to: 'to-[#3491C3]', 
+    bg: 'from-[#53B2D838] to-[#3491C31F]', 
+    iconColor: 'text-[#2F88B8]', hoverText: 'group-hover:text-[#2F88B8]', 
+    hoverBg: 'group-hover:bg-[#3491C3]', spotlight: '#53B2D81F', 
     icon: Calculator 
   },
   { 
-    from: 'from-blue-400', to: 'to-indigo-600', 
-    bg: 'from-blue-500/20 to-indigo-500/10', 
-    iconColor: 'text-blue-500', hoverText: 'group-hover:text-blue-500', 
-    hoverBg: 'group-hover:bg-blue-500', spotlight: 'rgba(59, 130, 246, 0.12)', 
+    from: 'from-[#3491C3]', to: 'to-[#2F73A3]', 
+    bg: 'from-[#3491C338] to-[#2F73A31F]', 
+    iconColor: 'text-[#2F73A3]', hoverText: 'group-hover:text-[#2F73A3]', 
+    hoverBg: 'group-hover:bg-[#2F73A3]', spotlight: '#3491C31F', 
     icon: Compass 
   },
   { 
-    from: 'from-amber-400', to: 'to-orange-600', 
-    bg: 'from-amber-500/20 to-orange-500/10', 
-    iconColor: 'text-amber-500', hoverText: 'group-hover:text-amber-500', 
-    hoverBg: 'group-hover:bg-amber-500', spotlight: 'rgba(245, 158, 11, 0.12)', 
+    from: 'from-[#4FA6CF]', to: 'to-[#285E88]', 
+    bg: 'from-[#4FA6CF38] to-[#285E881F]', 
+    iconColor: 'text-[#285E88]', hoverText: 'group-hover:text-[#285E88]', 
+    hoverBg: 'group-hover:bg-[#285E88]', spotlight: '#2F73A31F', 
     icon: FunctionSquare 
   },
   { 
-    from: 'from-purple-400', to: 'to-fuchsia-600', 
-    bg: 'from-purple-500/20 to-fuchsia-500/10', 
-    iconColor: 'text-purple-500', hoverText: 'group-hover:text-purple-500', 
-    hoverBg: 'group-hover:bg-purple-500', spotlight: 'rgba(168, 85, 247, 0.12)', 
+    from: 'from-[#69889F]', to: 'to-[#213550]', 
+    bg: 'from-[#69889F38] to-[#2135501F]', 
+    iconColor: 'text-[#365C78]', hoverText: 'group-hover:text-[#365C78] dark:group-hover:text-[#8CCDE5]', 
+    hoverBg: 'group-hover:bg-[#365C78]', spotlight: '#69889F1F', 
     icon: InfinityIcon 
   },
 ];
@@ -364,7 +364,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
               </span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent tracking-tight">
+            <h1 className="brand-display-title text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent tracking-tight">
               {currentStage 
                 ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) 
                 : t('categories.title')}

@@ -122,7 +122,7 @@ export function StatsSection() {
       mathEasterEgg: '10⁴',
       labelKey: 'stats.items.users',
       mathSymbol: '∑',
-      mathBg: 'from-blue-500/20 to-cyan-500/10',
+      mathBg: 'from-[#53B2D838] to-[#3491C31F]',
     },
     {
       icon: FileText,
@@ -131,7 +131,7 @@ export function StatsSection() {
       mathEasterEgg: '5 × 10³',
       labelKey: 'stats.items.problems',
       mathSymbol: '∫',
-      mathBg: 'from-emerald-500/20 to-green-500/10',
+      mathBg: 'from-[#3491C338] to-[#2F73A31F]',
     },
     {
       icon: CircleCheckBig,
@@ -140,7 +140,7 @@ export function StatsSection() {
       mathEasterEgg: '50k',
       labelKey: 'stats.items.solutions',
       mathSymbol: '∞',
-      mathBg: 'from-amber-500/20 to-yellow-500/10',
+      mathBg: 'from-[#4FA6CF38] to-[#285E881F]',
     },
     {
       icon: Globe,
@@ -149,12 +149,12 @@ export function StatsSection() {
       mathEasterEgg: '≈ √2025',
       labelKey: 'stats.items.countries',
       mathSymbol: '∂',
-      mathBg: 'from-rose-500/20 to-pink-500/10',
+      mathBg: 'from-[#69889F38] to-[#2135501F]',
     },
   ];
 
   return (
-    <section className="relative py-20 lg:py-28 bg-muted/30 overflow-hidden">
+    <section className="relative overflow-hidden bg-[#EDF6FA] py-20 lg:py-28 dark:bg-[#0A1B2B]">
       <div className="absolute inset-0 math-grid-bg opacity-40 -z-10" />
       
       <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10">

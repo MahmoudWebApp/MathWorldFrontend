@@ -63,7 +63,7 @@
 }
 @keyframes count-up-glow {
   0% { text-shadow: 0 0 0px transparent; }
-  50% { text-shadow: 0 0 20px oklch(0.55 0.155 260 / 0.5); }
+  50% { text-shadow: 0 0 20px #3491C380; }
   100% { text-shadow: 0 0 0px transparent; }
 }
 @keyframes wave-rotate {

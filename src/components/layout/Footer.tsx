@@ -4,6 +4,7 @@ import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { socialLinks } from './socialLinks';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 export function Footer() {
   const t = useTranslations();
@@ -43,13 +44,18 @@ export function Footer() {
           
           {/* Brand & Description (Takes more space) */}
           <div className="lg:col-span-5">
-            <Link href="/" className="flex items-center gap-3 mb-6 group inline-flex">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-2xl shadow-lg shadow-primary/20 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500">
-                M
-              </div>
-              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
-                MathWorld
-              </span>
+            <Link
+              href="/"
+              className="group mb-6 inline-flex items-center"
+              aria-label="MathWorld"
+            >
+              <Image
+                src="/mathworld-logo.svg"
+                alt="MathWorld Logo"
+                width={176}
+                height={104}
+                className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] dark:drop-shadow-[0_3px_16px_#53B2D838]"
+              />
             </Link>
             <p className="text-base text-muted-foreground leading-relaxed mb-8 max-w-sm">
               {t('footer.description')}

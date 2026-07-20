@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery } from './baseQuery';
 import type { DashboardData, ProblemPreview } from './types';
+import type { MasteryStatus } from './problemsApi';
 
 export interface UserProfile {
   Id: number;
@@ -42,10 +43,43 @@ export interface FavoriteCheck {
   IsFavorite: boolean;
 }
 
+export interface ErrorNotebookProblem {
+  Id: number;
+  Title: string;
+  StageId: number;
+  StageName: string;
+  CategoryId: number;
+  CategoryName: string;
+  AttemptCount: number;
+  IncorrectAttempts: number;
+  CorrectAttempts: number;
+  MasteryStatus: MasteryStatus;
+  IsArchived: boolean;
+  NextReviewAt?: string | null;
+  LastAttemptAt: string;
+}
+
+export interface SetErrorNotebookArchiveRequest {
+  ProblemId: number;
+  IsArchived: boolean;
+}
+
+export interface ErrorNotebookArchiveResult {
+  ProblemId: number;
+  IsArchived: boolean;
+}
+
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
-  tagTypes: ['User', 'Favorite', 'Solved', 'Dashboard', 'Problem'],
+  tagTypes: [
+    'User',
+    'Favorite',
+    'Solved',
+    'Dashboard',
+    'Problem',
+    'ErrorNotebook',
+  ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
       query: () => '/users/profile',
@@ -65,6 +99,35 @@ export const usersApi = createApi({
     getSolvedProblems: builder.query<ProblemPreview[], void>({
       query: () => '/users/solved',
       providesTags: ['Solved'],
+    }),
+
+    getErrorNotebook: builder.query<
+      ErrorNotebookProblem[],
+      { IncludeArchived?: boolean } | undefined
+    >({
+      query: (params) => ({
+        url: '/users/error-notebook',
+        params: {
+          includeArchived: params?.IncludeArchived ?? false,
+        },
+      }),
+      providesTags: ['ErrorNotebook'],
+    }),
+
+    setErrorNotebookArchive: builder.mutation<
+      ErrorNotebookArchiveResult,
+      SetErrorNotebookArchiveRequest
+    >({
+      query: ({ ProblemId, IsArchived }) => ({
+        url: `/users/error-notebook/${ProblemId}/archive`,
+        method: 'PUT',
+        body: { IsArchived },
+      }),
+      invalidatesTags: (_result, _error, { ProblemId }) => [
+        'ErrorNotebook',
+        'Dashboard',
+        { type: 'Problem', id: ProblemId },
+      ],
     }),
 
     toggleFavorite: builder.mutation<FavoriteCheck, FavoriteToggleRequest>({
@@ -124,6 +187,8 @@ export const {
   useGetProfileQuery,
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,
+  useGetErrorNotebookQuery,
+  useSetErrorNotebookArchiveMutation,
   useToggleFavoriteMutation,
   useCheckFavoriteQuery,
   useGetAdminUsersQuery,

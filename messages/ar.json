@@ -18,7 +18,11 @@
     "dashboard": "لوحة التحكم",
     "admin": "لوحة الإدارة",
     "guide": "دليل الإدخال",
-    "about": "عن المنصة"
+    "about": "عن المنصة",
+    "favorites": "المفضلة",
+    "solved": "المسائل المحلولة",
+    "errorNotebook": "دفتر الأخطاء",
+    "user": "مستخدم"
   },
   "hero": {
     "title": "اكتشف عالم الرياضيات",
@@ -139,7 +143,34 @@
     "problem": "المسألة",
     "correctAnswerWas": "الإجابة الصحيحة كانت:",
     "question": "السؤال",
-    "videoSolution": "حل فيديو"
+    "videoSolution": "حل فيديو",
+    "totalAttempts": "إجمالي المحاولات",
+    "bestTime": "أفضل وقت",
+    "averageTime": "متوسط الوقت",
+    "nextReview": "المراجعة القادمة",
+    "noReviewScheduled": "لا توجد مراجعة مجدولة",
+    "trainingModeTitle": "محاولة تدريبية",
+    "trainingModeDescription": "هذه الإعادة تحسن مستوى الإتقان دون تغيير نتيجة المحاولة الرسمية الأولى.",
+    "submitTrainingAttempt": "إرسال المحاولة التدريبية",
+    "officialAttempt": "محاولة رسمية",
+    "trainingAttempt": "محاولة تدريبية",
+    "attemptNumber": "المحاولة رقم {number}",
+    "tryAgain": "حل مرة أخرى",
+    "openErrorNotebook": "فتح دفتر الأخطاء",
+    "attemptHistory": "سجل المحاولات",
+    "selectedAnswer": "الإجابة المختارة",
+    "noAttemptHistory": "لا توجد محاولات مسجلة حتى الآن.",
+    "mastery": {
+      "New": "جديدة",
+      "NeedsReview": "تحتاج مراجعة",
+      "Practicing": "قيد التدريب",
+      "Mastered": "متقنة"
+    },
+    "minutesShort": "د",
+    "secondsShort": "ث",
+    "checkingAnswer": "جاري التحقق من إجابتك...",
+    "checkingAnswerHint": "يرجى الانتظار لحظات، ستظهر النتيجة فور اكتمال العملية.",
+    "retryWithoutReveal": "تم إخفاء الإجابة الصحيحة والحل حتى تتمكن من المحاولة مرة أخرى والاستفادة من التدريب."
   },
   "auth": {
     "login": {
@@ -631,10 +662,31 @@
       "description": "احفظ المسائل التي تعجبك!",
       "button": "تصفح المسائل"
     },
-    "remove": "إزالة من المفضلة"
+    "remove": "إزالة من المفضلة",
+    "addToFavorites": "إضافة إلى المفضلة",
+    "removeFromFavorites": "إزالة من المفضلة"
   },
   "errors": {
     "passwordMismatch": "كلمات المرور غير متطابقة",
     "problemNotFound": "المسألة غير موجودة"
+  },
+  "errorNotebook": {
+    "learningTool": "أداة تعليمية",
+    "title": "دفتر الأخطاء",
+    "description": "راجع المسائل التي أخطأت بها، وأعد حلها، وتابع تقدمك حتى الإتقان.",
+    "active": "تحتاج مراجعة",
+    "archived": "المؤرشفة",
+    "emptyActiveTitle": "دفتر الأخطاء فارغ",
+    "emptyActiveDescription": "ستظهر هنا تلقائيًا المسائل التي تجيب عنها بشكل خاطئ حتى تتمكن من مراجعتها لاحقًا.",
+    "emptyArchivedTitle": "لا توجد مسائل مؤرشفة",
+    "emptyArchivedDescription": "المسائل التي تؤرشفها من دفتر الأخطاء ستظهر هنا.",
+    "attempts": "المحاولات",
+    "incorrect": "الخاطئة",
+    "correct": "الصحيحة",
+    "nextReview": "المراجعة القادمة",
+    "noReviewDate": "لا يوجد موعد مراجعة محدد",
+    "practiceNow": "تدرب الآن",
+    "archive": "أرشفة",
+    "restore": "استعادة"
   }
 }

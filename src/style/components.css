@@ -2,31 +2,92 @@
 /* components.css - Upgraded Glass & Grid       */
 /* ============================================ */
 .math-grid-bg {
+  background-image: radial-gradient(circle, #3491C326 1px, transparent 1.4px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(circle at center, black 38%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle at center, black 38%, transparent 100%);
+}
+
+.dark .math-grid-bg {
+  background-image: radial-gradient(circle, #53B2D82E 1px, transparent 1.4px);
+}
+
+.brand-hero-bg {
+  background:
+    radial-gradient(circle at 12% 18%, #53B2D838 0%, transparent 34%),
+    radial-gradient(circle at 88% 14%, #3491C326 0%, transparent 30%),
+    radial-gradient(circle at 50% 82%, #2F73A318 0%, transparent 38%),
+    linear-gradient(180deg, #F2F9FC 0%, #F8FCFE 56%, #FFFFFF 100%);
+}
+
+.dark .brand-hero-bg {
+  background:
+    radial-gradient(circle at 12% 18%, #53B2D82B 0%, transparent 34%),
+    radial-gradient(circle at 88% 14%, #3491C326 0%, transparent 30%),
+    radial-gradient(circle at 50% 82%, #2F73A326 0%, transparent 38%),
+    linear-gradient(180deg, #081725 0%, #07131F 58%, #07131F 100%);
+}
+
+.brand-page-bg {
   background-image:
-    linear-gradient(var(--color-border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
-  -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+    radial-gradient(circle at 10% 0%, #53B2D812 0%, transparent 28%),
+    radial-gradient(circle at 90% 10%, #3491C30F 0%, transparent 24%);
+  background-attachment: fixed;
+}
+
+.dark .brand-page-bg {
+  background-image:
+    radial-gradient(circle at 10% 0%, #53B2D817 0%, transparent 28%),
+    radial-gradient(circle at 90% 10%, #2F73A31A 0%, transparent 24%);
 }
 
 .text-gradient-math {
-  background: linear-gradient(135deg, var(--color-primary) 0%, oklch(0.7 0.15 290) 50%, oklch(0.6 0.2 240) 100%);
+  background: linear-gradient(120deg, #53B2D8 0%, #3491C3 48%, #213550 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .text-gradient-math {
+  background: linear-gradient(120deg, #8BD4EE 0%, #53B2D8 50%, #8FBFE0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .glass {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%);
+  background: linear-gradient(135deg, #FFFFFFE6 0%, #F4FAFDC7 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #FFFFFFB8;
+  box-shadow: 0 8px 32px 0 #2135500D;
 }
 
 .dark .glass {
-  background: linear-gradient(135deg, rgba(30, 30, 40, 0.8) 0%, rgba(20, 20, 30, 0.6) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, #10283AE8 0%, #0A1B2BCC 100%);
+  border: 1px solid #BDE9F51A;
+  box-shadow: 0 8px 32px 0 #00000066;
+}
+
+.brand-surface {
+  background: linear-gradient(145deg, #FFFFFFF2 0%, #F4FAFDEB 100%);
+  border: 1px solid #D4E4EC;
+  box-shadow: 0 18px 55px #21355012;
+}
+
+.dark .brand-surface {
+  background: linear-gradient(145deg, #10283AF2 0%, #0B1C2BEF 100%);
+  border-color: #29495D;
+  box-shadow: 0 18px 55px #0000004D;
+}
+
+/* Keeps Arabic display titles from clipping letters below the baseline. */
+.brand-display-title {
+  line-height: 1.2;
+  padding-bottom: 0.1em;
+}
+
+html[dir="rtl"] .brand-display-title {
+  line-height: 1.42;
+  padding-bottom: 0.18em;
 }

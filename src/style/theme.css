@@ -3,53 +3,63 @@
 /* ============================================ */
 @theme {
   /* Light Mode - Clean White & Indigo */
-  --color-background: oklch(0.99 0.01 270);
-  --color-foreground: oklch(0.2 0.04 270);
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.2 0.04 270);
-  --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.2 0.04 270);
+  --color-background: #F6FAFD;
+  --color-foreground: #17324D;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #17324D;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #17324D;
   
   /* Primary: Electric Indigo */
-  --color-primary: oklch(0.58 0.2 275);
-  --color-primary-foreground: oklch(0.99 0 0);
+  --color-primary: #3491C3;
+  --color-primary-foreground: #FFFFFF;
   
-  --color-secondary: oklch(0.95 0.03 270);
-  --color-secondary-foreground: oklch(0.2 0.04 270);
-  --color-muted: oklch(0.96 0.02 270);
-  --color-muted-foreground: oklch(0.55 0.05 270);
-  --color-accent: oklch(0.95 0.03 270);
-  --color-accent-foreground: oklch(0.2 0.04 270);
-  --color-border: oklch(0.92 0.02 270);
-  --color-input: oklch(0.92 0.02 270);
-  --color-ring: oklch(0.58 0.2 275);
+  --color-secondary: #E9F3F8;
+  --color-secondary-foreground: #213550;
+  --color-muted: #EDF5F9;
+  --color-muted-foreground: #647B8D;
+  --color-accent: #DFF1F8;
+  --color-accent-foreground: #213550;
+  --color-border: #D4E4EC;
+  --color-input: #C5DCE7;
+  --color-ring: #3491C3;
+  --color-destructive: #D94A5B;
+  --color-destructive-foreground: #FFFFFF;
+
+  /* Brand colors extracted from the MathWorld logo. */
+  --color-brand-cyan: #53B2D8;
+  --color-brand-blue: #3491C3;
+  --color-brand-steel: #2F73A3;
+  --color-brand-navy: #213550;
+  --color-brand-soft: #E8F5FA;
   
   --radius: 1rem; 
-    --font-sans: var(--font-outfit), system-ui, sans-serif;
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
   --font-arabic: var(--font-almarai), system-ui, sans-serif;
 }
 
 .dark {
   /* Dark Mode - Deep Space & Cyan/Indigo Glow */
-  --color-background: oklch(0.12 0.02 270); /* Deep dark blue-gray */
-  --color-foreground: oklch(0.98 0 0);
-  --color-card: oklch(0.16 0.03 270);
-  --color-card-foreground: oklch(0.98 0 0);
-  --color-popover: oklch(0.16 0.03 270);
-  --color-popover-foreground: oklch(0.98 0 0);
+  --color-background: #07131F; /* Deep dark blue-gray */
+  --color-foreground: #EDF7FB;
+  --color-card: #0D2030;
+  --color-card-foreground: #EDF7FB;
+  --color-popover: #10283A;
+  --color-popover-foreground: #EDF7FB;
   
   /* Primary: Glowing Cyan-Blue */
-  --color-primary: oklch(0.7 0.15 250); 
-  --color-primary-foreground: oklch(0.12 0.02 270);
+  --color-primary: #53B2D8; 
+  --color-primary-foreground: #07131F;
   
-  --color-secondary: oklch(0.2 0.04 270);
-  --color-secondary-foreground: oklch(0.98 0 0);
-  --color-muted: oklch(0.2 0.04 270); 
-  --color-muted-foreground: oklch(0.7 0.05 270);
-  --color-accent: oklch(0.2 0.04 270);
-  --color-accent-foreground: oklch(0.98 0 0);
-  --color-border: oklch(1 0 0 / 12%);
-  --color-input: oklch(1 0 0 / 12%);
-  --color-ring: oklch(0.7 0.15 250);
+  --color-secondary: #132D40;
+  --color-secondary-foreground: #EDF7FB;
+  --color-muted: #102638; 
+  --color-muted-foreground: #9DB6C5;
+  --color-accent: #17384E;
+  --color-accent-foreground: #F5FBFE;
+  --color-border: #29495D;
+  --color-input: #31566D;
+  --color-ring: #53B2D8;
+  --color-destructive: #FF6B7C;
+  --color-destructive-foreground: #07131F;
 }
-

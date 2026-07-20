@@ -10,11 +10,28 @@ import { logout } from '@/store/slices/authSlice';
 import { setLocale } from '@/store/slices/localeSlice';
 import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'; 
+import Image from 'next/image'; 
 import { 
   SearchNormal1, Sun1, Moon, CloseCircle, User, Logout, ArrowDown2, Element3, ShieldSecurity, 
   ArrowRight
 } from 'iconsax-reactjs';
-import { Menu, Search, ChevronDown, Boxes, Sigma, FunctionSquare, Pi } from 'lucide-react'; // Better math icons
+import {
+  BookMarked,
+  Boxes,
+  ChevronDown,
+  CircleCheckBig,
+  FunctionSquare,
+  Heart,
+  Info,
+  Layers3,
+  LogIn,
+  Menu,
+  NotebookTabs,
+  Pi,
+  Search,
+  Sigma,
+  UserPlus,
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
@@ -113,21 +130,27 @@ function NavbarContent() {
     <>
       {/* Scroll Progress Bar at the absolute top */}
       <motion.div 
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-purple-500 z-[60] origin-left"
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#53B2D8] via-[#3491C3] to-[#213550] z-[60] origin-left"
         style={{ scaleX, transformOrigin: locale === 'ar' ? 'right' : 'left' }} 
       />
 
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 glass supports-[backdrop-filter]:bg-background/50">
+      <header className="sticky top-0 z-50 w-full border-b border-[#CFE2EB] bg-background/85 glass supports-[backdrop-filter]:bg-background/55 dark:border-[#29495D]">
         <nav className="container mx-auto px-6 lg:px-12 flex h-16 items-center justify-between gap-4">
           
-          {/* Logo with interactive hover */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold text-xl shadow-lg group-hover:shadow-primary/30 group-hover:scale-105 transition-all">
-              <span className="group-hover:rotate-12 transition-transform">M</span>
-            </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-              MathWorld
-            </span>
+          {/* Transparent SVG logo stays clear in both light and dark mode. */}
+          <Link
+            href="/"
+            className="group flex shrink-0 items-center"
+            aria-label="MathWorld"
+          >
+            <Image
+              src="/mathworld-logo.svg"
+              alt="MathWorld Logo"
+              width={148}
+              height={88}
+              className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] dark:drop-shadow-[0_3px_14px_#53B2D838]"
+              priority
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -258,7 +281,7 @@ function NavbarContent() {
                     <User className="h-3.5 w-3.5 text-primary" />
                   </div>
                   <span className="hidden sm:inline text-sm font-semibold">
-                    {user.FullName || user.Email?.split('@')[0] || 'User'}
+                    {user.FullName || user.Email?.split('@')[0] || t('nav.user')}
                   </span>
                   <ArrowDown2 className="h-4 w-4 text-muted-foreground" />
                 </Button>
@@ -275,6 +298,15 @@ function NavbarContent() {
                         <div className="px-3 py-2.5 text-xs text-muted-foreground border-b mb-2">{user.Email}</div>
                         <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <Element3 className="h-4 w-4" />{t('nav.dashboard')}
+                        </Link>
+                        <Link href="/dashboard/favorites" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <Heart className="h-4 w-4" />{t('nav.favorites')}
+                        </Link>
+                        <Link href="/dashboard/solved" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <CircleCheckBig className="h-4 w-4" />{t('nav.solved')}
+                        </Link>
+                        <Link href="/dashboard/error-notebook" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <NotebookTabs className="h-4 w-4" />{t('nav.errorNotebook')}
                         </Link>
                         {user.Role === 'Admin' && (
                           <Link href="/admin" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
@@ -319,17 +351,86 @@ function NavbarContent() {
                   className="w-full ps-10 pe-4 py-3 rounded-xl border-2 border-primary/20 bg-primary/5 text-base outline-none focus:border-primary transition-colors" />
               </form>
 
-              <Link href="/" className={cn('block px-4 py-3 rounded-xl font-semibold', pathname === '/' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', pathname === '/' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
+                <Layers3 className="h-5 w-5" />
                 {t('nav.home')}
               </Link>
               
-              <Link href="/stages" className={cn('block px-4 py-3 rounded-xl font-semibold', isStagesActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/stages" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', isStagesActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
+                <BookMarked className="h-5 w-5" />
                 {t('nav.stages')}
               </Link>
 
-              <Link href="/about" className={cn('block px-4 py-3 rounded-xl font-semibold', isAboutActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/about" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', isAboutActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
+                <Info className="h-5 w-5" />
                 {t('nav.about')}
               </Link>
+
+              <div className="my-2 h-px bg-border" />
+
+              {!mounted || isLoading ? (
+                <div className="h-24 animate-pulse rounded-xl bg-muted" />
+              ) : isAuthenticated && user ? (
+                <div className="space-y-2">
+                  <div className="rounded-xl border bg-muted/30 px-4 py-3">
+                    <p className="truncate text-sm font-semibold">
+                      {user.FullName || user.Email?.split('@')[0] || t('nav.user')}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">{user.Email}</p>
+                  </div>
+
+                  <Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                    <Element3 className="h-5 w-5" />
+                    {t('nav.dashboard')}
+                  </Link>
+                  <Link href="/dashboard/favorites" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                    <Heart className="h-5 w-5" />
+                    {t('nav.favorites')}
+                  </Link>
+                  <Link href="/dashboard/solved" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                    <CircleCheckBig className="h-5 w-5" />
+                    {t('nav.solved')}
+                  </Link>
+                  <Link href="/dashboard/error-notebook" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                    <NotebookTabs className="h-5 w-5" />
+                    {t('nav.errorNotebook')}
+                  </Link>
+
+                  {user.Role === 'Admin' && (
+                    <Link href="/admin" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-primary hover:bg-primary/10" onClick={() => setMobileMenuOpen(false)}>
+                      <ShieldSecurity className="h-5 w-5" />
+                      {t('nav.admin')}
+                    </Link>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-destructive hover:bg-destructive/10"
+                  >
+                    <Logout className="h-5 w-5" />
+                    {t('nav.logout')}
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" className="gap-2 rounded-xl" asChild>
+                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                      <LogIn className="h-4 w-4" />
+                      {t('nav.login')}
+                    </Link>
+                  </Button>
+                  <Button className="gap-2 rounded-xl" asChild>
+                    <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+                      <UserPlus className="h-4 w-4" />
+                      {t('nav.register')}
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
