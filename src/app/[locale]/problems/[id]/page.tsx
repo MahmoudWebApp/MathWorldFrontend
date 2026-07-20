@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
-import { useSelector } from 'react-redux';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useSelector } from "react-redux";
 import {
   ArrowLeft,
   BookOpen,
@@ -24,10 +24,10 @@ import {
   Star,
   Target,
   XCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { Link } from '@/i18n/routing';
-import type { RootState } from '@/store';
+import { Link } from "@/i18n/routing";
+import type { RootState } from "@/store";
 import {
   type AdminProblemOption,
   type AnswerResult,
@@ -40,33 +40,33 @@ import {
   useGetProblemAttemptsQuery,
   useGetProblemQuery,
   useSubmitAnswerMutation,
-} from '@/store/api/problemsApi';
+} from "@/store/api/problemsApi";
 import {
   useCheckFavoriteQuery,
   useToggleFavoriteMutation,
-} from '@/store/api/usersApi';
-import { Badge } from '@/components/ui/Badge';
-import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
-import { Button } from '@/components/ui/Button';
-import { LatexPreview } from '@/components/ui/LatexPreview';
-import { RichText } from '@/components/ui/RichText';
+} from "@/store/api/usersApi";
+import { Badge } from "@/components/ui/Badge";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { Button } from "@/components/ui/Button";
+import { LatexPreview } from "@/components/ui/LatexPreview";
+import { RichText } from "@/components/ui/RichText";
 
 function isStudentProblem(
   problem: ProblemDetail | undefined,
 ): problem is ProblemForStudent {
-  return !!problem && 'HasAttempted' in problem && 'Options' in problem;
+  return !!problem && "HasAttempted" in problem && "Options" in problem;
 }
 
 function isPublicProblem(
   problem: ProblemDetail | undefined,
 ): problem is ProblemForPublic {
-  return !!problem && 'Message' in problem && !('Options' in problem);
+  return !!problem && "Message" in problem && !("Options" in problem);
 }
 
 function isAdminProblem(
   problem: ProblemDetail | undefined,
 ): problem is ProblemAdminDetail {
-  return !!problem && 'TitleAr' in problem && 'TitleEn' in problem;
+  return !!problem && "TitleAr" in problem && "TitleEn" in problem;
 }
 
 function getYouTubeVideoId(url: string): string | null {
@@ -105,7 +105,7 @@ function YoutubeEmbed({ url }: { url: string }) {
   );
 }
 
-type OptionState = 'idle' | 'selected' | 'correct' | 'wrong';
+type OptionState = "idle" | "selected" | "correct" | "wrong";
 
 function formatDuration(
   seconds: number | null | undefined,
@@ -130,7 +130,7 @@ export default function ProblemPage() {
   const params = useParams<{ id: string }>();
   const t = useTranslations();
   const locale = useLocale();
-  const isArabic = locale === 'ar';
+  const isArabic = locale === "ar";
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const problemId = Number.parseInt(params.id, 10);
   const solutionRef = useRef<HTMLDivElement>(null);
@@ -166,16 +166,15 @@ export default function ProblemPage() {
   });
 
   const [toggleFavorite] = useToggleFavoriteMutation();
-  const [submitAnswer, { isLoading: isSubmitting }] =
-    useSubmitAnswerMutation();
+  const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
 
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [localAnswerResult, setLocalAnswerResult] =
     useState<AnswerResult | null>(null);
   const [submissionDone, setSubmissionDone] = useState(false);
   const [retryMode, setRetryMode] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [activeTab, setActiveTab] = useState<'question' | 'video'>('question');
+  const [submitError, setSubmitError] = useState("");
+  const [activeTab, setActiveTab] = useState<"question" | "video">("question");
   const [historyExpanded, setHistoryExpanded] = useState(false);
 
   useEffect(() => {
@@ -203,8 +202,8 @@ export default function ProblemPage() {
 
     const timer = window.setTimeout(() => {
       solutionRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
+        behavior: "smooth",
+        block: "start",
       });
     }, 200);
 
@@ -218,13 +217,13 @@ export default function ProblemPage() {
 
     if (isAdminProblem(problem)) {
       return {
-        title: locale === 'ar' ? problem.TitleAr : problem.TitleEn,
+        title: locale === "ar" ? problem.TitleAr : problem.TitleEn,
         questionText:
-          locale === 'ar' ? problem.QuestionTextAr : problem.QuestionTextEn,
+          locale === "ar" ? problem.QuestionTextAr : problem.QuestionTextEn,
         categoryId: problem.CategoryId,
-        categoryName: problem.CategoryName || '',
+        categoryName: problem.CategoryName || "",
         stageId: problem.StageId,
-        stageName: problem.StageName || '',
+        stageName: problem.StageName || "",
         points: problem.Points,
       };
     }
@@ -236,7 +235,7 @@ export default function ProblemPage() {
       categoryName: problem.CategoryName,
       stageId: problem.StageId,
       stageName: problem.StageName,
-      points: 'Points' in problem ? problem.Points : 0,
+      points: "Points" in problem ? problem.Points : 0,
     };
   }, [problem, locale]);
 
@@ -259,11 +258,12 @@ export default function ProblemPage() {
     studentProblem?.IsSolved ??
     false;
 
-  const effectiveCorrectOptionId = showResult && isCorrect
-    ? (localAnswerResult?.CorrectOptionId ??
-      studentProblem?.CorrectOptionId ??
-      null)
-    : null;
+  const effectiveCorrectOptionId =
+    showResult && isCorrect
+      ? (localAnswerResult?.CorrectOptionId ??
+        studentProblem?.CorrectOptionId ??
+        null)
+      : null;
 
   const canRetry =
     localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
@@ -277,7 +277,7 @@ export default function ProblemPage() {
     localAnswerResult?.MasteryStatus ??
     attemptHistory?.MasteryStatus ??
     studentProblem?.MasteryStatus ??
-    'New';
+    "New";
 
   const currentAttemptCount =
     localAnswerResult?.TotalAttempts ??
@@ -314,7 +314,7 @@ export default function ProblemPage() {
     }
 
     if (adminProblem) {
-      return locale === 'ar'
+      return locale === "ar"
         ? adminProblem.DetailedSolutionAr
         : adminProblem.DetailedSolutionEn;
     }
@@ -352,16 +352,9 @@ export default function ProblemPage() {
     }
 
     return value;
-  }, [
-    localAnswerResult,
-    studentProblem,
-    adminProblem,
-    retryMode,
-    isCorrect,
-  ]);
+  }, [localAnswerResult, studentProblem, adminProblem, retryMode, isCorrect]);
 
-  const showSolutionSection =
-    !!solutionText && (showResult || !!adminProblem);
+  const showSolutionSection = !!solutionText && (showResult || !!adminProblem);
   const showVideoTab = !!youtubeUrl && (showResult || !!adminProblem);
   const isFavorite =
     favoriteData?.IsFavorite ?? studentProblem?.IsFavorite ?? false;
@@ -372,12 +365,12 @@ export default function ProblemPage() {
 
   function formatDate(value: string | null | undefined) {
     if (!value) {
-      return t('common.unknown');
+      return t("common.unknown");
     }
 
     return new Intl.DateTimeFormat(locale, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
+      dateStyle: "medium",
+      timeStyle: "short",
     }).format(new Date(value));
   }
 
@@ -393,7 +386,7 @@ export default function ProblemPage() {
       }).unwrap();
       await refetchProblem();
     } catch (favoriteError) {
-      console.error('Failed to update favorite:', favoriteError);
+      console.error("Failed to update favorite:", favoriteError);
     }
   }
 
@@ -406,14 +399,14 @@ export default function ProblemPage() {
     setSubmissionDone(false);
     setLocalAnswerResult(null);
     setSelectedOptionId(null);
-    setSubmitError('');
-    setActiveTab('question');
+    setSubmitError("");
+    setActiveTab("question");
     attemptStartedAtRef.current = Date.now();
 
     window.setTimeout(() => {
       questionCardRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
+        behavior: "smooth",
+        block: "start",
       });
     }, 50);
   }
@@ -423,7 +416,7 @@ export default function ProblemPage() {
     setSubmissionDone(true);
     setLocalAnswerResult(null);
     setSelectedOptionId(studentProblem?.SelectedOptionId ?? null);
-    setSubmitError('');
+    setSubmitError("");
   }
 
   async function handleSubmit() {
@@ -436,7 +429,7 @@ export default function ProblemPage() {
       return;
     }
 
-    setSubmitError('');
+    setSubmitError("");
 
     try {
       const result = await submitAnswer({
@@ -464,7 +457,7 @@ export default function ProblemPage() {
         data?: { message?: string };
       };
 
-      setSubmitError(normalized.data?.message || t('common.error'));
+      setSubmitError(normalized.data?.message || t("common.error"));
     }
   }
 
@@ -472,24 +465,26 @@ export default function ProblemPage() {
     const isSelected = effectiveSelectedOptionId === option.Id;
 
     if (!showResult) {
-      return isSelected ? 'selected' : 'idle';
+      return isSelected ? "selected" : "idle";
     }
 
     if (effectiveCorrectOptionId === option.Id) {
-      return 'correct';
+      return "correct";
     }
 
     if (isSelected && !isCorrect) {
-      return 'wrong';
+      return "wrong";
     }
 
     if (isSelected && isCorrect) {
-      return 'correct';
+      return "correct";
     }
 
-    return 'idle';
+    return "idle";
   }
-
+  function cleanMathSymbols(text: string): string {
+    return text.replace(/\$\$/g, "").replace(/\$/g, "");
+  }
   if (isLoading) {
     return (
       <div className="container mx-auto animate-pulse px-4 py-8 md:px-16 lg:px-24">
@@ -509,14 +504,14 @@ export default function ProblemPage() {
       <div className="container mx-auto px-4 py-8 text-center md:px-16 lg:px-24">
         <XCircle className="mx-auto mb-4 h-12 w-12 text-destructive/70" />
         <p className="mb-4 text-lg text-muted-foreground">
-          {t('errors.problemNotFound')}
+          {t("errors.problemNotFound")}
         </p>
         <Link
           href="/problems"
           className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
         >
           <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-          {t('problem.backToProblems')}
+          {t("problem.backToProblems")}
         </Link>
       </div>
     );
@@ -538,8 +533,8 @@ export default function ProblemPage() {
         surface
         className="mb-6"
         items={[
-          { label: t('nav.home'), href: '/' },
-          { label: t('nav.stages'), href: '/stages' },
+          { label: t("nav.home"), href: "/" },
+          { label: t("nav.stages"), href: "/stages" },
           ...(stageName
             ? [
                 {
@@ -556,7 +551,10 @@ export default function ProblemPage() {
                 },
               ]
             : []),
-          { label: title, truncate: true },
+          {
+            label: cleanMathSymbols(title),
+            truncate: true,
+          },
         ]}
       />
 
@@ -564,7 +562,7 @@ export default function ProblemPage() {
         <div>
           <h1
             className={`brand-display-title mb-3 text-3xl font-bold sm:text-4xl ${
-              isArabic ? 'text-right' : 'text-left'
+              isArabic ? "text-right" : "text-left"
             }`}
           >
             <RichText
@@ -576,7 +574,7 @@ export default function ProblemPage() {
 
           <div
             className={`flex flex-wrap items-center gap-2 ${
-              isArabic ? 'justify-end' : 'justify-start'
+              isArabic ? "justify-end" : "justify-start"
             }`}
           >
             {points > 0 && (
@@ -596,9 +594,7 @@ export default function ProblemPage() {
               </Badge>
             )}
 
-            {categoryName && (
-              <Badge variant="secondary">{categoryName}</Badge>
-            )}
+            {categoryName && <Badge variant="secondary">{categoryName}</Badge>}
 
             {studentProblem?.HasAttempted && (
               <Badge variant="outline" className="gap-1">
@@ -616,18 +612,18 @@ export default function ProblemPage() {
             onClick={handleFavorite}
             aria-label={
               isFavorite
-                ? t('favorites.removeFromFavorites')
-                : t('favorites.addToFavorites')
+                ? t("favorites.removeFromFavorites")
+                : t("favorites.addToFavorites")
             }
             className={
               isFavorite
-                ? 'text-red-500 hover:text-red-600'
-                : 'text-muted-foreground hover:text-foreground'
+                ? "text-red-500 hover:text-red-600"
+                : "text-muted-foreground hover:text-foreground"
             }
           >
             <Heart
               className={`h-5 w-5 transition-transform ${
-                isFavorite ? 'scale-110 fill-current' : ''
+                isFavorite ? "scale-110 fill-current" : ""
               }`}
             />
           </Button>
@@ -639,45 +635,47 @@ export default function ProblemPage() {
           <div className="rounded-xl border bg-card p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <History className="h-4 w-4" />
-              {t('problem.totalAttempts')}
+              {t("problem.totalAttempts")}
             </div>
             <p className="text-xl font-bold">{currentAttemptCount}</p>
           </div>
           <div className="rounded-xl border bg-card p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <Clock3 className="h-4 w-4" />
-              {t('problem.bestTime')}
+              {t("problem.bestTime")}
             </div>
             <p className="text-xl font-bold">
               {formatDuration(
                 bestTime,
-                t('common.noData'),
-                t('problem.minutesShort'),
-                t('problem.secondsShort'),
+                t("common.noData"),
+                t("problem.minutesShort"),
+                t("problem.secondsShort"),
               )}
             </p>
           </div>
           <div className="rounded-xl border bg-card p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <Clock3 className="h-4 w-4" />
-              {t('problem.averageTime')}
+              {t("problem.averageTime")}
             </div>
             <p className="text-xl font-bold">
               {formatDuration(
                 averageTime,
-                t('common.noData'),
-                t('problem.minutesShort'),
-                t('problem.secondsShort'),
+                t("common.noData"),
+                t("problem.minutesShort"),
+                t("problem.secondsShort"),
               )}
             </p>
           </div>
           <div className="rounded-xl border bg-card p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <CalendarClock className="h-4 w-4" />
-              {t('problem.nextReview')}
+              {t("problem.nextReview")}
             </div>
             <p className="text-sm font-semibold">
-              {nextReviewAt ? formatDate(nextReviewAt) : t('problem.noReviewScheduled')}
+              {nextReviewAt
+                ? formatDate(nextReviewAt)
+                : t("problem.noReviewScheduled")}
             </p>
           </div>
         </div>
@@ -687,14 +685,14 @@ export default function ProblemPage() {
         <div className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-semibold text-primary">
-              {t('problem.trainingModeTitle')}
+              {t("problem.trainingModeTitle")}
             </p>
             <p className="text-sm text-muted-foreground">
-              {t('problem.trainingModeDescription')}
+              {t("problem.trainingModeDescription")}
             </p>
           </div>
           <Button variant="outline" onClick={handleCancelRetry}>
-            {t('common.cancel')}
+            {t("common.cancel")}
           </Button>
         </div>
       )}
@@ -708,32 +706,32 @@ export default function ProblemPage() {
             <div className="flex border-b">
               <button
                 type="button"
-                onClick={() => setActiveTab('question')}
+                onClick={() => setActiveTab("question")}
                 className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'question'
-                    ? 'border-b-2 border-primary text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
+                  activeTab === "question"
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <BookOpen className="h-4 w-4" />
-                {t('problem.question')}
+                {t("problem.question")}
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('video')}
+                onClick={() => setActiveTab("video")}
                 className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'video'
-                    ? 'border-b-2 border-primary text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
+                  activeTab === "video"
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <PlayCircle className="h-4 w-4" />
-                {t('problem.videoSolution')}
+                {t("problem.videoSolution")}
               </button>
             </div>
           )}
 
-          {activeTab === 'question' && (
+          {activeTab === "question" && (
             <div className="p-6">
               <RichText
                 text={questionText}
@@ -745,10 +743,10 @@ export default function ProblemPage() {
                 <div className="border-t py-8 text-center">
                   <Lock className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
                   <p className="mb-4 text-muted-foreground">
-                    {problem.Message || t('problem.loginToSolve')}
+                    {problem.Message || t("problem.loginToSolve")}
                   </p>
                   <Button asChild>
-                    <Link href="/login">{t('nav.login')}</Link>
+                    <Link href="/login">{t("nav.login")}</Link>
                   </Button>
                 </div>
               )}
@@ -766,10 +764,10 @@ export default function ProblemPage() {
                         </div>
                         <div>
                           <p className="font-semibold">
-                            {t('problem.checkingAnswer')}
+                            {t("problem.checkingAnswer")}
                           </p>
                           <p className="mt-0.5 text-sm opacity-80">
-                            {t('problem.checkingAnswerHint')}
+                            {t("problem.checkingAnswerHint")}
                           </p>
                         </div>
                       </div>
@@ -784,17 +782,17 @@ export default function ProblemPage() {
                         <label
                           key={option.Id}
                           className={`flex items-start gap-3 rounded-xl border p-4 transition-all ${
-                            optionState === 'correct'
-                              ? 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
-                              : optionState === 'wrong'
-                                ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
-                                : optionState === 'selected'
-                                  ? 'border-primary bg-primary/5'
-                                  : 'hover:border-primary/50'
+                            optionState === "correct"
+                              ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
+                              : optionState === "wrong"
+                                ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
+                                : optionState === "selected"
+                                  ? "border-primary bg-primary/5"
+                                  : "hover:border-primary/50"
                           } ${
                             isOptionDisabled
-                              ? 'cursor-default opacity-90'
-                              : 'cursor-pointer'
+                              ? "cursor-default opacity-90"
+                              : "cursor-pointer"
                           }`}
                         >
                           {canAnswer && (
@@ -809,10 +807,10 @@ export default function ProblemPage() {
                             />
                           )}
 
-                          {optionState === 'correct' && (
+                          {optionState === "correct" && (
                             <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
                           )}
-                          {optionState === 'wrong' && (
+                          {optionState === "wrong" && (
                             <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                           )}
 
@@ -846,14 +844,14 @@ export default function ProblemPage() {
                         {isSubmitting ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            {t('problem.checkingAnswer')}
+                            {t("problem.checkingAnswer")}
                           </>
                         ) : (
                           <>
                             <Send className="h-4 w-4 rtl:rotate-180" />
                             {retryMode
-                              ? t('problem.submitTrainingAttempt')
-                              : t('problem.submit')}
+                              ? t("problem.submitTrainingAttempt")
+                              : t("problem.submit")}
                           </>
                         )}
                       </Button>
@@ -864,8 +862,8 @@ export default function ProblemPage() {
                     <div
                       className={`mt-6 animate-in rounded-xl border p-5 duration-300 fade-in zoom-in ${
                         isCorrect
-                          ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
-                          : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
+                          ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
+                          : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
                       }`}
                     >
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
@@ -877,45 +875,45 @@ export default function ProblemPage() {
                           )}
                           <span className="font-semibold">
                             {isCorrect
-                              ? t('problem.correct')
-                              : t('problem.wrong')}
+                              ? t("problem.correct")
+                              : t("problem.wrong")}
                           </span>
                         </div>
 
                         {localAnswerResult && (
                           <Badge variant="outline">
                             {localAnswerResult.IsOfficialAttempt
-                              ? t('problem.officialAttempt')
-                              : t('problem.trainingAttempt')}
+                              ? t("problem.officialAttempt")
+                              : t("problem.trainingAttempt")}
                           </Badge>
                         )}
                       </div>
 
                       {!isCorrect && (
                         <p className="mt-2 text-sm leading-relaxed text-red-700 dark:text-red-300">
-                          {t('problem.retryWithoutReveal')}
+                          {t("problem.retryWithoutReveal")}
                         </p>
                       )}
 
                       {localAnswerResult && (
                         <div className="mt-4 flex flex-wrap gap-2 text-sm">
                           <Badge variant="secondary">
-                            {t('problem.attemptNumber', {
+                            {t("problem.attemptNumber", {
                               number: localAnswerResult.AttemptNumber,
                             })}
                           </Badge>
                           <Badge variant="secondary">
                             {formatDuration(
                               localAnswerResult.AttemptTimeSeconds,
-                              t('common.noData'),
-                              t('problem.minutesShort'),
-                              t('problem.secondsShort'),
+                              t("common.noData"),
+                              t("problem.minutesShort"),
+                              t("problem.secondsShort"),
                             )}
                           </Badge>
                           {localAnswerResult.PointsEarned > 0 && (
                             <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                              +{localAnswerResult.PointsEarned}{' '}
-                              {t('dashboard.user.totalPoints')}
+                              +{localAnswerResult.PointsEarned}{" "}
+                              {t("dashboard.user.totalPoints")}
                             </Badge>
                           )}
                         </div>
@@ -929,7 +927,7 @@ export default function ProblemPage() {
                             onClick={handleStartRetry}
                           >
                             <RotateCcw className="h-4 w-4" />
-                            {t('problem.tryAgain')}
+                            {t("problem.tryAgain")}
                           </Button>
 
                           {isInErrorNotebook && (
@@ -938,7 +936,7 @@ export default function ProblemPage() {
                               className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
                             >
                               <NotebookTabs className="h-4 w-4" />
-                              {t('problem.openErrorNotebook')}
+                              {t("problem.openErrorNotebook")}
                             </Link>
                           )}
                         </div>
@@ -955,8 +953,8 @@ export default function ProblemPage() {
                       key={`${option.Order}-${option.LatexCode}`}
                       className={`flex items-start gap-3 rounded-xl border p-4 ${
                         option.IsCorrect
-                          ? 'border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
-                          : ''
+                          ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
+                          : ""
                       }`}
                     >
                       {option.IsCorrect && (
@@ -970,11 +968,11 @@ export default function ProblemPage() {
             </div>
           )}
 
-          {activeTab === 'video' && showVideoTab && youtubeUrl && (
+          {activeTab === "video" && showVideoTab && youtubeUrl && (
             <div className="p-6">
               <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
                 <PlayCircle className="h-5 w-5" />
-                {t('problem.videoSolution')}
+                {t("problem.videoSolution")}
               </h3>
               <YoutubeEmbed url={youtubeUrl} />
             </div>
@@ -989,7 +987,7 @@ export default function ProblemPage() {
           >
             <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-green-800 dark:text-green-300">
               <CheckCircle className="h-5 w-5" />
-              {t('problem.solution')}
+              {t("problem.solution")}
             </h3>
             <RichText text={solutionText} isArabic={isArabic} />
           </div>
@@ -1004,7 +1002,7 @@ export default function ProblemPage() {
             >
               <span className="flex items-center gap-2 font-semibold">
                 <History className="h-5 w-5 text-primary" />
-                {t('problem.attemptHistory')}
+                {t("problem.attemptHistory")}
               </span>
               {historyExpanded ? (
                 <ChevronUp className="h-5 w-5 text-muted-foreground" />
@@ -1018,7 +1016,7 @@ export default function ProblemPage() {
                 {isAttemptHistoryLoading ? (
                   <div className="flex items-center justify-center py-8 text-muted-foreground">
                     <Loader2 className="me-2 h-5 w-5 animate-spin" />
-                    {t('common.loading')}
+                    {t("common.loading")}
                   </div>
                 ) : attemptHistory?.Attempts.length ? (
                   <div className="space-y-3">
@@ -1027,8 +1025,8 @@ export default function ProblemPage() {
                         key={attempt.Id}
                         className={`rounded-xl border p-4 ${
                           attempt.IsCorrect
-                            ? 'border-green-200 bg-green-50/40 dark:border-green-900 dark:bg-green-900/10'
-                            : 'border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-900/10'
+                            ? "border-green-200 bg-green-50/40 dark:border-green-900 dark:bg-green-900/10"
+                            : "border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-900/10"
                         }`}
                       >
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1039,14 +1037,14 @@ export default function ProblemPage() {
                               <XCircle className="h-5 w-5 text-red-600" />
                             )}
                             <span className="font-semibold">
-                              {t('problem.attemptNumber', {
+                              {t("problem.attemptNumber", {
                                 number: attempt.AttemptNumber,
                               })}
                             </span>
                             <Badge variant="outline">
                               {attempt.IsOfficial
-                                ? t('problem.officialAttempt')
-                                : t('problem.trainingAttempt')}
+                                ? t("problem.officialAttempt")
+                                : t("problem.trainingAttempt")}
                             </Badge>
                           </div>
                           <span className="text-xs text-muted-foreground">
@@ -1057,10 +1055,12 @@ export default function ProblemPage() {
                         <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                           <div>
                             <span className="text-muted-foreground">
-                              {t('problem.selectedAnswer')}:
+                              {t("problem.selectedAnswer")}:
                             </span>
                             <div className="mt-1">
-                              <LatexPreview latex={attempt.SelectedOptionText} />
+                              <LatexPreview
+                                latex={attempt.SelectedOptionText}
+                              />
                             </div>
                           </div>
                           <div className="flex flex-wrap items-center gap-3 sm:justify-end">
@@ -1068,9 +1068,9 @@ export default function ProblemPage() {
                               <Clock3 className="me-1 h-3.5 w-3.5" />
                               {formatDuration(
                                 attempt.TimeSpentSeconds,
-                                t('common.noData'),
-                                t('problem.minutesShort'),
-                                t('problem.secondsShort'),
+                                t("common.noData"),
+                                t("problem.minutesShort"),
+                                t("problem.secondsShort"),
                               )}
                             </Badge>
                             {attempt.PointsEarned > 0 && (
@@ -1085,7 +1085,7 @@ export default function ProblemPage() {
                   </div>
                 ) : (
                   <p className="py-6 text-center text-muted-foreground">
-                    {t('problem.noAttemptHistory')}
+                    {t("problem.noAttemptHistory")}
                   </p>
                 )}
               </div>

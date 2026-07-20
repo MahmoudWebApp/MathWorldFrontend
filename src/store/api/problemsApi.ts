@@ -202,6 +202,9 @@ export const problemsApi = createApi({
           page: params.Page || 1,
           pageSize: params.PageSize || 10,
         },
+        // FIX: Passing the locale as an Accept-Language header ensures that the backend 
+        // immediately returns the data in the requested language without needing a hard page refresh.
+        headers: params.locale ? { 'Accept-Language': params.locale } : undefined,
       }),
       providesTags: ['Problem'],
     }),
@@ -210,7 +213,12 @@ export const problemsApi = createApi({
       ProblemDetail,
       { Id: number; locale?: string }
     >({
-      query: ({ Id }) => `/problems/${Id}`,
+      query: ({ Id, locale }) => ({
+        url: `/problems/${Id}`,
+        // FIX: Passing the locale as an Accept-Language header ensures that the backend 
+        // immediately returns the data in the requested language without needing a hard page refresh.
+        headers: locale ? { 'Accept-Language': locale } : undefined,
+      }),
       providesTags: (_result, _error, params) => [
         { type: 'Problem', id: params.Id },
       ],
