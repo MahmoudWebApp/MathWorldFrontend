@@ -104,22 +104,28 @@ function NavbarContent() {
     router.push('/');
   };
 
-  const toggleLocale = () => {
+const toggleLocale = () => {
     const newLocale = locale === 'ar' ? 'en' : 'ar';
     
-    // FIX: Set the NEXT_LOCALE cookie explicitly BEFORE calling window.location.assign.
-    // This ensures that when the page reloads, the new API calls read the correct language cookie immediately.
+    // 1. تحديث الكوكيز أولاً لتستخدمه الطلبات القادمة
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
     
+    // 2. تحديث لغة التطبيق في Redux
     dispatch(setLocale(newLocale));
-    dispatch(problemsApi.util.invalidateTags(['Problem', 'Category']));
-    dispatch(categoriesApi.util.invalidateTags(['Category']));
     
+    // 3. مسح الكاش بالكامل من RTK Query لضمان عدم عرض أي بيانات عربية قديمة
+    // resetApiState() أقوى من invalidateTags لأنها تمسح البيانات من الذاكرة فوراً
+    dispatch(problemsApi.util.resetApiState());
+    dispatch(categoriesApi.util.resetApiState());
+    dispatch(stagesApi.util.resetApiState());
+    
+    // 4. استخدام راوتر next-intl لتغيير اللغة بسلاسة بدون Refresh عنيف
     const currentQuery = searchParams.toString();
-    const newPath = currentQuery ? `${pathname}?${currentQuery}` : pathname;
+    const querySuffix = currentQuery ? `?${currentQuery}` : '';
     
-    // Hard refresh to the new locale URL
-    window.location.assign(`/${newLocale}${newPath}`);
+    router.replace(`${pathname}${querySuffix}`, { locale: newLocale });
+    
+    router.refresh();
   };
 
   const handleNavSearch = (e: React.FormEvent) => {
