@@ -88,14 +88,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mt-8 flex min-h-screen items-center justify-center bg-gradient-to-b from-primary/5 to-background px-4 py-12">
+    <div className="mt-8 flex min-h-screen items-center justify-center brand-hero-bg relative overflow-hidden px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border bg-card p-8 shadow-xl">
+        <div className="brand-surface math-card rounded-3xl p-8">
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
               <UserIcon className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="mb-2 text-2xl font-bold">
+            <h1 className="brand-display-title text-gradient-math mb-2 text-2xl font-bold">
               {t('auth.register.title')}
             </h1>
             <p className="text-sm text-muted-foreground">
@@ -121,7 +121,7 @@ export default function RegisterPage() {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
-                  className="w-full rounded-lg border bg-background px-10 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl border border-brand-primary/15 bg-card/70 px-10 py-2.5 text-sm outline-none transition-all focus:border-brand-secondary/50 focus:ring-4 focus:ring-primary/10"
                   placeholder={t('auth.register.fullNamePlaceholder')}
                   autoComplete="name"
                   minLength={2}
@@ -141,7 +141,7 @@ export default function RegisterPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full rounded-lg border bg-background px-10 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl border border-brand-primary/15 bg-card/70 px-10 py-2.5 text-sm outline-none transition-all focus:border-brand-secondary/50 focus:ring-4 focus:ring-primary/10"
                   placeholder={t('auth.register.emailPlaceholder')}
                   autoComplete="email"
                   required
@@ -160,7 +160,7 @@ export default function RegisterPage() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full rounded-lg border bg-background px-10 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl border border-brand-primary/15 bg-card/70 px-10 py-2.5 text-sm outline-none transition-all focus:border-brand-secondary/50 focus:ring-4 focus:ring-primary/10"
                   placeholder="••••••••"
                   autoComplete="new-password"
                   minLength={6}
@@ -192,7 +192,7 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full rounded-lg border bg-background px-10 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl border border-brand-primary/15 bg-card/70 px-10 py-2.5 text-sm outline-none transition-all focus:border-brand-secondary/50 focus:ring-4 focus:ring-primary/10"
                   placeholder="••••••••"
                   autoComplete="new-password"
                   required

@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { RichText } from '@/components/ui/RichText';
+import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import {
   type ErrorNotebookProblem,
   useGetErrorNotebookQuery,
@@ -196,7 +197,14 @@ export default function ErrorNotebookPage() {
               <CardContent className="p-0">
                 <div className="p-5">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{problem.StageName}</Badge>
+                    <Badge variant="secondary" className="gap-1.5">
+                      <StageIconBadge
+                        stage={{ Id: problem.StageId, Name: problem.StageName }}
+                        size="xs"
+                        className="border-0 bg-background/35 shadow-none"
+                      />
+                      {problem.StageName}
+                    </Badge>
                     <Badge variant="outline">{problem.CategoryName}</Badge>
                     <Badge
                       className={

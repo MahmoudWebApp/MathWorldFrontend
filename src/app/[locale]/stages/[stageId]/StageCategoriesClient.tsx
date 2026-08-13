@@ -7,110 +7,29 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
-  Calculator,
   ChevronRight,
-  Compass,
   Filter,
-  FunctionSquare,
-  Infinity as InfinityIcon,
   Loader2,
-  type LucideIcon,
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
+import { CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
+import { getStageVisual, sortStagesByOrder } from '@/lib/stageVisuals';
+import { StageIconBadge } from '@/components/stages/StageIconBadge';
+import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 
 // ==========================================
-// 1. Styles & Assets Arrays
+// 1. Math assets
 // ==========================================
 
-const categoryStyles = [
-  { from: 'from-[#53B2D8]', to: 'to-[#3491C3]', bg: 'bg-[#53B2D81F]', hoverText: 'group-hover:text-[#2F88B8]', hoverShadow: 'hover:shadow-[#53B2D833]', spotlight: '#53B2D826' },
-  { from: 'from-[#3491C3]', to: 'to-[#2F73A3]', bg: 'bg-[#3491C31F]', hoverText: 'group-hover:text-[#2F73A3]', hoverShadow: 'hover:shadow-[#3491C333]', spotlight: '#3491C326' },
-  { from: 'from-[#4FA6CF]', to: 'to-[#285E88]', bg: 'bg-[#4FA6CF1F]', hoverText: 'group-hover:text-[#285E88]', hoverShadow: 'hover:shadow-[#2F73A333]', spotlight: '#2F73A326' },
-  { from: 'from-[#69889F]', to: 'to-[#365C78]', bg: 'bg-[#69889F1F]', hoverText: 'group-hover:text-[#365C78]', hoverShadow: 'hover:shadow-[#69889F33]', spotlight: '#69889F26' },
-  { from: 'from-[#61BEDF]', to: 'to-[#3B87B2]', bg: 'bg-[#61BEDF1F]', hoverText: 'group-hover:text-[#3B87B2]', hoverShadow: 'hover:shadow-[#61BEDF33]', spotlight: '#61BEDF26' },
-  { from: 'from-[#3B87B2]', to: 'to-[#244B6A]', bg: 'bg-[#3B87B21F]', hoverText: 'group-hover:text-[#244B6A]', hoverShadow: 'hover:shadow-[#3B87B233]', spotlight: '#3B87B226' },
-  { from: 'from-[#8CBFD5]', to: 'to-[#527F98]', bg: 'bg-[#8CBFD51F]', hoverText: 'group-hover:text-[#527F98]', hoverShadow: 'hover:shadow-[#8CBFD533]', spotlight: '#8CBFD526' },
-  { from: 'from-[#527F98]', to: 'to-[#213550]', bg: 'bg-[#527F981F]', hoverText: 'group-hover:text-[#365C78]', hoverShadow: 'hover:shadow-[#21355033]', spotlight: '#527F9826' },
-];
-
-const mathSymbols = [
-  { symbol: 'x²', equation: 'ax² + bx + c = 0' },
-  { symbol: 'πr²', equation: 'S = πr²' },
-  { symbol: '∫', equation: '∫ f(x) dx' },
-  { symbol: 'σ', equation: 'μ ± σ' },
-  { symbol: 'n!', equation: 'gcd(a, b)' },
-  { symbol: 'P(A)', equation: 'nCr × pʳ' },
-  { symbol: 'sinθ', equation: 'sin²θ + cos²θ = 1' },
-  { symbol: '[A]', equation: 'Ax = λx' },
-  { symbol: '∑', equation: 'f(x) = ∑ xᵢ' },
-  { symbol: '∂', equation: '∂f/∂x' },
-  { symbol: '∇', equation: '∇ × F' },
-  { symbol: '∞', equation: 'lim (x→∞)' },
-];
-
-const otherStageStyles = [
-  { 
-    from: 'from-[#53B2D8]', to: 'to-[#3491C3]', 
-    bg: 'from-[#53B2D838] to-[#3491C31F]', 
-    iconColor: 'text-[#2F88B8]', hoverText: 'group-hover:text-[#2F88B8]', 
-    hoverBg: 'group-hover:bg-[#3491C3]', spotlight: '#53B2D81F', 
-    icon: Calculator 
-  },
-  { 
-    from: 'from-[#3491C3]', to: 'to-[#2F73A3]', 
-    bg: 'from-[#3491C338] to-[#2F73A31F]', 
-    iconColor: 'text-[#2F73A3]', hoverText: 'group-hover:text-[#2F73A3]', 
-    hoverBg: 'group-hover:bg-[#2F73A3]', spotlight: '#3491C31F', 
-    icon: Compass 
-  },
-  { 
-    from: 'from-[#4FA6CF]', to: 'to-[#285E88]', 
-    bg: 'from-[#4FA6CF38] to-[#285E881F]', 
-    iconColor: 'text-[#285E88]', hoverText: 'group-hover:text-[#285E88]', 
-    hoverBg: 'group-hover:bg-[#285E88]', spotlight: '#2F73A31F', 
-    icon: FunctionSquare 
-  },
-  { 
-    from: 'from-[#69889F]', to: 'to-[#213550]', 
-    bg: 'from-[#69889F38] to-[#2135501F]', 
-    iconColor: 'text-[#365C78]', hoverText: 'group-hover:text-[#365C78] dark:group-hover:text-[#8CCDE5]', 
-    hoverBg: 'group-hover:bg-[#365C78]', spotlight: '#69889F1F', 
-    icon: InfinityIcon 
-  },
-];
-
-interface MathSymbol {
-  symbol: string;
-  equation: string;
-}
-
-interface CategoryCardStyle {
-  from: string;
-  to: string;
-  bg: string;
-  hoverText: string;
-  hoverShadow: string;
-  spotlight: string;
-}
-
-interface OtherStageStyle {
-  from: string;
-  to: string;
-  bg: string;
-  iconColor: string;
-  hoverText: string;
-  hoverBg: string;
-  spotlight: string;
-  icon: LucideIcon;
-}
+type MathSymbol = (typeof MATH_CARD_SYMBOLS)[number];
 
 interface CategoryPremiumCardProps {
   category: CategoryDto;
   index: number;
   math: MathSymbol;
-  style: CategoryCardStyle;
+  style: CategoryBrandStyle;
   locale: string;
   stageId: number;
   iconUrl?: string | null;
@@ -119,7 +38,6 @@ interface CategoryPremiumCardProps {
 interface OtherStagePremiumCardProps {
   stage: Stage;
   index: number;
-  style: OtherStageStyle;
   locale: string;
 }
 
@@ -144,7 +62,7 @@ function CategoryPremiumCard({
     >
       <Link
         href={`/problems?categoryId=${category.Id}&stageId=${stageId}`}
-        className={`group relative flex h-[240px] flex-col justify-between rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-8 shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:-translate-y-2 hover:border-primary/50 ${style.hoverShadow}`}
+        className={`brand-surface math-card group relative flex h-[240px] flex-col justify-between overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-2xl ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
         <div
@@ -179,7 +97,7 @@ function CategoryPremiumCard({
 
         {/* Footer: Equation & Subtle decorative element */}
         <div className="relative z-10 mt-auto">
-          <p className="font-mono text-sm text-muted-foreground bg-black/5 dark:bg-white/5 px-3 py-1 rounded-md inline-block">
+          <p className="math-equation-chip inline-block rounded-md px-3 py-1 font-mono text-sm text-muted-foreground">
             {math.equation}
           </p>
         </div>
@@ -193,12 +111,12 @@ function CategoryPremiumCard({
 function OtherStagePremiumCard({
   stage,
   index,
-  style,
   locale,
 }: OtherStagePremiumCardProps) {
   const isRtl = locale === 'ar';
   const stageName = isRtl ? stage.NameAr : stage.NameEn;
-  const Icon = style.icon;
+  const visual = getStageVisual(stage);
+  const style = visual.style;
   
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -248,7 +166,7 @@ function OtherStagePremiumCard({
       >
         <motion.div
           style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-          className="group relative overflow-hidden rounded-2xl border border-primary/10 bg-card/40 backdrop-blur-md p-5 transition-all duration-300 hover:shadow-xl hover:border-primary/30"
+          className="brand-surface math-card group relative overflow-hidden rounded-2xl p-5 backdrop-blur-md transition-all duration-300 hover:border-brand-secondary/25 hover:shadow-xl"
         >
           <motion.div
             className="absolute inset-0 z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -258,11 +176,11 @@ function OtherStagePremiumCard({
           <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${style.from} ${style.to} opacity-50 group-hover:opacity-100 transition-opacity`} />
           
           <div className="flex items-center gap-4 relative z-10" style={{ transformStyle: "preserve-3d" }}>
-            <motion.div 
+            <motion.div
               style={{ translateZ: 30 }}
-              className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${style.bg} flex-shrink-0 shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300`}
+              className="flex-shrink-0 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
             >
-              <Icon className={`h-6 w-6 ${style.iconColor}`} strokeWidth={2} />
+              <StageIconBadge stage={stage} size="md" />
             </motion.div>
 
             <motion.div style={{ translateZ: 20 }} className="flex-1 min-w-0">
@@ -303,12 +221,12 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
   const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0));
   
-  const otherStages = stages?.filter(s => s.Id !== stageId) || [];
+  const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   const isLoading = categoriesLoading || stagesLoading;
 
   if (categoriesError) {
     return (
-      <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden bg-background">
+      <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
@@ -333,10 +251,10 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   }
 
   return (
-    <section className="min-h-screen py-12 lg:py-20 relative overflow-hidden bg-background">
+    <section className="min-h-screen py-12 lg:py-20 relative overflow-hidden math-section-bg">
       {/* Premium Ambient Background */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/[0.03] rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/[0.03] rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-primary/10 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-brand-secondary/8 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute inset-0 math-grid-bg opacity-30 pointer-events-none" />
 
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
@@ -345,7 +263,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
         <div className="mb-12 text-center md:text-start">
           <Link
             href="/stages"
-            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-6 group bg-card/50 backdrop-blur-md px-4 py-2 rounded-full border border-border/50"
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-6 group math-equation-chip bg-card/50 backdrop-blur-md px-4 py-2 rounded-full"
           >
             <ArrowLeft className={`h-4 w-4 transition-transform group-hover:-translate-x-1 rtl:rotate-180 rtl:group-hover:translate-x-1`} />
             {t('stages.backToStages')}
@@ -357,17 +275,22 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             transition={{ duration: 0.5 }}
             className="flex flex-col md:items-start items-center"
           >
-            <div className="flex items-center gap-3 mb-3 px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/10">
-              <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-bold text-primary uppercase tracking-widest">
-                {currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : t('stages.title')}
-              </span>
+            <div className="mb-4 flex items-center gap-3">
+              {currentStage && <StageIconBadge stage={currentStage} size="md" />}
+              <div className="math-equation-chip flex items-center gap-3 rounded-lg px-3 py-1.5">
+                <span className="flex h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                <span className="text-xs font-bold uppercase tracking-widest text-primary">
+                  {currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : t('stages.title')}
+                </span>
+              </div>
             </div>
             
-            <h1 className="brand-display-title text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent tracking-tight">
-              {currentStage 
-                ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) 
-                : t('categories.title')}
+            <h1 className="brand-display-title text-foreground text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 tracking-tight">
+              <AccentHeadingText
+                text={currentStage
+                  ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn)
+                  : t('categories.title')}
+              />
             </h1>
             
             <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
@@ -388,9 +311,9 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-20 bg-card/30 backdrop-blur-md rounded-3xl border border-border/50"
+            className="brand-surface math-card text-center py-20 rounded-3xl backdrop-blur-md"
           >
-            <div className="mx-auto h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-6">
+            <div className="math-equation-chip mx-auto h-20 w-20 rounded-full flex items-center justify-center mb-6">
               <Filter className="h-10 w-10 text-muted-foreground opacity-50" />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3">
@@ -403,8 +326,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-8">
             {sortedCategories.map((category, index) => {
-              const math = mathSymbols[category.Id % mathSymbols.length];
-              const style = categoryStyles[category.Id % categoryStyles.length];
+              const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
+              const style = CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length];
               const iconUrl = category.Icon;
 
               return (
@@ -433,7 +356,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
           >
             <div className="text-center md:text-start mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold mb-2 text-foreground">
+                <h2 className="text-gradient-math text-2xl md:text-3xl font-bold mb-2">
                   {t('stages.exploreOtherLevels')}
                 </h2>
                 <p className="text-muted-foreground">
@@ -443,19 +366,14 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {otherStages.map((stage, index) => {
-                const style = otherStageStyles[index % otherStageStyles.length];
-                
-                return (
-                  <OtherStagePremiumCard
-                    key={stage.Id}
-                    stage={stage}
-                    index={index}
-                    style={style}
-                    locale={locale}
-                  />
-                );
-              })}
+              {otherStages.map((stage, index) => (
+                <OtherStagePremiumCard
+                  key={stage.Id}
+                  stage={stage}
+                  index={index}
+                  locale={locale}
+                />
+              ))}
             </div>
           </motion.div>
         )}

@@ -38,7 +38,7 @@ function MagneticSymbol({
 
   return (
     <motion.div
-      className="absolute text-5xl text-primary/[0.07] dark:text-primary/[0.12] font-serif pointer-events-none select-none hidden lg:block z-0"
+      className={`absolute text-5xl font-serif pointer-events-none select-none hidden lg:block z-0 ${index % 2 === 0 ? "text-brand-primary/10 dark:text-brand-primary-light/15" : "text-brand-secondary-strong/10 dark:text-brand-secondary-light/15"}`}
       style={{ top: sym.top, left: sym.left, x: moveX, y: moveY }}
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -154,9 +154,19 @@ export function HeroSection() {
             />
           ))}
 
-          {/* Glow Orbs */}
-          <div className="absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-[#53B2D824] blur-[120px] animate-pulse -z-10 dark:bg-[#53B2D81A]" />
-          <div className="absolute bottom-1/4 -right-32 h-80 w-80 rounded-full bg-[#2F73A31F] blur-[100px] animate-pulse -z-10 dark:bg-[#3491C317]" style={{ animationDelay: "2s" }} />
+          {/* Function curves and neon brand glow */}
+          <svg
+            className="absolute inset-x-0 top-[14%] h-[54%] w-full -z-10 opacity-35 dark:opacity-45"
+            viewBox="0 0 1200 520"
+            fill="none"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path d="M-50 390 C 150 420, 260 80, 470 205 S 780 430, 1250 80" className="stroke-brand-primary/45" strokeWidth="2" />
+            <path d="M-40 290 C 180 90, 330 430, 570 245 S 900 70, 1240 320" className="stroke-brand-secondary/35" strokeWidth="1.5" strokeDasharray="8 14" />
+          </svg>
+          <div className="absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-brand-primary/20 blur-[120px] animate-pulse -z-10" />
+          <div className="absolute bottom-1/4 -right-32 h-80 w-80 rounded-full bg-brand-secondary/16 blur-[100px] animate-pulse -z-10" style={{ animationDelay: "2s" }} />
 
           {/* Main Content */}
           <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10 pt-24 pb-20">
@@ -165,7 +175,7 @@ export function HeroSection() {
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="inline-flex items-center gap-2 rounded-full border border-[#C7E1EC] bg-[#FFFFFFCC] px-4 py-2 text-sm font-semibold text-[#2F73A3] shadow-sm backdrop-blur-md mb-8 dark:border-[#3B6278] dark:bg-[#0D2030CC] dark:text-[#78CBE8]"
+                className="math-equation-chip inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-brand-primary-strong shadow-sm backdrop-blur-md mb-8 dark:text-brand-secondary-light"
               >
                 <Sparkles className="h-4 w-4" />
                 <span>{t("hero.tagline")}</span>
@@ -176,10 +186,14 @@ export function HeroSection() {
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
-                className="brand-display-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 text-gradient-math flex flex-wrap justify-center gap-x-4"
+                className="brand-display-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 text-foreground flex flex-wrap justify-center gap-x-4"
               >
-                {t("hero.title").split(" ").map((word, i) => (
-                  <motion.span key={i} variants={childVariants} className="inline-block">
+                {t("hero.title").split(" ").map((word, i, words) => (
+                  <motion.span
+                    key={i}
+                    variants={childVariants}
+                    className={`inline-block ${i === words.length - 1 ? "sr-title-accent" : ""}`}
+                  >
                     {word}
                   </motion.span>
                 ))}
@@ -222,8 +236,8 @@ export function HeroSection() {
                 className="w-full max-w-2xl mx-auto mb-12 px-2 sm:px-0"
               >
                 <div className="relative group">
-                  <div className="absolute -inset-1 rounded-2xl bg-[#53B2D824] blur-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500" />
-                  <div className="brand-surface relative flex items-center overflow-hidden rounded-2xl bg-background/80 backdrop-blur-xl focus-within:border-[#53B2D8] focus-within:ring-4 focus-within:ring-[#53B2D826] transition-all duration-300">
+                  <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-brand-primary/25 to-brand-secondary/25 blur-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-500" />
+                  <div className="brand-surface relative flex items-center overflow-hidden rounded-2xl bg-background/80 backdrop-blur-xl focus-within:border-brand-secondary focus-within:ring-4 focus-within:ring-brand-primary/15 transition-all duration-300">
                     <Search className="absolute start-3 sm:start-4 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
                       type="text"
@@ -250,14 +264,14 @@ export function HeroSection() {
                 transition={{ delay: 1 }}
                 className="flex flex-wrap justify-center gap-4 mb-16"
               >
-                <Button size="lg" className="gap-2 rounded-xl" asChild>
+                <Button size="lg" className="sr-cta-ring gap-2 rounded-full px-8" asChild>
                   <Link href="/stages">
                     <BookOpen className="h-5 w-5" />
                     {t("hero.browseStages")}
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="gap-2 rounded-xl backdrop-blur-md" asChild>
-                  <Link href={isAuthenticated ? "/problems" : "/register"}>
+                  <Link href={isAuthenticated ? "/problems" : "/login"}>
                     <Trophy className="h-5 w-5" />
                     {t("hero.startChallenge")}
                     <ArrowRight className="h-4 w-4 rtl:rotate-180" />

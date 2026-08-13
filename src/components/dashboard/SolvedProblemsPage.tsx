@@ -58,8 +58,8 @@ export function SolvedProblemsPage() {
       {/* Stats */}
       <Card className="border-0 shadow-sm mb-8">
         <CardContent className="p-6 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20">
-            <Target className="h-6 w-6 text-blue-500" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+            <Target className="h-6 w-6 text-primary" />
           </div>
           <div>
             <div className="text-3xl font-bold">

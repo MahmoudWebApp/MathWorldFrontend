@@ -19,14 +19,14 @@ const sectionIcons = [
 ];
 
 const colorGradients = [
-  'from-blue-500/10 to-indigo-500/5 dark:from-blue-500/15 dark:to-indigo-500/5',
-  'from-emerald-500/10 to-teal-500/5 dark:from-emerald-500/15 dark:to-teal-500/5',
-  'from-amber-500/10 to-orange-500/5 dark:from-amber-500/15 dark:to-orange-500/5',
-  'from-rose-500/10 to-pink-500/5 dark:from-rose-500/15 dark:to-pink-500/5',
-  'from-violet-500/10 to-purple-500/5 dark:from-violet-500/15 dark:to-purple-500/5',
-  'from-cyan-500/10 to-sky-500/5 dark:from-cyan-500/15 dark:to-sky-500/5',
-  'from-fuchsia-500/10 to-pink-500/5 dark:from-fuchsia-500/15 dark:to-pink-500/5',
-  'from-lime-500/10 to-green-500/5 dark:from-lime-500/15 dark:to-green-500/5',
+  'from-brand-primary/14 to-brand-secondary/7 dark:from-brand-primary/18 dark:to-brand-secondary/9',
+  'from-brand-secondary/14 to-brand-primary/7 dark:from-brand-secondary/18 dark:to-brand-primary/9',
+  'from-brand-primary-strong/14 to-brand-primary-light/7 dark:from-brand-primary/18 dark:to-brand-primary-light/9',
+  'from-brand-secondary-strong/14 to-brand-secondary-light/7 dark:from-brand-secondary/18 dark:to-brand-secondary-light/9',
+  'from-brand-primary-light/14 to-brand-secondary/7 dark:from-brand-primary-light/16 dark:to-brand-secondary/9',
+  'from-brand-secondary-light/14 to-brand-primary/7 dark:from-brand-secondary-light/16 dark:to-brand-primary/9',
+  'from-brand-primary/12 to-brand-primary-light/7 dark:from-brand-primary/16 dark:to-brand-primary-light/9',
+  'from-brand-secondary/12 to-brand-secondary-light/7 dark:from-brand-secondary/16 dark:to-brand-secondary-light/9',
 ];
 
 export function PrivacyContent() {
@@ -45,7 +45,8 @@ export function PrivacyContent() {
   ] as const;
 
   return (
-    <section className="relative py-16 lg:py-24 bg-muted/30" ref={sectionRef}>
+    <section className="math-section-bg relative overflow-hidden py-16 lg:py-24" ref={sectionRef}>
+      <div className="math-grid-bg pointer-events-none absolute inset-0 opacity-25" />
       <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10">
         <div className="max-w-3xl mx-auto space-y-8">
           {sections.map((sectionKey, index) => {
@@ -62,7 +63,7 @@ export function PrivacyContent() {
                 className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
                 style={{ transitionDelay: isInView ? `${index * 100}ms` : '0ms' }}
               >
-                <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-500 group">
+                <Card className="brand-surface math-card relative overflow-hidden border-0 shadow-sm transition-all duration-500 group hover:shadow-lg">
                   <div className={`absolute inset-0 bg-gradient-to-br ${colorGradients[index]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   
                   <CardContent className="relative p-6 lg:p-8">

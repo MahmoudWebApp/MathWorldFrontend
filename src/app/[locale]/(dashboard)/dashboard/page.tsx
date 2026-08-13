@@ -50,8 +50,8 @@ export default function UserDashboardPage() {
       icon: Target,
       label: t("dashboard.user.solvedProblems"),
       value: dashboard?.SolvedProblemsCount ?? 0,
-      color: "text-blue-500",
-      bg: "bg-blue-50 dark:bg-blue-900/20",
+      color: "text-primary",
+      bg: "bg-primary/10",
       isLucide: true,
     },
     {
@@ -81,10 +81,10 @@ export default function UserDashboardPage() {
   ];
 
   return (
-    <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
+    <div className="container relative mx-auto px-4 py-8 md:px-16 lg:px-24">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t("dashboard.user.title")}</h1>
+        <h1 className="brand-display-title text-gradient-math text-3xl font-bold mb-2">{t("dashboard.user.title")}</h1>
         {isLoading ? (
           <div className="h-5 w-48 bg-muted animate-pulse rounded" />
         ) : (
@@ -101,7 +101,7 @@ export default function UserDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="border-0 shadow-sm">
+              <Card key={i} className="math-card">
                 <CardContent className="p-6">
                   <div className="h-10 w-10 rounded-xl bg-muted animate-pulse mb-3" />
                   <div className="h-8 w-16 bg-muted animate-pulse rounded mb-2" />
@@ -112,7 +112,7 @@ export default function UserDashboardPage() {
           : stats.map((stat, index) => (
               <Card
                 key={index}
-                className="border-0 shadow-sm hover:shadow-md transition-shadow"
+                className="math-card hover:-translate-y-1 hover:border-brand-secondary/25 hover:shadow-[0_18px_48px_rgba(92,36,255,0.12)] transition-all"
               >
                 <CardContent className="p-6">
                   <div

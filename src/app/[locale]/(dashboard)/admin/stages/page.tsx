@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { StageIconBadge } from "@/components/stages/StageIconBadge";
 
 export default function AdminStagesPage() {
   const t = useTranslations();
@@ -144,7 +145,12 @@ export default function AdminStagesPage() {
                   stages.map((stage) => (
                     <tr key={stage.Id} className="border-b hover:bg-muted/20">
                       <td className="p-4 font-mono text-sm">{stage.Id}</td>
-                      <td className="p-4 font-medium">{stage.NameAr}</td>
+                      <td className="p-4 font-medium">
+                        <span className="inline-flex items-center gap-2">
+                          <StageIconBadge stage={stage} size="xs" />
+                          {stage.NameAr}
+                        </span>
+                      </td>
                       <td className="p-4 text-muted-foreground">
                         {stage.NameEn}
                       </td>
@@ -159,7 +165,7 @@ export default function AdminStagesPage() {
                           size="sm"
                           onClick={() => openModal(stage)}
                         >
-                          <Edit className="h-4 w-4 text-blue-500" />
+                          <Edit className="h-4 w-4 text-primary" />
                         </Button>
 
                         <PopoverConfirm

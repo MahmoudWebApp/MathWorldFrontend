@@ -44,56 +44,52 @@ export default function AdminDashboardPage() {
       title: t('dashboard.admin.users'),
       count: stats?.TotalUsers || 0,
       href: '/admin/users',
-      color: 'text-blue-500',
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+      chartColor: 'var(--color-brand-primary-strong)',
     },
     {
       icon: Book,
       title: t('dashboard.admin.problems'),
       count: stats?.TotalProblems || 0,
       href: '/admin/problems',
-      color: 'text-green-500',
-      bg: 'bg-green-50 dark:bg-green-900/20',
+      color: 'text-brand-secondary-strong dark:text-brand-secondary-light',
+      bg: 'bg-brand-secondary/10',
+      chartColor: 'var(--color-brand-secondary)',
     },
     {
       icon: TickCircle,
       title: t('dashboard.admin.categories'),
       count: categories?.length || 0,
       href: '/admin/categories',
-      color: 'text-purple-500',
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
+      color: 'text-brand-primary-strong dark:text-brand-primary-light',
+      bg: 'bg-brand-primary/10',
+      chartColor: 'var(--color-brand-primary)',
     },
     {
       icon: Category2,
       title: t('dashboard.admin.stages'),
       count: stages?.length || 0,
       href: '/admin/stages',
-      color: 'text-cyan-500',
-      bg: 'bg-cyan-50 dark:bg-cyan-900/20',
+      color: 'text-brand-secondary-strong dark:text-brand-secondary-light',
+      bg: 'bg-gradient-to-br from-brand-primary/10 to-brand-secondary/15',
+      chartColor: 'var(--color-brand-secondary-light)',
     },
   ];
 
-  // Prepare data for the chart
-  const chartData = adminCards.map(card => {
-    const colorMap: Record<string, string> = {
-      'text-blue-500': '#3b82f6',
-      'text-green-500': '#22c55e',
-      'text-purple-500': '#a855f7',
-      'text-cyan-500': '#06b6d4',
-    };
-    return {
-      name: card.title,
-      value: card.count,
-      color: colorMap[card.color] || '#8884d8',
-    };
-  });
+  // Keep data visualization inside the same purple/cyan brand family.
+  const chartData = adminCards.map((card) => ({
+    name: card.title,
+    value: card.count,
+    color: card.chartColor,
+  }));
 
   return (
-    <div className="container mx-auto py-8 lg:px-24 md:px-16 px-4">
+    <div className="container relative mx-auto px-4 py-8 md:px-16 lg:px-24">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{t('dashboard.admin.title')}</h1>
+          <h1 className="brand-display-title text-gradient-math text-3xl font-bold mb-2">{t('dashboard.admin.title')}</h1>
           <p className="text-muted-foreground">{t('dashboard.admin.subtitle')}</p>
         </div>
       </div>
@@ -118,7 +114,7 @@ export default function AdminDashboardPage() {
         ) : (
           adminCards.map((card, index) => (
             <Link key={index} href={card.href}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+              <Card className="math-card hover:-translate-y-1 hover:border-brand-secondary/25 hover:shadow-[0_18px_48px_rgba(92,36,255,0.12)] transition-all cursor-pointer h-full">
                 <CardContent className="p-6">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${card.bg} mb-4`}>
                     <card.icon className={`h-6 w-6 ${card.color}`} variant="Bold" />
@@ -183,8 +179,8 @@ export default function AdminDashboardPage() {
                     </div>
                     <span className={`px-2 py-1 rounded-full text-xs shrink-0 ${
                       user.Role === 'Admin' 
-                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' 
-                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                        ? 'border border-brand-primary/20 bg-primary/10 text-primary' 
+                        : 'border border-brand-secondary/20 bg-brand-secondary/10 text-brand-secondary-strong dark:text-brand-secondary-light'
                     }`}>
                       {user.Role}
                     </span>

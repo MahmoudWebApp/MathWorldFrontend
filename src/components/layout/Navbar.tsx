@@ -10,29 +10,25 @@ import { logout } from '@/store/slices/authSlice';
 import { setLocale } from '@/store/slices/localeSlice';
 import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'; 
-import Image from 'next/image'; 
 import { 
   SearchNormal1, Sun1, Moon, CloseCircle, User, Logout, ArrowDown2, Element3, ShieldSecurity, 
   ArrowRight
 } from 'iconsax-reactjs';
 import {
   BookMarked,
-  Boxes,
   ChevronDown,
   CircleCheckBig,
-  FunctionSquare,
   Heart,
   Info,
   Layers3,
   LogIn,
   Menu,
   NotebookTabs,
-  Pi,
   Search,
-  Sigma,
   UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { BrandLogo } from '@/components/layout/BrandLogo';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
@@ -41,10 +37,9 @@ import { stagesApi } from '@/store/api/stagesApi';
 import { statsApi } from '@/store/api/statsApi';
 import { usersApi } from '@/store/api/usersApi';
 import { clearAuthSession } from '@/lib/authSession';
-import { useSearchParams } from 'next/navigation'; 
-
-// Awesome Geometry icons for stages to replace boring numbers
-const stageIcons = [Boxes, Sigma, FunctionSquare, Pi];
+import { useSearchParams } from 'next/navigation';
+import { StageIconBadge } from '@/components/stages/StageIconBadge';
+import { sortStagesByOrder } from '@/lib/stageVisuals';
 
 function NavbarContent() {
   const t = useTranslations();
@@ -57,6 +52,7 @@ function NavbarContent() {
 
   const { user, isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
   const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
+  const orderedStages = sortStagesByOrder(stages ?? []);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -144,27 +140,19 @@ function NavbarContent() {
     <>
       {/* Scroll Progress Bar at the absolute top */}
       <motion.div 
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#53B2D8] via-[#3491C3] to-[#213550] z-[60] origin-left"
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-primary via-brand-primary-light to-brand-secondary z-[60] origin-left shadow-[0_0_18px_rgba(92,36,255,0.38)]"
         style={{ scaleX, transformOrigin: locale === 'ar' ? 'right' : 'left' }} 
       />
 
-      <header className="sticky top-0 z-50 w-full border-b border-[#CFE2EB] bg-background/85 glass supports-[backdrop-filter]:bg-background/55 dark:border-[#29495D]">
+      <header className="sticky top-0 z-50 w-full border-b border-brand-primary/10 bg-background/85 glass supports-[backdrop-filter]:bg-background/55 dark:border-brand-primary/20">
         <nav className="container mx-auto px-6 lg:px-12 flex h-16 items-center justify-between gap-4">
           
-          {/* Transparent SVG logo stays clear in both light and dark mode. */}
           <Link
             href="/"
-            className="group flex shrink-0 items-center"
+            className="group flex shrink-0 items-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="MathWorld"
           >
-            <Image
-              src="/mathworld-logo.svg"
-              alt="MathWorld Logo"
-              width={148}
-              height={88}
-              className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] dark:drop-shadow-[0_3px_14px_#53B2D838]"
-              priority
-            />
+            <BrandLogo compact className="transition-transform duration-300 group-hover:scale-[1.025]" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -211,13 +199,14 @@ function NavbarContent() {
                       </Link>
                       
                       <div className="grid grid-cols-2 gap-2">
-                        {stages.map((stage, i) => {
-                          const Icon = stageIcons[i % stageIcons.length];
+                        {orderedStages.map((stage) => {
                           return (
                             <Link key={stage.Id} href={`/stages/${stage.Id}`} className="group flex items-center gap-3 p-3 rounded-xl hover:bg-primary/5 border border-transparent hover:border-primary/10 transition-all">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                                <Icon className="h-5 w-5" />
-                              </div>
+                              <StageIconBadge
+                                stage={stage}
+                                size="sm"
+                                className="transition-all duration-300 group-hover:scale-110 group-hover:shadow-md"
+                              />
                               <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
                                 {locale === 'ar' ? stage.NameAr : stage.NameEn}
                               </span>
@@ -338,7 +327,7 @@ function NavbarContent() {
             ) : (
               <div className="hidden sm:flex items-center gap-2">
                 <Button variant="ghost" className="rounded-full font-semibold" asChild><Link href="/login">{t('nav.login')}</Link></Button>
-                <Button className="rounded-full font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40" asChild><Link href="/register">{t('nav.register')}</Link></Button>
+                <Button className="sr-cta-ring rounded-full px-5 font-semibold" asChild><Link href="/register">{t('nav.register')}</Link></Button>
               </div>
             )}
 
@@ -374,6 +363,22 @@ function NavbarContent() {
                 <BookMarked className="h-5 w-5" />
                 {t('nav.stages')}
               </Link>
+
+              {orderedStages.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-muted/20 p-2">
+                  {orderedStages.map((stage) => (
+                    <Link
+                      key={stage.Id}
+                      href={`/stages/${stage.Id}`}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
+                    >
+                      <StageIconBadge stage={stage} size="sm" className="h-9 w-9 rounded-lg" />
+                      <span className="truncate">{locale === 'ar' ? stage.NameAr : stage.NameEn}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
 
               <Link href="/about" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', isAboutActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
                 <Info className="h-5 w-5" />

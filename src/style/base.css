@@ -27,7 +27,15 @@
     @apply bg-background text-foreground;
   }
 
-  
+  ::selection {
+    background: rgb(var(--sr-primary-rgb) / 0.22);
+    color: var(--color-foreground);
+  }
+
+  a, button, input, textarea, select {
+    -webkit-tap-highlight-color: rgb(var(--sr-secondary-rgb) / 0.12);
+  }
+
 
   /* Scrollbar styling */
   ::-webkit-scrollbar {
@@ -37,11 +45,11 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #3491C333;
+    background: rgb(var(--sr-primary-rgb) / 0.22);
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3491C366;
+    background: linear-gradient(180deg, rgb(var(--sr-primary-rgb) / 0.56), rgb(var(--sr-secondary-rgb) / 0.56));
   }
 
   /* Reduced motion preference */

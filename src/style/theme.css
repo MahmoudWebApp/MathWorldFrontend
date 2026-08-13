@@ -1,65 +1,72 @@
 /* ============================================ */
-/* theme.css - Premium Math EdTech Palette      */
+/* theme.css - MathWorld SR Purple / Pink Brand */
 /* ============================================ */
-@theme {
-  /* Light Mode - Clean White & Indigo */
-  --color-background: #F6FAFD;
-  --color-foreground: #17324D;
-  --color-card: #FFFFFF;
-  --color-card-foreground: #17324D;
-  --color-popover: #FFFFFF;
-  --color-popover-foreground: #17324D;
-  
-  /* Primary: Electric Indigo */
-  --color-primary: #3491C3;
-  --color-primary-foreground: #FFFFFF;
-  
-  --color-secondary: #E9F3F8;
-  --color-secondary-foreground: #213550;
-  --color-muted: #EDF5F9;
-  --color-muted-foreground: #647B8D;
-  --color-accent: #DFF1F8;
-  --color-accent-foreground: #213550;
-  --color-border: #D4E4EC;
-  --color-input: #C5DCE7;
-  --color-ring: #3491C3;
-  --color-destructive: #D94A5B;
-  --color-destructive-foreground: #FFFFFF;
+:root {
+  --sr-primary: #5c24ff;
+  --sr-secondary: #ff2399;
+  --sr-primary-rgb: 92 36 255;
+  --sr-secondary-rgb: 255 35 153;
+}
 
-  /* Brand colors extracted from the MathWorld logo. */
-  --color-brand-cyan: #53B2D8;
-  --color-brand-blue: #3491C3;
-  --color-brand-steel: #2F73A3;
-  --color-brand-navy: #213550;
-  --color-brand-soft: #E8F5FA;
-  
-  --radius: 1rem; 
-  --font-sans: var(--font-outfit), system-ui, sans-serif;
-  --font-arabic: var(--font-almarai), system-ui, sans-serif;
+@theme {
+  /* Brand tokens. The sr variables are the single source of truth. */
+  --color-brand-primary: var(--sr-primary);
+  --color-brand-primary-strong: #4713db;
+  --color-brand-primary-light: #8a66ff;
+  --color-brand-secondary: var(--sr-secondary);
+  --color-brand-secondary-strong: #d80779;
+  --color-brand-secondary-light: #ff6ab9;
+  --color-brand-ink: #180d2f;
+  --color-brand-night: #090511;
+
+  /* Light mode */
+  --color-background: #fcfbff;
+  --color-foreground: #17111f;
+  --color-card: #ffffff;
+  --color-card-foreground: #17111f;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #17111f;
+
+  --color-primary: var(--sr-primary);
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #fff0f8;
+  --color-secondary-foreground: #7c174f;
+  --color-muted: #f6f2fb;
+  --color-muted-foreground: #706778;
+  --color-accent: #f5efff;
+  --color-accent-foreground: #3f1b82;
+  --color-border: #e7deef;
+  --color-input: #ded2e9;
+  --color-ring: var(--sr-secondary);
+  --color-destructive: #d94a5b;
+  --color-destructive-foreground: #ffffff;
+
+  --radius: 1rem;
+  --font-sans: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-arabic: var(--font-alexandria), system-ui, sans-serif;
 }
 
 .dark {
-  /* Dark Mode - Deep Space & Cyan/Indigo Glow */
-  --color-background: #07131F; /* Deep dark blue-gray */
-  --color-foreground: #EDF7FB;
-  --color-card: #0D2030;
-  --color-card-foreground: #EDF7FB;
-  --color-popover: #10283A;
-  --color-popover-foreground: #EDF7FB;
-  
-  /* Primary: Glowing Cyan-Blue */
-  --color-primary: #53B2D8; 
-  --color-primary-foreground: #07131F;
-  
-  --color-secondary: #132D40;
-  --color-secondary-foreground: #EDF7FB;
-  --color-muted: #102638; 
-  --color-muted-foreground: #9DB6C5;
-  --color-accent: #17384E;
-  --color-accent-foreground: #F5FBFE;
-  --color-border: #29495D;
-  --color-input: #31566D;
-  --color-ring: #53B2D8;
-  --color-destructive: #FF6B7C;
-  --color-destructive-foreground: #07131F;
+  --color-background: #090511;
+  --color-foreground: #fbf8ff;
+  --color-card: #12091e;
+  --color-card-foreground: #fbf8ff;
+  --color-popover: #170c26;
+  --color-popover-foreground: #fbf8ff;
+
+  --color-primary: #7b58ff;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #2a0a1e;
+  --color-secondary-foreground: #fff2f9;
+  --color-muted: #191121;
+  --color-muted-foreground: #b9adbf;
+  --color-accent: #28102d;
+  --color-accent-foreground: #ffe5f3;
+  --color-border: #3b2748;
+  --color-input: #4a3159;
+  --color-ring: #ff4bab;
+  --color-destructive: #ff6b7c;
+  --color-destructive-foreground: #16070b;
 }

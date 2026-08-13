@@ -78,7 +78,7 @@ export default function DataEntryGuidePage() {
                 <li>{t.rich("latexRules.rule2.block", { code: (c) => <code className="bg-muted text-foreground px-1.5 py-0.5 rounded font-mono">{c}</code> })}</li>
               </ul>
               <div className="bg-muted/30 p-5 rounded-xl border mt-4 mx-10">
-                <p className="font-bold mb-3 flex items-center gap-2"><Terminal className="w-4 h-4 text-blue-500" />{t("latexRules.exampleTitle")}</p>
+                <p className="font-bold mb-3 flex items-center gap-2"><Terminal className="w-4 h-4 text-primary" />{t("latexRules.exampleTitle")}</p>
                 <code className="block bg-background p-4 rounded-lg text-sm leading-loose border font-mono whitespace-pre-wrap text-foreground">{t("latexRules.exampleCode")}</code>
               </div>
             </div>

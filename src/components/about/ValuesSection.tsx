@@ -8,10 +8,10 @@ import { Card, CardContent } from '@/components/ui/Card';
 const icons = [Award, Globe, Lightbulb, Users];
 
 const colorClasses = [
-  'from-blue-500/10 to-indigo-500/5 dark:from-blue-500/15 dark:to-indigo-500/5',
-  'from-emerald-500/10 to-teal-500/5 dark:from-emerald-500/15 dark:to-teal-500/5',
-  'from-amber-500/10 to-orange-500/5 dark:from-amber-500/15 dark:to-orange-500/5',
-  'from-rose-500/10 to-pink-500/5 dark:from-rose-500/15 dark:to-pink-500/5',
+  'from-brand-primary/14 to-brand-secondary/7 dark:from-brand-primary/18 dark:to-brand-secondary/9',
+  'from-brand-secondary/14 to-brand-primary/7 dark:from-brand-secondary/18 dark:to-brand-primary/9',
+  'from-brand-primary-strong/14 to-brand-primary-light/7 dark:from-brand-primary/18 dark:to-brand-primary-light/9',
+  'from-brand-secondary-strong/14 to-brand-secondary-light/7 dark:from-brand-secondary/18 dark:to-brand-secondary-light/9',
 ];
 
 export function ValuesSection() {
@@ -22,7 +22,7 @@ export function ValuesSection() {
   const values = t.raw('values.items') as Array<{ title: string; description: string }>;
 
   return (
-    <section className="relative py-20 lg:py-28 bg-muted/30 overflow-hidden" ref={sectionRef}>
+    <section className="math-section-bg relative overflow-hidden py-20 lg:py-28" ref={sectionRef}>
       <div className="absolute bottom-0 left-10 w-64 h-64 bg-primary/[0.02] rounded-full blur-[80px]" />
       
       <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10">
@@ -48,7 +48,7 @@ export function ValuesSection() {
                 className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
                 style={{ transitionDelay: isInView ? `${index * 100}ms` : '0ms' }}
               >
-                <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-500 h-full group hover:-translate-y-1">
+                <Card className="brand-surface math-card relative h-full overflow-hidden border-0 shadow-sm transition-all duration-500 group hover:-translate-y-1 hover:shadow-xl">
                   <div className={`absolute inset-0 bg-gradient-to-br ${colorClasses[index]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   
                   <CardContent className="relative p-6 lg:p-8 flex flex-col items-center text-center h-full">

@@ -504,8 +504,9 @@
         "users": "Active Learners",
         "problems": "Math Problems",
         "solutions": "Solutions",
-        "countries": "Countries"
-      }
+        "views": "Problem views"
+      },
+      "live": "Live platform data"
     },
     "features": {
       "title": "What Makes Us Different",

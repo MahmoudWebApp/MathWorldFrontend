@@ -11,7 +11,7 @@ export function CTASection() {
   const { ref: sectionRef, isInView } = useInView(0.1);
 
   return (
-    <section className="relative py-20 lg:py-28 overflow-hidden" ref={sectionRef}>
+    <section className="math-section-bg relative py-20 lg:py-28 overflow-hidden" ref={sectionRef}>
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/[0.03] to-primary/[0.05] dark:via-primary/[0.05] dark:to-primary/[0.08]" />
       
       {/* Background Decorations */}

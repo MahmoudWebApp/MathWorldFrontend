@@ -99,8 +99,8 @@ export default function AdminUsersPage() {
                         <span
                           className={`rounded-full px-2 py-1 text-xs font-medium ${
                             user.Role === 'Admin'
-                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                              : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                              ? 'border border-brand-primary/20 bg-primary/10 text-primary'
+                              : 'border border-brand-secondary/20 bg-brand-secondary/10 text-brand-secondary-strong dark:text-brand-secondary-light'
                           }`}
                         >
                           {user.Role}

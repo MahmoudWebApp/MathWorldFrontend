@@ -1,62 +1,35 @@
-// app/[locale]/layout.tsx
-import { Outfit, Almarai } from "next/font/google";
-import { getTranslations } from "next-intl/server";
-import "@/style/globals.css";
-import type { Metadata } from "next";
+import { Alexandria } from 'next/font/google';
+import type { Metadata } from 'next';
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
+import '@/style/globals.css';
+
+const alexandria = Alexandria({
+  subsets: ['arabic', 'latin'],
+  variable: '--font-alexandria',
+  display: 'swap',
 });
 
-const almarai = Almarai({
-  subsets: ["arabic"],
-  weight: ["300", "400", "700", "800"],
-  variable: "--font-almarai",
-  display: "swap",
-});
+export const metadata: Metadata = {
+  title: {
+    default: 'MathWorld',
+    template: '%s | MathWorld',
+  },
+  description: 'Learn, practice, and master mathematics with MathWorld.',
+  manifest: '/site.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
+};
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-
-  const t = await getTranslations({ locale });
-
-  return {
-    title: t("metadata.title"),
-    description: t("metadata.description"),
-    icons: {
-      icon: [
-        { url: "/favicon.svg", type: "image/svg+xml" },
-        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      ],
-      apple: [
-        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-      ],
-    },
-  };
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      suppressHydrationWarning
-      className={`${outfit.variable} ${almarai.variable}`}
-    >
-      <body suppressHydrationWarning className="min-h-screen bg-background antialiased brand-page-bg"
-       data-gramm="false"        
-        data-gramm_editor="false"  
-        data-enable-grammarly="false" 
-      >{children}</body>
+    <html suppressHydrationWarning className={alexandria.variable}>
+      <body className="min-h-screen bg-background antialiased brand-page-bg">{children}</body>
     </html>
   );
 }

@@ -65,7 +65,7 @@ export function PopoverConfirm({
           align={align}
           side={side}
           sideOffset={8}
-          className="z-[9999] w-80 bg-background border rounded-lg shadow-xl p-4 animate-in fade-in-0 zoom-in-95 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+          className="brand-surface z-[9999] w-80 rounded-xl p-4 shadow-xl animate-in fade-in-0 zoom-in-95 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
           onCloseAutoFocus={(e) => e.preventDefault()}
           dir={isRtl ? 'rtl' : 'ltr'}
         >

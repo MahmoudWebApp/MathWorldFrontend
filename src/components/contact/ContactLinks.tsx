@@ -85,9 +85,9 @@ const socialLinks = [
 const socialCardHover = `
   group
   flex flex-col items-center gap-3 p-6 rounded-2xl 
-  border border-border/50 bg-card/50 
+  border border-brand-primary/10 bg-card/65 backdrop-blur-sm 
   text-muted-foreground
-  hover:scale-105 hover:-translate-y-1 
+  hover:scale-[1.03] hover:-translate-y-1 
   hover:shadow-lg hover:shadow-primary/15 
   hover:border-primary/40 
   hover:bg-primary/[0.06] dark:hover:bg-primary/[0.10]
@@ -102,7 +102,7 @@ export function ContactLinks() {
   const { ref: sectionRef, isInView } = useInView(0.1);
 
   return (
-    <section className="relative py-20 lg:py-28 bg-muted/30" ref={sectionRef}>
+    <section className="math-section-bg relative overflow-hidden py-20 lg:py-28" ref={sectionRef}>
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/[0.02] rounded-full blur-[100px]" />
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/[0.02] rounded-full blur-[80px]" />
 
@@ -110,7 +110,7 @@ export function ContactLinks() {
         <div className="max-w-4xl mx-auto">
           {/* Email Card */}
           <div className={`mb-12 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 group">
+            <Card className="brand-surface math-card relative overflow-hidden transition-all duration-500 group hover:-translate-y-1 hover:border-brand-secondary/25 hover:shadow-xl">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               
               <CardContent className="relative p-8 lg:p-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-start">
@@ -172,7 +172,7 @@ export function ContactLinks() {
 
           {/* Response Time */}
           <div className={`transition-all duration-700 delay-300 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-primary/[0.03] to-transparent">
+            <Card className="brand-surface math-card bg-gradient-to-br from-primary/[0.03] to-brand-secondary/[0.03]">
               <CardContent className="p-6 flex items-center gap-4 text-center justify-center">
                 <Clock className="h-5 w-5 text-primary shrink-0" />
                 <div>

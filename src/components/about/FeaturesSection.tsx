@@ -7,10 +7,10 @@ import { Card, CardContent } from '@/components/ui/Card';
 
 const icons = [Brain, BookOpen, Trophy, Languages];
 const gradients = [
-  'from-violet-500/10 to-purple-500/5 dark:from-violet-500/15 dark:to-purple-500/5',
-  'from-cyan-500/10 to-sky-500/5 dark:from-cyan-500/15 dark:to-sky-500/5',
-  'from-fuchsia-500/10 to-pink-500/5 dark:from-fuchsia-500/15 dark:to-pink-500/5',
-  'from-lime-500/10 to-green-500/5 dark:from-lime-500/15 dark:to-green-500/5',
+  'from-brand-primary/14 to-brand-secondary/7 dark:from-brand-primary/18 dark:to-brand-secondary/9',
+  'from-brand-secondary/14 to-brand-primary/7 dark:from-brand-secondary/18 dark:to-brand-primary/9',
+  'from-brand-primary-strong/14 to-brand-primary-light/7 dark:from-brand-primary/18 dark:to-brand-primary-light/9',
+  'from-brand-secondary-strong/14 to-brand-secondary-light/7 dark:from-brand-secondary/18 dark:to-brand-secondary-light/9',
 ];
 
 export function FeaturesSection() {
@@ -21,7 +21,7 @@ export function FeaturesSection() {
   const features = t.raw('features.items') as Array<{ title: string; description: string }>;
 
   return (
-    <section className="relative py-20 lg:py-28 bg-muted/30 overflow-hidden" ref={sectionRef}>
+    <section className="math-section-bg relative overflow-hidden py-20 lg:py-28" ref={sectionRef}>
       <div className="absolute top-10 right-10 w-48 h-48 bg-primary/[0.03] rounded-full blur-[60px]" />
       <div className="absolute bottom-10 left-10 w-64 h-64 bg-primary/[0.02] rounded-full blur-[80px]" />
 
@@ -49,7 +49,7 @@ export function FeaturesSection() {
                 className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
                 style={{ transitionDelay: isInView ? `${index * 150}ms` : '0ms' }}
               >
-                <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-500 group hover:-translate-y-1 h-full">
+                <Card className="brand-surface math-card relative h-full overflow-hidden border-0 shadow-sm transition-all duration-500 group hover:-translate-y-1 hover:shadow-xl">
                   <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   
                   <CardContent className="relative p-6 lg:p-8 flex items-start gap-5">

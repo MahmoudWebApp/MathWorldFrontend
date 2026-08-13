@@ -796,7 +796,7 @@ export default function AdminProblemsPage() {
                   {/* Arabic solution preview */}
                   {form.DetailedSolutionAr && (
                     <div className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-green-500/30">
-                      <div className="text-xs font-bold text-green-600 dark:text-green-500 mb-3 flex items-center gap-2">
+                      <div className="text-xs font-bold text-green-600 dark:text-primary mb-3 flex items-center gap-2">
                         <Eye className="w-4 h-4" /> {t("admin.problems.solutionPreview")}
                       </div>
                       <RichText
@@ -833,7 +833,7 @@ export default function AdminProblemsPage() {
                       className="mt-4 p-5 bg-muted/10 rounded-xl border-2 border-dashed border-green-500/30"
                       dir="ltr"
                     >
-                      <div className="text-xs font-bold text-green-600 dark:text-green-500 mb-3 flex items-center gap-2">
+                      <div className="text-xs font-bold text-green-600 dark:text-primary mb-3 flex items-center gap-2">
                         <Eye className="w-4 h-4" /> Preview
                       </div>
                       <RichText
@@ -1042,7 +1042,7 @@ export default function AdminProblemsPage() {
                         </div>
                       </td>
                       <td className="p-5">
-                        <Badge className="px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
+                        <Badge className="px-3 py-1 border border-brand-primary/20 bg-primary/10 text-primary">
                           {getStageName(p.StageId)}
                         </Badge>
                       </td>
@@ -1066,7 +1066,7 @@ export default function AdminProblemsPage() {
                               onClick={() => setViewingProblem(p)}
                               className="hover:text-primary hover:bg-primary/10"
                             >
-                              <Eye className="h-4 w-4 text-blue-500" />
+                              <Eye className="h-4 w-4 text-primary" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent
@@ -1083,9 +1083,9 @@ export default function AdminProblemsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => openForm(p)}
-                              className="hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                              className="hover:text-primary hover:bg-primary/10"
                             >
-                              <Pencil className="h-4 w-4 text-green-500" />
+                              <Pencil className="h-4 w-4 text-primary" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent
@@ -1177,11 +1177,11 @@ export default function AdminProblemsPage() {
             </DialogTitle>
 
             <div className="flex flex-wrap items-center gap-3 pb-4 border-b">
-              <Badge className="px-4 py-2 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-base font-semibold flex items-center gap-2">
+              <Badge className="px-4 py-2 border border-brand-primary/20 bg-primary/10 text-primary text-base font-semibold flex items-center gap-2">
                 <BookOpen className="h-4 w-4" />
                 {getStageName(viewingProblem?.StageId || 0)}
               </Badge>
-              <Badge className="px-4 py-2 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 text-base font-semibold flex items-center gap-2">
+              <Badge className="px-4 py-2 border border-brand-secondary/20 bg-brand-secondary/10 text-brand-secondary-strong dark:text-brand-secondary-light text-base font-semibold flex items-center gap-2">
                 <ListChecks className="h-4 w-4" />
                 {getCategoryName(viewingProblem?.CategoryId || 0)}
               </Badge>
@@ -1236,7 +1236,7 @@ export default function AdminProblemsPage() {
                   href={viewingProblem.YoutubeSolutionUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-sm text-blue-600 underline"
+                  className="text-sm text-primary underline"
                 >
                   {t("admin.problems.watchVideo")}
                 </a>

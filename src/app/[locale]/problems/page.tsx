@@ -17,7 +17,7 @@ export async function generateMetadata({
 
 export default async function ProblemsPage() {
   return (
-    <div className="min-h-screen bg-slate-200/50 dark:bg-background">
+    <div className="min-h-screen math-section-bg">
       <ProblemsPageClientWrapper />
     </div>
   );

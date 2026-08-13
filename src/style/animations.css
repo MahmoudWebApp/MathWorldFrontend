@@ -27,10 +27,6 @@
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1); }
-}
 @keyframes draw-path {
   from { stroke-dashoffset: 600; }
   to { stroke-dashoffset: 0; }
@@ -43,12 +39,6 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-@keyframes equation-cycle {
-  0%, 20% { opacity: 0; transform: translateY(10px); }
-  25%, 45% { opacity: 1; transform: translateY(0); }
-  50%, 70% { opacity: 0; transform: translateY(-10px); }
-  100% { opacity: 0; transform: translateY(-10px); }
-}
 @keyframes orbit-1 {
   from { transform: rotate(0deg) translateX(140px) rotate(0deg); }
   to { transform: rotate(360deg) translateX(140px) rotate(-360deg); }
@@ -60,11 +50,6 @@
 @keyframes orbit-3 {
   from { transform: rotate(240deg) translateX(110px) rotate(-240deg); }
   to { transform: rotate(600deg) translateX(110px) rotate(-600deg); }
-}
-@keyframes count-up-glow {
-  0% { text-shadow: 0 0 0px transparent; }
-  50% { text-shadow: 0 0 20px #3491C380; }
-  100% { text-shadow: 0 0 0px transparent; }
 }
 @keyframes wave-rotate {
   from { transform: rotate(0deg); }
@@ -82,9 +67,6 @@
 .animate-float-reverse { animation: float-reverse 7s ease-in-out infinite; }
 .animate-spin-slow { animation: spin-slow 25s linear infinite; }
 .animate-spin-slow-reverse { animation: spin-slow-reverse 30s linear infinite; }
-.animate-fade-in-up { animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-fade-in-down { animation: fade-in-down 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.animate-scale-in { animation: scale-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-pulse-glow { animation: pulse-glow 4s ease-in-out infinite; }
 .animate-shimmer {
   animation: shimmer 3s linear infinite;
@@ -120,6 +102,3 @@
 .hero-delay-2 { --hero-delay: 0.2s; }
 .hero-delay-3 { --hero-delay: 0.3s; }
 .hero-delay-4 { --hero-delay: 0.42s; }
-.hero-delay-5 { --hero-delay: 0.55s; }
-.hero-delay-6 { --hero-delay: 0.68s; }
-.hero-delay-7 { --hero-delay: 0.82s; }

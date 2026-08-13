@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { ProblemCard } from "@/components/problems/ProblemCard";
+import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
+import { StageIconBadge } from '@/components/stages/StageIconBadge';
 
 const DEFAULT_PAGE_SIZE = 10;
 const DEBOUNCE_DELAY = 500;
@@ -104,12 +106,16 @@ function ProblemsPageClient() {
   const currentPage = searchResults?.Page || page;
 
   // Get names for display
-  const stageName =
+  const selectedStage =
     stageId && stages
-      ? (locale === "ar"
-          ? stages.find((s) => s.Id === parseInt(stageId))?.NameAr
-          : stages.find((s) => s.Id === parseInt(stageId))?.NameEn) || ""
-      : "";
+      ? stages.find((stage) => stage.Id === parseInt(stageId))
+      : undefined;
+
+  const stageName = selectedStage
+    ? locale === "ar"
+      ? selectedStage.NameAr
+      : selectedStage.NameEn
+    : "";
 
   const categoryName =
     categoryId && categories
@@ -171,7 +177,7 @@ function ProblemsPageClient() {
 
   // ── Main render ─────────────────────────────────────────
   return (
-    <div className="container mx-auto lg:px-24 md:px-16 px-4 py-12">
+    <div className="container relative mx-auto px-4 py-12 md:px-16 lg:px-24">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
         <Link href="/" className="hover:text-primary transition-colors">
@@ -196,8 +202,8 @@ function ProblemsPageClient() {
 
       {/* Page header */}
       <div className="mb-10 text-center md:text-start">
-        <h1 className="brand-display-title text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          {pageTitle}
+        <h1 className="brand-display-title text-4xl md:text-5xl font-extrabold mb-4 text-foreground">
+          <AccentHeadingText text={pageTitle} />
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
           {pageSubtitle}
@@ -207,14 +213,14 @@ function ProblemsPageClient() {
       {/* Search bar */}
       <div className="mb-8">
         <div className="relative">
-          <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+          <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/50 z-10" />
 
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={searchPlaceholder}
-            className="w-full rounded-2xl border border-border/50 bg-background/50 backdrop-blur-sm py-4 ps-12 pe-10 text-base outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 shadow-sm"
+            className="w-full rounded-2xl border border-brand-primary/15 bg-card/80 backdrop-blur-xl py-4 ps-12 pe-10 text-base outline-none transition-all focus:border-brand-secondary/50 focus:ring-4 focus:ring-primary/10 shadow-[0_12px_36px_rgba(57,26,84,0.08)]"
           />
 
           <div className="absolute inset-y-0 end-3 flex items-center gap-1">
@@ -260,13 +266,14 @@ function ProblemsPageClient() {
           <span className="text-sm text-muted-foreground">
             {t("problems.showing")}:
           </span>
-          {stageName && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm font-medium">
+          {stageName && selectedStage && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-primary/20 bg-primary/10 px-2.5 py-1 text-sm font-medium text-primary">
+              <StageIconBadge stage={selectedStage} size="xs" className="border-0 bg-background/30 shadow-none" />
               {stageName}
             </span>
           )}
           {categoryName && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 text-sm font-medium">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full math-equation-chip border-brand-secondary/20 bg-brand-secondary/10 text-brand-secondary-strong dark:text-brand-secondary-light text-sm font-medium">
               {categoryName}
             </span>
           )}
@@ -309,8 +316,8 @@ function ProblemsPageClient() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-muted/20 rounded-3xl border border-border/50">
-              <div className="bg-background w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <div className="brand-surface math-card text-center py-20 rounded-3xl">
+              <div className="math-equation-chip bg-background/80 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <Search className="h-8 w-8 text-muted-foreground/50" />
               </div>
               <p className="text-xl font-bold mb-2">{t("search.noResults")}</p>
@@ -353,7 +360,7 @@ function ProblemsPageClient() {
                 <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
               </Button>
 
-              <div className="flex items-center gap-1 bg-card border border-border/50 rounded-full p-1 shadow-sm">
+              <div className="flex items-center gap-1 bg-card/90 border border-brand-primary/15 rounded-full p-1 shadow-sm backdrop-blur-xl">
                 {(() => {
                   const maxVisiblePages = 5;
                   let pagesToShow: number[];

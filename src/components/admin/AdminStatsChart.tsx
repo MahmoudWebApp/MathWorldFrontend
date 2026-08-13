@@ -33,7 +33,7 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload?.length) {
     return (
-      <div className="bg-background border border-border rounded-lg shadow-lg p-3 pointer-events-none">
+      <div className="brand-surface math-card rounded-xl p-3 pointer-events-none">
         <p className="font-medium text-foreground mb-1">{label}</p>
         <p className="text-primary text-lg font-bold">
           {Number(payload[0].value ?? 0).toLocaleString()}
@@ -49,7 +49,7 @@ export default function AdminStatsChart({ data, isLoading = false }: AdminStatsC
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="math-card">
         <CardHeader>
           <CardTitle>{t('dashboard.admin.statsOverview')}</CardTitle>
         </CardHeader>
@@ -61,7 +61,7 @@ export default function AdminStatsChart({ data, isLoading = false }: AdminStatsC
   }
 
   return (
-    <Card>
+    <Card className="math-card">
       <CardHeader>
         <CardTitle>{t('dashboard.admin.statsOverview')}</CardTitle>
       </CardHeader>
@@ -78,17 +78,17 @@ export default function AdminStatsChart({ data, isLoading = false }: AdminStatsC
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
                 interval={0}
                 height={50}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--color-muted-foreground)', fontSize: 12 }}
                 width={30}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)', radius: 6 }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'color-mix(in srgb, var(--color-muted) 60%, transparent)', radius: 6 }} />
               <Bar dataKey="value" radius={[6, 6, 0, 0]} animationDuration={800}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />

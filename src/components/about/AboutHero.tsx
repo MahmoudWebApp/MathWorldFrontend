@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 
 const floatingSymbols = [
   { symbol: '∑', className: 'top-[10%] left-[5%]', size: 'text-5xl', delay: '0s', duration: '8s' },
@@ -22,16 +23,15 @@ export function AboutHero() {
   }, []);
 
   return (
-    <section className={`relative min-h-[70vh] overflow-hidden flex items-center justify-center ${mounted ? 'hero-loaded' : ''}`}>
+    <section className={`brand-hero-bg relative min-h-[70vh] overflow-hidden flex items-center justify-center ${mounted ? 'hero-loaded' : ''}`}>
       {/* Background Layers */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.08] via-primary/[0.03] to-background dark:from-primary/[0.12] dark:via-primary/[0.05] dark:to-background" />
       <div className="absolute inset-0 math-grid-bg opacity-40" />
       
       {/* Floating Math Symbols */}
       {floatingSymbols.map((sym, index) => (
         <div
           key={index}
-          className={`absolute ${sym.className} ${sym.size} text-primary/[0.06] dark:text-primary/[0.1] font-serif pointer-events-none select-none hidden lg:block animate-float`}
+          className={`absolute ${sym.className} ${sym.size} text-brand-primary/[0.07] odd:text-brand-secondary/[0.08] dark:text-brand-secondary/[0.10] font-serif pointer-events-none select-none hidden lg:block animate-float`}
           style={{
             animationDelay: sym.delay,
             animationDuration: sym.duration,
@@ -43,8 +43,8 @@ export function AboutHero() {
       ))}
 
       {/* Glow Orbs */}
-      <div className="absolute top-1/3 -left-24 w-72 h-72 bg-primary/10 dark:bg-primary/8 rounded-full blur-[100px] animate-pulse-glow" />
-      <div className="absolute bottom-1/3 -right-24 w-64 h-64 bg-primary/8 dark:bg-primary/5 rounded-full blur-[80px] animate-pulse-glow" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-1/3 -left-24 w-72 h-72 bg-brand-primary/12 dark:bg-brand-primary/10 rounded-full blur-[100px] animate-pulse-glow" />
+      <div className="absolute bottom-1/3 -right-24 w-64 h-64 bg-brand-secondary/10 dark:bg-brand-secondary/8 rounded-full blur-[80px] animate-pulse-glow" style={{ animationDelay: '2s' }} />
 
       {/* Content */}
       <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10 pt-24 pb-16">
@@ -56,8 +56,8 @@ export function AboutHero() {
           </div>
 
           {/* Title */}
-          <h1 className="brand-display-title hero-anim hero-delay-2 text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-gradient-math">
-            {t('hero.title')}
+          <h1 className="brand-display-title hero-anim hero-delay-2 text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6 text-foreground">
+            <AccentHeadingText text={t('hero.title')} />
           </h1>
 
           {/* Subtitle */}

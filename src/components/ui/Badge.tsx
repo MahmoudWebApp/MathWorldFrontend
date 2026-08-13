@@ -13,7 +13,7 @@ function Badge({ className, variant = 'default', ...props }: BadgeProps) {
         {
           'border-transparent bg-primary text-primary-foreground hover:bg-primary/80': variant === 'default',
           'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80': variant === 'secondary',
-          'text-foreground': variant === 'outline',
+          'border-brand-primary/20 bg-background/50 text-foreground backdrop-blur-sm': variant === 'outline',
           'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80': variant === 'destructive',
         },
         className

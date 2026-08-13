@@ -14,14 +14,14 @@ export function MissionSection() {
   const missionPoints = t.raw('mission.points') as string[];
 
   return (
-    <section className="relative py-20 lg:py-28 overflow-hidden" ref={sectionRef}>
+    <section className="math-section-bg relative py-20 lg:py-28 overflow-hidden" ref={sectionRef}>
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/[0.02] rounded-full blur-[100px]" />
       
       <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Mission Card */}
           <div className={`transition-all duration-1000 ${isInView ? 'opacity-100 translate-x-0' : isRtl ? 'opacity-0 translate-x-12' : 'opacity-0 -translate-x-12'}`}>
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-card to-card/50">
+            <Card className="brand-surface math-card relative overflow-hidden hover:shadow-xl transition-all duration-500">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
               <CardContent className="relative p-8 lg:p-10">
                 <div className="flex items-center gap-3 mb-6">
@@ -49,7 +49,7 @@ export function MissionSection() {
 
           {/* Vision Card */}
           <div className={`transition-all duration-1000 delay-200 ${isInView ? 'opacity-100 translate-x-0' : isRtl ? 'opacity-0 -translate-x-12' : 'opacity-0 translate-x-12'}`}>
-            <Card className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-500 bg-gradient-to-br from-card to-card/50 h-full">
+            <Card className="brand-surface math-card relative h-full overflow-hidden hover:shadow-xl transition-all duration-500">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500" />
               <CardContent className="relative p-8 lg:p-10 flex flex-col justify-center h-full">
                 <div className="flex items-center gap-3 mb-6">

@@ -1,20 +1,21 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-import { CircleCheckBig, FileText, Globe, Users, type LucideIcon } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import { CircleCheckBig, Eye, FileText, Users, type LucideIcon } from 'lucide-react';
+import { motion, useMotionValueEvent, useSpring } from 'framer-motion';
 
-import { motion, useSpring, AnimatePresence, useMotionValueEvent } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useGetStatsQuery } from '@/store/api/statsApi';
+import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 
-// Refactored AnimatedCounter using Framer Motion physics & direct DOM mutation (High Performance)
-function PhysicsCounter({ value, suffix }: { value: number; suffix: string }) {
+function PhysicsCounter({ value, locale }: { value: number; locale: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const spring = useSpring(0, { mass: 1, stiffness: 40, damping: 15 });
+  const spring = useSpring(0, { mass: 0.9, stiffness: 46, damping: 18 });
+  const formatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
 
-  // Update the DOM node directly on every frame without React re-renders!
-  useMotionValueEvent(spring, "change", (latest) => {
+  useMotionValueEvent(spring, 'change', (latest) => {
     if (ref.current) {
-      ref.current.textContent = Math.floor(latest).toLocaleString();
+      ref.current.textContent = formatter.format(Math.max(0, Math.floor(latest)));
     }
   });
 
@@ -22,163 +23,142 @@ function PhysicsCounter({ value, suffix }: { value: number; suffix: string }) {
     spring.set(value);
   }, [spring, value]);
 
-  return (
-    <motion.span>
-      <span ref={ref}>0</span>
-      {suffix}
-    </motion.span>
-  );
+  return <span ref={ref}>{formatter.format(0)}</span>;
 }
 
 interface StatItem {
   icon: LucideIcon;
-  value: number;
-  suffix: string;
-  mathEasterEgg: string;
+  value?: number;
   labelKey: string;
   mathSymbol: string;
-  mathBg: string;
+  tone: string;
 }
 
-// Math Easter Egg Component (Swaps standard number with Math representation on hover)
-function StatCard({ stat, index }: { stat: StatItem; index: number }) {
+function StatCard({ stat, index, locale }: { stat: StatItem; index: number; locale: string }) {
   const t = useTranslations('about');
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
+    <motion.article
+      initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: index * 0.15 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="group relative h-full rounded-2xl border bg-card/80 dark:bg-card/40 backdrop-blur-sm overflow-hidden transition-all duration-500 cursor-default"
+      viewport={{ once: true, margin: '-30px' }}
+      transition={{ duration: 0.48, delay: index * 0.08 }}
+      whileHover={{ y: -6, scale: 1.015 }}
+      className={`impact-stat impact-stat-${stat.tone} group relative overflow-hidden rounded-[1.65rem] p-5 sm:p-6`}
     >
-      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.mathBg}`} />
-      
-      {/* Background math symbol rotates on hover */}
-      <motion.span 
-        animate={{ rotate: isHovered ? 15 : 0, scale: isHovered ? 1.1 : 1 }}
-        className="absolute -bottom-4 -end-4 text-8xl font-serif text-primary/[0.04] dark:text-primary/[0.06] select-none pointer-events-none origin-bottom-right" 
-        dir="ltr"
-      >
+      <span className="impact-stat-symbol pointer-events-none absolute -end-1 -top-7 select-none" dir="ltr">
         {stat.mathSymbol}
-      </motion.span>
+      </span>
 
-      <div className="relative p-6 lg:p-7 text-center">
-        <motion.div 
-          animate={{ y: isHovered ? -5 : 0 }}
-          className={`flex h-12 w-12 mx-auto items-center justify-center rounded-xl bg-gradient-to-br ${stat.mathBg} mb-5`}
-        >
-          <stat.icon className="h-6 w-6 text-primary" />
-        </motion.div>
-
-        <div className="h-12 flex items-center justify-center text-3xl lg:text-4xl font-bold text-gradient-math mb-2">
-          <AnimatePresence mode="wait">
-            {!isHovered ? (
-              <motion.div
-                key="normal"
-                initial={{ opacity: 0, rotateX: 90 }}
-                animate={{ opacity: 1, rotateX: 0 }}
-                exit={{ opacity: 0, rotateX: -90 }}
-                transition={{ duration: 0.2 }}
-              >
-                <PhysicsCounter value={stat.value} suffix={stat.suffix} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="math"
-                initial={{ opacity: 0, rotateX: 90 }}
-                animate={{ opacity: 1, rotateX: 0 }}
-                exit={{ opacity: 0, rotateX: -90 }}
-                transition={{ duration: 0.2 }}
-                className="font-mono text-2xl tracking-widest text-primary"
-                dir="ltr"
-              >
-                {/* Math Easter Egg Representation */}
-                {stat.mathEasterEgg}
-              </motion.div>
-            )}
-          </AnimatePresence>
+      <div className="relative z-10 flex items-start justify-between gap-3">
+        <div className="impact-stat-icon flex h-11 w-11 items-center justify-center rounded-2xl">
+          <stat.icon className="h-5 w-5" strokeWidth={2} />
         </div>
-
-        <h3 className="text-base font-semibold text-muted-foreground group-hover:text-primary transition-colors duration-300">
-          {t(stat.labelKey)}
-        </h3>
+        <span className="impact-live-dot mt-2 h-2 w-2 rounded-full" aria-hidden="true" />
       </div>
-    </motion.div>
+
+      <div className="relative z-10 mt-8">
+        <div className="impact-number text-3xl font-black tracking-tight sm:text-4xl lg:text-[2.7rem]" dir="ltr">
+          {typeof stat.value === 'number' ? <PhysicsCounter value={stat.value} locale={locale} /> : '—'}
+        </div>
+        <p className="mt-2 text-sm font-bold text-white/70 sm:text-base">
+          {t(stat.labelKey)}
+        </p>
+      </div>
+
+      <div className="impact-stat-line absolute inset-x-5 bottom-0 h-px" />
+    </motion.article>
   );
 }
 
 export function StatsSection() {
   const t = useTranslations('about');
-  
-  const stats = [
+  const locale = useLocale();
+  const { data, isFetching } = useGetStatsQuery();
+
+  const stats: StatItem[] = [
     {
       icon: Users,
-      value: 10000,
-      suffix: '+',
-      mathEasterEgg: '10⁴',
+      value: data?.TotalUsers,
       labelKey: 'stats.items.users',
       mathSymbol: '∑',
-      mathBg: 'from-[#53B2D838] to-[#3491C31F]',
+      tone: 'primary',
     },
     {
       icon: FileText,
-      value: 5000,
-      suffix: '+',
-      mathEasterEgg: '5 × 10³',
+      value: data?.TotalProblems,
       labelKey: 'stats.items.problems',
-      mathSymbol: '∫',
-      mathBg: 'from-[#3491C338] to-[#2F73A31F]',
+      mathSymbol: 'x²',
+      tone: 'secondary',
     },
     {
       icon: CircleCheckBig,
-      value: 50000,
-      suffix: '+',
-      mathEasterEgg: '50k',
+      value: data?.TotalSolved,
       labelKey: 'stats.items.solutions',
-      mathSymbol: '∞',
-      mathBg: 'from-[#4FA6CF38] to-[#285E881F]',
+      mathSymbol: '✓',
+      tone: 'mixed',
     },
     {
-      icon: Globe,
-      value: 45,
-      suffix: '+',
-      mathEasterEgg: '≈ √2025',
-      labelKey: 'stats.items.countries',
-      mathSymbol: '∂',
-      mathBg: 'from-[#69889F38] to-[#2135501F]',
+      icon: Eye,
+      value: data?.TotalViews,
+      labelKey: 'stats.items.views',
+      mathSymbol: '∞',
+      tone: 'pink',
     },
   ];
 
   return (
-    <section className="relative overflow-hidden bg-[#EDF6FA] py-20 lg:py-28 dark:bg-[#0A1B2B]">
-      <div className="absolute inset-0 math-grid-bg opacity-40 -z-10" />
-      
-      <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10">
+    <section className="home-impact-section relative overflow-hidden py-20 lg:py-28">
+      <div className="container relative z-10 mx-auto px-4 md:px-8 lg:px-12">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
+          initial={{ opacity: 0, y: 26 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          className="impact-shell relative mx-auto max-w-7xl overflow-hidden rounded-[2.25rem] px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-12"
+          aria-busy={isFetching}
         >
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="h-1 w-8 rounded-full bg-primary" />
-            <span className="text-sm font-medium text-primary uppercase tracking-wider">
-              {t('stats.subtitle')}
-            </span>
-            <div className="h-1 w-8 rounded-full bg-primary" />
-          </div>
-          <h2 className="text-3xl lg:text-4xl font-bold mb-4">{t('stats.title')}</h2>
-        </motion.div>
+          <div className="impact-grid pointer-events-none absolute inset-0" />
+          <div className="impact-orb impact-orb-a" />
+          <div className="impact-orb impact-orb-b" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
-          {stats.map((stat, index) => (
-            <StatCard key={stat.labelKey} stat={stat} index={index} />
-          ))}
-        </div>
+          <svg
+            className="impact-wave pointer-events-none absolute inset-x-0 bottom-0 h-[58%] w-full"
+            viewBox="0 0 1400 500"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path className="impact-wave-one" d="M-80 310 C180 170 385 415 660 278 C900 158 1110 206 1480 120 L1480 540 L-80 540 Z" />
+            <path className="impact-wave-two" d="M-80 390 C160 282 390 465 690 356 C1010 240 1210 370 1480 250 L1480 540 L-80 540 Z" />
+          </svg>
+
+          <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[0.82fr_1.45fr] lg:gap-12">
+            <div className="max-w-xl text-center lg:text-start">
+              <div className="impact-kicker mb-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-white/90">
+                <span className={`h-2 w-2 rounded-full ${isFetching ? 'animate-pulse' : ''}`} />
+                {t('stats.live')}
+              </div>
+
+              <h2 className="brand-display-title text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+                <AccentHeadingText text={t('stats.title')} accentClassName="impact-title-accent" />
+              </h2>
+              <p className="mx-auto mt-5 max-w-lg text-base leading-8 text-white/70 lg:mx-0 lg:text-lg">
+                {t('stats.subtitle')}
+              </p>
+
+              <div className="impact-equation mt-8 inline-flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-white/80" dir="ltr">
+                <span className="text-white/40">f(progress)</span>
+                <span>=</span>
+                <span className="text-white">practice × consistency</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {stats.map((stat, index) => (
+                <StatCard key={stat.labelKey} stat={stat} index={index} locale={locale} />
+              ))}
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

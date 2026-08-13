@@ -4,7 +4,7 @@ import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { socialLinks } from './socialLinks';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
+import { BrandLogo } from './BrandLogo';
 
 export function Footer() {
   const t = useTranslations();
@@ -28,16 +28,16 @@ export function Footer() {
   ];
 
   return (
-    <footer className="relative overflow-hidden bg-background border-t">
+    <footer className="relative z-10 overflow-hidden border-t border-brand-primary/10 bg-background/95 dark:border-brand-primary/20">
       {/* Top Gradient Border */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-primary/55 to-brand-secondary/40" />
       
       {/* Background Math Grid with Mask */}
       <div className="absolute inset-0 math-grid-bg opacity-30" style={{ maskImage: 'linear-gradient(to bottom, transparent, black)', WebkitMaskImage: 'linear-gradient(to bottom, transparent, black)' }} />
       
       {/* Glow Orbs */}
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/[0.03] rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.04] rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-primary/[0.05] rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-brand-secondary/[0.05] rounded-full blur-[80px] pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-6 lg:px-12 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
@@ -46,16 +46,10 @@ export function Footer() {
           <div className="lg:col-span-5">
             <Link
               href="/"
-              className="group mb-6 inline-flex items-center"
+              className="group mb-6 inline-flex items-center rounded-[2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="MathWorld"
             >
-              <Image
-                src="/mathworld-logo.svg"
-                alt="MathWorld Logo"
-                width={176}
-                height={104}
-                className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.03] dark:drop-shadow-[0_3px_16px_#53B2D838]"
-              />
+              <BrandLogo className="w-[190px] transition-transform duration-300 group-hover:scale-[1.025]" />
             </Link>
             <p className="text-base text-muted-foreground leading-relaxed mb-8 max-w-sm">
               {t('footer.description')}
@@ -71,7 +65,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.15, y: -5 }}
                   whileTap={{ scale: 0.95 }}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border bg-background/50 backdrop-blur text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm hover:shadow-primary/25 transition-colors duration-300"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border bg-background/50 backdrop-blur text-muted-foreground hover:bg-gradient-to-br hover:from-brand-primary hover:to-brand-secondary hover:text-white hover:border-brand-secondary/50 shadow-sm hover:shadow-primary/25 transition-colors duration-300"
                   aria-label={social.name}
                 >
                   {social.icon}

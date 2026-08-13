@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronUp,
   Clock3,
-  GraduationCap,
   Heart,
   History,
   Loader2,
@@ -50,6 +49,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
 import { RichText } from "@/components/ui/RichText";
+import { StageIconBadge } from "@/components/stages/StageIconBadge";
 
 function isStudentProblem(
   problem: ProblemDetail | undefined,
@@ -638,8 +638,12 @@ export default function ProblemPage() {
             )}
 
             {stageName && (
-              <Badge className="gap-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                <GraduationCap className="h-3.5 w-3.5" />
+              <Badge className="gap-1.5 border border-brand-primary/20 bg-primary/10 text-primary">
+                <StageIconBadge
+                  stage={{ Id: stageId, Name: stageName }}
+                  size="xs"
+                  className="border-0 bg-background/30 shadow-none"
+                />
                 {stageName}
               </Badge>
             )}
@@ -682,14 +686,14 @@ export default function ProblemPage() {
 
       {studentProblem?.HasAttempted && (
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="rounded-xl border bg-card p-4">
+          <div className="math-equation-chip rounded-xl bg-card/80 p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <History className="h-4 w-4" />
               {t("problem.totalAttempts")}
             </div>
             <p className="text-xl font-bold">{currentAttemptCount}</p>
           </div>
-          <div className="rounded-xl border bg-card p-4">
+          <div className="math-equation-chip rounded-xl bg-card/80 p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <Clock3 className="h-4 w-4" />
               {t("problem.bestTime")}
@@ -703,7 +707,7 @@ export default function ProblemPage() {
               )}
             </p>
           </div>
-          <div className="rounded-xl border bg-card p-4">
+          <div className="math-equation-chip rounded-xl bg-card/80 p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <Clock3 className="h-4 w-4" />
               {t("problem.averageTime")}
@@ -717,7 +721,7 @@ export default function ProblemPage() {
               )}
             </p>
           </div>
-          <div className="rounded-xl border bg-card p-4">
+          <div className="math-equation-chip rounded-xl bg-card/80 p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
               <CalendarClock className="h-4 w-4" />
               {t("problem.nextReview")}
@@ -750,7 +754,7 @@ export default function ProblemPage() {
       <div className="grid grid-cols-1 gap-8">
         <div
           ref={questionCardRef}
-          className="scroll-mt-20 overflow-hidden rounded-2xl border bg-card shadow-sm"
+          className="brand-surface math-card scroll-mt-20 overflow-hidden rounded-2xl"
         >
           {showVideoTab && (
             <div className="flex border-b">
@@ -807,10 +811,10 @@ export default function ProblemPage() {
                     {isSubmitting && (
                       <div
                         role="status"
-                        className="mb-5 flex items-center gap-3 rounded-xl border border-[#8FC9E0] bg-[#EAF7FB] p-4 text-[#214F6A] shadow-sm dark:border-[#3C728B] dark:bg-[#102D40] dark:text-[#BFE8F6]"
+                        className="math-equation-chip mb-5 flex items-center gap-3 rounded-xl border-brand-primary/20 bg-primary/5 p-4 text-foreground shadow-sm"
                       >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#53B2D826]">
-                          <Loader2 className="h-5 w-5 animate-spin text-[#2F73A3] dark:text-[#78CBE8]" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
                         </div>
                         <div>
                           <p className="font-semibold">

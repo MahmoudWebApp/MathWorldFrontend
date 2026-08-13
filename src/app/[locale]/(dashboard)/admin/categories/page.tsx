@@ -337,9 +337,9 @@ export default function AdminCategoriesPage() {
                             size="sm"
                             onClick={() => openEditModal(category)}
                             disabled={isUpdating}
-                            className="hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            className="hover:text-primary hover:bg-primary/10"
                           >
-                            <Edit className="h-4 w-4 text-blue-500" />
+                            <Edit className="h-4 w-4 text-primary" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent
@@ -411,7 +411,7 @@ export default function AdminCategoriesPage() {
           onClick={handleCloseModal}
         >
           <div
-            className="bg-background p-6 rounded-2xl w-full max-w-md shadow-2xl border"
+            className="brand-surface p-6 rounded-2xl w-full max-w-md shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4 pb-3 border-b">
@@ -431,8 +431,8 @@ export default function AdminCategoriesPage() {
             </div>
 
             {selectedStageId && (
-              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium flex items-center gap-2">
+              <div className="math-equation-chip mb-4 rounded-xl p-3">
+                <p className="text-sm text-primary font-medium flex items-center gap-2">
                   <Filter className="h-4 w-4" />
                   {t("admin.categories.addingToStage")}:{" "}
                   <span className="font-bold">

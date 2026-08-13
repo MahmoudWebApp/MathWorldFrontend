@@ -3,11 +3,12 @@
 import { useTranslations } from 'next-intl';
 import { Shield, Calendar } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 
 const floatingSymbols = [
-  { symbol: '🔒', className: 'top-[15%] left-[8%]', size: 'text-4xl', delay: '0s', duration: '7s' },
-  { symbol: '🛡️', className: 'top-[25%] right-[10%]', size: 'text-3xl', delay: '1s', duration: '8s' },
-  { symbol: '🔐', className: 'bottom-[20%] left-[5%]', size: 'text-3xl', delay: '2s', duration: '6s' },
+  { symbol: '∫', className: 'top-[15%] left-[8%]', size: 'text-5xl', delay: '0s', duration: '7s' },
+  { symbol: '∞', className: 'top-[25%] right-[10%]', size: 'text-5xl', delay: '1s', duration: '8s' },
+  { symbol: 'θ', className: 'bottom-[20%] left-[5%]', size: 'text-4xl', delay: '2s', duration: '6s' },
 ];
 
 export function PrivacyHero() {
@@ -19,9 +20,8 @@ export function PrivacyHero() {
   }, []);
 
   return (
-    <section className={`relative min-h-[50vh] overflow-hidden flex items-center justify-center ${mounted ? 'hero-loaded' : ''}`}>
+    <section className={`brand-hero-bg relative min-h-[50vh] overflow-hidden flex items-center justify-center ${mounted ? 'hero-loaded' : ''}`}>
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-primary/[0.02] to-background dark:from-primary/[0.1] dark:via-primary/[0.04] dark:to-background" />
       <div className="absolute inset-0 math-grid-bg opacity-30" />
       
       {/* Floating Symbols */}
@@ -39,8 +39,8 @@ export function PrivacyHero() {
       ))}
 
       {/* Glow */}
-      <div className="absolute top-1/3 -left-20 w-60 h-60 bg-primary/8 rounded-full blur-[80px]" />
-      <div className="absolute bottom-1/4 -right-20 w-48 h-48 bg-primary/5 rounded-full blur-[60px]" />
+      <div className="absolute top-1/3 -left-20 w-60 h-60 bg-brand-primary/10 rounded-full blur-[80px]" />
+      <div className="absolute bottom-1/4 -right-20 w-48 h-48 bg-brand-secondary/10 rounded-full blur-[60px]" />
 
       {/* Content */}
       <div className="container mx-auto lg:px-24 md:px-16 px-4 relative z-10 pt-24 pb-16">
@@ -50,8 +50,8 @@ export function PrivacyHero() {
             <span>{t('hero.badge')}</span>
           </div>
 
-          <h1 className="brand-display-title hero-anim hero-delay-2 text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-gradient-math">
-            {t('hero.title')}
+          <h1 className="brand-display-title hero-anim hero-delay-2 text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 text-foreground">
+            <AccentHeadingText text={t('hero.title')} />
           </h1>
 
           <p className="hero-anim hero-delay-3 text-lg text-muted-foreground max-w-xl mx-auto mb-6">
