@@ -19,7 +19,7 @@ export function BrandMark({
 }: BrandMarkProps) {
   return (
     <Image
-      src="/mathworld-mark-v2.png"
+      src="/mathworld-mark-transparent-v3.png"
       alt={title}
       width={512}
       height={512}

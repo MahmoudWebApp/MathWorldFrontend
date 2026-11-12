@@ -225,7 +225,8 @@
   justify-content: center;
   overflow: hidden;
   border-radius: 15px;
-  background: #05020a;
+  /* The logo asset is transparent; never put a black tile behind it. */
+  background: transparent;
   border: 0;
   box-shadow: none;
 }
