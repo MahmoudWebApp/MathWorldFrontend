@@ -1,43 +1,43 @@
 /* ============================================ */
-/* theme.css - MathWorld SR Purple / Pink Brand */
+/* theme.css - MathWorld calm Purple / Pink Brand */
 /* ============================================ */
 :root {
-  --sr-primary: #5c24ff;
-  --sr-secondary: #ff2399;
-  --sr-primary-rgb: 92 36 255;
-  --sr-secondary-rgb: 255 35 153;
+  --sr-primary: #6d28d9;
+  --sr-secondary: #ec4899;
+  --sr-primary-rgb: 109 40 217;
+  --sr-secondary-rgb: 236 72 153;
 }
 
 @theme {
   /* Brand tokens. The sr variables are the single source of truth. */
   --color-brand-primary: var(--sr-primary);
-  --color-brand-primary-strong: #4713db;
-  --color-brand-primary-light: #8a66ff;
+  --color-brand-primary-strong: #5520ad;
+  --color-brand-primary-light: #a78bfa;
   --color-brand-secondary: var(--sr-secondary);
-  --color-brand-secondary-strong: #d80779;
-  --color-brand-secondary-light: #ff6ab9;
-  --color-brand-ink: #180d2f;
-  --color-brand-night: #090511;
+  --color-brand-secondary-strong: #be185d;
+  --color-brand-secondary-light: #f9a8d4;
+  --color-brand-ink: #211431;
+  --color-brand-night: #110c1e;
 
   /* Light mode */
-  --color-background: #fcfbff;
-  --color-foreground: #17111f;
+  --color-background: #faf8ff;
+  --color-foreground: #21172f;
   --color-card: #ffffff;
-  --color-card-foreground: #17111f;
+  --color-card-foreground: #21172f;
   --color-popover: #ffffff;
-  --color-popover-foreground: #17111f;
+  --color-popover-foreground: #21172f;
 
   --color-primary: var(--sr-primary);
   --color-primary-foreground: #ffffff;
 
-  --color-secondary: #fff0f8;
-  --color-secondary-foreground: #7c174f;
-  --color-muted: #f6f2fb;
-  --color-muted-foreground: #706778;
-  --color-accent: #f5efff;
-  --color-accent-foreground: #3f1b82;
-  --color-border: #e7deef;
-  --color-input: #ded2e9;
+  --color-secondary: #fff0f7;
+  --color-secondary-foreground: #831843;
+  --color-muted: #f5f1fa;
+  --color-muted-foreground: #6d6478;
+  --color-accent: #f2eaff;
+  --color-accent-foreground: #4c1d95;
+  --color-border: #e8e0ef;
+  --color-input: #dfd4eb;
   --color-ring: var(--sr-secondary);
   --color-destructive: #d94a5b;
   --color-destructive-foreground: #ffffff;
@@ -48,25 +48,25 @@
 }
 
 .dark {
-  --color-background: #090511;
+  --color-background: #110c1e;
   --color-foreground: #fbf8ff;
-  --color-card: #12091e;
+  --color-card: #1b1428;
   --color-card-foreground: #fbf8ff;
-  --color-popover: #170c26;
+  --color-popover: #21182f;
   --color-popover-foreground: #fbf8ff;
 
-  --color-primary: #7b58ff;
+  --color-primary: #a78bfa;
   --color-primary-foreground: #ffffff;
 
-  --color-secondary: #2a0a1e;
+  --color-secondary: #39182e;
   --color-secondary-foreground: #fff2f9;
-  --color-muted: #191121;
+  --color-muted: #251a33;
   --color-muted-foreground: #b9adbf;
-  --color-accent: #28102d;
+  --color-accent: #38203c;
   --color-accent-foreground: #ffe5f3;
-  --color-border: #3b2748;
-  --color-input: #4a3159;
-  --color-ring: #ff4bab;
+  --color-border: #453353;
+  --color-input: #54405f;
+  --color-ring: #f472b6;
   --color-destructive: #ff6b7c;
   --color-destructive-foreground: #16070b;
 }

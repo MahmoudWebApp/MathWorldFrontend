@@ -27,7 +27,7 @@ export const STAGE_BRAND_STYLES: StageBrandStyle[] = [
     hoverText: 'group-hover:text-brand-primary-strong dark:group-hover:text-brand-primary-light',
     hoverBg: 'group-hover:bg-brand-primary-strong',
     hoverShadow: 'hover:shadow-brand-primary/20',
-    spotlight: 'rgba(92, 36, 255, 0.18)',
+    spotlight: 'rgba(109, 40, 217, 0.18)',
   },
   {
     from: 'from-brand-secondary',
@@ -37,7 +37,7 @@ export const STAGE_BRAND_STYLES: StageBrandStyle[] = [
     hoverText: 'group-hover:text-brand-secondary-strong dark:group-hover:text-brand-secondary-light',
     hoverBg: 'group-hover:bg-brand-secondary-strong',
     hoverShadow: 'hover:shadow-brand-secondary/20',
-    spotlight: 'rgba(255, 35, 153, 0.18)',
+    spotlight: 'rgba(236, 72, 153, 0.18)',
   },
   {
     from: 'from-brand-primary-strong',
@@ -47,7 +47,7 @@ export const STAGE_BRAND_STYLES: StageBrandStyle[] = [
     hoverText: 'group-hover:text-brand-primary dark:group-hover:text-brand-primary-light',
     hoverBg: 'group-hover:bg-brand-primary',
     hoverShadow: 'hover:shadow-brand-primary/20',
-    spotlight: 'rgba(92, 36, 255, 0.18)',
+    spotlight: 'rgba(109, 40, 217, 0.18)',
   },
   {
     from: 'from-brand-secondary-strong',
@@ -68,7 +68,7 @@ export const CATEGORY_BRAND_STYLES: CategoryBrandStyle[] = [
     bg: 'bg-brand-primary/10',
     hoverText: 'group-hover:text-brand-primary-strong dark:group-hover:text-brand-primary-light',
     hoverShadow: 'hover:shadow-brand-primary/20',
-    spotlight: 'rgba(92, 36, 255, 0.16)',
+    spotlight: 'rgba(109, 40, 217, 0.16)',
   },
   {
     from: 'from-brand-secondary',
@@ -76,7 +76,7 @@ export const CATEGORY_BRAND_STYLES: CategoryBrandStyle[] = [
     bg: 'bg-brand-secondary/10',
     hoverText: 'group-hover:text-brand-secondary-strong dark:group-hover:text-brand-secondary-light',
     hoverShadow: 'hover:shadow-brand-secondary/20',
-    spotlight: 'rgba(255, 35, 153, 0.16)',
+    spotlight: 'rgba(236, 72, 153, 0.16)',
   },
   {
     from: 'from-brand-primary-strong',
@@ -84,7 +84,7 @@ export const CATEGORY_BRAND_STYLES: CategoryBrandStyle[] = [
     bg: 'bg-brand-primary/8',
     hoverText: 'group-hover:text-brand-primary dark:group-hover:text-brand-primary-light',
     hoverShadow: 'hover:shadow-brand-primary/20',
-    spotlight: 'rgba(92, 36, 255, 0.16)',
+    spotlight: 'rgba(109, 40, 217, 0.16)',
   },
   {
     from: 'from-brand-secondary-strong',

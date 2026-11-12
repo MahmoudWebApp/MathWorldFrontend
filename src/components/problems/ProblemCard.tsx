@@ -1,102 +1,72 @@
 "use client";
 
-import { Link } from '@/i18n/routing';
-import { useTranslations, useLocale } from 'next-intl';
-import { CheckCircle, Lock, ChevronRight, Eye, Star } from 'lucide-react';
-import type { ProblemPreview } from '@/store/api/types';
-import { Badge } from '@/components/ui/Badge';
-import { Card, CardContent } from '@/components/ui/Card';
-import { RichText } from '@/components/ui/RichText';
-import { StageIconBadge } from '@/components/stages/StageIconBadge';
-import { getStageVisual } from '@/lib/stageVisuals';
+import { useSelector } from "react-redux";
+import { useTranslations, useLocale } from "next-intl";
+import { ArrowRight, Calculator, Eye, Lock, Star } from "lucide-react";
+
+import { Link } from "@/i18n/routing";
+import type { RootState } from "@/store";
+import type { ProblemPreview } from "@/store/api/types";
+import { Badge } from "@/components/ui/Badge";
+import { RichText } from "@/components/ui/RichText";
+import { StageIconBadge } from "@/components/stages/StageIconBadge";
 
 interface ProblemCardProps {
   problem: ProblemPreview;
 }
 
+/** A readable, accessible preview. A green check is never used for unsolved work. */
 export function ProblemCard({ problem }: ProblemCardProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const isArabic = locale === 'ar';
-
-  const stageIdentity = {
-    Id: problem.StageId,
-    Name: problem.StageName,
-  };
-  const stageVisual = getStageVisual(stageIdentity);
-  const stageColor = `border bg-gradient-to-r ${stageVisual.style.bg} ${stageVisual.style.iconColor}`;
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const requiresLogin = problem.RequiresLogin && !isAuthenticated;
+  const stageIdentity = { Id: problem.StageId, Name: problem.StageName };
 
   return (
-    <Link href={`/problems/${problem.Id}`} className="block group outline-none">
-      <Card className="brand-surface math-card relative overflow-hidden rounded-2xl backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand-secondary/30 hover:shadow-[0_20px_52px_rgba(92,36,255,0.13)]">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-brand-primary/0 via-brand-primary/5 to-brand-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Left: Title with RichText + Badges */}
-            <div className="flex-1 space-y-3 min-w-0">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 shrink-0">
-                  {problem.RequiresLogin ? (
-                    <Lock className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  )}
-                </div>
-                
-                {/* Title with LaTeX rendering */}
-                <div className="min-w-0 flex-1">
-                  <RichText 
-                    text={problem.Title} 
-                    isArabic={isArabic}
-                    className="line-clamp-3 text-lg font-bold group-hover:text-primary transition-colors duration-300"
-                  />
-                </div>
-              </div>
-
-              {/* Badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                {problem.StageName && (
-                  <Badge variant="secondary" className={`gap-1.5 ${stageColor}`}>
-                    <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-background/35 shadow-none" />
-                    {problem.StageName}
-                  </Badge>
-                )}
-                {problem.CategoryName && (
-                  <Badge variant="outline" className="bg-background/50 backdrop-blur-sm">
-                    {problem.CategoryName}
-                  </Badge>
-                )}
-              </div>
+    <Link
+      href={`/problems/${problem.Id}`}
+      className="group block rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    >
+      <article className="brand-surface rounded-3xl p-5 transition-[border-color,box-shadow] hover:border-brand-primary/30 hover:shadow-md sm:p-6">
+        <div className="flex gap-4">
+          <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-primary/10 text-brand-primary">
+            {requiresLogin ? <Lock className="h-5 w-5" /> : <Calculator className="h-6 w-6" />}
+          </div>
+          <div className="min-w-0 flex-1">
+            <RichText
+              text={problem.Title}
+              isArabic={locale === "ar"}
+              className="text-lg font-bold leading-7 text-foreground transition-colors group-hover:text-brand-primary-strong dark:group-hover:text-brand-primary-light"
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {problem.StageName && (
+                <Badge variant="secondary" className="gap-1.5 border border-brand-primary/10 bg-brand-primary/5 text-foreground">
+                  <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-transparent shadow-none" />
+                  {problem.StageName}
+                </Badge>
+              )}
+              {problem.CategoryName && (
+                <Badge variant="outline" className="border-border bg-background/80 text-muted-foreground">
+                  {problem.CategoryName}
+                </Badge>
+              )}
             </div>
-
-            {/* Right: Stats + CTA */}
-            <div className="flex md:flex-col items-center md:items-end justify-between gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-4 math-equation-chip rounded-lg px-3 py-2">
-                <div className="inline-flex items-center gap-1.5 text-sm">
-                  <Eye className="h-4 w-4 text-primary/70" />
-                  <span className="font-medium">{problem.ViewsCount}</span>
-                </div>
-
-                {typeof problem.Points === 'number' && (
-                  <>
-                    <div className="h-4 w-px bg-border" />
-                    <div className="inline-flex items-center gap-1.5 text-sm">
-                      <Star className="h-4 w-4 text-primary/70" />
-                      <span className="font-medium">{problem.Points}</span>
-                    </div>
-                  </>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5"><Eye aria-hidden="true" className="h-4 w-4" />{problem.ViewsCount}</span>
+                {typeof problem.Points === "number" && (
+                  <span className="inline-flex items-center gap-1.5"><Star aria-hidden="true" className="h-4 w-4 text-brand-secondary" />{problem.Points}</span>
                 )}
               </div>
-
-              <div className="flex items-center gap-1 font-medium group-hover:text-primary transition-colors">
-                {t('common.solveNow')}
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
-              </div>
+              <span className="inline-flex items-center gap-2 text-sm font-bold text-brand-primary-strong dark:text-brand-primary-light">
+                {t("common.solveNow")}
+                <ArrowRight aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
+              </span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </article>
     </Link>
   );
 }
