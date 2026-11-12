@@ -19,10 +19,10 @@ export function BrandMark({
 }: BrandMarkProps) {
   return (
     <Image
-      src="/mathworld-mark.png"
+      src="/mathworld-mark-v2.png"
       alt={title}
-      width={390}
-      height={390}
+      width={512}
+      height={512}
       priority={priority}
       className={cn('shrink-0 object-contain', className)}
     />
