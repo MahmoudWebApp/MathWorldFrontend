@@ -3,7 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/Button';
-import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
+import { BookOpen, Sparkles } from 'lucide-react';
+import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { useInView } from '@/lib/useInView';
 
 export function CTASection() {
@@ -52,7 +53,7 @@ export function CTASection() {
             >
               <Link href="/register">
                 {t('cta.secondaryButton')}
-                <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                <DirectionalArrow direction="forward" />
               </Link>
             </Button>
           </div>
