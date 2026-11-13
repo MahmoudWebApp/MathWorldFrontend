@@ -72,9 +72,9 @@ function anglePoint(cx: number, cy: number, radius: number, degrees: number) {
 }
 
 export function GeometryDiagram({ scene, locale = 'ar' }: { scene: GeometryScene; locale?: string }) {
+  const markerId = `geometry-arrow-${useId().replace(/:/g, '')}`;
   if (!isGeometryScene(scene)) return null;
   const alt = locale === 'ar' ? scene.altTextAr : scene.altTextEn;
-  const markerId = `geometry-arrow-${useId().replace(/:/g, '')}`;
   return (
     <figure className="my-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
       <svg viewBox={`0 0 ${scene.viewport.width} ${scene.viewport.height}`}
