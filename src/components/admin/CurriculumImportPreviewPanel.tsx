@@ -10,33 +10,6 @@ export function CurriculumImportPreviewPanel({ stages }: { stages: CurriculumSta
   const [localError, setLocalError] = useState('');
   const [preview, { data, isLoading, error }] = usePreviewCurriculumImportMutation();
 
-  const loadExample = () => {
-    const stage = stages.find(item => item.Categories.some(category =>
-      /حساب|عمليات|arithmetic|number|أعداد/i.test(category.NameAr + ' ' + category.NameEn)));
-    if (!stage) {
-      setLocalError(ar ? 'لا توجد فئة حساب مناسبة للمثال؛ أدخل معرفات فئتك يدوياً' : 'No arithmetic category found; enter your category IDs manually');
-      return;
-    }
-    if (source.trim() !== '[]' && !window.confirm(ar ? 'استبدال المسودة الحالية؟' : 'Replace the current draft?')) return;
-    setSource(JSON.stringify([{
-      ContentKey: 'sample-arithmetic-01',
-      StageId: stage.StageId,
-      CategoryId: stage.Categories.find(category => /حساب|عمليات|arithmetic|number|أعداد/i.test(category.NameAr + ' ' + category.NameEn))!.CategoryId,
-      QuestionTextAr: 'احسب: ٧ × ٨ − ٦',
-      QuestionTextEn: 'Calculate: 7 × 8 − 6',
-      DetailedSolutionAr: 'نضرب أولاً: ٧ × ٨ = ٥٦، ثم نطرح ٦، فيكون الناتج ٥٠.',
-      DetailedSolutionEn: 'Multiply first: 7 × 8 = 56, then subtract 6 to get 50.',
-      Points: 10,
-      Options: [
-        { LatexCode: '42', IsCorrect: false, Order: 1 },
-        { LatexCode: '48', IsCorrect: false, Order: 2 },
-        { LatexCode: '50', IsCorrect: true, Order: 3 },
-        { LatexCode: '58', IsCorrect: false, Order: 4 },
-      ],
-    }], null, 2));
-    setLocalError('');
-  };
-
   const submit = async () => {
     setLocalError('');
     let candidate: unknown;
@@ -59,9 +32,13 @@ export function CurriculumImportPreviewPanel({ stages }: { stages: CurriculumSta
         {ar ? 'ألصق مصفوفة JSON تحتوي معرفات المراحل والفئات الفعلية. الفحص لا يحفظ ولا ينشر أي مسألة.'
           : 'Paste a JSON array using actual stage/category IDs. Preview never saves or publishes problems.'}
       </p>
-      <button type="button" onClick={loadExample} className="rounded-lg border px-3 py-2 text-sm">
-        {ar ? 'مثال تجريبي بمعرفات حقيقية (دون حفظ)' : 'Sample with real stage/category IDs (not saved)'}
-      </button>
+      <p className="text-sm">{ar ? 'المراحل والفئات المتاحة لإعداد دفعتك يدوياً:' : 'Available stages and categories for manual authoring:'}</p>
+      <div className="max-h-40 overflow-y-auto rounded-lg border p-2 text-xs">
+        {stages.map(stage => <p key={stage.StageId}>
+          {ar ? stage.NameAr : stage.NameEn} (StageId: {stage.StageId}) —
+          {stage.Categories.map(category => `${ar ? category.NameAr : category.NameEn} [${category.CategoryId}]`).join(' · ')}
+        </p>)}
+      </div>
       <textarea aria-label={ar ? 'مسائل بصيغة JSON' : 'Problems JSON'} value={source}
         onChange={event => setSource(event.target.value)} rows={9} spellCheck={false}
         className="w-full rounded-lg border bg-transparent p-3 font-mono text-xs" />
