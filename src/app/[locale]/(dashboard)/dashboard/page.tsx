@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 
 import { ProblemCard } from "@/components/problems/ProblemCard";
 import {
@@ -14,7 +15,7 @@ import {
 } from "iconsax-reactjs";
 import { NotebookTabs, Trophy, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
-import { useGetDashboardQuery } from "@/store/api/usersApi";
+import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
 
 // Helper function to calculate relative time from a date string
@@ -40,10 +41,45 @@ export default function UserDashboardPage() {
   const t = useTranslations();
   const locale = useLocale();
   const isArabic = locale === "ar";
+  const router = useRouter();
   // Single API call for all dashboard data instead of 3 separate calls
   const { data: dashboard, isLoading, isError } = useGetDashboardQuery(locale, {
     refetchOnMountOrArgChange: true,
   });
+  const stageId = dashboard?.CurrentStageId;
+  const { data: journey, isLoading: loadingJourney } = useGetLearningJourneyQuery(
+    stageId ?? 0,
+    { skip: stageId == null || stageId <= 0 },
+  );
+
+  useEffect(() => {
+    if (!isLoading && !isError && dashboard?.Role === "Student" &&
+      dashboard.CurrentStageId == null) {
+      router.replace("/learning-stage");
+    }
+  }, [dashboard, isLoading, isError, router]);
+
+  const journeyLabels = isArabic
+    ? {
+        title: "رحلتي التعليمية",
+        progress: "نسبة إنجاز المرحلة",
+        attempted: "مسائل تمت تجربتها",
+        solved: "مسائل تم حلها",
+        points: "نقاط هذه المرحلة",
+        categories: "التقدم حسب التصنيف",
+        change: "تغيير المرحلة",
+        practice: "تصفح مسائل المرحلة",
+      }
+    : {
+        title: "My learning journey",
+        progress: "Stage completion",
+        attempted: "Problems attempted",
+        solved: "Problems solved",
+        points: "Stage points",
+        categories: "Progress by topic",
+        change: "Change stage",
+        practice: "Explore stage problems",
+      };
 
   const stats = [
     {
@@ -96,6 +132,82 @@ export default function UserDashboardPage() {
           </p>
         )}
       </div>
+
+      {stageId != null && stageId > 0 && (
+        <section className="math-card mb-8 rounded-3xl border border-primary/15 bg-card p-5 md:p-7">
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold">{journeyLabels.title}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {journey
+                  ? (isArabic ? journey.NameAr : journey.NameEn)
+                  : loadingJourney ? "..." : ""}
+              </p>
+            </div>
+            <Link
+              href="/learning-stage"
+              className="rounded-lg border border-primary/20 px-3 py-2 text-sm text-primary hover:bg-primary/10"
+            >
+              {journeyLabels.change}
+            </Link>
+          </div>
+
+          {journey && (
+            <>
+              <div className="mb-3 flex items-end justify-between">
+                <span className="text-sm text-muted-foreground">{journeyLabels.progress}</span>
+                <strong className="text-2xl text-primary">{journey.CompletionPercent}%</strong>
+              </div>
+              <div
+                role="progressbar"
+                aria-label={journeyLabels.progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={journey.CompletionPercent}
+                className="mb-6 h-3 overflow-hidden rounded-full bg-primary/10"
+              >
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${journey.CompletionPercent}%` }}
+                />
+              </div>
+              <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="rounded-xl bg-primary/5 p-3">
+                  <div className="text-xl font-bold">{journey.AttemptedProblems}</div>
+                  <div className="text-xs text-muted-foreground">{journeyLabels.attempted}</div>
+                </div>
+                <div className="rounded-xl bg-primary/5 p-3">
+                  <div className="text-xl font-bold">{journey.SolvedProblems} / {journey.TotalProblems}</div>
+                  <div className="text-xs text-muted-foreground">{journeyLabels.solved}</div>
+                </div>
+                <div className="rounded-xl bg-primary/5 p-3">
+                  <div className="text-xl font-bold">{journey.TotalPoints}</div>
+                  <div className="text-xs text-muted-foreground">{journeyLabels.points}</div>
+                </div>
+              </div>
+              <h3 className="mb-3 text-sm font-semibold">{journeyLabels.categories}</h3>
+              <div className="mb-5 grid gap-2 sm:grid-cols-2">
+                {journey.Categories.map((category) => (
+                  <div key={category.CategoryId} className="rounded-xl border border-border p-3">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                      <span>{isArabic ? category.NameAr : category.NameEn}</span>
+                      <span className="font-medium text-primary">{category.SolvedProblems}/{category.TotalProblems}</span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-primary/10">
+                      <div className="h-full rounded-full bg-primary"
+                        style={{ width: `${category.CompletionPercent}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link href={`/stages/${journey.StageId}`}
+                className="inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+                {journeyLabels.practice}
+              </Link>
+            </>
+          )}
+        </section>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

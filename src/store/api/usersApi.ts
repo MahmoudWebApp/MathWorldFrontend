@@ -13,6 +13,7 @@ export interface UserProfile {
   TotalPoints: number;
   MemberSince: string;
   ProfilePicture?: string | null;
+  CurrentStageId?: number | null;
 }
 
 export interface UserListItem {
@@ -69,6 +70,39 @@ export interface ErrorNotebookArchiveResult {
   IsArchived: boolean;
 }
 
+export interface LearningStage {
+  StageId?: number | null;
+  NameAr?: string | null;
+  NameEn?: string | null;
+  HasSelectedStage: boolean;
+}
+
+export interface JourneyCategory {
+  CategoryId: number;
+  NameAr: string;
+  NameEn: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  FirstTryCorrect: number;
+  MasteredProblems: number;
+  CompletionPercent: number;
+}
+
+export interface LearningJourney {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  FirstTryCorrect: number;
+  MasteredProblems: number;
+  TotalPoints: number;
+  CompletionPercent: number;
+  Categories: JourneyCategory[];
+}
+
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
@@ -79,11 +113,35 @@ export const usersApi = createApi({
     'Dashboard',
     'Problem',
     'ErrorNotebook',
+    'LearningStage',
+    'LearningJourney',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
       query: () => '/users/profile',
       providesTags: ['User'],
+    }),
+
+    getLearningStage: builder.query<LearningStage, void>({
+      query: () => '/users/learning-stage',
+      providesTags: ['LearningStage'],
+    }),
+
+    setLearningStage: builder.mutation<LearningStage, { StageId: number }>({
+      query: (body) => ({
+        url: '/users/learning-stage',
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['LearningStage', 'LearningJourney', 'Dashboard', 'User'],
+    }),
+
+    getLearningJourney: builder.query<LearningJourney, number>({
+      query: (stageId) => ({
+        url: '/users/journey',
+        params: { stageId },
+      }),
+      providesTags: ['LearningJourney'],
     }),
 
     getDashboard: builder.query<DashboardData, string>({
@@ -184,6 +242,9 @@ export const usersApi = createApi({
 });
 
 export const {
+  useGetLearningStageQuery,
+  useSetLearningStageMutation,
+  useGetLearningJourneyQuery,
   useGetProfileQuery,
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,
