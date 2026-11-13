@@ -6,7 +6,7 @@ import { Link } from '@/i18n/routing';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { Activity, BookOpen, CheckCircle2, Users, Trophy, ShieldCheck } from 'lucide-react';
 import {
-  Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import {
   useGetAdminAnalyticsOverviewQuery, useGetAdminAnalyticsStageQuery,
@@ -58,6 +58,16 @@ export default function AdminAnalyticsPage() {
     retry: 'Retry', loading: 'Loading analytics...',
     empty: 'No data for this stage yet.',
   };
+
+  const stageComparison = overview?.Stages.map((stage) => ({
+    stage: isArabic ? stage.NameAr : stage.NameEn,
+    attempts: stage.AttemptsInWindow,
+    correct: stage.CorrectAttemptsInWindow,
+  })) ?? [];
+  const weakCategories = detail?.Categories.map((category) => ({
+    category: isArabic ? category.NameAr : category.NameEn,
+    wrong: Math.max(0, category.AttemptsInWindow - category.CorrectAttemptsInWindow),
+  })).filter(item => item.wrong > 0).sort((a, b) => b.wrong - a.wrong).slice(0, 8) ?? [];
 
   const cards = overview ? [
     { label: labels.students, value: n(overview.TotalStudents), icon: Users },
@@ -158,6 +168,27 @@ export default function AdminAnalyticsPage() {
             </div>
           </section>
 
+          <section className="math-card mb-8 rounded-2xl border border-border p-5 md:p-6" aria-label={isArabic ? 'مقارنة نشاط المراحل' : 'Stage engagement comparison'}>
+            <h2 className="mb-1 text-lg font-bold">{isArabic ? 'مقارنة نشاط الطلاب عبر المراحل' : 'Student engagement across stages'}</h2>
+            <p className="mb-5 text-xs text-muted-foreground">{isArabic ? 'مقارنة المحاولات والإجابات الصحيحة خلال الفترة المختارة، بدل مقارنة عدد محتويات الموقع' : 'Actual student attempts and correct answers, not content inventory'}</p>
+            {overview.AttemptsInWindow === 0 ? (
+              <p className="py-12 text-center text-muted-foreground">{labels.noActivity}</p>
+            ) : (
+              <div className="h-64 w-full" dir="ltr">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stageComparison} margin={{top: 8,right: 12,bottom: 12,left: -15}}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2}/>
+                    <XAxis dataKey="stage" tick={{fontSize: 11}} interval={0} />
+                    <YAxis allowDecimals={false} tick={{fontSize: 11}} />
+                    <Tooltip/><Legend/>
+                    <Bar dataKey="attempts" name={labels.attempts} fill="var(--color-brand-primary)" radius={[6,6,0,0]} maxBarSize={50}/>
+                    <Bar dataKey="correct" name={labels.correct} fill="var(--color-brand-secondary)" radius={[6,6,0,0]} maxBarSize={50}/>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </section>
+
           {loadingDetail ? (
             <div role="status" className="math-card rounded-2xl border border-border p-10 text-center">{labels.loading}</div>
           ) : detailError || !detail ? (
@@ -179,6 +210,26 @@ export default function AdminAnalyticsPage() {
                         <Area type="monotone" dataKey="attempts" name={labels.attempt} stroke="var(--color-brand-primary-strong)" fill="var(--color-brand-primary-strong)" fillOpacity={0.15} />
                         <Area type="monotone" dataKey="correct" name={labels.correct} stroke="var(--color-brand-secondary)" fill="var(--color-brand-secondary)" fillOpacity={0.1} />
                       </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </section>
+
+              <section className="math-card rounded-2xl border border-border p-5">
+                <h2 className="mb-2 text-lg font-bold">{isArabic ? 'التصنيفات الأعلى بالأخطاء' : 'Categories with the most errors'}</h2>
+                <p className="mb-4 text-xs text-muted-foreground">{isArabic ? 'تساعدك تحدد وين يحتاج الطلاب دعم ومراجعة' : 'Identify where learners need extra support'}</p>
+                {!weakCategories.length ? (
+                  <p className="py-24 text-center text-muted-foreground">{labels.noActivity}</p>
+                ) : (
+                  <div className="h-64 w-full" dir="ltr">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={weakCategories} layout="vertical" margin={{left: 8,right: 12}}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.2}/>
+                        <XAxis type="number" allowDecimals={false}/>
+                        <YAxis type="category" dataKey="category" width={100} tick={{fontSize: 11}}/>
+                        <Tooltip/>
+                        <Bar dataKey="wrong" name={isArabic ? 'إجابات خاطئة' : 'Wrong attempts'} fill="var(--color-brand-secondary)" radius={[0,6,6,0]} maxBarSize={22}/>
+                      </BarChart>
                     </ResponsiveContainer>
                   </div>
                 )}
