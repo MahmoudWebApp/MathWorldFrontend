@@ -802,7 +802,7 @@ export default function ProblemPage() {
               {isArabic ? "تعذّر عرض الحل. حاول مجدداً." : "Could not load the solution. Please retry."}
             </p>
           )}
-          {premiumSolution && (
+          {premiumSolution?.ProblemId === problemId && (
             <div className="mt-4 space-y-3">
               {premiumSolution.DetailedSolution && (
                 <RichText text={premiumSolution.DetailedSolution} isArabic={isArabic} />
