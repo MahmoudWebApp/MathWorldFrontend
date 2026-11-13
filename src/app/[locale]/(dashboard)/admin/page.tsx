@@ -43,11 +43,12 @@ export default function AdminDashboardPage() {
     centerDescription: 'انتقل للتحليلات التفصيلية حسب المرحلة والتصنيف، وتابع سجل الطلاب وأداء المنصة.',
     centerAction: 'عرض الإحصائيات الكاملة',
     students: 'إجمالي الطلاب', active: 'نشطون في الفترة', attempts: 'محاولات الحل',
-    unique: 'حلول مختلفة', accuracy: 'نسبة الإجابات الصحيحة', content: 'إدارة المسائل',
+    unique: 'الحلول الفريدة (إجمالي)', accuracy: 'نسبة الإجابات الصحيحة', content: 'إدارة المسائل',
+    mistakes: 'إجابات خاطئة بالفترة', mostMissed: 'المسائل الأكثر إجابات خاطئة', missedDesc: 'أولوية مراجعة تعتمد على عدد المحاولات الخاطئة فقط', noMissed: 'لا توجد أخطاء مسجلة في هذه الفترة',
     date: 'خلال آخر', days: 'يوم', stage: 'المرحلة',
     activity: 'النشاط اليومي', dailyDesc: 'عدد المحاولات والإجابات الصحيحة خلال الفترة',
     byStage: 'مقارنة نشاط المراحل', stageDesc: 'محاولات الطلاب في كل مرحلة',
-    weak: 'التصنيفات التي تحتاج مراجعة', weakDesc: 'المحاولات الخاطئة لكل تصنيف في المرحلة المحددة',
+    weak: 'التصنيفات الأكثر إجابات خاطئة', weakDesc: 'أخطاء الطلاب ضمن الفترة والمرحلة المحددتين؛ لا تمثل تقييمًا نهائيًا للصعوبة',
     wrong: 'إجابات خاطئة', correct: 'إجابات صحيحة', selected: 'إجمالي المحاولات',
     latest: 'أحدث الطلاب', allStudents: 'إدارة الطلاب', stageProgress: 'تحليل المرحلة',
     stagePrompt: 'اختر مرحلة لعرض نقاط الضعف',
@@ -64,11 +65,12 @@ export default function AdminDashboardPage() {
     centerDescription: 'Explore stage and category insights, individual learners and platform performance.',
     centerAction: 'Open full analytics',
     students: 'Total learners', active: 'Active in period', attempts: 'Answer attempts',
-    unique: 'Distinct solves', accuracy: 'Correct-answer rate', content: 'Manage problems',
+    unique: 'Distinct solves (all time)', accuracy: 'Correct-answer rate', content: 'Manage problems',
+    mistakes: 'Incorrect answers in period', mostMissed: 'Most frequently missed problems', missedDesc: 'Content review priority by number of wrong attempts, not an absolute difficulty score', noMissed: 'No incorrect attempts in this period',
     date: 'Last', days: 'days', stage: 'Stage',
     activity: 'Daily engagement', dailyDesc: 'Answer attempts versus correct attempts during the period',
     byStage: 'Activity by stage', stageDesc: 'Student attempts in every stage',
-    weak: 'Categories needing attention', weakDesc: 'Wrong answers by category in the selected stage',
+    weak: 'Categories with the most mistakes', weakDesc: 'Incorrect attempts in this stage and period; not an absolute difficulty rating',
     wrong: 'Wrong answers', correct: 'Correct answers', selected: 'Total attempts',
     latest: 'Recently joined students', allStudents: 'Manage learners', stageProgress: 'Stage analysis',
     stagePrompt: 'Choose a stage to review weak topics',
@@ -102,6 +104,7 @@ export default function AdminDashboardPage() {
     { title: txt.attempts, value: format(overview.AttemptsInWindow), Icon: Clock3 },
     { title: txt.unique, value: format(overview.TotalUniqueSolved), Icon: BookOpenCheck },
     { title: txt.accuracy, value: `${overview.CorrectRatePercent}%`, Icon: Gauge },
+    { title: txt.mistakes, value: format(overview.AttemptsInWindow - overview.CorrectAttemptsInWindow), Icon: CircleHelp },
   ] : [];
 
   return (
@@ -151,7 +154,7 @@ export default function AdminDashboardPage() {
         <p role="status" className="math-card mb-6 rounded-2xl border border-border p-10 text-center">{txt.loading}</p>
       ) : (
         <>
-          <section aria-label={txt.title} className="mb-7 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+          <section aria-label={txt.title} className="mb-7 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
             {metrics.map(({title,value,Icon}) => (
               <div key={title} className="math-card rounded-2xl border border-border p-5">
                 <span className="mb-3 inline-flex rounded-xl bg-primary/10 p-2.5 text-primary"><Icon className="h-5 w-5" aria-hidden /></span>
@@ -280,6 +283,29 @@ export default function AdminDashboardPage() {
                   </div>
                 )}
             </div>
+          </section>
+
+          <section className="math-card mb-7 rounded-2xl border border-border p-5 md:p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-bold">{txt.mostMissed}</h2>
+              <p className="mt-1 text-xs text-muted-foreground">{txt.missedDesc}</p>
+            </div>
+            {(overview.MostMissedProblems ?? []).length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">{txt.noMissed}</p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {overview.MostMissedProblems.map((item, index) => (
+                  <div key={item.ProblemId} className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/20 p-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">{index + 1}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">{ar ? item.TitleAr : item.TitleEn}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">#{item.ProblemId}</p>
+                      <p className="mt-3 text-sm text-destructive">{format(item.IncorrectAttemptsInWindow)} {txt.wrong}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
           <div className="flex flex-wrap gap-3">
             <Link href="/admin/problems" className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-medium hover:bg-muted">
