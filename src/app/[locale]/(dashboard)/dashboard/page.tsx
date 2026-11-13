@@ -209,6 +209,13 @@ export default function UserDashboardPage() {
         </section>
       )}
 
+      <Link
+        href="/social-accounts"
+        className="mb-8 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+      >
+        {isArabic ? 'ربط Google أو Facebook بحسابي' : 'Connect Google or Facebook'}
+      </Link>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {isLoading
