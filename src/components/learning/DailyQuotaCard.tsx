@@ -2,7 +2,6 @@
 
 import { useLocale } from 'next-intl';
 import { Clock3, Crown, Infinity, ListChecks } from 'lucide-react';
-import { Link } from '@/i18n/routing';
 import { useGetDailyQuotaQuery } from '@/store/api/usersApi';
 
 export function DailyQuotaCard({
@@ -81,9 +80,9 @@ export function DailyQuotaCard({
             {date ? ` · ${date} UTC` : ''}
           </p>
           {exhausted && (
-            <Link href="/upgrade" className="mt-3 inline-flex rounded-xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10">
-              {ar ? 'مميزات Premium — قريبًا' : 'Premium benefits — coming soon'}
-            </Link>
+            <span className="mt-3 inline-flex rounded-xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary">
+              {ar ? 'Premium قريبًا — تواصل مع إدارة المنصة للتفعيل التجريبي' : 'Premium coming soon — contact the admin for test access'}
+            </span>
           )}
         </>
       )}
