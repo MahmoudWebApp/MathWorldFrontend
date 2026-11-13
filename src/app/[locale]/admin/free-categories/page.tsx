@@ -4,21 +4,39 @@ import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
-import { useGetStageCategoryAccessQuery } from '@/store/api/categoriesApi';
+import { useGetStageCategoryAccessQuery, useUpdateStageFreeCategoriesMutation } from '@/store/api/categoriesApi';
 
 function StagePolicy({ stageId, ar }: { stageId: number; ar: boolean }) {
   const { data, isLoading, isError, refetch } = useGetStageCategoryAccessQuery(stageId);
+  const [selection, setSelection] = useState<number[] | null>(null);
+  const [save, { isLoading: saving, isError: saveError, isSuccess }] = useUpdateStageFreeCategoriesMutation();
+  const chosen = selection ?? data?.FreeCategoryIds ?? [];
+  const toggle = (id: number) => setSelection(current => {
+    const ids = current ?? data?.FreeCategoryIds ?? [];
+    return ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id].slice(0, 2);
+  });
   if (isLoading) return <p role="status">{ar ? 'جاري تحميل الفئات…' : 'Loading categories…'}</p>;
   if (isError || !data) return <button type="button" onClick={() => void refetch()} className="underline">{ar ? 'تعذّر التحميل — أعد المحاولة' : 'Failed to load — retry'}</button>;
   return <div className="space-y-3">
     <p className="text-sm text-muted-foreground">{ar ? 'الفئات المجانية حالياً' : 'Currently free categories'}: {data.FreeCategoryCount}</p>
     <div className="grid gap-3 sm:grid-cols-2">
-      {data.Categories.map(category => <div key={category.Id} className="flex items-center justify-between rounded-xl border p-4">
-        <span>{ar ? category.NameAr : category.NameEn}</span>
+      {data.Categories.map(category => <label key={category.Id} className="flex items-center justify-between rounded-xl border p-4">
+        <span className="flex items-center gap-3"><input type="checkbox" checked={chosen.includes(category.Id)} onChange={() => toggle(category.Id)} disabled={saving} />{ar ? category.NameAr : category.NameEn}</span>
         <span className={category.IsFree ? 'text-primary' : 'text-muted-foreground'}>{category.IsFree ? (ar ? 'مجانية' : 'Free') : 'Premium'}</span>
-      </div>)}
+      </label>)}
     </div>
-    <p className="text-xs text-muted-foreground">{ar ? 'هذه الصفحة تعرض السياسة الحالية فقط. تغيير الفئتين يحتاج إعداد الإدارة على الخادم، ولا يتم حفظ أي تعديل من هذه الشاشة.' : 'This is a read-only policy overview. Changing the two free categories requires server-side administration; this screen does not save changes.'}</p>
+    <div className="flex flex-wrap items-center gap-3">
+      <button type="button" disabled={saving || chosen.length !== 2 || selection === null} onClick={async () => {
+        try { await save({ stageId, categoryIds: chosen }).unwrap(); setSelection(null); }
+        catch { /* Error is shown below; preserve selection for retry. */ }
+      }} className="rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground disabled:opacity-50">
+        {saving ? (ar ? 'جاري الحفظ…' : 'Saving…') : (ar ? 'حفظ الفئتين المجانيتين' : 'Save two free categories')}
+      </button>
+      <button type="button" disabled={saving || selection === null} onClick={() => setSelection(null)} className="rounded-xl border px-4 py-2">{ar ? 'إلغاء' : 'Cancel'}</button>
+    </div>
+    {selection && chosen.length !== 2 && <p role="status">{ar ? 'يجب اختيار فئتين بالضبط.' : 'Select exactly two categories.'}</p>}
+    {saveError && <p role="alert" className="text-destructive">{ar ? 'فشل الحفظ. أعد المحاولة.' : 'Could not save. Please retry.'}</p>}
+    {isSuccess && selection === null && <p role="status" className="text-primary">{ar ? 'تم حفظ الاختيار.' : 'Selection saved.'}</p>}
   </div>;
 }
 
