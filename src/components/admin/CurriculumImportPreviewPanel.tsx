@@ -11,16 +11,17 @@ export function CurriculumImportPreviewPanel({ stages }: { stages: CurriculumSta
   const [preview, { data, isLoading, error }] = usePreviewCurriculumImportMutation();
 
   const loadExample = () => {
-    const stage = stages.find(item => item.Categories.length > 0);
+    const stage = stages.find(item => item.Categories.some(category =>
+      /حساب|عمليات|arithmetic|number|أعداد/i.test(category.NameAr + ' ' + category.NameEn)));
     if (!stage) {
-      setLocalError(ar ? 'لا توجد مرحلة مع فئة صالحة لإنشاء المثال' : 'No stage with a category available');
+      setLocalError(ar ? 'لا توجد فئة حساب مناسبة للمثال؛ أدخل معرفات فئتك يدوياً' : 'No arithmetic category found; enter your category IDs manually');
       return;
     }
     if (source.trim() !== '[]' && !window.confirm(ar ? 'استبدال المسودة الحالية؟' : 'Replace the current draft?')) return;
     setSource(JSON.stringify([{
       ContentKey: 'sample-arithmetic-01',
       StageId: stage.StageId,
-      CategoryId: stage.Categories[0].CategoryId,
+      CategoryId: stage.Categories.find(category => /حساب|عمليات|arithmetic|number|أعداد/i.test(category.NameAr + ' ' + category.NameEn))!.CategoryId,
       QuestionTextAr: 'احسب: ٧ × ٨ − ٦',
       QuestionTextEn: 'Calculate: 7 × 8 − 6',
       DetailedSolutionAr: 'نضرب أولاً: ٧ × ٨ = ٥٦، ثم نطرح ٦، فيكون الناتج ٥٠.',
