@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ArrowRight } from "lucide-react";
+import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link } from "@/i18n/routing";
 import type { Stage } from "@/store/api/stagesApi";
@@ -40,7 +40,7 @@ export function StagePremiumCard({ stage, index, locale }: StagePremiumCardProps
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/70 pt-4 text-sm font-bold text-brand-primary-strong dark:text-brand-primary-light">
         <span>{t("common.explore")}</span>
         <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary transition-colors group-hover:bg-brand-primary group-hover:text-white">
-          <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+          <DirectionalArrow direction="forward" />
         </span>
       </div>
     </Link>
