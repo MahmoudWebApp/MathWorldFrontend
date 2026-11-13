@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetAdminStatsQuery } from '@/store/api/statsApi';
 import { useGetAdminUsersQuery } from '@/store/api/usersApi';
@@ -26,6 +26,7 @@ interface AdminUser {
 
 export default function AdminDashboardPage() {
   const t = useTranslations();
+  const isArabic = useLocale() === 'ar';
   
   // Fetch dashboard data from the supported admin APIs.
   const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStatsQuery();
@@ -93,6 +94,14 @@ export default function AdminDashboardPage() {
           <p className="text-muted-foreground">{t('dashboard.admin.subtitle')}</p>
         </div>
       </div>
+
+      <Link
+        href="/admin/leaderboard"
+        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+      >
+        {isArabic ? 'ترتيب المتفوقين حسب المرحلة' : 'Learner rankings by stage'}
+        <ArrowRight2 className="h-4 w-4 rtl:rotate-180" aria-hidden />
+      </Link>
 
       {/* Stats Cards - 4 columns on large screens */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
