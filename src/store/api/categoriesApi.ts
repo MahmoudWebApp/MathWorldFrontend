@@ -71,6 +71,7 @@ export const categoriesApi = createApi({
 
     getStageCategoryAccess: builder.query<StageCategoryAccessDto, number>({
       query: (stageId) => `/stages/${stageId}/free-categories`,
+      providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
       providesTags: ['Category'],
       providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
       providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
@@ -109,6 +110,26 @@ export const categoriesApi = createApi({
         body: { CategoryIds: categoryIds },
       }),
       invalidatesTags: (_result, _error, { stageId }) => [{ type: 'StageAccess', id: stageId }],
+    }),
+
+    updateStageFreeCategories: builder.mutation<
+      { StageId: number; FreeCategoryIds: number[] },
+      { stageId: number; categoryIds: [number, number] }
+    >({
+      query: ({ stageId, categoryIds }) => ({
+        url: `/admin/stages/${stageId}/free-categories`,
+        method: 'PUT',
+        body: { CategoryIds: categoryIds },
+      }),
+      async onQueryStarted({ stageId }, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(categoriesApi.util.invalidateTags(['Category']));
+          dispatch(categoriesApi.util.invalidateTags([{ type: 'StageAccess', id: stageId }]));
+        } catch {
+          // Preserve the previous catalog when saving fails.
+        }
+      },
     }),
 
     // Admin: Get all categories (bilingual)
@@ -177,6 +198,7 @@ export const categoriesApi = createApi({
 export const {
   useGetCategoriesQuery,
   useGetStageCategoryAccessQuery,
+  useUpdateStageFreeCategoriesMutation,
   useUpdateStageFreeCategoriesMutation,
   useUpdateStageFreeCategoriesMutation,
   useGetStudentSubscriptionQuery,
