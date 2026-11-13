@@ -18,8 +18,8 @@ export interface GeometryScene {
   altTextEn: string;
 }
 
-const finite = (...values: number[]) => values.every(Number.isFinite);
-const validText = (text?: string) => text === undefined || text.length <= 80;
+const finite = (...values: unknown[]) => values.every(value => typeof value === 'number' && Number.isFinite(value));
+const validText = (text?: unknown) => text === undefined || (typeof text === 'string' && text.length <= 80);
 const bounded = (n: number) => Number.isFinite(n) && Math.abs(n) <= 10000;
 
 /** Never inject raw SVG or HTML. Only known geometric primitives are rendered. */
