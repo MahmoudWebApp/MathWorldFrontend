@@ -3,6 +3,7 @@
 import { useGetCurriculumReadinessQuery } from '@/store/api/curriculumApi';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
+import { CurriculumImportPreviewPanel } from '@/components/admin/CurriculumImportPreviewPanel';
 
 export default function CurriculumReadinessPage() {
   const locale = useLocale();
@@ -22,6 +23,7 @@ export default function CurriculumReadinessPage() {
       {isLoading && <p role="status">{ar ? 'جارٍ تحميل التقرير...' : 'Loading report...'}</p>}
       {error && <p role="alert" className="text-red-600">{ar ? 'تعذر جلب التقرير. تأكد من تسجيل الدخول كأدمن.' : 'Could not load report. Admin access is required.'}</p>}
       {data && <>
+        <CurriculumImportPreviewPanel />
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             [ar ? 'المراحل' : 'Stages', data.StageCount],
