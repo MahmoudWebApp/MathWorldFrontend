@@ -54,6 +54,7 @@ import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
+import { GeometryDiagram, isGeometryScene } from "@/components/math/GeometryDiagram";
 
 function isStudentProblem(
   problem: ProblemDetail | undefined,
@@ -154,6 +155,9 @@ export default function ProblemPage() {
     },
   );
 
+  // Optional forward-compatible geometry payload. Older API responses have no diagram.
+  const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
+  const diagram = isGeometryScene(rawDiagram) ? rawDiagram : null;
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
   const { data: dailyQuota, refetch: refetchDailyQuota } =
@@ -861,6 +865,7 @@ export default function ProblemPage() {
                 isArabic={isArabic}
                 className="mb-6 text-lg"
               />
+              {diagram && <GeometryDiagram scene={diagram} locale={locale} />}
 
               {!isAuthenticated && isPublicProblem(problem) && (
                 <div className="border-t py-8 text-center">
