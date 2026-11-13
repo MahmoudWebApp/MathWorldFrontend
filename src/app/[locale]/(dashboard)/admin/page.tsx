@@ -94,6 +94,14 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      <Link
+        href="/admin/leaderboard"
+        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+      >
+        {t('common.viewAll')} — {t('dashboard.admin.users')}
+        <ArrowRight2 className="h-4 w-4 rtl:rotate-180" aria-hidden />
+      </Link>
+
       {/* Stats Cards - 4 columns on large screens */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {isCardsLoading ? (
