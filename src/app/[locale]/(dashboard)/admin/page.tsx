@@ -1,209 +1,259 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { useGetAdminStatsQuery } from '@/store/api/statsApi';
-import { useGetAdminUsersQuery } from '@/store/api/usersApi';
-import { useGetAdminCategoriesQuery } from '@/store/api/categoriesApi';
-import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
-import { 
-  People, 
-  Book, 
-  TickCircle, 
-  ArrowRight2,
-  Warning2,
-  Category2
-} from 'iconsax-reactjs';
-import { Card, CardContent } from '@/components/ui/Card';
-import AdminStatsChart from '@/components/admin/AdminStatsChart';
+import {
+  Activity, AlertTriangle, BarChart3, BookOpenCheck, CheckCircle2,
+  Clock3, Medal, ShieldCheck, TrendingUp, Users,
+} from 'lucide-react';
+import { DirectionalArrow } from '@/components/ui/DirectionalArrow';
+import {
+  AdminActivityChart, AdminCategoryMistakesChart, AdminStagePerformanceChart,
+} from '@/components/admin/AdminActivityCharts';
+import {
+  useGetAdminAnalyticsOverviewQuery, useGetAdminAnalyticsStageQuery,
+} from '@/store/api/statsApi';
+import { useGetAdminLearnersQuery } from '@/store/api/usersApi';
 
-interface AdminUser {
-  Id: number; 
-  FullName: string;
-  Email: string;
-  Role: string;
-}
+const periods = [7, 30, 90] as const;
 
 export default function AdminDashboardPage() {
-  const t = useTranslations();
-  const isArabic = useLocale() === 'ar';
-  
-  // Fetch dashboard data from the supported admin APIs.
-  const { data: stats, isLoading: statsLoading, isError: statsError } = useGetAdminStatsQuery();
-  const { data: users, isLoading: usersLoading, isError: usersError } = useGetAdminUsersQuery({ PageSize: 5 });
-  const { data: categories, isLoading: categoriesLoading, isError: categoriesError } = useGetAdminCategoriesQuery();
-  const { data: stages, isLoading: stagesLoading, isError: stagesError } = useGetAdminStagesQuery();
+  const arabic = useLocale() === 'ar';
+  const [days, setDays] = useState<(typeof periods)[number]>(30);
+  const { data, isLoading, isError, isFetching, refetch } =
+    useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: true });
 
-  // Aggregate loading and error states
-  const isCardsLoading = statsLoading || categoriesLoading || stagesLoading;
-  const hasCardsError = statsError || categoriesError || stagesError;
+  // Pick the stage with the most actual attempts for an actionable learner preview.
+  // Do not infer rankings from question inventory or from Admin accounts.
+  const busiestStage = [...(data?.Stages ?? [])]
+    .sort((a, b) => b.AttemptsInWindow - a.AttemptsInWindow || a.StageId - b.StageId)[0];
+  const { data: selectedStage } = useGetAdminAnalyticsStageQuery(
+    { stageId: busiestStage?.StageId ?? 0, days }, {
+      skip: !busiestStage || busiestStage.AttemptsInWindow === 0,
+      refetchOnMountOrArgChange: true,
+    },
+  );
+  const { data: learners } = useGetAdminLearnersQuery(
+    { Page: 1, PageSize: 4 }, { refetchOnMountOrArgChange: true },
+  );
 
-  // Configure the four supported dashboard summary cards.
-  const adminCards = [
-    {
-      icon: People,
-      title: t('dashboard.admin.users'),
-      count: stats?.TotalUsers || 0,
-      href: '/admin/users',
-      color: 'text-primary',
-      bg: 'bg-primary/10',
-      chartColor: 'var(--color-brand-primary-strong)',
-    },
-    {
-      icon: Book,
-      title: t('dashboard.admin.problems'),
-      count: stats?.TotalProblems || 0,
-      href: '/admin/problems',
-      color: 'text-brand-secondary-strong dark:text-brand-secondary-light',
-      bg: 'bg-brand-secondary/10',
-      chartColor: 'var(--color-brand-secondary)',
-    },
-    {
-      icon: TickCircle,
-      title: t('dashboard.admin.categories'),
-      count: categories?.length || 0,
-      href: '/admin/categories',
-      color: 'text-brand-primary-strong dark:text-brand-primary-light',
-      bg: 'bg-brand-primary/10',
-      chartColor: 'var(--color-brand-primary)',
-    },
-    {
-      icon: Category2,
-      title: t('dashboard.admin.stages'),
-      count: stages?.length || 0,
-      href: '/admin/stages',
-      color: 'text-brand-secondary-strong dark:text-brand-secondary-light',
-      bg: 'bg-gradient-to-br from-brand-primary/10 to-brand-secondary/15',
-      chartColor: 'var(--color-brand-secondary-light)',
-    },
-  ];
-
-  // Keep data visualization inside the same purple/cyan brand family.
-  const chartData = adminCards.map((card) => ({
-    name: card.title,
-    value: card.count,
-    color: card.chartColor,
-  }));
+  const t = arabic ? {
+    title: 'لوحة قيادة MathWorld',
+    subtitle: 'مراقبة تفاعل الطلاب ونتائج الحلول وجودة المسائل — بيانات فعلية وليست أعداد محتوى الموقع',
+    full: 'مركز الإحصائيات الكامل',
+    fullDescription: 'التحليل حسب المرحلة والتصنيف، النشاط اليومي، أخطاء المسائل، وترتيب الطلاب مع فلاتر زمنية',
+    explore: 'استعرض الإحصائيات',
+    days: (n: number) => `آخر ${n} يوم`,
+    student: 'إجمالي الطلاب',
+    active: 'الطلاب النشطون',
+    attempts: 'المحاولات بالفترة',
+    solved: 'حلول فريدة (كل الوقت)',
+    accuracy: 'نسبة الإجابات الصحيحة',
+    errors: 'الإجابات الخاطئة بالفترة',
+    trend: 'النشاط اليومي للطلاب',
+    trendSub: 'المحاولات والإجابات الصحيحة بمرور الأيام',
+    stage: 'أداء المراحل التعليمية',
+    stageSub: 'مقارنة المحاولات الصحيحة والخاطئة لكل مرحلة',
+    weak: 'أكثر التصنيفات تسجيلًا للأخطاء',
+    weakSub: 'ترتيب حسب عدد الإجابات الخاطئة خلال الفترة، وليس تقييمًا نهائيًا لصعوبة التصنيف',
+    problematic: 'المسائل الأكثر إجابات خاطئة',
+    problematicSub: 'أولويات لمراجعة المحتوى بناءً على محاولات الطلاب',
+    correct: 'صحيحة', wrong: 'خاطئة', noErrors: 'لا توجد أخطاء مسجّلة بالفترة',
+    recent: 'أحدث الطلاب', noLearners: 'لا يوجد طلاب بعد',
+    all: 'كل الطلاب', details: 'ملف الطالب',
+    top: 'طلاب المرحلة الأكثر نشاطًا', noTop: 'لا توجد حلول مسجّلة لهذه الفترة',
+    more: 'التفاصيل الكاملة', error: 'تعذر تحميل الإحصائيات',
+    retry: 'إعادة المحاولة', loading: 'جاري تحميل بيانات الطلاب...',
+    updated: 'تُحتسب الإحصائيات من سجلات الإجابات المحفوظة',
+  } : {
+    title: 'MathWorld Control Center',
+    subtitle: 'Monitor real student engagement, solving outcomes and learning quality — not site inventory totals',
+    full: 'Complete analytics center',
+    fullDescription: 'Explore stages, categories, daily activity, missed questions and learner rankings with date filters',
+    explore: 'Open all analytics',
+    days: (n: number) => `Last ${n} days`,
+    student: 'Total students',
+    active: 'Active learners',
+    attempts: 'Attempts in period',
+    solved: 'Unique solves (all time)',
+    accuracy: 'Correct answer rate',
+    errors: 'Incorrect answers in period',
+    trend: 'Daily student activity',
+    trendSub: 'Recorded attempts and correct answers over time',
+    stage: 'Performance by educational stage',
+    stageSub: 'Compare correct and incorrect attempts per stage',
+    weak: 'Categories with the most incorrect answers',
+    weakSub: 'Ranked by incorrect attempts in period; not an absolute measure of difficulty',
+    problematic: 'Most frequently missed problems',
+    problematicSub: 'Content review priorities based on real student attempts',
+    correct: 'Correct', wrong: 'Incorrect', noErrors: 'No incorrect answers in this period',
+    recent: 'Recently joined learners', noLearners: 'No learners yet',
+    all: 'All learners', details: 'View profile',
+    top: 'Learners in the most active stage', noTop: 'No solves recorded in this period',
+    more: 'Full details', error: 'Analytics could not be loaded',
+    retry: 'Retry', loading: 'Loading student activity...',
+    updated: 'All engagement data comes from persisted answer attempts',
+  };
+  const num = (n: number) => new Intl.NumberFormat(arabic ? 'ar' : 'en').format(n);
+  const cards = data ? [
+    { name: t.student, count: num(data.TotalStudents), Icon: Users },
+    { name: t.active, count: num(data.ActiveStudentsInWindow), Icon: Activity },
+    { name: t.attempts, count: num(data.AttemptsInWindow), Icon: TrendingUp },
+    { name: t.solved, count: num(data.TotalUniqueSolved), Icon: BookOpenCheck },
+    { name: t.accuracy, count: `${num(data.CorrectRatePercent)}%`, Icon: CheckCircle2 },
+    { name: t.errors, count: num(data.AttemptsInWindow - data.CorrectAttemptsInWindow), Icon: AlertTriangle },
+  ] : [];
+  const section = 'math-card min-w-0 rounded-3xl border border-border bg-card/85 p-5 shadow-sm md:p-6';
 
   return (
-    <div className="container relative mx-auto px-4 py-8 md:px-16 lg:px-24">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="brand-display-title text-gradient-math text-3xl font-bold mb-2">{t('dashboard.admin.title')}</h1>
-          <p className="text-muted-foreground">{t('dashboard.admin.subtitle')}</p>
-        </div>
-      </div>
+    <main className="container relative mx-auto max-w-7xl px-4 py-8 md:px-10">
+      <header className="mb-6">
+        <h1 className="brand-display-title text-gradient-math text-3xl font-bold">{t.title}</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">{t.subtitle}</p>
+      </header>
 
       <Link
         href="/admin/analytics"
-        className="mb-7 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/10 px-5 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary/15"
+        className="group mb-7 flex flex-col justify-between gap-5 rounded-3xl border border-primary/30 bg-gradient-to-br from-brand-primary/15 via-card to-brand-secondary/10 p-6 shadow-sm transition-all hover:border-primary/60 hover:shadow-lg sm:flex-row sm:items-center md:p-8"
       >
-        {isArabic ? 'مركز الإحصائيات ومراقبة المراحل' : 'Analytics & Stage Monitoring'}
-        <ArrowRight2 className="h-4 w-4 rtl:rotate-180" aria-hidden />
+        <div className="flex min-w-0 items-start gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+            <BarChart3 className="h-7 w-7" aria-hidden />
+          </span>
+          <div>
+            <h2 className="text-xl font-bold md:text-2xl">{t.full}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{t.fullDescription}</p>
+          </div>
+        </div>
+        <span className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">
+          {t.explore}<DirectionalArrow direction="forward" size={18} />
+        </span>
       </Link>
 
-      {/* Stats Cards - 4 columns on large screens */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {isCardsLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6 flex flex-col justify-between h-full">
-                <div className="h-12 w-12 rounded-xl bg-muted animate-pulse mb-4" />
-                <div className="h-8 w-16 bg-muted animate-pulse rounded mb-2" />
-                <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-              </CardContent>
-            </Card>
-          ))
-        ) : hasCardsError ? (
-          <div className="col-span-full p-4 bg-red-50 text-red-500 rounded-lg flex items-center gap-2">
-            <Warning2 className="h-5 w-5" />
-            <p>{t('common.errorLoadingData')}</p>
-          </div>
-        ) : (
-          adminCards.map((card, index) => (
-            <Link key={index} href={card.href}>
-              <Card className="math-card hover:-translate-y-1 hover:border-brand-secondary/25 hover:shadow-[0_18px_48px_rgba(92,36,255,0.12)] transition-all cursor-pointer h-full">
-                <CardContent className="p-6">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${card.bg} mb-4`}>
-                    <card.icon className={`h-6 w-6 ${card.color}`} variant="Bold" />
-                  </div>
-                  <div className="text-3xl font-bold mb-1">{card.count}</div>
-                  <div className="text-sm text-muted-foreground flex items-center gap-1">
-                    {card.title}
-                    <ArrowRight2 className="h-3 w-3 rtl:rotate-180" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
-        )}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-5 w-5 text-primary" aria-hidden />{t.updated}</h2>
+        <div role="group" className="flex flex-wrap gap-2">
+          {periods.map(value => (
+            <button key={value} type="button" aria-pressed={days === value}
+              onClick={() => setDays(value)}
+              className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
+                days === value ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-card hover:border-primary/40'
+              }`}>{t.days(value)}</button>
+          ))}
+        </div>
       </div>
 
-      {/* Quick Stats & Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* Stats Chart */}
-        <AdminStatsChart 
-          data={chartData} 
-          isLoading={isCardsLoading} 
-        />
+      {isLoading ? (
+        <div className={section} role="status">{t.loading}</div>
+      ) : isError || !data ? (
+        <div className={section} role="alert">
+          <p className="text-destructive">{t.error}</p>
+          <button type="button" onClick={() => refetch()}
+            className="mt-3 rounded-xl border border-primary px-4 py-2 text-primary">{t.retry}</button>
+        </div>
+      ) : (
+        <>
+          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            {cards.map(({ name, count, Icon }) => (
+              <div key={name} className="math-card rounded-2xl border border-border bg-card/80 p-4">
+                <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <strong className="block text-2xl tabular-nums">{count}</strong>
+                <p className="mt-2 text-xs text-muted-foreground">{name}</p>
+              </div>
+            ))}
+          </div>
 
-        {/* Recent Users */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">{t('dashboard.admin.recentUsers')}</h3>
-              <Link href="/admin/users" className="text-sm text-primary hover:underline">
-                {t('common.viewAll')}
-              </Link>
-            </div>
-            
-            <div className="space-y-3">
-              {usersLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 animate-pulse">
-                    <div className="h-10 w-10 rounded-full bg-muted" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-32 bg-muted rounded" />
-                      <div className="h-3 w-48 bg-muted rounded" />
-                    </div>
-                    <div className="h-6 w-16 bg-muted rounded-full" />
-                  </div>
-                ))
-              ) : usersError ? (
-                <div className="text-center py-8 text-red-500 flex flex-col items-center gap-2">
-                  <Warning2 className="h-8 w-8" />
-                  <p>{t('common.errorLoadingUsers')}</p>
-                </div>
-              ) : users?.Users && users.Users.length > 0 ? (
-                users.Users.map((user: AdminUser) => (
-                  <div key={user.Id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 transition-colors hover:bg-muted">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                      <People className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{user.FullName || ""}</p>
-                      <p className="text-sm text-muted-foreground truncate">{user.Email}</p>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs shrink-0 ${
-                      user.Role === 'Admin' 
-                        ? 'border border-brand-primary/20 bg-primary/10 text-primary' 
-                        : 'border border-brand-secondary/20 bg-brand-secondary/10 text-brand-secondary-strong dark:text-brand-secondary-light'
-                    }`}>
-                      {user.Role}
-                    </span>
-                  </div>
-                ))
+          {isFetching && <p className="mb-3 text-xs text-muted-foreground" role="status">{t.loading}</p>}
+          <div className="mb-6 grid gap-5 xl:grid-cols-5">
+            <section className={section + ' xl:col-span-3'}>
+              <h2 className="text-lg font-bold">{t.trend}</h2>
+              <p className="mb-4 mt-1 text-xs text-muted-foreground">{t.trendSub}</p>
+              <AdminActivityChart data={data.DailyActivity ?? []} arabic={arabic} />
+            </section>
+            <section className={section + ' xl:col-span-2'}>
+              <h2 className="text-lg font-bold">{t.stage}</h2>
+              <p className="mb-4 mt-1 text-xs text-muted-foreground">{t.stageSub}</p>
+              <AdminStagePerformanceChart stages={data.Stages} arabic={arabic} />
+            </section>
+          </div>
+          <div className="mb-6 grid gap-5 xl:grid-cols-2">
+            <section className={section}>
+              <h2 className="text-lg font-bold">{t.weak}</h2>
+              <p className="mb-4 mt-1 text-xs leading-5 text-muted-foreground">{t.weakSub}</p>
+              <AdminCategoryMistakesChart categories={data.MostMissedCategories ?? []} arabic={arabic} />
+            </section>
+            <section className={section}>
+              <h2 className="text-lg font-bold">{t.problematic}</h2>
+              <p className="mb-4 mt-1 text-xs text-muted-foreground">{t.problematicSub}</p>
+              {!(data.MostMissedProblems ?? []).length ? (
+                <div className="flex min-h-52 items-center justify-center text-sm text-muted-foreground">{t.noErrors}</div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-lg">
-                  {t('common.noData')}
+                <div className="space-y-2">
+                  {data.MostMissedProblems.map((p, i) => (
+                    <div key={p.ProblemId} className="flex items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 p-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{i + 1}. {arabic ? p.TitleAr : p.TitleEn}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">#{p.ProblemId}</p>
+                      </div>
+                      <div className="shrink-0 text-end text-xs">
+                        <p className="font-semibold text-destructive">{num(p.IncorrectAttemptsInWindow)} {t.wrong}</p>
+                        <p className="mt-1 text-muted-foreground">{num(p.CorrectAttemptsInWindow)} {t.correct}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+              <Link href="/admin/analytics" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                {t.more}<DirectionalArrow direction="forward" />
+              </Link>
+            </section>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <section className={section}>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="flex items-center gap-2 text-lg font-bold"><Medal className="h-5 w-5 text-primary" aria-hidden />{t.top}</h2>
+                <Link href="/admin/analytics" className="text-sm font-semibold text-primary hover:underline">{t.more}</Link>
+              </div>
+              {!selectedStage?.TopLearners?.length ? <p className="py-10 text-center text-sm text-muted-foreground">{t.noTop}</p> :
+                <div className="space-y-2">
+                  {selectedStage.TopLearners.slice(0, 4).map((learner) => (
+                    <Link key={learner.UserId} href={`/admin/users/${learner.UserId}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-border/60 p-3 hover:bg-primary/5">
+                      <div className="min-w-0"><span className="font-semibold">#{learner.Rank} {learner.FullName}</span></div>
+                      <span className="shrink-0 text-sm text-primary">{num(learner.UniqueSolved)} {t.solved.split(' ')[0]}</span>
+                    </Link>
+                  ))}
+                </div>}
+            </section>
+            <section className={section}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-lg font-bold"><Users className="h-5 w-5 text-primary" aria-hidden />{t.recent}</h2>
+                <Link href="/admin/users" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                  {t.all}<DirectionalArrow direction="forward" />
+                </Link>
+              </div>
+              {!learners?.Learners.length ? <p className="py-10 text-center text-sm text-muted-foreground">{t.noLearners}</p> :
+                <div className="space-y-2">
+                  {learners.Learners.map(learner => (
+                    <Link key={learner.Id} href={`/admin/users/${learner.Id}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-border/60 p-3 hover:bg-primary/5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{learner.FullName}</p>
+                        <p className="truncate text-xs text-muted-foreground" dir="ltr">{learner.Email}</p>
+                      </div>
+                      <DirectionalArrow direction="forward" className="shrink-0 text-primary" />
+                    </Link>
+                  ))}
+                </div>}
+            </section>
+          </div>
+        </>
+      )}
+    </main>
   );
 }
