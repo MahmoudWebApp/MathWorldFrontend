@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Search, SlidersHorizontal, ArrowLeft, ArrowRight, Users, BarChart3 } from 'lucide-react';
+import { Search, SlidersHorizontal, Users, BarChart3 } from 'lucide-react';
+import { DirectionalArrow } from '@/components/ui/DirectionalArrow';
 import { useGetAdminLearnersQuery, type AdminLearnerFilters } from '@/store/api/usersApi';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
 
@@ -172,11 +173,11 @@ export default function AdminUsersPage() {
               <div className="flex gap-2">
                 <button type="button" disabled={page <= 1} onClick={() => setPage((v) => v - 1)}
                   className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">
-                  <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />{label.previous}
+                  <DirectionalArrow direction="back" />{label.previous}
                 </button>
                 <button type="button" disabled={page >= data.TotalPages} onClick={() => setPage((v) => v + 1)}
                   className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">
-                  {label.next}<ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />
+                  {label.next}<DirectionalArrow direction="forward" />
                 </button>
               </div>
             </div>
