@@ -1,4 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
+import type { PremiumSolution } from '@/lib/premium-api';
 import { baseQuery } from './baseQuery';
 import type { PagedProblemsResponse, ProblemPreview } from './types';
 
@@ -274,6 +275,10 @@ export const problemsApi = createApi({
       providesTags: ['Problem'],
     }),
 
+    getPremiumSolution: builder.query<PremiumSolution, number>({
+      query: (problemId) => `/problems/${problemId}/premium-solution`,
+    }),
+
     createProblem: builder.mutation<{ Id: number }, CreateProblemRequest>({
       query: (body) => ({
         url: '/admin/problems',
@@ -310,6 +315,7 @@ export const problemsApi = createApi({
 export const {
   useSearchProblemsQuery,
   useGetProblemQuery,
+  useLazyGetPremiumSolutionQuery,
   useGetProblemAttemptsQuery,
   useSubmitAnswerMutation,
   useGetCategoryProblemsQuery,
