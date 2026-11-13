@@ -5,9 +5,6 @@ import { useGetCategoriesQuery, type CategoryDto } from '@/store/api/categoriesA
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
 import {
   AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  ChevronRight,
   Filter,
   Loader2,
 } from 'lucide-react';
@@ -18,6 +15,7 @@ import { CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } fro
 import { getStageVisual, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
+import { DirectionalArrow } from '@/components/ui/DirectionalArrow';
 
 // ==========================================
 // 1. Math assets
@@ -86,7 +84,7 @@ function CategoryPremiumCard({
             </div>
             {/* Minimal Arrow Button */}
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-              <ArrowRight className="h-5 w-5 rtl:rotate-180" />
+              <DirectionalArrow direction="forward" size={20} />
             </div>
           </div>
           
@@ -193,7 +191,7 @@ function OtherStagePremiumCard({
               style={{ translateZ: 40 }}
               className={`flex h-9 w-9 items-center justify-center rounded-full bg-background/50 border border-primary/10 ${style.hoverBg} group-hover:border-transparent transition-colors duration-300 flex-shrink-0`}
             >
-              <ChevronRight className={`h-4 w-4 text-muted-foreground group-hover:text-white transition-transform ${isRtl ? 'rotate-180 group-hover:-translate-x-0.5' : 'group-hover:translate-x-0.5'}`} />
+              <DirectionalArrow direction="forward" variant="chevron" className="h-4 w-4 text-muted-foreground transition-transform group-hover:text-white group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
             </motion.div>
           </div>
         </motion.div>
@@ -265,7 +263,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             href="/stages"
             className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-6 group math-equation-chip bg-card/50 backdrop-blur-md px-4 py-2 rounded-full"
           >
-            <ArrowLeft className={`h-4 w-4 transition-transform group-hover:-translate-x-1 rtl:rotate-180 rtl:group-hover:translate-x-1`} />
+            <DirectionalArrow direction="back" className="h-4 w-4 transition-transform group-hover:-translate-x-1 rtl:group-hover:translate-x-1" />
             {t('stages.backToStages')}
           </Link>
           
