@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
 import { API_BASE_URL } from '@/store/api/baseQuery';
 import { GeometryDiagram, isGeometryScene, type GeometryScene } from '@/components/math/GeometryDiagram';
 
@@ -14,6 +16,7 @@ type Props = {
 /** Authenticated Admin problem editor. Backend remains the authority for all writes. */
 export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }: Props) {
   const ar = locale === 'ar';
+  const authToken = useSelector((state: RootState) => state.auth.token);
   const [json, setJson] = useState(() => JSON.stringify(initialScene ?? {
     schemaVersion: 1,
     viewport: { width: 360, height: 260 },
@@ -52,7 +55,7 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     try {
       const response = await fetch(`${API_BASE_URL}/admin/problems/${problemId}/diagram`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken || token()}` },
         body: JSON.stringify({ scene: parsed }),
       });
       if (!response.ok) throw new Error(String(response.status));
