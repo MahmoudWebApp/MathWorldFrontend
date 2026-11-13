@@ -10,8 +10,6 @@ import { useSearchProblemsQuery } from "@/store/api/problemsApi";
 import type { ProblemPreview } from "@/store/api/types";
 import {
   X,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   AlertCircle,
   Search,
@@ -21,6 +19,7 @@ import { Link } from "@/i18n/routing";
 import { ProblemCard } from "@/components/problems/ProblemCard";
 import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
+import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 
 const DEFAULT_PAGE_SIZE = 10;
 const DEBOUNCE_DELAY = 500;
@@ -357,7 +356,7 @@ function ProblemsPageClient() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
               >
-                <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
+                <DirectionalChevron direction="back" className="h-5 w-5" />
               </Button>
 
               <div className="flex items-center gap-1 bg-card/90 border border-brand-primary/15 rounded-full p-1 shadow-sm backdrop-blur-xl">
@@ -410,7 +409,7 @@ function ProblemsPageClient() {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
               >
-                <ChevronRight className="h-5 w-5 rtl:rotate-180" />
+                <DirectionalChevron direction="forward" className="h-5 w-5" />
               </Button>
             </div>
           )}

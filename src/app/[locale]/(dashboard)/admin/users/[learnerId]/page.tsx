@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
+import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import {
-  ArrowLeft, BarChart3, BookOpen, CheckCircle2, Clock3, ListChecks,
+  BarChart3, BookOpen, CheckCircle2, Clock3, ListChecks,
   Star, Users, AlertCircle,
 } from 'lucide-react';
 import {
@@ -96,7 +97,7 @@ export default function AdminLearnerDetailPage() {
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
       <Link href="/admin/users" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-        <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden />{label.back}
+        <DirectionalArrow direction="back" className="h-4 w-4" />{label.back}
       </Link>
       {!validId || isError ? (
         <div role="alert" className="math-card rounded-2xl border border-destructive/30 p-8 text-center">
@@ -244,9 +245,9 @@ export default function AdminLearnerDetailPage() {
                     <span>{label.page} {attemptData.Page} / {Math.max(1, attemptData.TotalPages)}</span>
                     <div className="flex gap-2">
                       <button type="button" disabled={page <= 1} onClick={() => setPage(v => v - 1)}
-                        className="rounded-xl border border-border px-3 py-2 disabled:opacity-40">{label.prev}</button>
+                        className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40"><DirectionalChevron direction="back" className="h-4 w-4" />{label.prev}</button>
                       <button type="button" disabled={page >= attemptData.TotalPages} onClick={() => setPage(v => v + 1)}
-                        className="rounded-xl border border-border px-3 py-2 disabled:opacity-40">{label.next}</button>
+                        className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">{label.next}<DirectionalChevron direction="forward" className="h-4 w-4" /></button>
                     </div>
                   </div>
                 </>

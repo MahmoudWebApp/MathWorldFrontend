@@ -20,8 +20,6 @@ import {
   Pencil,
   Trash2,
   Eye,
-  ChevronLeft,
-  ChevronRight,
   CheckCircle2,
   Circle,
   RotateCcw,
@@ -30,7 +28,6 @@ import {
   ListChecks,
   HelpCircle,
   Lightbulb,
-  ArrowLeft,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -38,6 +35,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
 import { cn } from "@/lib/utils";
+import { DirectionalArrow, DirectionalChevron } from "@/components/ui/DirectionalNavigation";
 import {
   Select,
   SelectContent,
@@ -405,7 +403,7 @@ export default function AdminProblemsPage() {
                 onClick={closeForm}
                 className="rounded-full"
               >
-                <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
+                <DirectionalArrow direction="back" className="h-5 w-5" />
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-primary">
@@ -1146,7 +1144,7 @@ export default function AdminProblemsPage() {
                   setFilters((prev) => ({ ...prev, Page: prev.Page - 1 }))
                 }
               >
-                <ChevronLeft className="me-1 h-4 w-4 rtl:rotate-180" />
+                <DirectionalChevron direction="back" className="me-1 h-4 w-4" />
                 {t("common.previous")}
               </Button>
               <Button
@@ -1158,7 +1156,7 @@ export default function AdminProblemsPage() {
                 }
               >
                 {t("common.next")}
-                <ChevronRight className="ms-1 h-4 w-4 rtl:rotate-180" />
+                <DirectionalChevron direction="forward" className="ms-1 h-4 w-4" />
               </Button>
             </div>
           </div>
