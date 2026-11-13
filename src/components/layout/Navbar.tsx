@@ -328,6 +328,12 @@ function NavbarContent() {
                         <Link href="/dashboard/error-notebook" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <NotebookTabs className="h-4 w-4" />{t('nav.errorNotebook')}
                         </Link>
+                        <Link href="/learning-stage"
+                          className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary"
+                          onClick={() => setUserMenuOpen(false)}>
+                          <BookMarked className="h-4 w-4" />
+                          {locale === 'ar' ? 'تغيير المرحلة التعليمية' : 'Change learning stage'}
+                        </Link>
                           </>
                         )}
                         {user.Role === 'Admin' && (
@@ -457,6 +463,12 @@ function NavbarContent() {
                   <Link href="/dashboard/error-notebook" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                     <NotebookTabs className="h-5 w-5" />
                     {t('nav.errorNotebook')}
+                  </Link>
+                  <Link href="/learning-stage"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+                    onClick={() => setMobileMenuOpen(false)}>
+                    <BookMarked className="h-5 w-5" />
+                    {locale === 'ar' ? 'تغيير المرحلة التعليمية' : 'Change learning stage'}
                   </Link>
 
                     </>
