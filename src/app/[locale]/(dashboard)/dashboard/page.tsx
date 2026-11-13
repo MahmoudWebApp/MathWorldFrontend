@@ -209,6 +209,16 @@ export default function UserDashboardPage() {
         </section>
       )}
 
+      {stageId != null && stageId > 0 && (
+        <Link
+          href="/dashboard/leaderboard"
+          className="mb-8 me-3 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
+        >
+          <Trophy className="h-5 w-5" aria-hidden />
+          {isArabic ? 'ترتيبي بين طلاب مرحلتي' : 'My stage leaderboard'}
+        </Link>
+      )}
+
       <Link
         href="/social-accounts"
         className="mb-8 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
