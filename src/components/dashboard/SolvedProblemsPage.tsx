@@ -6,7 +6,8 @@ import { useGetSolvedProblemsQuery } from '@/store/api/usersApi';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { AlertCircle, ArrowLeft, ArrowRight, Target } from 'lucide-react';
+import { AlertCircle, Target } from 'lucide-react';
+import { DirectionalArrow } from '@/components/ui/DirectionalArrow';
 import { AnimatedCounter } from '@/components/home/AnimatedCounter';
 import { useState, useEffect } from 'react';
 
@@ -47,7 +48,7 @@ export function SolvedProblemsPage() {
           href="/dashboard" 
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
         >
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <DirectionalArrow direction="back" />
           {t('dashboard.user.title')}
         </Link>
         
@@ -98,7 +99,7 @@ export function SolvedProblemsPage() {
             <Button asChild>
                 <Link href="/stages">
                   {t("hero.browseStages")}
-                <ArrowRight className="h-4 w-4 ml-2 rtl:mr-2 rtl:ml-0 rtl:rotate-180" />
+                <DirectionalArrow direction="forward" className="ms-2" />
               </Link>
             </Button>
           </CardContent>
