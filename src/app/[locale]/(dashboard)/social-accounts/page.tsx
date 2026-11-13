@@ -2,7 +2,8 @@
 
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { ArrowLeft, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { LockKeyhole, ShieldCheck } from 'lucide-react';
+import { DirectionalArrow } from '@/components/ui/DirectionalArrow';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 
 const localized = {
@@ -54,7 +55,7 @@ export default function SocialAccountsPage() {
           href="/dashboard"
           className="mt-9 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
         >
-          <ArrowLeft size={16} />
+          <DirectionalArrow direction="back" />
           {copy.back}
         </Link>
       </section>
