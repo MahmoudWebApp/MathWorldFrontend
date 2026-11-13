@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useSelector } from "react-redux";
-import { ArrowRight, BookOpen, GraduationCap, Search, Sparkles, Trophy } from "lucide-react";
+import { BookOpen, GraduationCap, Search, Sparkles, Trophy } from "lucide-react";
+import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link, useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
@@ -81,7 +82,7 @@ export function HeroSection() {
             <Link href={isAuthenticated ? "/problems" : "/login"}>
               {isAuthenticated ? <BookOpen aria-hidden="true" className="h-5 w-5" /> : <Trophy aria-hidden="true" className="h-5 w-5" />}
               {t("hero.startChallenge")}
-              <ArrowRight aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
+              <DirectionalArrow direction="forward" />
             </Link>
           </Button>
         </div>
