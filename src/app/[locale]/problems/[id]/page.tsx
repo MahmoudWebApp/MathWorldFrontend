@@ -37,12 +37,14 @@ import {
   type ProblemForStudent,
   useGetProblemAttemptsQuery,
   useGetProblemQuery,
+  useLazyGetPremiumSolutionQuery,
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
   useCheckFavoriteQuery,
   useToggleFavoriteMutation,
   useGetDailyQuotaQuery,
+  useGetStudentEntitlementQuery,
 } from "@/store/api/usersApi";
 import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
 import { Badge } from "@/components/ui/Badge";
@@ -174,6 +176,11 @@ export default function ProblemPage() {
   const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
     skip: !isAuthenticated || Number.isNaN(problemId),
   });
+
+  const { data: entitlement } = useGetStudentEntitlementQuery(undefined, {
+    skip: !isAuthenticated || !studentProblem,
+  });
+  const [loadPremiumSolution, { data: premiumSolution, isFetching: isLoadingPremiumSolution, isError: premiumSolutionError }] = useLazyGetPremiumSolutionQuery();
 
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
@@ -778,6 +785,40 @@ export default function ProblemPage() {
         <div className="mb-5">
           <DailyQuotaCard stageId={studentProblem.StageId} compact />
         </div>
+      )}
+      {studentProblem && entitlement?.CanRevealSolutionBeforeAnswer && (
+        <section className="mb-5 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+          <Button
+            variant="outline"
+            disabled={isLoadingPremiumSolution}
+            onClick={() => void loadPremiumSolution(problemId)}
+          >
+            {isLoadingPremiumSolution
+              ? (isArabic ? "جارٍ تحميل الحل..." : "Loading solution...")
+              : (isArabic ? "عرض الحل مسبقاً — Premium" : "Reveal solution early — Premium")}
+          </Button>
+          {premiumSolutionError && (
+            <p role="alert" className="mt-3 text-sm text-destructive">
+              {isArabic ? "تعذّر عرض الحل. حاول مجدداً." : "Could not load the solution. Please retry."}
+            </p>
+          )}
+          {premiumSolution && (
+            <div className="mt-4 space-y-3">
+              {premiumSolution.DetailedSolution && (
+                <RichText text={premiumSolution.DetailedSolution} isArabic={isArabic} />
+              )}
+              {premiumSolution.CorrectOptionId !== null && (
+                <p className="text-sm font-medium">
+                  {isArabic ? "رقم خيار الإجابة الصحيحة:" : "Correct answer option ID:"}
+                  {" "}{premiumSolution.CorrectOptionId}
+                </p>
+              )}
+              {premiumSolution.YoutubeSolutionUrl && getYouTubeVideoId(premiumSolution.YoutubeSolutionUrl) && (
+                <YoutubeEmbed url={premiumSolution.YoutubeSolutionUrl} />
+              )}
+            </div>
+          )}
+        </section>
       )}
       <div className="grid grid-cols-1 gap-8">
         <div
