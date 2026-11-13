@@ -36,6 +36,9 @@ export interface AdminAnalyticsOverview {
   CorrectAttemptsInWindow: number;
   CorrectRatePercent: number;
   Stages: AdminStageAnalytics[];
+  DailyActivity: AdminActivityDay[];
+  MostMissedCategories: AdminWeakCategory[];
+  MostMissedProblems: AdminMissedProblem[];
 }
 
 export interface AdminCategoryAnalytics {
@@ -45,6 +48,32 @@ export interface AdminCategoryAnalytics {
   Problems: number;
   UniqueSolved: number;
   AttemptsInWindow: number;
+  CorrectAttemptsInWindow: number;
+}
+
+/** Rank by wrong attempts within the selected period, not a formal difficulty score. */
+export interface AdminWeakCategory {
+  CategoryId: number;
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  StageNameAr: string;
+  StageNameEn: string;
+  AttemptsInWindow: number;
+  IncorrectAttemptsInWindow: number;
+  CorrectAttemptsInWindow: number;
+  IncorrectRatePercent: number;
+  AverageAttemptSeconds: number;
+}
+
+export interface AdminMissedProblem {
+  ProblemId: number;
+  StageId: number;
+  CategoryId: number;
+  TitleAr: string;
+  TitleEn: string;
+  AttemptsInWindow: number;
+  IncorrectAttemptsInWindow: number;
   CorrectAttemptsInWindow: number;
 }
 
