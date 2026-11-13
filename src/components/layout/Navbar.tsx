@@ -175,7 +175,6 @@ function NavbarContent() {
                 {locale === 'ar' ? 'فئات مرحلتي' : 'My stage topics'}
               </Link>
             ) : (
-            {/* Awesome Mega Menu for Stages */}
             <div className="relative" onMouseEnter={handleStagesMouseEnter} onMouseLeave={handleStagesMouseLeave}>
               <Link
                 href="/stages"
