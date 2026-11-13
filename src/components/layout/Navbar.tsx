@@ -327,6 +327,10 @@ function NavbarContent() {
                         <Link href="/dashboard/error-notebook" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <NotebookTabs className="h-4 w-4" />{t('nav.errorNotebook')}
                         </Link>
+                        <Link href="/daily-challenge" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <CircleCheckBig className="h-4 w-4" />
+                          {locale === 'ar' ? 'تحدي اليوم' : 'Daily challenge'}
+                        </Link>
                         <Link href="/journey" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <Layers3 className="h-4 w-4" />
                           {locale === 'ar' ? 'رحلتي في الرياضيات' : 'My learning journey'}
