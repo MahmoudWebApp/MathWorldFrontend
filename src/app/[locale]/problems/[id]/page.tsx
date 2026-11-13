@@ -55,6 +55,7 @@ import { LatexPreview } from "@/components/ui/LatexPreview";
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
 import { GeometryDiagram, isGeometryScene } from "@/components/math/GeometryDiagram";
+import { AdminGeometryEditor } from "@/components/admin/AdminGeometryEditor";
 
 function isStudentProblem(
   problem: ProblemDetail | undefined,
@@ -1122,6 +1123,15 @@ export default function ProblemPage() {
             </div>
           )}
         </div>
+
+        {adminProblem && (
+          <AdminGeometryEditor
+            problemId={problemId}
+            locale={locale}
+            initialScene={diagram}
+            onSaved={setRemoteDiagram}
+          />
+        )}
 
         {showSolutionSection && solutionText && (
           <div
