@@ -26,7 +26,7 @@ function StagePolicy({ stageId, ar }: { stageId: number; ar: boolean }) {
       </label>)}
     </div>
     <div className="flex flex-wrap items-center gap-3">
-      <button type="button" disabled={saving || chosen.length !== 2 || selection === null} onClick={async () => {
+      <button type="button" disabled={saving || chosen.length !== 2 || selection === null || (chosen.length === data.FreeCategoryIds.length && chosen.every(id => data.FreeCategoryIds.includes(id)))} onClick={async () => {
         try { await save({ stageId, categoryIds: chosen }).unwrap(); setSelection(null); }
         catch { /* Error is shown below; preserve selection for retry. */ }
       }} className="rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground disabled:opacity-50">
@@ -58,7 +58,7 @@ export default function FreeCategoriesAdminPage() {
       <select id="policy-stage" value={selectedId} onChange={event => setStageId(Number(event.target.value))} className="mb-6 w-full rounded-xl border bg-background p-3">
         {stages?.map(stage => <option key={stage.Id} value={stage.Id}>{ar ? stage.NameAr : stage.NameEn}</option>)}
       </select>
-      <StagePolicy stageId={selectedId} ar={ar} />
+      <StagePolicy key={selectedId} stageId={selectedId} ar={ar} />
     </section>}
   </main>;
 }
