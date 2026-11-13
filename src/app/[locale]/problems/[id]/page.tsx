@@ -157,7 +157,21 @@ export default function ProblemPage() {
 
   // Optional forward-compatible geometry payload. Older API responses have no diagram.
   const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
-  const diagram = isGeometryScene(rawDiagram) ? rawDiagram : null;
+  const embeddedDiagram = isGeometryScene(rawDiagram) ? rawDiagram : null;
+  const [remoteDiagram, setRemoteDiagram] = useState<unknown>(null);
+  useEffect(() => {
+    if (!Number.isSafeInteger(problemId) || problemId <= 0) return;
+    const controller = new AbortController();
+    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://mathwordbackend.onrender.com/api").replace(/\\/$/, "");
+    const prefix = /\\/api$/i.test(apiBase) ? apiBase : `${apiBase}/api`;
+    setRemoteDiagram(null);
+    fetch(`${prefix}/problems/${problemId}/diagram`, { signal: controller.signal })
+      .then(response => response.ok ? response.json() : null)
+      .then(result => { if (!controller.signal.aborted) setRemoteDiagram(result?.Data ?? null); })
+      .catch(() => { if (!controller.signal.aborted) setRemoteDiagram(null); });
+    return () => controller.abort();
+  }, [problemId]);
+  const diagram = embeddedDiagram ?? (isGeometryScene(remoteDiagram) ? remoteDiagram : null);
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
   const { data: dailyQuota, refetch: refetchDailyQuota } =
