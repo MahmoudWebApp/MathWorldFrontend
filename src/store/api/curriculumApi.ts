@@ -28,6 +28,8 @@ export interface CurriculumReadiness {
   MinimumProblemsPerStage: number;
   StageCount: number;
   TotalProblems: number;
+  OrphanProblemIds: number[];
+  OrphanProblemCount: number;
   TotalMissingToMinimum: number;
   StagesBelowMinimum: number;
   StagesWithInvalidProblems: number;
