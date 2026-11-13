@@ -10,6 +10,7 @@ import type { AppDispatch } from '@/store';
 import { useLoginMutation } from '@/store/api/authApi';
 import { setCredentials } from '@/store/slices/authSlice';
 import { Button } from '@/components/ui/Button';
+import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 import {
   getApiErrorMessage,
   persistAuthSession,
@@ -142,6 +143,8 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+
+          <SocialAuthButtons mode="login" />
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t('auth.login.noAccount')}{' '}

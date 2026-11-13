@@ -95,7 +95,6 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
   const copy = locale === 'ar' ? translations.ar : translations.en;
   const dispatch = useDispatch<AppDispatch>();
   const googleButton = useRef<HTMLDivElement>(null);
-  const [googleReady, setGoogleReady] = useState(false);
   const [facebookReady, setFacebookReady] = useState(false);
   const [busy, setBusy] = useState<Provider | null>(null);
   const [linked, setLinked] = useState<Provider | null>(null);
@@ -161,7 +160,6 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
       text: mode === 'link' ? 'continue_with' : 'continue_with',
       shape: 'pill',
     });
-    setGoogleReady(true);
   }, [exchange, mode]);
 
   const initializeFacebook = useCallback(() => {

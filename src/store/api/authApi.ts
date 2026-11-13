@@ -58,6 +58,22 @@ export const authApi = createApi({
       }),
     }),
 
+    linkGoogle: builder.mutation<{ Linked: boolean; Provider: string }, SocialLoginRequest>({
+      query: (data) => ({
+        url: '/auth/social/link/google',
+        method: 'POST',
+        body: { Provider: 'Google', ...data },
+      }),
+    }),
+
+    linkFacebook: builder.mutation<{ Linked: boolean; Provider: string }, SocialLoginRequest>({
+      query: (data) => ({
+        url: '/auth/social/link/facebook',
+        method: 'POST',
+        body: { Provider: 'Facebook', ...data },
+      }),
+    }),
+
     getMe: builder.query<AuthProfile, void>({
       query: () => '/users/profile',
       providesTags: ['User'],
@@ -70,5 +86,7 @@ export const {
   useRegisterMutation,
   useGoogleLoginMutation,
   useFacebookLoginMutation,
+  useLinkGoogleMutation,
+  useLinkFacebookMutation,
   useGetMeQuery,
 } = authApi;

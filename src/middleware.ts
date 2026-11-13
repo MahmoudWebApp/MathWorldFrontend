@@ -8,7 +8,7 @@ const intlMiddleware = createMiddleware(routing);
 
 const ADMIN_PATHS = ['/admin'];
 const AUTH_PATHS = ['/login', '/register'];
-const AUTH_REQUIRED_PATHS = ['/dashboard', '/profile', '/learning-stage'];
+const AUTH_REQUIRED_PATHS = ['/dashboard', '/profile', '/learning-stage', '/social-accounts'];
 
 interface JwtPayload {
   exp?: number;
