@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
-  BarChart3, BookOpenText, ChevronDown, FolderTree,
+  BarChart3, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
   GraduationCap, LayoutDashboard, ShieldCheck, UsersRound,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
@@ -55,6 +55,15 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Categories',
     descriptionAr: 'اختر فئة لعرض وإضافة مسائلها',
     descriptionEn: 'Organize topics by stage',
+    group: 'content',
+  },
+  {
+    href: '/admin/free-categories',
+    icon: LockKeyhole,
+    labelAr: 'الفئات المجانية وPremium',
+    labelEn: 'Free & Premium access',
+    descriptionAr: 'مراجعة الفئتين المجانيتين لكل مرحلة',
+    descriptionEn: 'Review the two free categories per stage',
     group: 'content',
   },
   {
