@@ -210,6 +210,20 @@ export interface AdminLearnerAttemptQuery extends AdminLearnerDrilldownQuery {
   Page: number;
 }
 
+/** Server-owned daily allowance; one Free allowance per educational stage. */
+export interface StageDailyQuota {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  Limit: number;
+  Used: number;
+  Remaining: number | null;
+  Unlimited: boolean;
+  SubscriptionType: string;
+  DayUtc: string;
+  ResetsAtUtc: string;
+}
+
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
@@ -223,6 +237,7 @@ export const usersApi = createApi({
     'LearningStage',
     'LearningJourney',
     'AdminLearners',
+    'DailyQuota',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -242,6 +257,16 @@ export const usersApi = createApi({
         body,
       }),
       invalidatesTags: ['LearningStage', 'LearningJourney', 'Dashboard', 'User'],
+    }),
+
+    getDailyQuota: builder.query<StageDailyQuota, number>({
+      query: stageId => ({
+        url: '/users/daily-quota',
+        params: { stageId },
+      }),
+      providesTags: (_data, _error, stageId) => [
+        { type: 'DailyQuota', id: stageId },
+      ],
     }),
 
     getLearningJourney: builder.query<LearningJourney, number>({
@@ -388,6 +413,7 @@ export const {
   useGetLearningStageQuery,
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,
+  useGetDailyQuotaQuery,
   useGetProfileQuery,
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,
