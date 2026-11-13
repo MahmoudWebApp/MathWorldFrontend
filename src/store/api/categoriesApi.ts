@@ -32,6 +32,27 @@ export interface CategoryDto {
   Order: number;
 }
 
+export interface StageCategoryAccessDto {
+  StageId: number;
+  FreeCategoryIds: number[];
+  FreeCategoryCount: number;
+  Categories: Array<{
+    Id: number;
+    NameAr: string;
+    NameEn: string;
+    Icon: string;
+    Order: number;
+    IsFree: boolean;
+  }>;
+}
+
+export interface StudentSubscriptionDto {
+  SubscriptionType: 'Free' | 'Premium';
+  IsPremium: boolean;
+  FreeCategoriesPerStage: number;
+  DailyNewProblemsLimit?: number | null;
+}
+
 // ============================================
 // API Definition
 // ============================================
@@ -46,6 +67,13 @@ export const categoriesApi = createApi({
     getCategories: builder.query<CategoryDto[], string>({
       query: () => '/categories',
       providesTags: ['Category'],
+    }),
+
+    getStageCategoryAccess: builder.query<StageCategoryAccessDto, number>({
+      query: (stageId) => `/stages/${stageId}/free-categories`,
+    }),
+    getStudentSubscription: builder.query<StudentSubscriptionDto, void>({
+      query: () => '/users/subscription',
     }),
 
     // Admin: Get all categories (bilingual)
@@ -113,6 +141,8 @@ export const categoriesApi = createApi({
 
 export const {
   useGetCategoriesQuery,
+  useGetStageCategoryAccessQuery,
+  useGetStudentSubscriptionQuery,
   useGetAdminCategoriesQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
