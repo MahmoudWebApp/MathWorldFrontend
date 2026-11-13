@@ -230,7 +230,11 @@ function NavbarContent() {
             >
               {t('nav.about')}
             </Link>
-            {mounted && isAuthenticated && user?.Role === 'Admin' && <AdminNavDropdown />}
+            {mounted && isAuthenticated && user?.Role === 'Admin' && (
+              <div className="hidden xl:block">
+                <AdminNavDropdown />
+              </div>
+            )}
           </div>
 
           {/* Actions & Search */}
