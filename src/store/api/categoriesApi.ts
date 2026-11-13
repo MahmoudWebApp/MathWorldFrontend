@@ -60,7 +60,7 @@ export interface StudentSubscriptionDto {
 export const categoriesApi = createApi({
   reducerPath: 'categoriesApi',
   baseQuery,
-  tagTypes: ['Category'],
+  tagTypes: ['Category', 'StageAccess'],
   endpoints: (builder) => ({
 
     // Public: Get all categories - returns translated names based on Accept-Language
@@ -71,9 +71,19 @@ export const categoriesApi = createApi({
 
     getStageCategoryAccess: builder.query<StageCategoryAccessDto, number>({
       query: (stageId) => `/stages/${stageId}/free-categories`,
+      providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
     }),
     getStudentSubscription: builder.query<StudentSubscriptionDto, void>({
       query: () => '/users/subscription',
+    }),
+
+    updateStageFreeCategories: builder.mutation<void, { stageId: number; categoryIds: number[] }>({
+      query: ({ stageId, categoryIds }) => ({
+        url: `/admin/stages/${stageId}/free-categories`,
+        method: 'PUT',
+        body: { CategoryIds: categoryIds },
+      }),
+      invalidatesTags: (_result, _error, { stageId }) => [{ type: 'StageAccess', id: stageId }],
     }),
 
     // Admin: Get all categories (bilingual)
@@ -143,6 +153,7 @@ export const {
   useGetCategoriesQuery,
   useGetStageCategoryAccessQuery,
   useGetStudentSubscriptionQuery,
+  useUpdateStageFreeCategoriesMutation,
   useGetAdminCategoriesQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
