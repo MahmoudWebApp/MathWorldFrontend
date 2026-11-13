@@ -103,6 +103,113 @@ export interface LearningJourney {
   Categories: JourneyCategory[];
 }
 
+export interface AdminLearnerSummary {
+  Id: number;
+  FullName: string;
+  Email: string;
+  CurrentStageId?: number | null;
+  StageNameAr?: string | null;
+  StageNameEn?: string | null;
+  SubscriptionType: string;
+  IsActive: boolean;
+  CreatedAt: string;
+  LastLoginAt?: string | null;
+  LastAttemptAt?: string | null;
+  SolvedProblems: number;
+  AttemptedProblems: number;
+  TotalAwardedPoints: number;
+}
+
+export interface AdminLearnerDirectory {
+  Learners: AdminLearnerSummary[];
+  Total: number;
+  Page: number;
+  PageSize: number;
+  TotalPages: number;
+}
+
+export interface AdminLearnerFilters {
+  Search?: string;
+  StageId?: number;
+  IsActive?: boolean;
+  Subscription?: 'Free' | 'Premium';
+  Page?: number;
+  PageSize?: number;
+}
+
+export interface AdminLearnerStage {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  FirstTryCorrect: number;
+  AwardedPoints: number;
+  CompletionPercent: number;
+}
+
+export interface AdminLearnerCategory {
+  CategoryId: number;
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  FirstTryCorrect: number;
+  InErrorNotebook: number;
+}
+
+export interface AdminLearnerDetail {
+  Learner: AdminLearnerSummary;
+  TotalAttempts: number;
+  CorrectAttempts: number;
+  WrongAttempts: number;
+  FirstTryCorrect: number;
+  FavoriteProblems: number;
+  OpenErrorNotebookProblems: number;
+  TotalTimeSpentSeconds: number;
+  CorrectRatePercent: number;
+  Stages: AdminLearnerStage[];
+  Categories: AdminLearnerCategory[];
+}
+
+export interface AdminLearnerAttempt {
+  Id: number;
+  ProblemId: number;
+  TitleAr: string;
+  TitleEn: string;
+  StageId: number;
+  CategoryId: number;
+  IsCorrect: boolean;
+  IsOfficial: boolean;
+  AttemptNumber: number;
+  TimeSpentSeconds: number;
+  UsedHint: boolean;
+  PointsEarned: number;
+  SubmittedAt: string;
+}
+
+export interface AdminLearnerAttemptPage {
+  LearnerId: number;
+  StageId?: number | null;
+  Total: number;
+  Page: number;
+  PageSize: number;
+  TotalPages: number;
+  Attempts: AdminLearnerAttempt[];
+}
+
+export interface AdminLearnerDrilldownQuery {
+  LearnerId: number;
+  StageId?: number;
+}
+
+export interface AdminLearnerAttemptQuery extends AdminLearnerDrilldownQuery {
+  Page: number;
+}
+
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
@@ -115,6 +222,7 @@ export const usersApi = createApi({
     'ErrorNotebook',
     'LearningStage',
     'LearningJourney',
+    'AdminLearners',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -228,6 +336,41 @@ export const usersApi = createApi({
       ],
     }),
 
+    getAdminLearners: builder.query<AdminLearnerDirectory, AdminLearnerFilters>({
+      query: ({ Search, StageId, IsActive, Subscription, Page = 1, PageSize = 10 }) => ({
+        url: '/admin/learners',
+        params: {
+          ...(Search ? { search: Search } : {}),
+          ...(StageId ? { stageId: StageId } : {}),
+          ...(IsActive === undefined ? {} : { isActive: IsActive }),
+          ...(Subscription ? { subscription: Subscription } : {}),
+          page: Page,
+          pageSize: PageSize,
+        },
+      }),
+      providesTags: ['AdminLearners'],
+    }),
+
+    getAdminLearnerDetail: builder.query<AdminLearnerDetail, AdminLearnerDrilldownQuery>({
+      query: ({ LearnerId, StageId }) => ({
+        url: `/admin/learners/${LearnerId}`,
+        params: StageId ? { stageId: StageId } : {},
+      }),
+      providesTags: ['AdminLearners'],
+    }),
+
+    getAdminLearnerAttempts: builder.query<AdminLearnerAttemptPage, AdminLearnerAttemptQuery>({
+      query: ({ LearnerId, StageId, Page }) => ({
+        url: `/admin/learners/${LearnerId}/attempts`,
+        params: {
+          ...(StageId ? { stageId: StageId } : {}),
+          page: Page,
+          pageSize: 15,
+        },
+      }),
+      providesTags: ['AdminLearners'],
+    }),
+
     getAdminUsers: builder.query<
       PagedUserList,
       { Page?: number; PageSize?: number }
@@ -253,5 +396,8 @@ export const {
   useToggleFavoriteMutation,
   useCheckFavoriteQuery,
   useGetAdminUsersQuery,
+  useGetAdminLearnersQuery,
+  useGetAdminLearnerDetailQuery,
+  useGetAdminLearnerAttemptsQuery,
   useGetDashboardQuery,
 } = usersApi;
