@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
-import { Activity, BookOpen, CheckCircle2, Users, Trophy, ShieldCheck } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Users, Trophy, ShieldCheck } from 'lucide-react';
+import { AdminActivityChart, AdminCategoryMistakesChart } from '@/components/admin/AdminActivityCharts';
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
@@ -28,13 +29,14 @@ export default function AdminAnalyticsPage() {
     });
   const n = (value: number) => new Intl.NumberFormat(isArabic ? 'ar' : 'en').format(value);
   const labels = isArabic ? {
-    title: 'مركز إدارة MathWorld',
+    title: 'مركز إحصائيات MathWorld',
     subtitle: 'مراقبة الطلاب وجودة المحتوى والأداء الحقيقي حسب المرحلة التعليمية',
     admin: 'وضع الإدارة — لا تُحتسب لك نقاط أو حلول',
     back: 'العودة للإدارة',
     days: 'آخر {days} يوم',
     students: 'الطلاب', active: 'الطلاب النشطون', problems: 'المسائل',
-    solved: 'حلول فريدة', attempts: 'المحاولات', accuracy: 'دقة الإجابات',
+    mistakes: 'الإجابات الخاطئة بالفترة', globalTrend: 'النشاط اليومي لكل الطلاب', highestErrors: 'التصنيفات الأكثر إجابات خاطئة', missedQuestions: 'المسائل الأكثر أخطاءً', noMistakes: 'لا توجد أخطاء مسجلة ضمن الفترة', wrong: 'خاطئة', right: 'صحيحة', directory: 'إدارة الطلاب',
+    solved: 'حلول فريدة (كل الوقت)', attempts: 'المحاولات', accuracy: 'دقة الإجابات',
     stages: 'أداء المراحل', categories: 'التصنيفات في المرحلة', activity: 'النشاط اليومي',
     leaders: 'المتفوقون في المرحلة', noActivity: 'ما في نشاط خلال الفترة المختارة.',
     total: 'الإجمالي', selected: 'اختاروا المرحلة', attempt: 'محاولة',
@@ -43,13 +45,14 @@ export default function AdminAnalyticsPage() {
     retry: 'إعادة المحاولة', loading: 'جاري تحميل الإحصائيات...',
     empty: 'لا توجد بيانات لهذه المرحلة بعد.',
   } : {
-    title: 'MathWorld Control Center',
+    title: 'MathWorld Analytics Center',
     subtitle: 'Monitor student engagement and content quality at every educational stage',
     admin: 'Admin mode — your account does not earn solutions or points',
     back: 'Back to admin',
     days: 'Last {days} days',
     students: 'Students', active: 'Active students', problems: 'Problems',
-    solved: 'Unique solves', attempts: 'Attempts', accuracy: 'Answer accuracy',
+    mistakes: 'Incorrect answers in period', globalTrend: 'Daily activity across all learners', highestErrors: 'Categories with most incorrect answers', missedQuestions: 'Most frequently missed questions', noMistakes: 'No mistakes recorded in this period', wrong: 'Incorrect', right: 'Correct', directory: 'Student management',
+    solved: 'Unique solves (all time)', attempts: 'Attempts', accuracy: 'Answer accuracy',
     stages: 'Stage performance', categories: 'Stage categories', activity: 'Daily activity',
     leaders: 'Top learners', noActivity: 'No recorded activity in this period.',
     total: 'Total', selected: 'Selected this stage', attempt: 'Attempts',
@@ -72,7 +75,7 @@ export default function AdminAnalyticsPage() {
   const cards = overview ? [
     { label: labels.students, value: n(overview.TotalStudents), icon: Users },
     { label: labels.active, value: n(overview.ActiveStudentsInWindow), icon: Activity },
-    { label: labels.problems, value: n(overview.TotalProblems), icon: BookOpen },
+    { label: labels.mistakes, value: n(overview.AttemptsInWindow - overview.CorrectAttemptsInWindow), icon: AlertTriangle },
     { label: labels.solved, value: n(overview.TotalUniqueSolved), icon: Trophy },
     { label: labels.attempts, value: n(overview.AttemptsInWindow), icon: CheckCircle2 },
     { label: labels.accuracy, value: `${overview.CorrectRatePercent}%`, icon: ShieldCheck },
@@ -101,6 +104,13 @@ export default function AdminAnalyticsPage() {
         </div>
         <Link href="/admin" className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm hover:bg-muted">
           <DirectionalArrow direction="back" className="h-4 w-4" />{labels.back}
+        </Link>
+      </div>
+
+      <div className="mb-5">
+        <Link href="/admin/users" className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
+          <Users className="h-4 w-4" aria-hidden />{labels.directory}
+          <DirectionalArrow direction="forward" className="h-4 w-4" />
         </Link>
       </div>
 
@@ -140,6 +150,36 @@ export default function AdminAnalyticsPage() {
                 <p className="mt-1 text-xs text-muted-foreground">{label}</p>
               </div>
             ))}
+          </section>
+
+          <div className="mb-8 grid gap-5 xl:grid-cols-2">
+            <section className="math-card min-w-0 rounded-2xl border border-border p-5">
+              <h2 className="mb-4 text-lg font-bold">{labels.globalTrend}</h2>
+              <AdminActivityChart data={overview.DailyActivity ?? []} arabic={isArabic} height={280} />
+            </section>
+            <section className="math-card min-w-0 rounded-2xl border border-border p-5">
+              <h2 className="mb-4 text-lg font-bold">{labels.highestErrors}</h2>
+              <AdminCategoryMistakesChart categories={overview.MostMissedCategories ?? []} arabic={isArabic} height={280} />
+            </section>
+          </div>
+          <section className="math-card mb-8 rounded-2xl border border-border p-5">
+            <h2 className="mb-4 text-lg font-bold">{labels.missedQuestions}</h2>
+            {(overview.MostMissedProblems ?? []).length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">{labels.noMistakes}</p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {overview.MostMissedProblems.map(item => (
+                  <div key={item.ProblemId} className="rounded-xl border border-border/70 bg-muted/20 p-4">
+                    <h3 className="font-semibold">{isArabic ? item.TitleAr : item.TitleEn}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">#{item.ProblemId}</p>
+                    <p className="mt-3 flex gap-4 text-sm">
+                      <span className="text-destructive">{n(item.IncorrectAttemptsInWindow)} {labels.wrong}</span>
+                      <span className="text-primary">{n(item.CorrectAttemptsInWindow)} {labels.right}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           <section aria-label={labels.stages}>
