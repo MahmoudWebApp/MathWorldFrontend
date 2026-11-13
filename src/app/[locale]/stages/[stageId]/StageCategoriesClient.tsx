@@ -229,7 +229,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const authenticated = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Student");
   const { data: access, isLoading: accessLoading, isError: accessError } = useGetStageCategoryAccessQuery(stageId, { skip: !Number.isSafeInteger(stageId) || stageId <= 0 });
   const { data: subscription, isLoading: subscriptionLoading } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
-  const isPremium = subscription?.IsPremium === true;
+  const isAdmin = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Admin");
+  const isPremium = isAdmin || subscription?.IsPremium === true;
 
   const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
   const { data: stages, isLoading: stagesLoading } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
