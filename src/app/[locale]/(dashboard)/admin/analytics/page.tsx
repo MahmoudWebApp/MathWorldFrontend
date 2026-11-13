@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Activity, BookOpen, CheckCircle2, Users, Trophy, ArrowRight, ShieldCheck } from 'lucide-react';
+import { DirectionalArrow } from '@/components/ui/DirectionalArrow';
+import { Activity, BookOpen, CheckCircle2, Users, Trophy, ShieldCheck } from 'lucide-react';
 import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
@@ -89,7 +90,7 @@ export default function AdminAnalyticsPage() {
           </p>
         </div>
         <Link href="/admin" className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm hover:bg-muted">
-          <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />{labels.back}
+          <DirectionalArrow direction="back" />{labels.back}
         </Link>
       </div>
 
