@@ -4,319 +4,221 @@ import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import {
-  Activity, BarChart3, BookOpenCheck, ChevronDown,
-  CircleHelp, Clock3, Gauge, GraduationCap, ShieldCheck, TrendingUp, Users,
+  Activity, BarChart3, CircleCheck, Gauge, ShieldCheck, UsersRound,
+  BookOpenText, FolderTree, GraduationCap,
 } from 'lucide-react';
-import {
-  AreaChart, Area, BarChart, Bar, CartesianGrid, XAxis, YAxis,
-  ResponsiveContainer, Tooltip, Legend,
-} from 'recharts';
+import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
+import { ADMIN_NAV_ITEMS } from '@/components/admin/AdminNavigation';
+import { useGetAdminAnalyticsOverviewQuery } from '@/store/api/statsApi';
+import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
 
-import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
-import {
-  useGetAdminAnalyticsOverviewQuery, useGetAdminAnalyticsStageQuery,
-} from '@/store/api/statsApi';
-import { useGetAdminLearnersQuery } from '@/store/api/usersApi';
-
-type Period = 7 | 30 | 90;
+type Timeframe = 7 | 30 | 90;
 
 export default function AdminDashboardPage() {
   const ar = useLocale() === 'ar';
-  const [days, setDays] = useState<Period>(30);
-  const [selectedStageId, setSelectedStageId] = useState<number | null>(null);
+  const [days, setDays] = useState<Timeframe>(30);
   const { data: overview, isLoading, isError, refetch } =
     useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: true });
-  const stageId = selectedStageId ?? overview?.Stages[0]?.StageId ?? 0;
-  const { data: stage, isLoading: stageLoading, isError: stageError } =
-    useGetAdminAnalyticsStageQuery({ stageId, days }, {
-      skip: stageId <= 0, refetchOnMountOrArgChange: true,
-    });
-  const { data: learners, isLoading: learnersLoading } =
-    useGetAdminLearnersQuery({ Page: 1, PageSize: 5 }, {
-      refetchOnMountOrArgChange: true,
-    });
-  const txt = ar ? {
-    title: 'لوحة تحكم MathWorld',
-    subtitle: 'نشاط المتعلمين، تقدّم المراحل، ونقاط الضعف — بيانات حقيقية من المحاولات',
-    adminMode: 'وضع الإدارة · لا يحتسب لك أي حل أو نقاط',
-    centerTitle: 'مركز الإحصائيات المتكامل',
-    centerDescription: 'انتقل للتحليلات التفصيلية حسب المرحلة والتصنيف، وتابع سجل الطلاب وأداء المنصة.',
-    centerAction: 'عرض الإحصائيات الكاملة',
-    students: 'إجمالي الطلاب', active: 'نشطون في الفترة', attempts: 'محاولات الحل',
-    unique: 'الحلول الفريدة (إجمالي)', accuracy: 'نسبة الإجابات الصحيحة', content: 'إدارة المسائل',
-    mistakes: 'إجابات خاطئة بالفترة', mostMissed: 'المسائل الأكثر إجابات خاطئة', missedDesc: 'أولوية مراجعة تعتمد على عدد المحاولات الخاطئة فقط', noMissed: 'لا توجد أخطاء مسجلة في هذه الفترة',
-    date: 'خلال آخر', days: 'يوم', stage: 'المرحلة',
-    activity: 'النشاط اليومي', dailyDesc: 'عدد المحاولات والإجابات الصحيحة خلال الفترة',
-    byStage: 'مقارنة نشاط المراحل', stageDesc: 'محاولات الطلاب في كل مرحلة',
-    weak: 'التصنيفات الأكثر إجابات خاطئة', weakDesc: 'أخطاء الطلاب ضمن الفترة والمرحلة المحددتين؛ لا تمثل تقييمًا نهائيًا للصعوبة',
-    wrong: 'إجابات خاطئة', correct: 'إجابات صحيحة', selected: 'إجمالي المحاولات',
-    latest: 'أحدث الطلاب', allStudents: 'إدارة الطلاب', stageProgress: 'تحليل المرحلة',
-    stagePrompt: 'اختر مرحلة لعرض نقاط الضعف',
-    noActivity: 'ما في محاولات مسجلة ضمن الفترة المحددة.',
-    noWeak: 'ما في أخطاء مسجلة بهذه المرحلة ضمن الفترة المحددة.',
-    empty: 'لا يوجد طلاب بعد.', noStage: 'لم يختر المرحلة',
-    loading: 'جارٍ تحميل إحصائيات الطلاب...', failed: 'تعذر تحميل إحصائيات النشاط.',
-    retry: 'إعادة المحاولة', refresh: 'تحديث',
-  } : {
-    title: 'MathWorld Admin Dashboard',
-    subtitle: 'Learner engagement, stage progress and weaknesses — based on real answers',
-    adminMode: 'Admin mode · Your account does not earn solves or points',
-    centerTitle: 'Complete Analytics Center',
-    centerDescription: 'Explore stage and category insights, individual learners and platform performance.',
-    centerAction: 'Open full analytics',
-    students: 'Total learners', active: 'Active in period', attempts: 'Answer attempts',
-    unique: 'Distinct solves (all time)', accuracy: 'Correct-answer rate', content: 'Manage problems',
-    mistakes: 'Incorrect answers in period', mostMissed: 'Most frequently missed problems', missedDesc: 'Content review priority by number of wrong attempts, not an absolute difficulty score', noMissed: 'No incorrect attempts in this period',
-    date: 'Last', days: 'days', stage: 'Stage',
-    activity: 'Daily engagement', dailyDesc: 'Answer attempts versus correct attempts during the period',
-    byStage: 'Activity by stage', stageDesc: 'Student attempts in every stage',
-    weak: 'Categories with the most mistakes', weakDesc: 'Incorrect attempts in this stage and period; not an absolute difficulty rating',
-    wrong: 'Wrong answers', correct: 'Correct answers', selected: 'Total attempts',
-    latest: 'Recently joined students', allStudents: 'Manage learners', stageProgress: 'Stage analysis',
-    stagePrompt: 'Choose a stage to review weak topics',
-    noActivity: 'No attempts in the selected period yet.',
-    noWeak: 'No wrong attempts in this stage and period.',
-    empty: 'No students have joined yet.', noStage: 'No stage selected',
-    loading: 'Loading student analytics...', failed: 'Could not load engagement analytics.',
-    retry: 'Retry', refresh: 'Refresh',
-  };
-  const format = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
-  const stageName = (s: { NameAr: string; NameEn: string }) => ar ? s.NameAr : s.NameEn;
-  const day = (value: string) => new Date(value).toLocaleDateString(ar ? 'ar' : 'en', {
-    timeZone: 'UTC', month: 'short', day: 'numeric',
-  });
-  const dailyData = stage?.DailyActivity.map((row) => ({
-    day: day(row.DayUtc), attempts: row.Attempts, correct: row.CorrectAttempts,
-  })) ?? [];
-  const comparison = overview?.Stages.map((s) => ({
-    name: stageName(s), attempts: s.AttemptsInWindow,
-    correct: s.CorrectAttemptsInWindow,
-  })) ?? [];
-  const weakest = stage?.Categories.map((c) => ({
-    name: stageName(c),
-    wrong: Math.max(0, c.AttemptsInWindow - c.CorrectAttemptsInWindow),
-    attempts: c.AttemptsInWindow,
-  })).filter(c => c.wrong > 0).sort((a, b) => b.wrong - a.wrong).slice(0, 6) ?? [];
+  const { data: stages } = useGetAdminStagesQuery();
 
-  const metrics = overview ? [
-    { title: txt.students, value: format(overview.TotalStudents), Icon: Users },
-    { title: txt.active, value: format(overview.ActiveStudentsInWindow), Icon: Activity },
-    { title: txt.attempts, value: format(overview.AttemptsInWindow), Icon: Clock3 },
-    { title: txt.unique, value: format(overview.TotalUniqueSolved), Icon: BookOpenCheck },
-    { title: txt.accuracy, value: `${overview.CorrectRatePercent}%`, Icon: Gauge },
-    { title: txt.mistakes, value: format(overview.AttemptsInWindow - overview.CorrectAttemptsInWindow), Icon: CircleHelp },
+  const label = ar ? {
+    eyebrow: 'مركز الإدارة',
+    title: 'لوحة إدارة MathWorld',
+    subtitle: 'لمحة سريعة عن المنصة ووصول مباشر للإدارات. التقارير التفصيلية لها صفحتها الخاصة.',
+    administrator: 'حساب إدارة فقط، لا يشارك بحلول الطلاب أو نقاطهم',
+    quick: 'نظرة سريعة',
+    days: 'يوم',
+    students: 'إجمالي الطلاب',
+    active: 'الطلاب النشطون',
+    attempts: 'محاولات الحل',
+    accuracy: 'نسبة الإجابات الصحيحة',
+    studentsInfo: 'حسابات الطلاب فقط',
+    activeInfo: 'ضمن الفترة المحددة',
+    attemptsInfo: 'محاولات الطلاب بالفترة',
+    accuracyInfo: 'نسبة الإجابات الصحيحة بالفترة',
+    analytics: 'مركز الإحصائيات الكامل',
+    analyticsDesc: 'مخططات النشاط، المقارنة بين المراحل، تحليل الأخطاء، وأداء الطلاب — جميعها ضمن صفحة متخصصة.',
+    analyticsAction: 'عرض جميع الإحصائيات',
+    sections: 'إدارات المنصة',
+    sectionsDesc: 'ادخل للقسم المطلوب مباشرة، بدون زحمة مخططات على الرئيسية.',
+    open: 'فتح الإدارة',
+    contentTitle: 'تنظيم المحتوى التعليمي',
+    contentDesc: 'ابدأ من المستوى التعليمي، ثم اختر الفئة، ومنها استعرض المسائل أو أضف مسألة جديدة.',
+    chooseLevel: 'اختر المستوى لعرض فئاته',
+    manageLevels: 'جميع المستويات',
+    manageCategories: 'جميع الفئات',
+    manageProblems: 'جميع المسائل',
+    loading: 'جاري تحميل المؤشرات...',
+    error: 'تعذّر تحميل المؤشرات حاليًا. روابط الإدارة ما زالت متاحة.',
+    retry: 'إعادة المحاولة',
+  } : {
+    eyebrow: 'Administration workspace',
+    title: 'MathWorld Admin Dashboard',
+    subtitle: 'A quick platform overview and management shortcuts. Detailed reporting has its own page.',
+    administrator: 'Admin-only account; excluded from learner scores and attempts',
+    quick: 'At a glance',
+    days: 'days',
+    students: 'Total students',
+    active: 'Active students',
+    attempts: 'Answer attempts',
+    accuracy: 'Correct-answer rate',
+    studentsInfo: 'Student accounts only',
+    activeInfo: 'In the selected period',
+    attemptsInfo: 'Student attempts in the period',
+    accuracyInfo: 'Correct attempts in the period',
+    analytics: 'Complete analytics center',
+    analyticsDesc: 'Activity charts, stage comparisons, error analysis and learner performance live on a dedicated page.',
+    analyticsAction: 'View all analytics',
+    sections: 'Platform management',
+    sectionsDesc: 'Jump straight to the relevant section without overcrowding this page.',
+    open: 'Open section',
+    contentTitle: 'Organize educational content',
+    contentDesc: 'Start with a learning stage, choose one of its categories, then browse or add questions.',
+    chooseLevel: 'Choose a stage to view its categories',
+    manageLevels: 'All stages',
+    manageCategories: 'All categories',
+    manageProblems: 'All problems',
+    loading: 'Loading key metrics...',
+    error: 'Metrics could not be loaded. Management links are still available.',
+    retry: 'Retry',
+  };
+
+  const format = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
+  const quickCards = overview ? [
+    { title: label.students, hint: label.studentsInfo, value: format(overview.TotalStudents), icon: UsersRound },
+    { title: label.active, hint: label.activeInfo, value: format(overview.ActiveStudentsInWindow), icon: Activity },
+    { title: label.attempts, hint: label.attemptsInfo, value: format(overview.AttemptsInWindow), icon: CircleCheck },
+    { title: label.accuracy, hint: label.accuracyInfo, value: `${overview.CorrectRatePercent}%`, icon: Gauge },
   ] : [];
 
+  const sections = ADMIN_NAV_ITEMS.filter(item => item.group === 'management');
   return (
-    <main className="container relative mx-auto max-w-7xl px-4 py-8 md:px-10">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+    <main className="container mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-10">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="brand-display-title text-gradient-math text-3xl font-bold">{txt.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{txt.subtitle}</p>
-          <span className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
-            <ShieldCheck className="h-4 w-4" aria-hidden />{txt.adminMode}
-          </span>
+          <p className="mb-2 text-xs font-semibold text-primary">{label.eyebrow}</p>
+          <h1 className="brand-display-title text-gradient-math text-3xl font-bold">{label.title}</h1>
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{label.subtitle}</p>
+          <p className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs text-primary">
+            <ShieldCheck className="h-4 w-4" aria-hidden />{label.administrator}
+          </p>
         </div>
-        <div className="inline-flex gap-2" role="group" aria-label={txt.date}>
+        <div role="group" className="flex flex-wrap gap-2" aria-label={label.quick}>
           {([7, 30, 90] as const).map(value => (
-            <button key={value} type="button" aria-pressed={days === value}
+            <button
+              type="button" key={value} aria-pressed={days === value}
               onClick={() => setDays(value)}
-              className={`rounded-xl border px-3 py-2 text-sm transition-colors ${
+              className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
                 days === value ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-border bg-card hover:border-primary/50'
-              }`}>
-              {value} {txt.days}
-            </button>
+              }`}
+            >{value} {label.days}</button>
           ))}
         </div>
-      </div>
+      </header>
+
+      <section aria-label={label.quick}>
+        <h2 className="mb-4 text-lg font-bold">{label.quick}</h2>
+        {isError ? (
+          <div role="alert" className="rounded-xl border border-destructive/30 bg-card p-5">
+            <p className="text-sm text-destructive">{label.error}</p>
+            <button type="button" onClick={() => refetch()} className="mt-3 text-sm font-semibold text-primary underline">{label.retry}</button>
+          </div>
+        ) : isLoading || !overview ? (
+          <p role="status" className="rounded-xl border border-border bg-card p-7 text-center text-muted-foreground">{label.loading}</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {quickCards.map(({title,hint,value,icon:Icon}) => (
+              <div key={title} className="math-card rounded-2xl border border-border p-4 md:p-5">
+                <div className="mb-3 inline-flex rounded-xl bg-primary/10 p-2.5 text-primary">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </div>
+                <p className="text-2xl font-bold tabular-nums">{value}</p>
+                <h3 className="mt-1 text-sm font-semibold">{title}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <Link href="/admin/analytics"
-        className="group mb-7 flex flex-wrap items-center gap-4 rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/15 via-primary/5 to-brand-secondary/10 p-6 transition-all hover:border-primary/50 hover:shadow-lg md:p-8">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-          <BarChart3 className="h-8 w-8" aria-hidden />
+        className="group flex flex-wrap items-center gap-4 rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/15 via-primary/5 to-brand-secondary/10 p-5 transition-all hover:border-primary/60 hover:shadow-lg md:p-7">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+          <BarChart3 className="h-7 w-7" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
-          <strong className="block text-xl font-bold md:text-2xl">{txt.centerTitle}</strong>
-          <span className="mt-2 block max-w-2xl text-sm text-muted-foreground">{txt.centerDescription}</span>
+          <strong className="block text-xl font-bold">{label.analytics}</strong>
+          <span className="mt-1 block max-w-2xl text-sm text-muted-foreground">{label.analyticsDesc}</span>
         </span>
-        <span className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">
-          {txt.centerAction}<DirectionalArrow direction="forward" className="h-4 w-4" />
+        <span className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+          {label.analyticsAction}<DirectionalChevron direction="forward" className="h-4 w-4" />
         </span>
       </Link>
 
-      {isError ? (
-        <div role="alert" className="math-card mb-6 rounded-2xl border border-destructive/30 p-7">
-          <p className="text-destructive">{txt.failed}</p>
-          <button type="button" onClick={() => refetch()} className="mt-3 rounded-xl border border-border px-4 py-2">{txt.retry}</button>
+      <section aria-label={label.contentTitle} className="math-card rounded-3xl border border-border p-5 md:p-7">
+        <div className="mb-5">
+          <h2 className="flex items-center gap-2 text-xl font-bold">
+            <GraduationCap className="h-5 w-5 text-primary" aria-hidden />
+            {label.contentTitle}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">{label.contentDesc}</p>
         </div>
-      ) : isLoading || !overview ? (
-        <p role="status" className="math-card mb-6 rounded-2xl border border-border p-10 text-center">{txt.loading}</p>
-      ) : (
-        <>
-          <section aria-label={txt.title} className="mb-7 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            {metrics.map(({title,value,Icon}) => (
-              <div key={title} className="math-card rounded-2xl border border-border p-5">
-                <span className="mb-3 inline-flex rounded-xl bg-primary/10 p-2.5 text-primary"><Icon className="h-5 w-5" aria-hidden /></span>
-                <p className="text-2xl font-bold tabular-nums">{value}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{title}</p>
-              </div>
-            ))}
-          </section>
+        <p className="mb-3 text-xs font-semibold text-muted-foreground">{label.chooseLevel}</p>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {(stages ?? []).map(stage => (
+            <Link key={stage.Id} href={`/admin/categories?stageId=${stage.Id}`}
+              className="group flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-muted/20 p-4 transition-colors hover:border-primary/40 hover:bg-primary/5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <GraduationCap className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-bold">{ar ? stage.NameAr : stage.NameEn}</span>
+                <span className="block text-xs text-muted-foreground">{label.manageCategories}</span>
+              </span>
+              <DirectionalChevron direction="forward" className="h-4 w-4 shrink-0 text-primary" />
+            </Link>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-4">
+          {[
+            {href:'/admin/stages',name:label.manageLevels,icon:GraduationCap},
+            {href:'/admin/categories',name:label.manageCategories,icon:FolderTree},
+            {href:'/admin/problems',name:label.manageProblems,icon:BookOpenText},
+          ].map(item => (
+            <Link href={item.href} key={item.href} className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold transition-colors hover:border-primary/40 hover:bg-muted">
+              <item.icon className="h-4 w-4 text-primary" aria-hidden />
+              {item.name}
+              <DirectionalChevron direction="forward" className="h-4 w-4" />
+            </Link>
+          ))}
+        </div>
+      </section>
 
-          <section aria-label={txt.byStage} className="mb-7 grid gap-5 xl:grid-cols-2">
-            <div className="math-card rounded-2xl border border-border p-5 md:p-6">
-              <div className="mb-4">
-                <h2 className="text-lg font-bold">{txt.byStage}</h2>
-                <p className="mt-1 text-xs text-muted-foreground">{txt.stageDesc}</p>
-              </div>
-              {overview.AttemptsInWindow === 0 ? (
-                <p className="py-24 text-center text-sm text-muted-foreground">{txt.noActivity}</p>
-              ) : (
-                <div className="h-64 w-full" dir="ltr">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={comparison} margin={{left: -18, right: 10, bottom: 15}}>
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis dataKey="name" tick={{fontSize: 11}} interval={0} />
-                      <YAxis allowDecimals={false} tick={{fontSize: 11}} />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="attempts" name={txt.selected} fill="var(--color-brand-primary)" radius={[6, 6, 0, 0]} maxBarSize={48} />
-                      <Bar dataKey="correct" name={txt.correct} fill="var(--color-brand-secondary)" radius={[6, 6, 0, 0]} maxBarSize={48} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-
-            <div className="math-card rounded-2xl border border-border p-5 md:p-6">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold">{txt.activity}</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">{txt.dailyDesc}</p>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <span className="sr-only">{txt.stage}</span>
-                  <select value={stageId} onChange={event => setSelectedStageId(Number(event.target.value))}
-                    className="max-w-[220px] rounded-xl border border-border bg-card px-3 py-2 text-sm">
-                    {overview.Stages.map(s => <option key={s.StageId} value={s.StageId}>{stageName(s)}</option>)}
-                  </select>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden />
-                </label>
-              </div>
-              {stageLoading ? (
-                <p role="status" className="py-24 text-center text-sm text-muted-foreground">{txt.loading}</p>
-              ) : stageError ? (
-                <p role="alert" className="py-24 text-center text-sm text-destructive">{txt.failed}</p>
-              ) : !stage || stage.Summary.AttemptsInWindow === 0 ? (
-                <p className="py-24 text-center text-sm text-muted-foreground">{txt.noActivity}</p>
-              ) : (
-                <div className="h-64 w-full" dir="ltr">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={dailyData} margin={{left: -18, right: 10}}>
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.2}/>
-                      <XAxis dataKey="day" minTickGap={18} tick={{fontSize: 11}} />
-                      <YAxis allowDecimals={false} tick={{fontSize: 11}} />
-                      <Tooltip /><Legend />
-                      <Area type="monotone" dataKey="attempts" name={txt.selected} stroke="var(--color-brand-primary)" fill="var(--color-brand-primary)" fillOpacity={0.16} strokeWidth={2} />
-                      <Area type="monotone" dataKey="correct" name={txt.correct} stroke="var(--color-brand-secondary)" fill="var(--color-brand-secondary)" fillOpacity={0.10} strokeWidth={2} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="mb-7 grid gap-5 xl:grid-cols-2">
-            <div className="math-card rounded-2xl border border-border p-5 md:p-6">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold">{txt.weak}</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">{txt.weakDesc}</p>
-                </div>
-                <CircleHelp className="h-6 w-6 text-primary" aria-hidden />
-              </div>
-              {stageLoading ? <p className="py-16 text-center text-muted-foreground">{txt.loading}</p>
-                : !weakest.length ? <p className="py-16 text-center text-sm text-muted-foreground">{txt.noWeak}</p> : (
-                <div className="h-64 w-full" dir="ltr">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={weakest} layout="vertical" margin={{left: 8, right: 12}}>
-                      <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis type="number" allowDecimals={false} />
-                      <YAxis type="category" dataKey="name" width={90} tick={{fontSize: 11}}/>
-                      <Tooltip />
-                      <Bar dataKey="wrong" name={txt.wrong} fill="var(--color-brand-secondary)" radius={[0, 6, 6, 0]} maxBarSize={22} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-              <Link href="/admin/analytics" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-                {txt.stageProgress}<DirectionalChevron direction="forward" className="h-4 w-4" />
+      <section aria-label={label.sections}>
+        <h2 className="text-xl font-bold">{label.sections}</h2>
+        <p className="mb-4 mt-1 text-sm text-muted-foreground">{label.sectionsDesc}</p>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {sections.map(item => {
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} href={item.href}
+                className="group flex flex-col rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:bg-primary/5 hover:shadow-md">
+                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <h3 className="font-bold">{ar ? item.labelAr : item.labelEn}</h3>
+                <p className="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">
+                  {ar ? item.descriptionAr : item.descriptionEn}
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                  {label.open}<DirectionalChevron direction="forward" className="h-4 w-4" />
+                </span>
               </Link>
-            </div>
-
-            <div className="math-card rounded-2xl border border-border p-5 md:p-6">
-              <div className="mb-4 flex items-center justify-between gap-2">
-                <div><h2 className="text-lg font-bold">{txt.latest}</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">{txt.students}</p></div>
-                <Link href="/admin/users" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                  {txt.allStudents}<DirectionalChevron direction="forward" className="h-4 w-4"/>
-                </Link>
-              </div>
-              {learnersLoading ? <p className="py-16 text-center text-sm text-muted-foreground">{txt.loading}</p>
-                : !learners?.Learners.length ? <p className="py-16 text-center text-sm text-muted-foreground">{txt.empty}</p> : (
-                  <div className="space-y-2">
-                    {learners.Learners.map(user => (
-                      <Link key={user.Id} href={`/admin/users/${user.Id}`}
-                        className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 p-3 transition-colors hover:bg-primary/5">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <GraduationCap className="h-5 w-5" aria-hidden/>
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <strong className="block truncate text-sm">{user.FullName}</strong>
-                          <span className="block truncate text-xs text-muted-foreground">{(ar ? user.StageNameAr : user.StageNameEn) || txt.noStage}</span>
-                        </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">{format(user.SolvedProblems)} {txt.unique}</span>
-                        <DirectionalChevron direction="forward" className="h-4 w-4 shrink-0 text-primary"/>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-            </div>
-          </section>
-
-          <section className="math-card mb-7 rounded-2xl border border-border p-5 md:p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold">{txt.mostMissed}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">{txt.missedDesc}</p>
-            </div>
-            {(overview.MostMissedProblems ?? []).length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">{txt.noMissed}</p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {overview.MostMissedProblems.map((item, index) => (
-                  <div key={item.ProblemId} className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/20 p-4">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">{index + 1}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold">{ar ? item.TitleAr : item.TitleEn}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">#{item.ProblemId}</p>
-                      <p className="mt-3 text-sm text-destructive">{format(item.IncorrectAttemptsInWindow)} {txt.wrong}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/admin/problems" className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-medium hover:bg-muted">
-              <BookOpenCheck className="h-5 w-5 text-primary" aria-hidden/>{txt.content}<DirectionalChevron direction="forward" className="h-4 w-4"/>
-            </Link>
-            <Link href="/admin/analytics" className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-medium hover:bg-muted">
-              <TrendingUp className="h-5 w-5 text-primary" aria-hidden/>{txt.centerAction}<DirectionalChevron direction="forward" className="h-4 w-4"/>
-            </Link>
-          </div>
-        </>
-      )}
+            );
+          })}
+        </div>
+      </section>
     </main>
   );
 }
