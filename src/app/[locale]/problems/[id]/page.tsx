@@ -167,7 +167,9 @@ export default function ProblemPage() {
   const remoteDiagram = diagramOverride?.problemId === problemId
     ? diagramOverride.scene
     : fetchedDiagram;
-  const diagram = isGeometryScene(remoteDiagram) ? remoteDiagram : embeddedDiagram;
+  const diagram = diagramOverride?.problemId === problemId && diagramOverride.scene === null
+    ? null
+    : isGeometryScene(remoteDiagram) ? remoteDiagram : embeddedDiagram;
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
   const { data: dailyQuota, refetch: refetchDailyQuota } =
