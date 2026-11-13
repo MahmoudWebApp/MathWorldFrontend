@@ -2,7 +2,8 @@
 
 import { useSelector } from "react-redux";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowRight, Calculator, Eye, Lock, Star } from "lucide-react";
+import { Calculator, Eye, Lock, Star } from "lucide-react";
+import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link } from "@/i18n/routing";
 import type { RootState } from "@/store";
@@ -61,7 +62,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
               </div>
               <span className="inline-flex items-center gap-2 text-sm font-bold text-brand-primary-strong dark:text-brand-primary-light">
                 {t("common.solveNow")}
-                <ArrowRight aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
+                <DirectionalArrow direction="forward" />
               </span>
             </div>
           </div>
