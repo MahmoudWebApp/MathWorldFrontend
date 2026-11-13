@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import {
   Activity, AlertTriangle, BarChart3, BookOpenCheck, CheckCircle2,
-  Clock3, Medal, ShieldCheck, TrendingUp, Users,
+  Medal, ShieldCheck, TrendingUp, Users,
 } from 'lucide-react';
 import { DirectionalArrow } from '@/components/ui/DirectionalArrow';
 import {
