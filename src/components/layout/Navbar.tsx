@@ -11,7 +11,7 @@ import { setLocale } from '@/store/slices/localeSlice';
 import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'; 
 import { 
-  SearchNormal1, Sun1, Moon, CloseCircle, User, Logout, ArrowDown2, Element3, ShieldSecurity, 
+  SearchNormal1, Sun1, Moon, CloseCircle, User, Logout, ArrowDown2, Element3,
 } from 'iconsax-reactjs';
 import {
   BookMarked,
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
+import { AdminNavDropdown, AdminNavMobile, ADMIN_NAV_ITEMS } from '@/components/admin/AdminNavigation';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
@@ -229,6 +230,11 @@ function NavbarContent() {
             >
               {t('nav.about')}
             </Link>
+            {mounted && isAuthenticated && user?.Role === 'Admin' && (
+              <div className="hidden xl:block">
+                <AdminNavDropdown />
+              </div>
+            )}
           </div>
 
           {/* Actions & Search */}
@@ -317,9 +323,19 @@ function NavbarContent() {
                           </>
                         )}
                         {user.Role === 'Admin' && (
-                          <Link href="/admin" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
-                            <ShieldSecurity className="h-4 w-4" />{t('nav.admin')}
-                          </Link>
+                          <div className="max-h-[min(60vh,440px)] space-y-0.5 overflow-y-auto" aria-label={locale === 'ar' ? 'أقسام إدارة المنصة' : 'Administration sections'}>
+                            <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">{t('nav.admin')}</p>
+                            {ADMIN_NAV_ITEMS.map(item => {
+                              const Icon = item.icon;
+                              return (
+                                <Link key={item.href} href={item.href} onClick={() => setUserMenuOpen(false)}
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary">
+                                  <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                                  {locale === 'ar' ? item.labelAr : item.labelEn}
+                                </Link>
+                              );
+                            })}
+                          </div>
                         )}
                         <button onClick={handleLogout} className="flex w-full items-center gap-2 px-3 py-2.5 mt-1 text-sm font-medium rounded-xl hover:bg-destructive/10 text-destructive transition-colors">
                           <Logout className="h-4 w-4" />{t('nav.logout')}
@@ -425,12 +441,7 @@ function NavbarContent() {
 
                     </>
                   )}
-                  {user.Role === 'Admin' && (
-                    <Link href="/admin" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-primary hover:bg-primary/10" onClick={() => setMobileMenuOpen(false)}>
-                      <ShieldSecurity className="h-5 w-5" />
-                      {t('nav.admin')}
-                    </Link>
-                  )}
+                  {user.Role === 'Admin' && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
 
                   <button
                     type="button"

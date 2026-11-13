@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
+import { DirectionalChevron } from "@/components/ui/DirectionalNavigation";
 import {
   useGetAdminStagesQuery,
   useCreateStageMutation,
@@ -18,6 +20,7 @@ import { StageIconBadge } from "@/components/stages/StageIconBadge";
 
 export default function AdminStagesPage() {
   const t = useTranslations();
+  const ar = useLocale() === "ar";
   const { data: stages, isLoading, refetch } = useGetAdminStagesQuery();
   const [createStage] = useCreateStageMutation();
   const [updateStage] = useUpdateStageMutation();
@@ -148,7 +151,13 @@ export default function AdminStagesPage() {
                       <td className="p-4 font-medium">
                         <span className="inline-flex items-center gap-2">
                           <StageIconBadge stage={stage} size="xs" />
-                          {stage.NameAr}
+                          <Link
+                            href={`/admin/categories?stageId=${stage.Id}`}
+                            className="inline-flex items-center gap-1.5 font-bold text-primary hover:underline"
+                          >
+                            {stage.NameAr}
+                            <DirectionalChevron direction="forward" className="h-4 w-4" />
+                          </Link>
                         </span>
                       </td>
                       <td className="p-4 text-muted-foreground">
@@ -160,6 +169,13 @@ export default function AdminStagesPage() {
                         </span>
                       </td>
                       <td className="p-4 space-x-2 rtl:space-x-reverse">
+                        <Link
+                          href={`/admin/categories?stageId=${stage.Id}`}
+                          className="mb-2 inline-flex items-center gap-1.5 rounded-lg border border-primary/20 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/10 sm:mb-0"
+                        >
+                          {ar ? "عرض الفئات" : "View categories"}
+                          <DirectionalChevron direction="forward" className="h-4 w-4" />
+                        </Link>
                         <Button
                           variant="ghost"
                           size="sm"
