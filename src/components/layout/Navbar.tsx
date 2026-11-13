@@ -301,9 +301,8 @@ function NavbarContent() {
                         <div className="px-3 py-2.5 text-xs text-muted-foreground border-b mb-2">{user.Email}</div>
                         {user.Role !== 'Admin' && (
                           <>
-                        {user.Role !== 'Admin' && (
-                    <>
-                  <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+
+                        <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <Element3 className="h-4 w-4" />{t('nav.dashboard')}
                         </Link>
                         <Link href="/dashboard/favorites" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
@@ -317,9 +316,7 @@ function NavbarContent() {
                         </Link>
                           </>
                         )}
-                          </>
-                  )}
-                  {user.Role === 'Admin' && (
+                        {user.Role === 'Admin' && (
                           <Link href="/admin" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                             <ShieldSecurity className="h-4 w-4" />{t('nav.admin')}
                           </Link>
@@ -406,6 +403,9 @@ function NavbarContent() {
                     <p className="truncate text-xs text-muted-foreground">{user.Email}</p>
                   </div>
 
+                  {user.Role !== 'Admin' && (
+                    <>
+
                   <Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                     <Element3 className="h-5 w-5" />
                     {t('nav.dashboard')}
@@ -423,6 +423,8 @@ function NavbarContent() {
                     {t('nav.errorNotebook')}
                   </Link>
 
+                    </>
+                  )}
                   {user.Role === 'Admin' && (
                     <Link href="/admin" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-primary hover:bg-primary/10" onClick={() => setMobileMenuOpen(false)}>
                       <ShieldSecurity className="h-5 w-5" />
