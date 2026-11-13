@@ -2,13 +2,39 @@
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { usePreviewCurriculumImportMutation, type ProposedCurriculumProblem } from '@/store/api/curriculumApi';
+import { usePreviewCurriculumImportMutation, type ProposedCurriculumProblem, type CurriculumStageCoverage } from '@/store/api/curriculumApi';
 
-export function CurriculumImportPreviewPanel() {
+export function CurriculumImportPreviewPanel({ stages }: { stages: CurriculumStageCoverage[] }) {
   const ar = useLocale() === 'ar';
   const [source, setSource] = useState('[]');
   const [localError, setLocalError] = useState('');
   const [preview, { data, isLoading, error }] = usePreviewCurriculumImportMutation();
+
+  const loadExample = () => {
+    const stage = stages.find(item => item.Categories.length > 0);
+    if (!stage) {
+      setLocalError(ar ? 'لا توجد مرحلة مع فئة صالحة لإنشاء المثال' : 'No stage with a category available');
+      return;
+    }
+    if (source.trim() !== '[]' && !window.confirm(ar ? 'استبدال المسودة الحالية؟' : 'Replace the current draft?')) return;
+    setSource(JSON.stringify([{
+      ContentKey: 'sample-arithmetic-01',
+      StageId: stage.StageId,
+      CategoryId: stage.Categories[0].CategoryId,
+      QuestionTextAr: 'احسب: ٧ × ٨ − ٦',
+      QuestionTextEn: 'Calculate: 7 × 8 − 6',
+      DetailedSolutionAr: 'نضرب أولاً: ٧ × ٨ = ٥٦، ثم نطرح ٦، فيكون الناتج ٥٠.',
+      DetailedSolutionEn: 'Multiply first: 7 × 8 = 56, then subtract 6 to get 50.',
+      Points: 10,
+      Options: [
+        { LatexCode: '42', IsCorrect: false, Order: 1 },
+        { LatexCode: '48', IsCorrect: false, Order: 2 },
+        { LatexCode: '50', IsCorrect: true, Order: 3 },
+        { LatexCode: '58', IsCorrect: false, Order: 4 },
+      ],
+    }], null, 2));
+    setLocalError('');
+  };
 
   const submit = async () => {
     setLocalError('');
@@ -32,6 +58,9 @@ export function CurriculumImportPreviewPanel() {
         {ar ? 'ألصق مصفوفة JSON تحتوي معرفات المراحل والفئات الفعلية. الفحص لا يحفظ ولا ينشر أي مسألة.'
           : 'Paste a JSON array using actual stage/category IDs. Preview never saves or publishes problems.'}
       </p>
+      <button type="button" onClick={loadExample} className="rounded-lg border px-3 py-2 text-sm">
+        {ar ? 'مثال تجريبي بمعرفات حقيقية (دون حفظ)' : 'Sample with real stage/category IDs (not saved)'}
+      </button>
       <textarea aria-label={ar ? 'مسائل بصيغة JSON' : 'Problems JSON'} value={source}
         onChange={event => setSource(event.target.value)} rows={9} spellCheck={false}
         className="w-full rounded-lg border bg-transparent p-3 font-mono text-xs" />
