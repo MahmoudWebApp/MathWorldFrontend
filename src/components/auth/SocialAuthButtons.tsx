@@ -4,7 +4,7 @@ import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useDispatch } from 'react-redux';
-import { Facebook, Loader2, ShieldCheck } from 'lucide-react';
+import { Users, Loader2, ShieldCheck } from 'lucide-react';
 
 import type { AppDispatch } from '@/store';
 import {
@@ -230,7 +230,7 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
             className="mx-auto flex min-h-11 w-full max-w-[280px] items-center justify-center gap-2 rounded-full border border-primary/20 bg-card px-4 text-sm font-semibold hover:bg-primary/5 disabled:opacity-60"
           >
             {busy === 'Facebook' ? <Loader2 className="h-4 w-4 animate-spin" /> :
-              <Facebook className="h-4 w-4" />}
+              <Users className="h-4 w-4" />}
             {mode === 'link' ? copy.linkFacebook : copy.facebook}
           </button>
         </>
