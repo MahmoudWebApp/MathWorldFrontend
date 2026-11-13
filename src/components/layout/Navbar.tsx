@@ -299,7 +299,11 @@ function NavbarContent() {
                         className="absolute end-0 top-full z-20 mt-2 w-56 rounded-2xl border bg-popover/95 backdrop-blur-xl p-2 shadow-xl"
                       >
                         <div className="px-3 py-2.5 text-xs text-muted-foreground border-b mb-2">{user.Email}</div>
-                        <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                        {user.Role !== 'Admin' && (
+                          <>
+                        {user.Role !== 'Admin' && (
+                    <>
+                  <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <Element3 className="h-4 w-4" />{t('nav.dashboard')}
                         </Link>
                         <Link href="/dashboard/favorites" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
@@ -311,7 +315,11 @@ function NavbarContent() {
                         <Link href="/dashboard/error-notebook" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <NotebookTabs className="h-4 w-4" />{t('nav.errorNotebook')}
                         </Link>
-                        {user.Role === 'Admin' && (
+                          </>
+                        )}
+                          </>
+                  )}
+                  {user.Role === 'Admin' && (
                           <Link href="/admin" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                             <ShieldSecurity className="h-4 w-4" />{t('nav.admin')}
                           </Link>
