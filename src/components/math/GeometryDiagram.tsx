@@ -1,5 +1,7 @@
 'use client';
 
+import { useId } from 'react';
+
 export type GeometryObject =
   | { id: string; type: 'point'; x: number; y: number; label?: string }
   | { id: string; type: 'segment' | 'ray' | 'vector' | 'line'; x1: number; y1: number; x2: number; y2: number; label?: string }
@@ -72,7 +74,7 @@ function anglePoint(cx: number, cy: number, radius: number, degrees: number) {
 export function GeometryDiagram({ scene, locale = 'ar' }: { scene: GeometryScene; locale?: string }) {
   if (!isGeometryScene(scene)) return null;
   const alt = locale === 'ar' ? scene.altTextAr : scene.altTextEn;
-  const markerId = 'geometry-arrow';
+  const markerId = `geometry-arrow-${useId().replace(/:/g, '')}`;
   return (
     <figure className="my-4 overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900">
       <svg viewBox={`0 0 ${scene.viewport.width} ${scene.viewport.height}`}
