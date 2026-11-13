@@ -35,6 +35,21 @@ export interface LearningJourney {
   Categories: JourneyCategoryProgress[];
 }
 
+export interface DailyChallenge {
+  DateUtc: string;
+  StageId: number;
+  Total: number;
+  Completed: number;
+  Problems: Array<{
+    Id: number;
+    CategoryId: number;
+    TitleAr: string;
+    TitleEn: string;
+    Points: number;
+    IsSolved: boolean;
+  }>;
+}
+
 export interface CreateStageRequest {
   NameAr: string;
   NameEn: string;
@@ -54,6 +69,9 @@ export const stagesApi = createApi({
       providesTags: ['Stage'],
     }),
 
+    getDailyChallenge: builder.query<DailyChallenge, void>({
+      query: () => '/users/daily-challenge',
+    }),
     getLearningJourney: builder.query<LearningJourney, number | void>({
       query: (stageId) => stageId
         ? `/users/journey?stageId=${stageId}`
@@ -100,6 +118,7 @@ export const stagesApi = createApi({
 export const {
   useGetStagesQuery,
   useGetLearningJourneyQuery,
+  useGetDailyChallengeQuery,
   useGetAdminStagesQuery,
   useCreateStageMutation,
   useUpdateStageMutation,
