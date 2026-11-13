@@ -44,7 +44,12 @@ export default function LoginPage() {
       dispatch(setCredentials({ user, token: user.Token }));
       persistAuthSession(user);
 
-      const destination = user.Role === 'Admin' ? 'admin' : 'dashboard';
+      const destination =
+        user.Role === 'Admin'
+          ? 'admin'
+          : user.CurrentStageId == null
+            ? 'learning-stage'
+            : 'dashboard';
       window.location.assign(`/${locale}/${destination}`);
     } catch (loginError) {
       setError(getApiErrorMessage(loginError, t('common.error')));

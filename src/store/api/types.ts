@@ -40,6 +40,7 @@ export interface User {
   Token: string;
   SubscriptionType: string;
   ProfilePicture?: string | null;
+  CurrentStageId?: number | null;
 }
 
 export interface RecentActivityItem {
@@ -60,6 +61,7 @@ export interface DashboardData {
   TotalPoints: number;
   SuccessRate: number;
   MemberSince: string;
+  CurrentStageId?: number | null;
   RecentSolved: ProblemPreview[];
   RecentFavorites: ProblemPreview[];
   RecentActivities: RecentActivityItem[];

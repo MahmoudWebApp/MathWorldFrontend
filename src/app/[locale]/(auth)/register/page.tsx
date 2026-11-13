@@ -78,7 +78,12 @@ export default function RegisterPage() {
       dispatch(setCredentials({ user, token: user.Token }));
       persistAuthSession(user);
 
-      const destination = user.Role === 'Admin' ? 'admin' : 'dashboard';
+      const destination =
+        user.Role === 'Admin'
+          ? 'admin'
+          : user.CurrentStageId == null
+            ? 'learning-stage'
+            : 'dashboard';
       window.location.assign(`/${locale}/${destination}`);
     } catch (registerError) {
       setError(
