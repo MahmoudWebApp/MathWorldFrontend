@@ -42,7 +42,9 @@ import {
 import {
   useCheckFavoriteQuery,
   useToggleFavoriteMutation,
+  useGetDailyQuotaQuery,
 } from "@/store/api/usersApi";
+import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
 import { Badge } from "@/components/ui/Badge";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
@@ -152,6 +154,11 @@ export default function ProblemPage() {
 
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
+  const { data: dailyQuota, refetch: refetchDailyQuota } =
+    useGetDailyQuotaQuery(studentProblem?.StageId ?? 0, {
+      skip: !isAuthenticated || !studentProblem,
+      refetchOnMountOrArgChange: true,
+    });
 
   const {
     data: attemptHistory,
@@ -270,6 +277,9 @@ export default function ProblemPage() {
 
   const canRetry =
     localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
+  const newQuestionQuotaExhausted =
+    !!studentProblem && !studentProblem.HasAttempted && !localAnswerResult
+    && !!dailyQuota && !dailyQuota.Unlimited && dailyQuota.Remaining === 0;
 
   const canAnswer =
     isAuthenticated &&
@@ -426,6 +436,7 @@ export default function ProblemPage() {
     if (
       !studentProblem ||
       !canAnswer ||
+      newQuestionQuotaExhausted ||
       isSubmitting ||
       effectiveSelectedOptionId === null
     ) {
@@ -449,6 +460,8 @@ export default function ProblemPage() {
       setSubmissionDone(true);
       setRetryMode(false);
       setHistoryExpanded(true);
+      // Quota is derived on the server; refresh after every successful answer.
+      await refetchDailyQuota();
 
       await refetchProblem();
 
@@ -457,10 +470,20 @@ export default function ProblemPage() {
       }
     } catch (submitFailure) {
       const normalized = submitFailure as {
-        data?: { message?: string };
+        status?: number;
+        data?: { Message?: string; message?: string };
       };
-
-      setSubmitError(normalized.data?.message || t("common.error"));
+      if (normalized.status === 429) {
+        await refetchDailyQuota();
+      }
+      setSubmitError(
+        normalized.data?.Message || normalized.data?.message ||
+        (normalized.status === 429
+          ? isArabic
+            ? "استهلكت حصة المسائل الجديدة لهذا المستوى اليوم. تقدر تعيد المسائل السابقة."
+            : "Today's allowance is used for this stage. You can still retry previous problems."
+          : t("common.error")),
+      );
     }
   }
 
@@ -751,6 +774,11 @@ export default function ProblemPage() {
         </div>
       )}
 
+      {studentProblem && (
+        <div className="mb-5">
+          <DailyQuotaCard stageId={studentProblem.StageId} compact />
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-8">
         <div
           ref={questionCardRef}
@@ -890,7 +918,8 @@ export default function ProblemPage() {
                       <Button
                         onClick={handleSubmit}
                         disabled={
-                          isSubmitting || effectiveSelectedOptionId === null
+                          isSubmitting || newQuestionQuotaExhausted ||
+                          effectiveSelectedOptionId === null
                         }
                         className="gap-2 transition-all"
                         size="lg"
