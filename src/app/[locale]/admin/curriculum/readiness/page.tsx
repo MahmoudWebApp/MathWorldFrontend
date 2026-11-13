@@ -2,6 +2,7 @@
 
 import { useGetCurriculumReadinessQuery } from '@/store/api/curriculumApi';
 import { useLocale } from 'next-intl';
+import { Link } from '@/i18n/routing';
 
 export default function CurriculumReadinessPage() {
   const locale = useLocale();
@@ -25,7 +26,7 @@ export default function CurriculumReadinessPage() {
           {[
             [ar ? 'المراحل' : 'Stages', data.StageCount],
             [ar ? 'المسائل' : 'Problems', data.TotalProblems],
-            [ar ? 'مراحل تحتاج مسائل' : 'Stages below minimum', data.StagesBelowMinimum],
+            [ar ? 'مسائل ناقصة للحد الأدنى' : 'Missing problems to minimum', data.TotalMissingToMinimum],
           ].map(([label, value]) => (
             <div key={String(label)} className="rounded-xl border bg-card p-4">
               <p className="text-sm text-muted-foreground">{label}</p>
@@ -44,6 +45,15 @@ export default function CurriculumReadinessPage() {
               </div>
               <p className="mt-2 text-sm">{ar ? 'عدد المسائل' : 'Problems'}: {stage.ProblemCount} / {stage.RequiredMinimum}</p>
               <p className="text-sm">{ar ? 'المسائل الناقصة' : 'Missing'}: {stage.MissingToMinimum} · {ar ? 'مسائل تحتاج تدقيق' : 'Problems needing review'}: {stage.InvalidProblemCount}</p>
+              {stage.InvalidProblemIds?.length > 0 && (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                  <span>{ar ? 'مسائل تحتاج مراجعة:' : 'Flagged problems:'}</span>
+                  {stage.InvalidProblemIds.map(id => (
+                    <Link key={id} href={`/problems/${id}`} className="rounded-md border px-2 py-1 underline">#{id}</Link>
+                  ))}
+                </div>
+              )}
+              {stage.Categories.length === 0 && <p className="mt-2 text-sm text-amber-600">{ar ? 'لا توجد فئات لهذه المرحلة' : 'No categories assigned to this stage'}</p>}
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {stage.Categories.map(category => (
                   <div key={category.CategoryId} className="rounded-lg border p-3 text-sm">
