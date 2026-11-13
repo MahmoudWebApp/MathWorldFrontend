@@ -42,29 +42,29 @@ export const ADMIN_NAV_ITEMS = [
   {
     href: '/admin/stages',
     icon: GraduationCap,
-    labelAr: 'إدارة المراحل',
+    labelAr: 'المستويات التعليمية',
     labelEn: 'Stages',
-    descriptionAr: 'المراحل التعليمية وترتيبها',
+    descriptionAr: 'ابدأ من المستوى ثم ادخل لفئاته',
     descriptionEn: 'Manage educational stages and order',
-    group: 'management',
+    group: 'content',
   },
   {
     href: '/admin/categories',
     icon: FolderTree,
-    labelAr: 'إدارة التصنيفات',
+    labelAr: 'الفئات حسب المستوى',
     labelEn: 'Categories',
-    descriptionAr: 'تنظيم التصنيفات حسب المرحلة',
+    descriptionAr: 'اختر فئة لعرض وإضافة مسائلها',
     descriptionEn: 'Organize topics by stage',
-    group: 'management',
+    group: 'content',
   },
   {
     href: '/admin/problems',
     icon: BookOpenText,
-    labelAr: 'إدارة المسائل',
+    labelAr: 'المسائل التعليمية',
     labelEn: 'Problems',
-    descriptionAr: 'إضافة وتحرير ومراجعة المسائل',
-    descriptionEn: 'Create, edit and review math problems',
-    group: 'management',
+    descriptionAr: 'إضافة وتحرير المسائل في المستوى والفئة المختارين',
+    descriptionEn: 'Create, edit and review questions within their stage and category',
+    group: 'content',
   },
 ] as const;
 
@@ -117,7 +117,7 @@ export function AdminNavDropdown() {
         <nav
           id="mathworld-admin-navigation"
           aria-label={ar ? 'أقسام إدارة المنصة' : 'Administration sections'}
-          className="absolute end-0 top-full z-50 mt-3 w-[min(92vw,370px)] rounded-2xl border border-border bg-popover p-2.5 shadow-2xl"
+          className="absolute end-0 top-full z-50 mt-3 max-h-[min(75vh,650px)] w-[min(92vw,380px)] overflow-y-auto rounded-2xl border border-border bg-popover p-2.5 shadow-2xl"
         >
           <div className="px-3 pb-2 pt-1 text-xs font-semibold text-muted-foreground">
             {ar ? 'نظرة عامة' : 'Overview'}
@@ -130,6 +130,13 @@ export function AdminNavDropdown() {
             {ar ? 'الإدارات' : 'Management'}
           </div>
           {ADMIN_NAV_ITEMS.filter(item => item.group === 'management').map(item => (
+            <AdminMenuLink key={item.href} item={item} ar={ar} pathname={pathname} close={() => setOpen(false)} />
+          ))}
+          <div className="mx-2 my-3 border-t border-border" />
+          <div className="px-3 pb-2 text-xs font-semibold text-muted-foreground">
+            {ar ? 'المحتوى التعليمي: مستويات ← فئات ← مسائل' : 'Learning content: Stages → Categories → Problems'}
+          </div>
+          {ADMIN_NAV_ITEMS.filter(item => item.group === 'content').map(item => (
             <AdminMenuLink key={item.href} item={item} ar={ar} pathname={pathname} close={() => setOpen(false)} />
           ))}
         </nav>
