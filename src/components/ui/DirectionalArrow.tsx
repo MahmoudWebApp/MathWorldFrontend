@@ -25,7 +25,9 @@ export function DirectionalArrow({
   className?: string;
 }) {
   const isArabic = useLocale() === 'ar';
-  const pointsRight = (direction === 'back') === isArabic;
+  const pointsRight = isArabic
+    ? direction === 'back'
+    : direction === 'forward';
   const Icon = variant === 'chevron'
     ? (pointsRight ? ChevronRight : ChevronLeft)
     : (pointsRight ? ArrowRight : ArrowLeft);
