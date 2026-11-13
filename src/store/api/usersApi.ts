@@ -103,34 +103,6 @@ export interface LearningJourney {
   Categories: JourneyCategory[];
 }
 
-export interface LeaderboardEntry {
-  Rank: number;
-  DisplayName: string;
-  UserId?: number | null;
-  SolvedProblems: number;
-  Points: number;
-  FirstTryCorrect: number;
-  IsCurrentUser: boolean;
-}
-
-export interface LeaderboardData {
-  StageId: number;
-  NameAr: string;
-  NameEn: string;
-  Period: 'all' | 'weekly' | 'monthly';
-  Page: number;
-  PageSize: number;
-  TotalLearners: number;
-  MyRank?: number | null;
-  Entries: LeaderboardEntry[];
-}
-
-export interface LeaderboardQuery {
-  StageId: number;
-  Period: 'all' | 'weekly' | 'monthly';
-  Page: number;
-}
-
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
@@ -143,7 +115,6 @@ export const usersApi = createApi({
     'ErrorNotebook',
     'LearningStage',
     'LearningJourney',
-    'Leaderboard',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -171,22 +142,6 @@ export const usersApi = createApi({
         params: { stageId },
       }),
       providesTags: ['LearningJourney'],
-    }),
-
-    getStudentLeaderboard: builder.query<LeaderboardData, LeaderboardQuery>({
-      query: ({ StageId, Period, Page }) => ({
-        url: '/users/leaderboard',
-        params: { stageId: StageId, period: Period, page: Page, pageSize: 20 },
-      }),
-      providesTags: ['Leaderboard'],
-    }),
-
-    getStageAdminLeaderboard: builder.query<LeaderboardData, LeaderboardQuery>({
-      query: ({ StageId, Period, Page }) => ({
-        url: `/admin/stages/${StageId}/leaderboard`,
-        params: { period: Period, page: Page, pageSize: 20 },
-      }),
-      providesTags: ['Leaderboard'],
     }),
 
     getDashboard: builder.query<DashboardData, string>({
@@ -299,6 +254,4 @@ export const {
   useCheckFavoriteQuery,
   useGetAdminUsersQuery,
   useGetDashboardQuery,
-  useGetStudentLeaderboardQuery,
-  useGetStageAdminLeaderboardQuery,
 } = usersApi;
