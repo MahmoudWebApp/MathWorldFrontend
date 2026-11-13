@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { ArrowRight, BookOpen, CheckCircle2, Loader2 } from 'lucide-react';
+import { BookOpen, CheckCircle2, Loader2 } from 'lucide-react';
+import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 
 import { useGetStagesQuery } from '@/store/api/stagesApi';
 import {
@@ -146,7 +147,7 @@ export default function LearningStagePage() {
                 disabled={effectiveId == null || saving}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-7 py-3 font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {saving ? <Loader2 size={19} className="animate-spin" /> : <ArrowRight size={19} />}
+                {saving ? <Loader2 size={19} className="animate-spin" /> : <DirectionalArrow direction="forward" size={19} />}
                 {activeStage?.HasSelectedStage ? copy.change : copy.save}
               </button>
               {effectiveId == null && (

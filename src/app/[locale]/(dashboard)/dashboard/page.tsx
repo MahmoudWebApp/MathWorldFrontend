@@ -10,10 +10,10 @@ import {
   TrendUp,
   Award,
   Calendar,
-  ArrowRight2,
   Warning2,
 } from "iconsax-reactjs";
 import { NotebookTabs, Trophy, Target } from "lucide-react";
+import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
@@ -272,7 +272,7 @@ export default function UserDashboardPage() {
         </div>
         <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
           {t("common.view")}
-          <ArrowRight2 className="h-4 w-4 rtl:rotate-180" />
+          <DirectionalArrow direction="forward" />
         </span>
       </Link>
 
@@ -288,7 +288,7 @@ export default function UserDashboardPage() {
               className="text-sm text-primary hover:underline flex items-center gap-1"
             >
               {t("common.viewAll")}
-              <ArrowRight2 className="h-4 w-4 rtl:rotate-180" />
+              <DirectionalArrow direction="forward" />
             </Link>
           </div>
 
@@ -340,7 +340,7 @@ export default function UserDashboardPage() {
               className="text-sm text-primary hover:underline flex items-center gap-1"
             >
               {t("common.viewAll")}
-              <ArrowRight2 className="h-4 w-4 rtl:rotate-180" />
+              <DirectionalArrow direction="forward" />
             </Link>
           </div>
 
