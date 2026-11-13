@@ -173,7 +173,7 @@ export default function ProblemPage() {
       .catch(() => { if (!controller.signal.aborted) setRemoteDiagram(null); });
     return () => controller.abort();
   }, [problemId]);
-  const diagram = embeddedDiagram ?? (isGeometryScene(remoteDiagram) ? remoteDiagram : null);
+  const diagram = isGeometryScene(remoteDiagram) ? remoteDiagram : embeddedDiagram;
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
   const { data: dailyQuota, refetch: refetchDailyQuota } =
