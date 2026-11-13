@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Link } from "@/i18n/routing";
+import { DirectionalChevron } from "@/components/ui/DirectionalNavigation";
 import { useTranslations, useLocale } from "next-intl";
 import {
   useGetAdminCategoriesQuery,
@@ -38,8 +41,17 @@ import {
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default function AdminCategoriesPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
+      <AdminCategoriesPageContent />
+    </Suspense>
+  );
+}
+
+function AdminCategoriesPageContent() {
   const t = useTranslations();
   const locale = useLocale();
+  const searchParams = useSearchParams();
   const { data: categories, isLoading, refetch } = useGetAdminCategoriesQuery();
   const { data: stages } = useGetAdminStagesQuery();
 
@@ -69,12 +81,22 @@ export default function AdminCategoriesPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Select the first stage after the stage list loads.
+  // Deep links from Admin > Stages keep the selected educational level.
+  // Only allow IDs that actually belong to the loaded admin stage list.
   useEffect(() => {
-    if (stages && stages.length > 0 && !selectedStageId) {
-      setSelectedStageId(stages[0].Id);
+    if (!stages?.length) return;
+    const raw = searchParams.get("stageId");
+    const value = raw ? Number(raw) : null;
+    const matched = value && Number.isSafeInteger(value)
+      ? stages.find(stage => stage.Id === value)
+      : undefined;
+    if (matched) {
+      setSelectedStageId(matched.Id);
+    } else {
+      setSelectedStageId(prev => prev && stages.some(stage => stage.Id === prev)
+        ? prev : stages[0].Id);
     }
-  }, [stages, selectedStageId]);
+  }, [stages, searchParams]);
 
   useEffect(() => {
     return () => {
@@ -213,7 +235,12 @@ export default function AdminCategoriesPage() {
       <Breadcrumbs
         items={[
           { label: t("nav.admin"), href: "/admin" },
-          { label: t("admin.categories.title") }, 
+          { label: t("admin.stages.title"), href: "/admin/stages" },
+          { label: selectedStageId
+              ? (locale === "ar"
+                  ? stages?.find(s => s.Id === selectedStageId)?.NameAr
+                  : stages?.find(s => s.Id === selectedStageId)?.NameEn) || t("admin.categories.title")
+              : t("admin.categories.title") }, 
         ]}
         className="mb-6"
       />
@@ -222,6 +249,11 @@ export default function AdminCategoriesPage() {
           <h1 className="text-3xl font-bold mb-2">
             {t("admin.categories.title")}
           </h1>
+          <p className="text-sm text-muted-foreground">
+            {locale === "ar"
+              ? "اختر فئة من المستوى لعرض مسائلها وإضافة مسائل جديدة ضمنها."
+              : "Choose a category in this stage to view its questions and add new ones."}
+          </p>
         </div>
         <Button
           onClick={openCreateModal}
@@ -315,7 +347,13 @@ export default function AdminCategoriesPage() {
                       )}
                     </td>
                     <td className="p-4 font-bold text-start">
-                      {category.NameAr}
+                      <Link
+                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}`}
+                        className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                      >
+                        {category.NameAr}
+                        <DirectionalChevron direction="forward" className="h-4 w-4" />
+                      </Link>
                     </td>
                     <td
                       className="p-4 text-muted-foreground text-start"
@@ -329,6 +367,19 @@ export default function AdminCategoriesPage() {
                       </span>
                     </td>
                     <td className="p-4 space-x-2 rtl:space-x-reverse whitespace-nowrap">
+                      <Link
+                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}`}
+                        className="mb-1 inline-flex items-center gap-1 rounded-lg border border-primary/20 px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/10"
+                      >
+                        {locale === "ar" ? "عرض المسائل" : "View problems"}
+                        <DirectionalChevron direction="forward" className="h-4 w-4" />
+                      </Link>
+                      <Link
+                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}&create=1`}
+                        className="mb-1 inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-foreground hover:bg-muted"
+                      >
+                        {locale === "ar" ? "إضافة مسألة" : "Add problem"}
+                      </Link>
                       {/* Edit action */}
                       <Tooltip>
                         <TooltipTrigger asChild>
