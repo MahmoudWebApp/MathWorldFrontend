@@ -1,4 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
+import type { StudentEntitlement } from '@/lib/premium-api';
 import { baseQuery } from './baseQuery';
 import type { DashboardData, ProblemPreview } from './types';
 import type { MasteryStatus } from './problemsApi';
@@ -277,6 +278,10 @@ export const usersApi = createApi({
       providesTags: ['LearningJourney'],
     }),
 
+    getStudentEntitlement: builder.query<StudentEntitlement, void>({
+      query: () => '/users/subscription',
+    }),
+
     getDashboard: builder.query<DashboardData, string>({
       query: () => '/users/dashboard',
       providesTags: ['Dashboard'],
@@ -414,6 +419,7 @@ export const {
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,
   useGetDailyQuotaQuery,
+  useGetStudentEntitlementQuery,
   useGetProfileQuery,
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,
