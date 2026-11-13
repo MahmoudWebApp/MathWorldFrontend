@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { API_BASE_URL } from '@/store/api/baseQuery';
 import { GeometryDiagram, isGeometryScene, type GeometryScene } from '@/components/math/GeometryDiagram';
+import { rightTriangleFixture } from '@/components/math/geometry-fixtures';
 
 type Props = {
   problemId: number;
@@ -47,6 +48,11 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     if (!match) return '';
     try { return decodeURIComponent(match.slice(6)); } catch { return ''; }
   };
+  const useExample = () => {
+    if (!window.confirm(ar ? 'استبدال النص الحالي بمثال المثلث؟' : 'Replace the current draft with the triangle example?')) return;
+    setJson(JSON.stringify(rightTriangleFixture, null, 2));
+    setMessage('');
+  };
   const save = async () => {
     if (!parsed || !valid || saving) return;
     if (!window.confirm(ar ? 'تأكيد حفظ الرسم الهندسي؟' : 'Save this geometry diagram?')) return;
@@ -72,7 +78,7 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     setMessage('');
     try {
       const response = await fetch(`${API_BASE_URL}/admin/problems/${problemId}/diagram`, {
-        method: 'DELETE', headers: { Authorization: `Bearer ${token()}` },
+        method: 'DELETE', headers: { Authorization: `Bearer ${authToken || token()}` },
       });
       if (!response.ok && response.status !== 404) throw new Error(String(response.status));
       setScene(null);
@@ -86,6 +92,9 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     <section dir={ar ? 'rtl' : 'ltr'} className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
       <h2 className="mb-2 text-lg font-bold">{ar ? 'محرر الرسم الهندسي' : 'Geometry diagram editor'}</h2>
       <p className="mb-3 text-sm text-slate-500">{ar ? 'عدّل وصف الرسم وعناصره بصيغة JSON الآمنة. المعاينة تظهر قبل الحفظ.' : 'Edit the safe JSON scene and preview it before saving.'}</p>
+      <button type="button" onClick={useExample} className="mb-3 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600">
+        {ar ? 'تحميل مثال مثلث قائم (دون حفظ)' : 'Load right-triangle example (not saved)'}
+      </button>
       <textarea aria-label={ar ? 'بيانات الرسم' : 'Diagram JSON'} spellCheck={false} value={json}
         onChange={e => { setJson(e.target.value); setMessage(''); }} rows={12}
         className="w-full rounded-lg border border-slate-300 bg-transparent p-3 font-mono text-xs dark:border-slate-700" />
