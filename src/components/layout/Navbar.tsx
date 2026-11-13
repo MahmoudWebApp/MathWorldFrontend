@@ -12,7 +12,6 @@ import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'; 
 import { 
   SearchNormal1, Sun1, Moon, CloseCircle, User, Logout, ArrowDown2, Element3, ShieldSecurity, 
-  ArrowRight
 } from 'iconsax-reactjs';
 import {
   BookMarked,
@@ -29,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
+import { DirectionalArrow } from '@/components/ui/DirectionalArrow';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
@@ -195,7 +195,7 @@ function NavbarContent() {
                     <div className="relative z-10">
                       <Link href="/stages" className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors mb-3 group">
                         <span className="font-bold">{t('stages.allStages')}</span>
-                        <ArrowRight className="h-4 w-4 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
+                        <DirectionalArrow direction="forward" className="h-4 w-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
                       </Link>
                       
                       <div className="grid grid-cols-2 gap-2">
