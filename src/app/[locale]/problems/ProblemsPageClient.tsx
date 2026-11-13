@@ -77,8 +77,8 @@ function ProblemsPageClient() {
   // These come from URL and are fixed
   const stageId = urlStageId;
   const categoryId = urlCategoryId;
-  const authenticated = useSelector((state: { auth: { isAuthenticated: boolean } }) => state.auth.isAuthenticated);
-  const { data: access, isLoading: accessLoading } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
+  const authenticated = useSelector((state: { auth: { isAuthenticated: boolean; user: { role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.role === "Student");
+  const { data: access, isLoading: accessLoading, isError: accessError } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
   const { data: subscription, isLoading: subscriptionLoading } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
   const accessPending = Boolean(categoryId && stageId) && (accessLoading || (authenticated && subscriptionLoading));
   const categoryLocked = Boolean(categoryId && stageId && access && subscription?.IsPremium !== true && !access.FreeCategoryIds.includes(Number(categoryId)));
@@ -101,7 +101,7 @@ function ProblemsPageClient() {
       PageSize: DEFAULT_PAGE_SIZE,
       locale: locale,
     },
-    { skip: categoryLocked || accessPending },
+    { skip: categoryLocked || accessPending || (Boolean(categoryId && stageId) && accessError) },
   );
 
   // ── Derived data ────────────────────────────────────────
@@ -168,6 +168,9 @@ function ProblemsPageClient() {
       ? t("search.searchInStage", { stage: stageName })
       : t("search.placeholder");
 
+  if (categoryId && stageId && accessError) {
+    return <section role="alert" className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-2xl font-bold">{locale === "ar" ? "تعذر التحقق من صلاحيات الفئة" : "Unable to verify category access"}</h1><Link href={`/stages/${stageId}`} className="rounded-xl border px-5 py-3">{locale === "ar" ? "العودة إلى المرحلة" : "Back to stage"}</Link></section>;
+  }
   if (categoryLocked) {
     return <section className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-3xl font-bold">{locale === "ar" ? "هذه الفئة مقفلة" : "This category is locked"}</h1><p className="mb-6">{locale === "ar" ? "الفئتان المجانيتان بلا حد يومي، وباقي الفئات مع Premium." : "Two free categories offer unlimited daily practice. Premium unlocks the rest."}</p><Link href="/premium" className="rounded-xl border px-5 py-3">Premium</Link></section>;
   }
