@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/store';
-import { API_BASE_URL } from '@/store/api/baseQuery';
+import { useUpsertAdminProblemDiagramMutation, useDeleteAdminProblemDiagramMutation } from '@/store/api/problemsApi';
 import { GeometryDiagram, isGeometryScene, type GeometryScene } from '@/components/math/GeometryDiagram';
 import { rightTriangleFixture } from '@/components/math/geometry-fixtures';
 
@@ -17,7 +15,8 @@ type Props = {
 /** Authenticated Admin problem editor. Backend remains the authority for all writes. */
 export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }: Props) {
   const ar = locale === 'ar';
-  const authToken = useSelector((state: RootState) => state.auth.token);
+  const [upsertDiagram] = useUpsertAdminProblemDiagramMutation();
+  const [deleteDiagram] = useDeleteAdminProblemDiagramMutation();
   const [json, setJson] = useState(() => JSON.stringify(initialScene ?? {
     schemaVersion: 1,
     viewport: { width: 360, height: 260 },
@@ -43,11 +42,6 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     // A partial edit is not a valid preview or request.
   }
   const valid = parsed !== null && json.length <= 30000;
-  const token = () => {
-    const match = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('token='));
-    if (!match) return '';
-    try { return decodeURIComponent(match.slice(6)); } catch { return ''; }
-  };
   const useExample = () => {
     if (!window.confirm(ar ? 'استبدال النص الحالي بمثال المثلث؟' : 'Replace the current draft with the triangle example?')) return;
     setJson(JSON.stringify(rightTriangleFixture, null, 2));
@@ -59,12 +53,7 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     setSaving(true);
     setMessage('');
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/problems/${problemId}/diagram`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken || token()}` },
-        body: JSON.stringify({ scene: parsed }),
-      });
-      if (!response.ok) throw new Error(String(response.status));
+      await upsertDiagram({ problemId, scene: parsed }).unwrap();
       setScene(parsed);
       onSaved?.(parsed);
       setMessage(ar ? 'تم حفظ الرسم' : 'Diagram saved');
@@ -77,10 +66,7 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     setSaving(true);
     setMessage('');
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/problems/${problemId}/diagram`, {
-        method: 'DELETE', headers: { Authorization: `Bearer ${authToken || token()}` },
-      });
-      if (!response.ok && response.status !== 404) throw new Error(String(response.status));
+      await deleteDiagram(problemId).unwrap();
       setScene(null);
       onSaved?.(null);
       setMessage(ar ? 'تم حذف الرسم' : 'Diagram removed');
