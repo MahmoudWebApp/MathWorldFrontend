@@ -225,6 +225,37 @@ export interface StageDailyQuota {
   ResetsAtUtc: string;
 }
 
+export interface AdminSubscriptionChange {
+  SubscriptionType: 'Free' | 'Premium';
+  PremiumExpiresAtUtc?: string | null;
+  Reason: string;
+}
+
+export interface AdminSubscriptionStatus {
+  LearnerId: number;
+  SubscriptionType: 'Free' | 'Premium';
+  PremiumExpiresAtUtc?: string | null;
+  Unlimited: boolean;
+}
+
+export interface AdminSubscriptionAuditRecord {
+  Id: number;
+  AdminId: number;
+  PreviousType: string;
+  NewType: string;
+  PreviousExpiresAtUtc?: string | null;
+  NewExpiresAtUtc?: string | null;
+  Reason: string;
+  ChangedAtUtc: string;
+}
+
+export interface AdminSubscriptionHistory {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Records: AdminSubscriptionAuditRecord[];
+}
+
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
@@ -239,6 +270,7 @@ export const usersApi = createApi({
     'LearningJourney',
     'AdminLearners',
     'DailyQuota',
+    'Subscription',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -280,6 +312,30 @@ export const usersApi = createApi({
 
     getStudentEntitlement: builder.query<StudentEntitlement, void>({
       query: () => '/users/subscription',
+      providesTags: ['Subscription'],
+    }),
+
+    updateAdminLearnerSubscription: builder.mutation<
+      AdminSubscriptionStatus,
+      { LearnerId: number; Change: AdminSubscriptionChange }
+    >({
+      query: ({ LearnerId, Change }) => ({
+        url: `/admin/learners/${LearnerId}/subscription`,
+        method: 'PUT',
+        body: Change,
+      }),
+      invalidatesTags: ['AdminLearners', 'Subscription', 'User'],
+    }),
+
+    getAdminLearnerSubscriptionHistory: builder.query<
+      AdminSubscriptionHistory,
+      { LearnerId: number; Page?: number; PageSize?: number }
+    >({
+      query: ({ LearnerId, Page = 1, PageSize = 20 }) => ({
+        url: `/admin/learners/${LearnerId}/subscription-history`,
+        params: { page: Page, pageSize: PageSize },
+      }),
+      providesTags: ['Subscription'],
     }),
 
     getDashboard: builder.query<DashboardData, string>({
@@ -420,6 +476,8 @@ export const {
   useGetLearningJourneyQuery,
   useGetDailyQuotaQuery,
   useGetStudentEntitlementQuery,
+  useUpdateAdminLearnerSubscriptionMutation,
+  useGetAdminLearnerSubscriptionHistoryQuery,
   useGetProfileQuery,
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,
