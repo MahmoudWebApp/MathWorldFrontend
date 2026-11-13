@@ -7,8 +7,8 @@ import { useGetLearningJourneyQuery } from '@/store/api/stagesApi';
 
 export default function JourneyPage() {
   const ar = useLocale() === 'ar';
-  const student = useSelector((state: { auth: { isAuthenticated: boolean; user: { role?: string } | null } }) =>
-    state.auth.isAuthenticated && state.auth.user?.role === 'Student');
+  const student = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
+    state.auth.isAuthenticated && state.auth.user?.Role === 'Student');
   const { data, isLoading, isError, refetch } = useGetLearningJourneyQuery(undefined, {
     skip: !student,
     refetchOnMountOrArgChange: true,
