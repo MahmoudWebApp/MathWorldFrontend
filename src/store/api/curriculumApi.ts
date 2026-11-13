@@ -20,6 +20,7 @@ export interface CurriculumStageCoverage {
   MissingToMinimum: number;
   MeetsMinimum: boolean;
   InvalidProblemCount: number;
+  InvalidProblemIds: number[];
   Categories: CurriculumCategoryCoverage[];
 }
 
@@ -27,6 +28,7 @@ export interface CurriculumReadiness {
   MinimumProblemsPerStage: number;
   StageCount: number;
   TotalProblems: number;
+  TotalMissingToMinimum: number;
   StagesBelowMinimum: number;
   StagesWithInvalidProblems: number;
   Stages: CurriculumStageCoverage[];
