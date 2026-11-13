@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDispatch } from 'react-redux';
-import { ArrowRight2, Eye, EyeSlash, Lock, Refresh2, Sms } from 'iconsax-reactjs';
+import { Eye, EyeSlash, Lock, Refresh2, Sms } from 'iconsax-reactjs';
+import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 
 import { Link } from '@/i18n/routing';
 import type { AppDispatch } from '@/store';
@@ -138,7 +139,7 @@ export default function LoginPage() {
               ) : (
                 <>
                   {t('auth.login.submit')}
-                  <ArrowRight2 className="h-4 w-4 transition-transform rtl:rotate-180" />
+                  <DirectionalArrow direction="forward" />
                 </>
               )}
             </Button>
