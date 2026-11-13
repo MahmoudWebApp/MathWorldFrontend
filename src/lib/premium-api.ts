@@ -31,8 +31,11 @@ export interface LaunchFeatures {
 }
 
 type ApiEnvelope<T> = { Data: T };
-const endpoint = (baseUrl: string, path: string) =>
-  `${baseUrl.replace(/\/$/, "")}${path}`;
+const endpoint = (baseUrl: string, path: string) => {
+  const base = baseUrl.replace(/\/$/, "");
+  const apiBase = /\/api$/i.test(base) ? base : `${base}/api`;
+  return `${apiBase}${path.replace(/^\/api(?=\/)/i, "")}`;
+};
 
 async function getJson<T>(url: string, token?: string): Promise<T> {
   const response = await fetch(url, {
