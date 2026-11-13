@@ -1,0 +1,46 @@
+'use client';
+
+import { useState } from 'react';
+import { useLocale } from 'next-intl';
+import { useSelector } from 'react-redux';
+import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
+import { useGetStageCategoryAccessQuery } from '@/store/api/categoriesApi';
+
+function StagePolicy({ stageId, ar }: { stageId: number; ar: boolean }) {
+  const { data, isLoading, isError, refetch } = useGetStageCategoryAccessQuery(stageId);
+  if (isLoading) return <p role="status">{ar ? 'جاري تحميل الفئات…' : 'Loading categories…'}</p>;
+  if (isError || !data) return <button type="button" onClick={() => void refetch()} className="underline">{ar ? 'تعذّر التحميل — أعد المحاولة' : 'Failed to load — retry'}</button>;
+  return <div className="space-y-3">
+    <p className="text-sm text-muted-foreground">{ar ? 'الفئات المجانية حالياً' : 'Currently free categories'}: {data.FreeCategoryCount}</p>
+    <div className="grid gap-3 sm:grid-cols-2">
+      {data.Categories.map(category => <div key={category.Id} className="flex items-center justify-between rounded-xl border p-4">
+        <span>{ar ? category.NameAr : category.NameEn}</span>
+        <span className={category.IsFree ? 'text-primary' : 'text-muted-foreground'}>{category.IsFree ? (ar ? 'مجانية' : 'Free') : 'Premium'}</span>
+      </div>)}
+    </div>
+    <p className="text-xs text-muted-foreground">{ar ? 'هذه الصفحة تعرض السياسة الحالية فقط. تغيير الفئتين يحتاج إعداد الإدارة على الخادم، ولا يتم حفظ أي تعديل من هذه الشاشة.' : 'This is a read-only policy overview. Changing the two free categories requires server-side administration; this screen does not save changes.'}</p>
+  </div>;
+}
+
+export default function FreeCategoriesAdminPage() {
+  const ar = useLocale() === 'ar';
+  const admin = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === 'Admin');
+  const { data: stages, isLoading, isError } = useGetAdminStagesQuery(undefined, { skip: !admin });
+  const [stageId, setStageId] = useState<number | null>(null);
+  const selectedId = stageId && stages?.some(stage => stage.Id === stageId) ? stageId : stages?.[0]?.Id;
+  return <main className="container mx-auto max-w-5xl px-4 py-12" dir={ar ? 'rtl' : 'ltr'}>
+    <h1 className="mb-3 text-3xl font-bold">{ar ? 'سياسة الفئات المجانية' : 'Free category access policy'}</h1>
+    <p className="mb-7 text-muted-foreground">{ar ? 'لكل مرحلة فئتان مجانيتان بلا حد يومي للمسائل.' : 'Each stage includes two free categories with unlimited daily practice.'}</p>
+    {!admin && <p role="alert">{ar ? 'هذه الصفحة مخصصة للإدارة.' : 'This page is for administrators.'}</p>}
+    {admin && isLoading && <p>{ar ? 'جاري تحميل المراحل…' : 'Loading stages…'}</p>}
+    {admin && isError && <p role="alert">{ar ? 'تعذّر تحميل المراحل.' : 'Unable to load stages.'}</p>}
+    {admin && stages && stages.length === 0 && <p>{ar ? 'لا توجد مراحل.' : 'No stages available.'}</p>}
+    {admin && selectedId && <section className="rounded-2xl border bg-card p-6">
+      <label htmlFor="policy-stage" className="mb-2 block font-semibold">{ar ? 'المرحلة التعليمية' : 'Educational stage'}</label>
+      <select id="policy-stage" value={selectedId} onChange={event => setStageId(Number(event.target.value))} className="mb-6 w-full rounded-xl border bg-background p-3">
+        {stages?.map(stage => <option key={stage.Id} value={stage.Id}>{ar ? stage.NameAr : stage.NameEn}</option>)}
+      </select>
+      <StagePolicy stageId={selectedId} ar={ar} />
+    </section>}
+  </main>;
+}
