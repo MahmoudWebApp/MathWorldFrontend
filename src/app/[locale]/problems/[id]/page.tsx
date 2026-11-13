@@ -162,8 +162,9 @@ export default function ProblemPage() {
   useEffect(() => {
     if (!Number.isSafeInteger(problemId) || problemId <= 0) return;
     const controller = new AbortController();
-    const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || "https://mathwordbackend.onrender.com/api").replace(/\\/$/, "");
-    const prefix = /\\/api$/i.test(apiBase) ? apiBase : `${apiBase}/api`;
+    const configuredBase = process.env.NEXT_PUBLIC_API_BASE_URL || "https://mathwordbackend.onrender.com/api";
+    const apiBase = configuredBase.endsWith("/") ? configuredBase.slice(0, -1) : configuredBase;
+    const prefix = apiBase.endsWith("/api") ? apiBase : `${apiBase}/api`;
     setRemoteDiagram(null);
     fetch(`${prefix}/problems/${problemId}/diagram`, { signal: controller.signal })
       .then(response => response.ok ? response.json() : null)
