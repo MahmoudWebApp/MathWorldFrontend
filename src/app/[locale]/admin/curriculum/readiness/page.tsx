@@ -34,6 +34,14 @@ export default function CurriculumReadinessPage() {
             </div>
           ))}
         </div>
+        {data.OrphanProblemCount > 0 && (
+          <section className="rounded-xl border border-red-300 p-4">
+            <h2 className="font-semibold text-red-600">{ar ? 'مسائل مرتبطة بمراحل غير موجودة' : 'Problems referencing missing stages'}: {data.OrphanProblemCount}</h2>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {data.OrphanProblemIds.map(id => <Link key={id} href={`/problems/${id}`} className="rounded border px-2 py-1 text-sm underline">#{id}</Link>)}
+            </div>
+          </section>
+        )}
         <div className="space-y-4">
           {data.Stages.map(stage => (
             <section key={stage.StageId} className="rounded-xl border bg-card p-5">
