@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import {
-  Activity, BarChart3, BookOpenCheck, CheckCircle2, ChevronDown,
+  Activity, BarChart3, BookOpenCheck, ChevronDown,
   CircleHelp, Clock3, Gauge, GraduationCap, ShieldCheck, TrendingUp, Users,
 } from 'lucide-react';
 import {
