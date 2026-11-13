@@ -2,7 +2,8 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
-import { ChevronRight, Home } from "lucide-react";
+import { Home } from "lucide-react";
+import { DirectionalArrow } from "@/components/ui/DirectionalArrow";
 import { cn } from "@/lib/utils";
 
 export interface BreadcrumbItem {
@@ -72,7 +73,7 @@ export function Breadcrumbs({
               )}
 
               {!isLast && (
-                <ChevronRight className="mx-1 h-4 w-4 shrink-0 text-muted-foreground/45 rtl:rotate-180 sm:mx-1.5" />
+                <DirectionalArrow direction="forward" variant="chevron" className="mx-1 h-4 w-4 shrink-0 text-muted-foreground/45 sm:mx-1.5" />
               )}
             </li>
           );
