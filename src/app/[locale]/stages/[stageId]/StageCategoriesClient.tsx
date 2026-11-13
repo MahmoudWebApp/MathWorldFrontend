@@ -1,7 +1,14 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { useGetCategoriesQuery, type CategoryDto } from '@/store/api/categoriesApi';
+import {
+  useGetCategoriesQuery,
+  useGetStageCategoryAccessQuery,
+  useGetStudentSubscriptionQuery,
+  type CategoryDto,
+} from '@/store/api/categoriesApi';
+import { useSelector } from 'react-redux';
+import { LockKeyhole } from 'lucide-react';
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
 import {
   AlertCircle,
@@ -31,6 +38,7 @@ interface CategoryPremiumCardProps {
   locale: string;
   stageId: number;
   iconUrl?: string | null;
+  locked: boolean;
 }
 
 interface OtherStagePremiumCardProps {
@@ -50,6 +58,7 @@ function CategoryPremiumCard({
   locale,
   stageId,
   iconUrl,
+  locked,
 }: CategoryPremiumCardProps) {
   return (
     <motion.div
@@ -59,7 +68,8 @@ function CategoryPremiumCard({
       className="h-full"
     >
       <Link
-        href={`/problems?categoryId=${category.Id}&stageId=${stageId}`}
+        href={locked ? '/premium' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
+        aria-label={locked ? (locale === 'ar' ? 'فئة مقفلة - ترقية إلى Premium' : 'Locked category - upgrade to Premium') : undefined}
         className={`brand-surface math-card group relative flex h-[240px] flex-col justify-between overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-2xl ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
@@ -68,6 +78,12 @@ function CategoryPremiumCard({
           style={{ background: style.spotlight }}
         />
 
+        {locked && (
+          <div className="absolute end-5 top-5 z-20 flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">
+            <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
+            {locale === 'ar' ? 'Premium' : 'Premium'}
+          </div>
+        )}
         {/* Header: Icon & Name */}
         <div className="relative z-10 flex flex-col gap-6">
           <div className="flex items-center justify-between">
@@ -210,8 +226,11 @@ interface StageCategoriesClientProps {
 export default function StageCategoriesClient({ stageId }: StageCategoriesClientProps) {
   const t = useTranslations();
   const locale = useLocale();
+  const authenticated = useSelector((state: { auth: { isAuthenticated: boolean } }) => state.auth.isAuthenticated);
+  const { data: access, isLoading: accessLoading, isError: accessError } = useGetStageCategoryAccessQuery(stageId, { skip: !Number.isSafeInteger(stageId) || stageId <= 0 });
+  const { data: subscription, isLoading: subscriptionLoading } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
+  const isPremium = subscription?.IsPremium === true;
 
-  
   const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
   const { data: stages, isLoading: stagesLoading } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
@@ -220,9 +239,9 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0));
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
-  const isLoading = categoriesLoading || stagesLoading;
+  const isLoading = categoriesLoading || stagesLoading || accessLoading || (authenticated && subscriptionLoading);
 
-  if (categoriesError) {
+  if (categoriesError || accessError) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
@@ -338,6 +357,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   locale={locale}
                   stageId={stageId}
                   iconUrl={iconUrl}
+                  locked={!isPremium && !access?.FreeCategoryIds.includes(category.Id)}
                 />
               );
             })}
