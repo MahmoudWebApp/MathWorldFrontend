@@ -9,8 +9,8 @@ export default function PremiumInformationPage() {
   const locale = useLocale();
   const ar = locale === 'ar';
   const authenticated = useSelector(
-    (state: { auth: { isAuthenticated: boolean; user: { role?: string } | null } }) =>
-      state.auth.isAuthenticated && state.auth.user?.role === 'Student',
+    (state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
+      state.auth.isAuthenticated && state.auth.user?.Role === 'Student',
   );
   const { data: entitlement, isLoading, isError, refetch } = useGetStudentSubscriptionQuery(undefined, {
     skip: !authenticated,
