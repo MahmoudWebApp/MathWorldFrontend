@@ -33,7 +33,7 @@ export function isGeometryScene(value: unknown): value is GeometryScene {
   const ids = new Set<string>();
   for (const item of scene.objects) {
     if (!item || typeof item.id !== 'string' || !/^[a-zA-Z0-9_-]{1,40}$/.test(item.id) ||
-        ids.has(item.id) || !validText(item.label)) return false;
+        ids.has(item.id) || !validText('label' in item ? item.label : undefined)) return false;
     ids.add(item.id);
     switch (item.type) {
       case 'point':
