@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/Button";
-import { useGetCategoriesQuery } from "@/store/api/categoriesApi";
+import { useGetCategoriesQuery, useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from "@/store/api/categoriesApi";
+import { useSelector } from "react-redux";
 import { useGetStagesQuery } from "@/store/api/stagesApi";
 import { useSearchProblemsQuery } from "@/store/api/problemsApi";
 import type { ProblemPreview } from "@/store/api/types";
@@ -76,6 +77,11 @@ function ProblemsPageClient() {
   // These come from URL and are fixed
   const stageId = urlStageId;
   const categoryId = urlCategoryId;
+  const authenticated = useSelector((state: { auth: { isAuthenticated: boolean } }) => state.auth.isAuthenticated);
+  const { data: access, isLoading: accessLoading } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
+  const { data: subscription, isLoading: subscriptionLoading } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
+  const accessPending = Boolean(categoryId && stageId) && (accessLoading || (authenticated && subscriptionLoading));
+  const categoryLocked = Boolean(categoryId && stageId && access && subscription?.IsPremium !== true && !access.FreeCategoryIds.includes(Number(categoryId)));
 
   // ── API queries ─────────────────────────────────────────
   const { data: categories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
@@ -95,7 +101,7 @@ function ProblemsPageClient() {
       PageSize: DEFAULT_PAGE_SIZE,
       locale: locale,
     },
-    { skip: false },
+    { skip: categoryLocked || accessPending },
   );
 
   // ── Derived data ────────────────────────────────────────
@@ -162,8 +168,12 @@ function ProblemsPageClient() {
       ? t("search.searchInStage", { stage: stageName })
       : t("search.placeholder");
 
+  if (categoryLocked) {
+    return <section className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-3xl font-bold">{locale === "ar" ? "هذه الفئة مقفلة" : "This category is locked"}</h1><p className="mb-6">{locale === "ar" ? "الفئتان المجانيتان بلا حد يومي، وباقي الفئات مع Premium." : "Two free categories offer unlimited daily practice. Premium unlocks the rest."}</p><Link href="/premium" className="rounded-xl border px-5 py-3">Premium</Link></section>;
+  }
+
   // ── Early return: full page loader ───────────────────────
-  if (isLoading && !searchResults) {
+  if ((isLoading || accessPending) && !searchResults) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-20 flex flex-col justify-center items-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
