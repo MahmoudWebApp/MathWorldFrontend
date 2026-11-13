@@ -23,7 +23,7 @@ export default function CurriculumReadinessPage() {
       {isLoading && <p role="status">{ar ? 'جارٍ تحميل التقرير...' : 'Loading report...'}</p>}
       {error && <p role="alert" className="text-red-600">{ar ? 'تعذر جلب التقرير. تأكد من تسجيل الدخول كأدمن.' : 'Could not load report. Admin access is required.'}</p>}
       {data && <>
-        <CurriculumImportPreviewPanel />
+        <CurriculumImportPreviewPanel stages={data.Stages} />
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             [ar ? 'المراحل' : 'Stages', data.StageCount],
