@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useSelector } from "react-redux";
 import {
-  ArrowLeft,
   BookOpen,
   CalendarClock,
   CheckCircle,
@@ -46,6 +45,7 @@ import {
 } from "@/store/api/usersApi";
 import { Badge } from "@/components/ui/Badge";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { DirectionalArrow } from "@/components/ui/DirectionalArrow";
 import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
 import { RichText } from "@/components/ui/RichText";
@@ -560,7 +560,7 @@ export default function ProblemPage() {
           href="/problems"
           className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
         >
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <DirectionalArrow direction="back" />
           {t("problem.backToProblems")}
         </Link>
       </div>
