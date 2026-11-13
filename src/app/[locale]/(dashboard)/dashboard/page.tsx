@@ -7,7 +7,6 @@ import { Link, useRouter } from "@/i18n/routing";
 import { ProblemCard } from "@/components/problems/ProblemCard";
 import {
   Heart,
-  TrendUp,
   Award,
   Calendar,
   Warning2,
@@ -81,38 +80,32 @@ export default function UserDashboardPage() {
         practice: "Explore stage problems",
       };
 
+  // Web and Flutter show the same stage-based learning journey.
+  // A global first-attempt success rate is not a completion percentage.
   const stats = [
     {
       icon: Target,
-      label: t("dashboard.user.solvedProblems"),
-      value: dashboard?.SolvedProblemsCount ?? 0,
-      color: "text-primary",
-      bg: "bg-primary/10",
-      isLucide: true,
+      label: journeyLabels.solved,
+      value: journey ? `${journey.SolvedProblems}/${journey.TotalProblems}` : "—",
+      color: "text-primary", bg: "bg-primary/10", isLucide: true,
     },
     {
-      icon: Heart,
-      label: t("dashboard.user.favoriteProblems"),
-      value: dashboard?.FavoriteProblemsCount ?? 0,
-      color: "text-red-500",
-      bg: "bg-red-50 dark:bg-red-900/20",
-      isLucide: false,
+      icon: NotebookTabs,
+      label: journeyLabels.attempted,
+      value: journey?.AttemptedProblems ?? "—",
+      color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", isLucide: true,
     },
     {
       icon: Trophy,
-      label: t("dashboard.user.totalPoints"),
-      value: dashboard?.TotalPoints ?? 0,
-      color: "text-yellow-500",
-      bg: "bg-yellow-50 dark:bg-yellow-900/20",
-      isLucide: true,
+      label: journeyLabels.points,
+      value: journey?.TotalPoints ?? "—",
+      color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/20", isLucide: true,
     },
     {
-      icon: TrendUp,
-      label: t("dashboard.user.successRate"),
-      value: `${dashboard?.SuccessRate ?? 0}%`,
-      color: "text-green-500",
-      bg: "bg-green-50 dark:bg-green-900/20",
-      isLucide: false,
+      icon: Award,
+      label: journeyLabels.progress,
+      value: journey ? `${journey.CompletionPercent}%` : "—",
+      color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20", isLucide: false,
     },
   ];
 
@@ -318,7 +311,7 @@ export default function UserDashboardPage() {
                   <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>{t("dashboard.user.noSolvedYet")}</p>
                   <Link
-                    href="/stages"
+                    href={stageId ? `/stages/${stageId}` : "/learning-stage"}
                     className="text-primary hover:underline mt-2 inline-block font-medium"
                   >
                     {t("dashboard.user.startSolving")}
@@ -371,7 +364,7 @@ export default function UserDashboardPage() {
                   <Heart className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>{t("dashboard.user.noFavoritesYet")}</p>
                   <Link
-                    href="/stages"
+                    href={stageId ? `/stages/${stageId}` : "/learning-stage"}
                     className="text-primary hover:underline mt-2 inline-block font-medium"
                   >
                       {t("hero.browseStages")}
