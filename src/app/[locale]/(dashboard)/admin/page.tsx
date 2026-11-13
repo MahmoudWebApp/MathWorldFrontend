@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
       refetchOnMountOrArgChange: true,
     },
   );
-  const { data: learners } = useGetAdminLearnersQuery(
+  const { data: learners, isLoading: learnersLoading, isError: learnersError } = useGetAdminLearnersQuery(
     { Page: 1, PageSize: 4 }, { refetchOnMountOrArgChange: true },
   );
 
@@ -237,7 +237,9 @@ export default function AdminDashboardPage() {
                   {t.all}<DirectionalArrow direction="forward" />
                 </Link>
               </div>
-              {!learners?.Learners.length ? <p className="py-10 text-center text-sm text-muted-foreground">{t.noLearners}</p> :
+              {learnersLoading ? <p role="status" className="py-10 text-center text-sm text-muted-foreground">{t.loading}</p>
+                : learnersError ? <p role="alert" className="py-10 text-center text-sm text-destructive">{t.error}</p>
+                : !learners?.Learners.length ? <p className="py-10 text-center text-sm text-muted-foreground">{t.noLearners}</p> :
                 <div className="space-y-2">
                   {learners.Learners.map(learner => (
                     <Link key={learner.Id} href={`/admin/users/${learner.Id}`}
