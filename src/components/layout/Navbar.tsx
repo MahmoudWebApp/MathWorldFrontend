@@ -168,6 +168,13 @@ function NavbarContent() {
               {t('nav.home')}
             </Link>
             
+            {user?.Role === 'Student' && user.CurrentStageId ? (
+              <Link href={`/stages/${user.CurrentStageId}`}
+                className={cn('rounded-xl px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted/80',
+                  isStagesActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
+                {locale === 'ar' ? 'فئات مرحلتي' : 'My stage topics'}
+              </Link>
+            ) : (
             {/* Awesome Mega Menu for Stages */}
             <div className="relative" onMouseEnter={handleStagesMouseEnter} onMouseLeave={handleStagesMouseLeave}>
               <Link
@@ -221,6 +228,7 @@ function NavbarContent() {
               </AnimatePresence>
             </div>
 
+            )}
             <Link
               href="/about"
               className={cn(
@@ -380,6 +388,16 @@ function NavbarContent() {
                 {t('nav.home')}
               </Link>
               
+              {user?.Role === 'Student' && user.CurrentStageId ? (
+                <Link href={`/stages/${user.CurrentStageId}`}
+                  className={cn('flex items-center gap-3 rounded-xl px-4 py-3 font-semibold',
+                    isStagesActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')}
+                  onClick={() => setMobileMenuOpen(false)}>
+                  <BookMarked className="h-5 w-5" />
+                  {locale === 'ar' ? 'فئات مرحلتي' : 'My stage topics'}
+                </Link>
+              ) : (
+                <>
               <Link href="/stages" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', isStagesActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
                 <BookMarked className="h-5 w-5" />
                 {t('nav.stages')}
@@ -401,6 +419,8 @@ function NavbarContent() {
                 </div>
               )}
 
+                </>
+              )}
               <Link href="/about" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', isAboutActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
                 <Info className="h-5 w-5" />
                 {t('nav.about')}
