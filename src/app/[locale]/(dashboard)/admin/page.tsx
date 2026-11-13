@@ -91,7 +91,7 @@ export default function AdminDashboardPage() {
     { title: label.accuracy, hint: label.accuracyInfo, value: `${overview.CorrectRatePercent}%`, icon: Gauge },
   ] : [];
 
-  const sections = ADMIN_NAV_ITEMS.filter(item => item.group === 'management');
+  const sections = ADMIN_NAV_ITEMS.filter(item => item.group !== 'overview');
   return (
     <main className="container mx-auto max-w-7xl space-y-8 px-4 py-8 md:px-10">
       <header className="flex flex-wrap items-start justify-between gap-4">
