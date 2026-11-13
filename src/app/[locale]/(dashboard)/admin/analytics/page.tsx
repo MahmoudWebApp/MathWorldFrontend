@@ -175,8 +175,8 @@ export default function AdminAnalyticsPage() {
                         <XAxis dataKey="label" minTickGap={20} tick={{ fontSize: 11 }} />
                         <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                         <Tooltip />
-                        <Area type="monotone" dataKey="attempts" name={labels.attempt} stroke="#7155da" fill="#7155da" fillOpacity={0.15} />
-                        <Area type="monotone" dataKey="correct" name={labels.correct} stroke="#1b8354" fill="#1b8354" fillOpacity={0.1} />
+                        <Area type="monotone" dataKey="attempts" name={labels.attempt} stroke="var(--color-brand-primary-strong)" fill="var(--color-brand-primary-strong)" fillOpacity={0.15} />
+                        <Area type="monotone" dataKey="correct" name={labels.correct} stroke="var(--color-brand-secondary)" fill="var(--color-brand-secondary)" fillOpacity={0.1} />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
