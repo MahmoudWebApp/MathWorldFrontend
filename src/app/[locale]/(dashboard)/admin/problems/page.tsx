@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import {
@@ -109,8 +110,19 @@ const defaultFilters = {
    ──────────────────────────────────────────── */
 
 export default function AdminProblemsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
+      <AdminProblemsPageContent />
+    </Suspense>
+  );
+}
+
+function AdminProblemsPageContent() {
   const t = useTranslations();
   const locale = useLocale();
+  const searchParams = useSearchParams();
+  const deepLinkKey = searchParams.toString();
+  const appliedDeepLink = useRef<string | null>(null);
 
   const [view, setView] = useState<"list" | "form">("list");
   const [searchText, setSearchText] = useState("");
@@ -128,6 +140,37 @@ export default function AdminProblemsPage() {
 
   const { data: allCategories } = useGetAdminCategoriesQuery();
   const { data: stages } = useGetAdminStagesQuery();
+
+  // Following Stage -> Category -> Problems preserves the category and
+  // opens a ready-to-fill question form when the link says create=1.
+  // Validate the relationship against real API data before preselecting.
+  useEffect(() => {
+    if (!stages || !allCategories || appliedDeepLink.current === deepLinkKey) return;
+    const stageRaw = searchParams.get("stageId");
+    const categoryRaw = searchParams.get("categoryId");
+    const stageId = stageRaw ? Number(stageRaw) : 0;
+    const categoryId = categoryRaw ? Number(categoryRaw) : 0;
+    const validStage = Number.isSafeInteger(stageId) && stageId > 0
+      && stages.some(s => s.Id === stageId) ? stageId : undefined;
+    const validCategory = validStage && Number.isSafeInteger(categoryId) && categoryId > 0
+      && allCategories.some(c => c.Id === categoryId && c.StageId === validStage)
+      ? categoryId : undefined;
+    appliedDeepLink.current = deepLinkKey;
+    if (validStage) {
+      setFilters(prev => ({
+        ...prev, StageId: validStage, CategoryId: validCategory, Page: 1,
+      }));
+    } else if (stageRaw || categoryRaw) {
+      setFilters(prev => ({ ...prev, StageId: undefined, CategoryId: undefined, Page: 1 }));
+    }
+    if (searchParams.get("create") === "1" && validStage && validCategory) {
+      setEditingId(null);
+      setForm({ ...emptyForm, StageId: validStage, CategoryId: validCategory,
+        Options: emptyForm.Options.map(option => ({...option})) });
+      setFormErrors({});
+      setView("form");
+    }
+  }, [deepLinkKey, searchParams, stages, allCategories]);
 
   const [createProblem, { isLoading: isCreating }] = useCreateProblemMutation();
   const [updateProblem, { isLoading: isUpdating }] = useUpdateProblemMutation();
@@ -177,6 +220,11 @@ export default function AdminProblemsPage() {
       errors.CategoryId = t("common.required");
     if (!form.StageId || form.StageId === 0)
       errors.StageId = t("admin.problems.stageRequired");
+    if (form.CategoryId && form.StageId &&
+        !allCategories?.some(c => c.Id === form.CategoryId && c.StageId === form.StageId))
+      errors.CategoryId = locale === "ar"
+        ? "الفئة المحددة لا تنتمي إلى المستوى التعليمي المختار."
+        : "The selected category does not belong to this educational stage.";
     if (!form.Points || form.Points <= 0)
       errors.Points = t("admin.problems.pointsMustBePositive");
 
@@ -193,7 +241,7 @@ export default function AdminProblemsPage() {
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [form, t]);
+  }, [form, t, allCategories, locale]);
 
   const clearError = (key: string) => {
     setFormErrors((prev) => {
@@ -247,7 +295,9 @@ export default function AdminProblemsPage() {
       });
     } else {
       setEditingId(null);
-      setForm(emptyForm);
+      setForm({ ...emptyForm, StageId: filters.StageId ?? 0,
+        CategoryId: filters.CategoryId ?? 0,
+        Options: emptyForm.Options.map(option => ({...option})) });
     }
     setFormErrors({});
     setView("form");
@@ -319,9 +369,11 @@ export default function AdminProblemsPage() {
   };
 
   const getStageName = (stageId: number) =>
-    stages?.find((s) => s.Id === stageId)?.NameAr || "";
+    (locale === "ar" ? stages?.find(s => s.Id === stageId)?.NameAr :
+      stages?.find(s => s.Id === stageId)?.NameEn) || "";
   const getCategoryName = (categoryId: number) =>
-    allCategories?.find((c) => c.Id === categoryId)?.NameAr || "-";
+    (locale === "ar" ? allCategories?.find(c => c.Id === categoryId)?.NameAr :
+      allCategories?.find(c => c.Id === categoryId)?.NameEn) || "-";
 
   const FieldError = ({ id }: { id: string }) =>
     formErrors[id] ? (
@@ -416,6 +468,11 @@ export default function AdminProblemsPage() {
                     ? t("admin.problems.editSubtitle")
                     : t("admin.problems.addSubtitle")}
                 </p>
+                {form.StageId > 0 && form.CategoryId > 0 && (
+                  <p className="mt-1 text-xs font-semibold text-primary">
+                    {getStageName(form.StageId)} / {getCategoryName(form.CategoryId)}
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -858,6 +915,14 @@ export default function AdminProblemsPage() {
       <Breadcrumbs
         items={[
           { label: t("nav.admin"), href: "/admin" },
+          { label: t("admin.stages.title"), href: "/admin/stages" },
+          ...(filters.StageId ? [{
+            label: getStageName(filters.StageId),
+            href: `/admin/categories?stageId=${filters.StageId}`,
+          }] : []),
+          ...(filters.CategoryId ? [{
+            label: getCategoryName(filters.CategoryId),
+          }] : []),
           { label: t("admin.problems.title") },
         ]}
         className="mb-6"
@@ -868,6 +933,23 @@ export default function AdminProblemsPage() {
           <p className="text-muted-foreground mt-1">
             {t("admin.problems.subtitle")}
           </p>
+          {filters.StageId && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-primary">
+              <Link href={`/${locale}/admin/categories?stageId=${filters.StageId}`}
+                className="inline-flex items-center gap-1 hover:underline">
+                <DirectionalChevron direction="back" className="h-4 w-4" />
+                {locale === "ar" ? "فئات المستوى" : "Stage categories"}
+              </Link>
+              <span className="text-muted-foreground">/</span>
+              <span>{getStageName(filters.StageId)}</span>
+              {filters.CategoryId && (
+                <>
+                  <span className="text-muted-foreground">/</span>
+                  <span>{getCategoryName(filters.CategoryId)}</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {!isSearching && totalProblems > 0 && (
