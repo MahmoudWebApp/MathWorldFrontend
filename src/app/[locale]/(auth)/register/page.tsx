@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDispatch } from 'react-redux';
-import { ArrowRight2 } from 'iconsax-reactjs';
+import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import {
   Eye,
   EyeOff,
@@ -230,7 +230,7 @@ export default function RegisterPage() {
               ) : (
                 <>
                   {t('auth.register.submit')}
-                  <ArrowRight2 className="h-4 w-4 transition-transform rtl:rotate-180" />
+                  <DirectionalArrow direction="forward" />
                 </>
               )}
             </Button>
