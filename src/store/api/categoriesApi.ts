@@ -72,12 +72,22 @@ export const categoriesApi = createApi({
     getStageCategoryAccess: builder.query<StageCategoryAccessDto, number>({
       query: (stageId) => `/stages/${stageId}/free-categories`,
       providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
+      providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
     }),
     getStudentSubscription: builder.query<StudentSubscriptionDto, void>({
       query: () => '/users/subscription',
     }),
 
     updateStageFreeCategories: builder.mutation<void, { stageId: number; categoryIds: number[] }>({
+      query: ({ stageId, categoryIds }) => ({
+        url: `/admin/stages/${stageId}/free-categories`,
+        method: 'PUT',
+        body: { CategoryIds: categoryIds },
+      }),
+      invalidatesTags: (_result, _error, { stageId }) => [{ type: 'StageAccess', id: stageId }],
+    }),
+
+    updateStageFreeCategories: builder.mutation<{ StageId: number; FreeCategoryIds: number[] }, { stageId: number; categoryIds: number[] }>({
       query: ({ stageId, categoryIds }) => ({
         url: `/admin/stages/${stageId}/free-categories`,
         method: 'PUT',
@@ -152,6 +162,7 @@ export const categoriesApi = createApi({
 export const {
   useGetCategoriesQuery,
   useGetStageCategoryAccessQuery,
+  useUpdateStageFreeCategoriesMutation,
   useGetStudentSubscriptionQuery,
   useUpdateStageFreeCategoriesMutation,
   useGetAdminCategoriesQuery,
