@@ -26,7 +26,7 @@ export default function AdminLearnerDetailPage() {
   );
   const { data: attemptData, isLoading: attemptsLoading, isError: attemptsError } =
     useGetAdminLearnerAttemptsQuery(
-      { LearnerId: learnerId, StageId: stageId, Page: page },
+      { LearnerId: learnerId, StageId: stageId ?? data?.Learner.CurrentStageId ?? undefined, Page: page },
       { skip: !validId || isError, refetchOnMountOrArgChange: true },
     );
 
@@ -75,8 +75,13 @@ export default function AdminLearnerDetailPage() {
     }) : label.never;
   const stageName = (stage: { NameAr: string; NameEn: string }) => ar ? stage.NameAr : stage.NameEn;
   const selectedStage = stageId ?? data?.Learner.CurrentStageId;
-  const timeDisplay = (seconds: number) =>
-    seconds >= 3600 ? `${nf(Math.round(seconds / 60))} min` : `${nf(Math.round(seconds / 60))} min`;
+  const timeDisplay = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remaining = seconds % 60;
+    return minutes > 0
+      ? `${nf(minutes)} ${ar ? 'د' : 'min'} ${remaining ? `${nf(remaining)} ${ar ? 'ث' : 'sec'}` : ''}`
+      : `${nf(remaining)} ${ar ? 'ث' : 'sec'}`;
+  };
   const summary = data ? [
     { label: label.solved, value: nf(data.Learner.SolvedProblems), Icon: BookOpen },
     { label: label.attempts, value: nf(data.TotalAttempts), Icon: ListChecks },
