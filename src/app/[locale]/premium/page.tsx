@@ -142,10 +142,13 @@ export default function PremiumInformationPage() {
             ))}
             <li className="flex items-start gap-3 text-sm leading-7 text-muted-foreground">
               <LockKeyhole className="mt-1 h-5 w-5 shrink-0" aria-hidden />
-              <span>{ar ? 'قريباً: تقارير الإحصائيات وExcel/PDF والتواصل مع المدرسين.'
-                : 'Planned: advanced reports, Excel/PDF exports and teacher connections.'}</span>
+              <span>{ar ? 'تقرير شخصي وتصدير CSV لـ Excel، والحفظ PDF عبر الطباعة. التواصل مع المدرسين لاحقاً.'
+                : 'Personal report, Excel-ready CSV and print-to-PDF. Teacher connections are planned.'}</span>
             </li>
           </ul>
+          <Link href="/dashboard/analytics" className="mt-8 inline-flex items-center justify-center rounded-xl border border-primary/30 bg-background px-5 py-3 text-sm font-bold text-primary hover:bg-primary/5">
+            {ar ? 'عرض تقريري الشخصي' : 'View my progress report'}
+          </Link>
           <p className="mt-8 rounded-xl border border-primary/20 bg-background/70 px-4 py-3 text-center text-sm font-medium">
             <ShieldCheck className="me-2 inline h-4 w-4 text-primary" aria-hidden />
             {ar ? 'الدفع الإلكتروني غير مفعّل حالياً. يمكن للأدمن تفعيل الاشتراك مؤقتاً.'
