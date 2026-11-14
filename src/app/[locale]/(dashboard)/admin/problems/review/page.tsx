@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { BookCheck, CheckCheck, ClipboardList, ShieldCheck, XCircle } from 'lucide-react';
+import { LatexPreview } from '@/components/ui/LatexPreview';
+import { RichText } from '@/components/ui/RichText';
 import {
   useGetCurriculumDraftsQuery,
   useGetCurriculumDraftQuery,
@@ -24,10 +26,10 @@ export default function CurriculumReviewPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const { data: list, isLoading, isError } = useGetCurriculumDraftsQuery({
+  const { currentData: list, isLoading, isFetching: loadingList, isError, refetch: retryList } = useGetCurriculumDraftsQuery({
     page, ...(status ? { status } : {}),
   });
-  const { data: detail, isFetching: loadingDetail } = useGetCurriculumDraftQuery(
+  const { currentData: detail, isFetching: loadingDetail, isError: detailError, refetch: retryDetail } = useGetCurriculumDraftQuery(
     selected ?? 0, { skip: selected == null },
   );
   const [reviewDraft, { isLoading: reviewing }] = useReviewCurriculumDraftMutation();
@@ -99,21 +101,26 @@ export default function CurriculumReviewPage() {
           <h2 className="font-bold">{ar ? 'الدفعات المسجلة' : 'Submitted batches'}</h2>
           <label className="block text-sm">
             <span className="sr-only">{ar ? 'حالة الدفعة' : 'Batch status'}</span>
-            <select value={status} onChange={e => {setStatus(e.target.value as CurriculumDraftStatus | '');setPage(1);}}
+            <select value={status} onChange={e => {setStatus(e.target.value as CurriculumDraftStatus | '');setPage(1);setSelected(null);setError('');setMessage('');}}
               className="w-full rounded-lg border bg-background p-2.5">
               <option value="">{ar ? 'كل الحالات' : 'All statuses'}</option>
               {STATUSES.map(s => <option value={s} key={s}>{s}</option>)}
             </select>
           </label>
-          {isLoading && <p className="text-sm text-muted-foreground">{ar ? 'جارٍ التحميل…' : 'Loading…'}</p>}
-          {isError && <p role="alert" className="text-sm text-destructive">{ar ? 'تعذّر تحميل الدفعات' : 'Failed to load batches'}</p>}
+          {(isLoading || loadingList) && <p role="status" className="text-sm text-muted-foreground">{ar ? 'جارٍ التحميل…' : 'Loading…'}</p>}
+          {isError && <div role="alert" className="space-y-2 rounded-xl border border-destructive/30 p-3 text-sm text-destructive">
+            <p>{ar ? 'تعذّر تحميل الدفعات' : 'Failed to load batches'}</p>
+            <button type="button" onClick={() => void retryList()} className="rounded-lg border border-current px-3 py-1.5 font-semibold">
+              {ar ? 'إعادة المحاولة' : 'Retry'}
+            </button>
+          </div>}
           {!isLoading && !isError && !list?.Batches.length && (
             <p className="rounded-xl bg-muted/40 p-5 text-center text-sm text-muted-foreground">
               {ar ? 'ما في دفعات مسجلة بهالحالة.' : 'No batches in this status.'}
             </p>
           )}
-          <div className="max-h-[32rem] space-y-2 overflow-y-auto">
-            {list?.Batches.map(batch => (
+          <div className="max-h-[32rem] space-y-2 overflow-y-auto" aria-busy={loadingList}>
+            {!isError && list?.Batches.map(batch => (
               <button type="button" key={batch.Id} onClick={() => choose(batch.Id)}
                 aria-pressed={selected === batch.Id}
                 className={`w-full rounded-xl border p-3 text-start transition-colors hover:bg-primary/5 ${selected === batch.Id ? 'border-primary bg-primary/5' : 'border-border'}`}>
@@ -131,11 +138,11 @@ export default function CurriculumReviewPage() {
             ))}
           </div>
           <div className="flex items-center justify-between border-t pt-3 text-sm">
-            <button disabled={page <= 1} className="font-semibold text-primary disabled:opacity-40" onClick={() => setPage(p => p - 1)}>
+            <button type="button" disabled={loadingList || page <= 1} className="font-semibold text-primary disabled:opacity-40" onClick={() => setPage(p => p - 1)}>
               {ar ? 'السابق' : 'Previous'}
             </button>
             <span>{page} / {Math.max(1,Math.ceil((list?.Total ?? 0)/20))}</span>
-            <button disabled={!list || page * 20 >= list.Total} className="font-semibold text-primary disabled:opacity-40" onClick={() => setPage(p => p + 1)}>
+            <button type="button" disabled={loadingList || !list || page * 20 >= list.Total} className="font-semibold text-primary disabled:opacity-40" onClick={() => setPage(p => p + 1)}>
               {ar ? 'التالي' : 'Next'}
             </button>
           </div>
@@ -156,7 +163,7 @@ export default function CurriculumReviewPage() {
                 </h2>
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-bold text-primary">{detail.Status}</span>
               </div>
-              <div className="grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-4 text-sm">
+              <div className="grid grid-cols-1 gap-3 rounded-xl bg-muted/40 p-4 text-sm sm:grid-cols-2">
                 <p>{ar ? 'مسائل:' : 'Questions:'} <strong>{detail.ProblemCount}</strong></p>
                 <p>{ar ? 'المنشور:' : 'Published:'} <strong>{detail.PublishedCount}</strong></p>
                 <p>{ar ? 'المُرسل:' : 'Submitted by:'} #{detail.SubmittedByAdminId}</p>
@@ -176,16 +183,17 @@ export default function CurriculumReviewPage() {
                       {ar ? q.QuestionTextAr : q.QuestionTextEn}
                     </summary>
                     <div className="mt-3 space-y-3 text-sm">
-                      <p dir="rtl"><strong>AR:</strong> {q.QuestionTextAr}</p>
-                      <p dir="ltr"><strong>EN:</strong> {q.QuestionTextEn}</p>
+                      <div dir="rtl"><strong>AR:</strong><RichText text={q.QuestionTextAr} isArabic className="mt-1 break-words" /></div>
+                      <div dir="ltr"><strong>EN:</strong><RichText text={q.QuestionTextEn} className="mt-1 break-words" /></div>
                       <p><strong>StageId:</strong> {q.StageId} · <strong>CategoryId:</strong> {q.CategoryId}</p>
                       <ol className="space-y-1 ps-4">
-                        {q.Options.map(o => <li key={o.Order} className={o.IsCorrect ? 'font-semibold text-emerald-600' : ''} dir="ltr">
-                          {o.Order}. {o.LatexCode} {o.IsCorrect ? '✓' : ''}
+                        {q.Options.map(o => <li key={o.Order} className={o.IsCorrect ? 'rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-2 font-semibold' : 'rounded-lg border p-2'} dir="ltr">
+                          <span className="me-2 text-xs text-muted-foreground">{o.Order}.</span>
+                          <LatexPreview latex={o.LatexCode} /> {o.IsCorrect ? <span aria-label={ar ? 'الإجابة الصحيحة' : 'Correct answer'}>✓</span> : null}
                         </li>)}
                       </ol>
-                      <p dir="rtl"><strong>الحل:</strong> {q.DetailedSolutionAr}</p>
-                      <p dir="ltr"><strong>Solution:</strong> {q.DetailedSolutionEn}</p>
+                      <div dir="rtl"><strong>الحل:</strong><RichText text={q.DetailedSolutionAr} isArabic className="mt-1 break-words" /></div>
+                      <div dir="ltr"><strong>Solution:</strong><RichText text={q.DetailedSolutionEn} className="mt-1 break-words" /></div>
                     </div>
                   </details>
                 ))}
@@ -196,7 +204,7 @@ export default function CurriculumReviewPage() {
               {detail.Status === 'Pending' && (
                 <div className="space-y-3 rounded-xl border p-4">
                   <h3 className="font-semibold">{ar ? 'قرار المراجعة' : 'Editorial decision'}</h3>
-                  <textarea value={note} onChange={e=>setNote(e.target.value)} maxLength={1000} rows={3}
+                  <textarea aria-label={ar ? 'ملاحظة المراجعة' : 'Editorial review note'} value={note} onChange={e=>setNote(e.target.value)} maxLength={1000} rows={3}
                     placeholder={ar ? 'ملاحظة مراجعة مفصّلة (10 أحرف على الأقل)' : 'Detailed review note (minimum 10 characters)'}
                     className="w-full rounded-lg border bg-background p-3 outline-none focus:ring-2 focus:ring-primary" />
                   <div className="flex flex-wrap gap-3">
@@ -224,7 +232,7 @@ export default function CurriculumReviewPage() {
                   </p>
                   <label className="block space-y-1 text-sm font-semibold">
                     <span>{ar ? 'اكتب PUBLISH لتأكيد النشر' : 'Type PUBLISH to confirm'}</span>
-                    <input dir="ltr" value={publishConfirm} onChange={e=>setPublishConfirm(e.target.value)}
+                    <input dir="ltr" autoComplete="off" value={publishConfirm} onChange={e=>setPublishConfirm(e.target.value)}
                       className="w-full rounded-lg border bg-background p-2.5" placeholder="PUBLISH" />
                   </label>
                   <button type="button" disabled={publishing || publishConfirm !== 'PUBLISH'}
@@ -241,7 +249,12 @@ export default function CurriculumReviewPage() {
               )}
             </>
           ) : (
-            <p role="alert" className="py-20 text-center text-destructive">{ar ? 'لم تُعثر على الدفعة' : 'Batch not found'}</p>
+            <div role="alert" className="space-y-3 py-12 text-center text-destructive">
+              <p>{detailError ? (ar ? 'تعذر تحميل تفاصيل الدفعة.' : 'Failed to load batch details.') : (ar ? 'لم تُعثر على الدفعة' : 'Batch not found')}</p>
+              <button type="button" onClick={() => void retryDetail()} className="rounded-lg border border-current px-4 py-2 text-sm font-semibold">
+                {ar ? 'إعادة المحاولة' : 'Retry'}
+              </button>
+            </div>
           )}
         </section>
       </div>
