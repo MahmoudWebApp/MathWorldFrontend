@@ -93,6 +93,15 @@ Detailed release acceptance: [MATHWORLD_UI_BRAND_ACCEPTANCE.md](MATHWORLD_UI_BRA
 - **Release status:** Backend CI passed on `0ef27be18` after these changes, including PostgreSQL suites. Frontend CI must be checked for its latest SHA; physical screenshot and migrated staging checks remain open.
 - All changes are on feature branches only, not merged or published.
 
+## November 14 — complete 30-day notifications history (web, API and Flutter)
+
+- **Backend:** `GET /api/notifications` now supports `take=1..50` and `skip=0..10000` while filtering by active JWT owner and a rolling 30-day window. Returns `TotalCount`, `HasMore`, `Skip` and `Take` along with the existing items/unread count. Validates page inputs and keeps the existing mark-read endpoints unchanged. See backend `docs/NOTIFICATIONS_INBOX_PAGINATION_V1.md`.
+- **Web:** full authenticated `/notifications` page with next/previous pages, total/unread count, bilingual RTL/LTR copy, read item/mark-all, errors and retry. Bell popup now links to the full screen instead of implying its 30-item preview is the entire 30-day history.
+- **Mobile:** Flutter full-page inbox uses a separate paginated provider, keeps the bell first-page provider, invalidates the bell after read operations, supports bilingual page controls and pull-to-refresh. Data parsing accepts older API responses without pagination metadata.
+- **Tests:** disposable PostgreSQL integration checks cover multi-page ordering, page limits, read state and cross-user isolation. Flutter pagination parsing regression test added to the existing CI test suite.
+- **Not implemented:** SignalR/push, email/SMS, device-notification permission, 31+ actual-device interaction screenshot review, production deployment. Offset pagination can shift while new notices arrive mid-session; a refresh from page one reconciles.
+- All code remains on feature branches and draft PRs; CI on each current SHA must be verified before merging.
+
 ## Next high-priority acceptance work
 
 1. **Pull-request review and integration:** finish latest CI, review migrations and auth rules, check production parity on a staging environment, and smoke test web and mobile against migrated disposable PostgreSQL. No merges until all checks pass.
