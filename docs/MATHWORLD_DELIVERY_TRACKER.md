@@ -26,6 +26,9 @@
 - Premium reports: server-authorized personal attempt analytics and Excel-friendly CSV export with Arabic UTF-8 BOM. Web report includes CSV download + browser print/save-as-PDF (not a generated server PDF); Flutter shows the metrics and provides **clipboard CSV** only (not native XLSX/PDF download).
 - Editorial integration test: new PostgreSQL-backed CI checks JWT-owned inbox, subscription notice, milestone, anonymized leaderboard, badge counts, safe draft approve/publish, Premium private report and UTF-8 export. At latest successful snapshot the suite was green.
 - Category proposals: `docs/content/mathworld-proposed-16-new-categories.csv` drafts four new bilingual categories per stage (IDs intentionally omitted to preserve existing stage/category history). This is **not** an automatic import or published content.
+- Flutter Premium CSV: iOS/Android native file-sharing flow added with Arabic-compatible UTF-8 BOM; real file sharing, not clipboard-only. Requires device QA for share targets and file privacy; PDF remains web-print only.
+- Category safety: backend blocks moving populated/free-selected categories to another stage and deleting a selected Free category. Admin page now offers a safe read-only bilingual category CSV preview; proposed taxonomy is never auto-published.
+- Premium launch gifts: backend one-use, 144-bit random gift codes stored as SHA-256 hashes only, administrator issue/list/revoke, student atomic redemption with audited subscription changes and inbox notice; dedicated redemption rate limit. Web admin/student pages and Flutter student redemption route are on feature branches. These are **100% gifted Premium periods**, not payment discounts, and their availability in production is not implied.
 - Visual identity: Web BrandMark and Flutter BrandMark were visually compared; both use the violet/pink cap/sigma/x² mark. Actual launch icons need a device check.
 
 ## Next high-priority acceptance work
@@ -35,15 +38,15 @@
 3. **Notifications v2:** milestone achievement and subscription notifications are in place; add content announcements, optional FCM push and transactional email after consent, verification, rate limits and cost controls. SMS OFF for launch.
 4. **Web/Flutter parity:** test Arabic/English, RTL, accessible text, responsive screens, offline/error states, launch screen/icon on actual Android and iOS devices.
 5. **Student journey:** backend points, badges, stage-specific leaderboards and error notebook are present on branches; complete UI QA, stage isolation, learning recommendations, challenges and optional richer animations. Server-driven entitlements throughout.
-6. **Premium UX:** $5/year is a target, not a live checkout. Admin grants, audit and private analytics/CSV are implemented on branches; improve native file export on mobile and true PDF production, coupon planning, and eventual payment provider after legal/business readiness.
+6. **Premium UX:** $5/year is a target, not a live checkout. Admin grants, audit, private analytics/CSV and single-use 100%-gift codes are on branches; test device export/redeem, add true PDF and payment-processor percentage coupons only when checkout is integrated.
 7. **Content/editor tooling:** approved publication of the 64 question drafts, editorial approval of 16 proposed new categories, a dedicated safe category-import/review path, categorical SVG icon key migration, video links, mathematics diagrams and validation.
 8. **Security/production:** backups, restore test, monitoring, migration rehearsal, protected config/secrets, VPS/domain and final release gates.
 9. **Growth:** YouTube, TikTok, Facebook accounts/content pipeline and educational videos after core product readiness.
 
 ## Explicitly not completed
 
-- No live production migration, data insertion, publication, or payment activation was performed by this batch.
+- No live production migration, data insertion, publication, or payment activation was performed by this batch. Premium gifts require PostgreSQL migration and deployment before use.
 - 64 question drafts are not verified or approved for students. No content was directly inserted into production.
-- Push notifications, SignalR, email and SMS delivery are not implemented.
+- Push notifications, SignalR, email, SMS and percentage-off checkout codes are not implemented.
 - Green CI is per feature-branch SHA, and the newest builds may still be queued. Hands-on end-to-end and staging tests still need to follow.
 - The existing React Learning Player is a different project and must not be confused with MathWorld.
