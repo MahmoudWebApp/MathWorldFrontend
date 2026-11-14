@@ -16,6 +16,8 @@ FILES={
     "approved-web-mark":"public/mathworld-mark-transparent-v3.png",
     "favicon-16":"public/mathworld-favicon-16-v2.png",
     "favicon-32":"public/mathworld-favicon-32-v2.png",
+    "favicon-browser-ico":"public/mathworld-favicon-v2.ico",
+    "favicon-nextjs-app-ico":"src/app/favicon.ico",
     "apple-touch-icon":"public/apple-touch-icon.png",
     "web-pwa-192":"public/android-chrome-192x192.png",
     "web-pwa-512":"public/android-chrome-512x512.png",
