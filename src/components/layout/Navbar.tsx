@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
+import { NotificationBell } from '@/components/layout/NotificationBell';
+import { notificationsApi } from '@/store/api/notificationsApi';
 import { AdminNavDropdown, AdminNavMobile, ADMIN_NAV_ITEMS } from '@/components/admin/AdminNavigation';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -97,6 +99,7 @@ function NavbarContent() {
     dispatch(stagesApi.util.resetApiState());
     dispatch(statsApi.util.resetApiState());
     dispatch(usersApi.util.resetApiState());
+    dispatch(notificationsApi.util.resetApiState());
     setUserMenuOpen(false);
     router.push('/');
   };
@@ -286,6 +289,8 @@ function NavbarContent() {
             <Button variant="ghost" size="sm" className="rounded-full font-bold hover:bg-primary/10 hover:text-primary" onClick={toggleLocale}>
               {locale === 'ar' ? 'EN' : 'عربي'}
             </Button>
+
+            {mounted && isAuthenticated && <NotificationBell isAuthenticated={isAuthenticated} />}
 
             {/* Auth Section */}
             {!mounted || isLoading ? (
