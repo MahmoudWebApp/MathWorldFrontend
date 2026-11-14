@@ -127,13 +127,13 @@ export default function AdminDashboardPage() {
         ) : isLoading || !overview ? (
           <p role="status" className="rounded-xl border border-border bg-card p-7 text-center text-muted-foreground">{label.loading}</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4">
             {quickCards.map(({title,hint,value,icon:Icon}) => (
               <div key={title} className="math-card rounded-2xl border border-border p-4 md:p-5">
                 <div className="mb-3 inline-flex rounded-xl bg-primary/10 p-2.5 text-primary">
                   <Icon className="h-5 w-5" aria-hidden />
                 </div>
-                <p className="text-2xl font-bold tabular-nums">{value}</p>
+                <p className="break-words text-2xl font-bold tabular-nums">{value}</p>
                 <h3 className="mt-1 text-sm font-semibold">{title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
               </div>
