@@ -233,7 +233,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const locale = useLocale();
   const authenticated = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Student");
   const { data: access, isLoading: accessLoading, isError: accessError } = useGetStageCategoryAccessQuery(stageId, { skip: !Number.isSafeInteger(stageId) || stageId <= 0 });
-  const { data: subscription, isLoading: subscriptionLoading } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
+  const { data: subscription, isLoading: subscriptionLoading, isError: subscriptionError } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
   const isAdmin = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Admin");
   const isPremium = isAdmin || subscription?.IsPremium === true;
 
@@ -247,7 +247,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   const isLoading = categoriesLoading || stagesLoading || accessLoading || (authenticated && subscriptionLoading);
 
-  if (categoriesError || accessError) {
+  if (categoriesError || accessError || (authenticated && subscriptionError)) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
