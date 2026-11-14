@@ -6,6 +6,7 @@ import { Link } from '@/i18n/routing';
 import { FileSpreadsheet, FileDown, ShieldCheck, AlertTriangle } from 'lucide-react';
 import {
   usePreviewCurriculumImportMutation,
+  useSubmitCurriculumDraftMutation,
   type CurriculumImportPreview,
   type ProposedCurriculumProblem,
 } from '@/store/api/curriculumApi';
@@ -92,6 +93,8 @@ export default function CurriculumCsvPreviewPage() {
   const [parseError, setParseError] = useState('');
   const [preview, setPreview] = useState<CurriculumImportPreview | null>(null);
   const [previewBatch, { isLoading }] = usePreviewCurriculumImportMutation();
+  const [submitDraft, { isLoading: isSubmittingDraft }] = useSubmitCurriculumDraftMutation();
+  const [savedBatchId, setSavedBatchId] = useState<number | null>(null);
   const { data: stages } = useGetAdminStagesQuery();
   const { data: categories } = useGetAdminCategoriesQuery();
 
@@ -109,6 +112,7 @@ export default function CurriculumCsvPreviewPage() {
     setName(file?.name ?? '');
     setDraft([]);
     setPreview(null);
+    setSavedBatchId(null);
     setParseError('');
     if (!file) return;
     if (file.size > 1024 * 1024) {
@@ -130,6 +134,19 @@ export default function CurriculumCsvPreviewPage() {
     } catch {
       setParseError(ar ? 'تعذّرت المعاينة. تأكد من الدخول كأدمن ومن معرفات المراحل والفئات.'
         : 'Preview failed. Check admin access and stage/category IDs.');
+    }
+  };
+
+  const saveForReview = async () => {
+    setParseError('');
+    if (!preview?.CanProceedToEditorialReview || !draft.length) return;
+    try {
+      const result = await submitDraft({ Problems: draft }).unwrap();
+      setSavedBatchId(result.Id);
+    } catch {
+      setParseError(ar
+        ? 'فشل تسجيل الدفعة للمراجعة. تأكد من صلاحية الأدمن وصحة البيانات.'
+        : 'Could not submit draft for review. Check admin access and content validity.');
     }
   };
 
@@ -215,9 +232,27 @@ export default function CurriculumCsvPreviewPage() {
               {item.Errors.length > 0 && <p className="mt-1 text-sm text-destructive" dir="ltr">{item.Errors.join(', ')}</p>}
             </div>
           ))}
+          {preview.CanProceedToEditorialReview && savedBatchId == null && (
+            <button type="button" disabled={isSubmittingDraft} onClick={() => void saveForReview()}
+              className="rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-foreground disabled:opacity-50">
+              {isSubmittingDraft
+                ? (ar ? 'جارٍ إرسال الدفعة…' : 'Submitting draft…')
+                : (ar ? 'تسجيل الدفعة للمراجعة (بدون نشر)' : 'Submit draft for review (no publish)')}
+            </button>
+          )}
+          {savedBatchId !== null && (
+            <div role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+              <p className="font-semibold">{ar
+                ? `تم حفظ الدفعة رقم ${savedBatchId} للمراجعة، بدون نشر أي مسألة.`
+                : `Batch #${savedBatchId} saved for review; no questions published.`}</p>
+              <Link href="/admin/problems/review" className="mt-2 inline-block font-semibold text-primary hover:underline">
+                {ar ? 'فتح قائمة مراجعة الدفعات' : 'Open editorial review queue'}
+              </Link>
+            </div>
+          )}
           <p className="text-sm text-muted-foreground">
-            {ar ? 'لا يوجد زر نشر هنا. بعد إصلاح الأخطاء، يلزم اعتماد المحتوى من المراجع.'
-              : 'There is no publish action here. All questions require editorial approval.'}
+            {ar ? 'النشر خطوة منفصلة بعد المراجعة والاعتماد الصريح.'
+              : 'Publishing is a separate step after explicit editorial approval.'}
           </p>
         </section>
       )}
