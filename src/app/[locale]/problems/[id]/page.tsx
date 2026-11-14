@@ -203,6 +203,20 @@ export default function ProblemPage() {
   const [activeTab, setActiveTab] = useState<"question" | "video">("question");
   const [historyExpanded, setHistoryExpanded] = useState(false);
 
+  // The same dynamic route component can remain mounted when navigating
+  // between question IDs. Never expose a previous question's selected answer,
+  // result or pre-answer Premium solution in the next question.
+  useEffect(() => {
+    setSelectedOptionId(null);
+    setLocalAnswerResult(null);
+    setSubmissionDone(false);
+    setRetryMode(false);
+    setSubmitError("");
+    setActiveTab("question");
+    setHistoryExpanded(false);
+    attemptStartedAtRef.current = Date.now();
+  }, [problemId]);
+
   useEffect(() => {
     if (!studentProblem || retryMode) {
       return;
@@ -228,7 +242,9 @@ export default function ProblemPage() {
 
     const timer = window.setTimeout(() => {
       solutionRef.current?.scrollIntoView({
-        behavior: "smooth",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
         block: "start",
       });
     }, 200);
