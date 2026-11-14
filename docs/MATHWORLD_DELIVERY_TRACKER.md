@@ -42,6 +42,15 @@ Detailed release acceptance: [MATHWORLD_UI_BRAND_ACCEPTANCE.md](MATHWORLD_UI_BRA
 - **Progress on UI:** removed Flutter wordmark direction/cropping issues, improved narrow phone metrics and semantics, and improved web dark button contrast, keyboard focus/reduced motion and 320px admin cards. **Still high-priority:** screen-by-screen web/mobile UI/UX QA in Arabic RTL and English LTR; shared brand components, real admin dashboard charts, learner stage/category/problem flows, interactive geometric content, responsive/mobile, dark/light and all loading/error states.
 - Green CI is not a substitute for visual/device approval. Do not mark UI or launcher icon complete until acceptance screenshots and physical device check.
 
+## November 14 — student UI and Free category policy hardening
+
+- **Free has no ten-per-day limit:** obsolete client-side daily-quota **answer-blocking logic was removed from both the Next.js problem details page and Flutter problem details screen**. Legacy practice cards now read subscription status rather than the daily quota counter. HTTP 429 now describes generic request throttling, not a fictional ten-question allowance.
+- **Stage categories:** responsive Flutter grid (320–430 px single column, dynamic text-scale layout with unit tests), Free/Premium status badges and locked-category gift-code action. Next.js category grid now has Free badges, visible arrows, better focus, reduced motion and the current two-free-category unlimited policy clearly shown.
+- **Problem discovery:** Flutter no-results screen supports a clear-search action and pull-to-refresh. Reusable interactive Flutter cards now expose proper Material Ink feedback; widget tests verify their behavior.
+- **Access correctness:** failed Premium subscription checks on the web no longer silently present the user as Free; icons returned by the API show a safe glyph/image fallback without raw URL text.
+- **Android external launcher:** a pixel-level audit found the native `android/.../drawable-nodpi/launch_image.png` was still an opaque **black square**, and the adaptive foreground used 64.8% of the full bitmap. Generator code now regenerates native splash, round/mipmap/adaptive icons from the approved transparent logo with safe margins. **Do not consider this done until the automated regeneration bot commit and latest strict pixel audit have both completed.**
+- Website favicon, iOS app icons and Flutter Web PWA generated images are already free of black corners and previously passed audit.
+
 ## Next high-priority acceptance work
 
 1. **Pull-request review and integration:** finish latest CI, review migrations and auth rules, check production parity on a staging environment, and smoke test web and mobile against migrated disposable PostgreSQL. No merges until all checks pass.
