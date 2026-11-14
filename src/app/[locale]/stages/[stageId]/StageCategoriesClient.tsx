@@ -96,7 +96,7 @@ function CategoryPremiumCard({
           <div className="flex items-center justify-between">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center sm:h-16 sm:w-16 rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
               {iconIsPath ? (
-                <Image src={icon} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+                <Image src={icon} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" className="h-8 w-8 object-contain" />
               ) : iconIsGlyph ? (
                 <span aria-hidden="true" className="text-3xl">{icon}</span>
               ) : (
