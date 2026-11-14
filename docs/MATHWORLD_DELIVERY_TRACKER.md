@@ -70,6 +70,7 @@ Detailed release acceptance: [MATHWORLD_UI_BRAND_ACCEPTANCE.md](MATHWORLD_UI_BRA
 - **Geometry parity (Next.js + Flutter):** all primitive coordinates are bounded to +/-10,000; signed angle sweeps render in the same direction; empty/full-turn arcs are rejected consistently. Flutter geometry tests cover the safety boundary and signed angles.
 - **Flutter problem diagrams:** added visible bilingual captions and a responsive bordered figure with color-scheme-aware contrast; removed the redundant surrounding glass card.
 - **Verification:** Next.js production build/typecheck and brand audit passed for web commit `6eb9a461`. Flutter analyze/geometry, brand checks and Android builds must be evaluated against the latest mobile commit `51282257`, not the earlier successful APK. Physical launcher-icon verification, staging APIs and Arabic/English device QA remain open.
+- **Android shipping gate (new finding):** current `android/app/build.gradle.kts` uses `signingConfigs.getByName("debug")` even under `buildTypes.release`. Thus CI produces an installable **release-mode, debug-signed QA APK**, not an APK signed for Google Play. Production upload signing, final application ID, key handling and device icon validation are tracked in [mobile issue #13](https://github.com/MahmoudWebApp/mathworld-mobile/issues/13).
 - All changes are committed to the existing feature branches only. No main merges, app-store uploads or deployed API changes.
 
 ## Next high-priority acceptance work
