@@ -122,7 +122,7 @@ export const categoriesApi = createApi({
         if (result.error) return { error: result.error };
         return { data: result.data as CategoryDto };
       },
-      invalidatesTags: ['Category'],
+      invalidatesTags: ['Category', 'StageAccess'],
     }),
 
     // Admin: Update category with optional icon upload
@@ -144,7 +144,9 @@ export const categoriesApi = createApi({
         if (result.error) return { error: result.error };
         return { data: result.data as CategoryDto };
       },
-      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Category', id: Id }],
+      invalidatesTags: (_result, _error, { Id }) => [
+        { type: 'Category', id: Id }, 'Category', 'StageAccess',
+      ],
     }),
 
     // Admin: Delete category
@@ -153,7 +155,7 @@ export const categoriesApi = createApi({
         url: `/admin/categories/${Id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Category'],
+      invalidatesTags: ['Category', 'StageAccess'],
     }),
   }),
 });
