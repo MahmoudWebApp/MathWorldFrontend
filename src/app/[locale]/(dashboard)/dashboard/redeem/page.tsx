@@ -35,7 +35,7 @@ export default function RedeemPremiumGiftPage() {
       setRedemption(result);
       setCode('');
       // The access cache lives in another RTK Query API slice.
-      dispatch(categoriesApi.util.invalidateTags(['StageAccess', 'Category']));
+      dispatch(categoriesApi.util.invalidateTags(['StageAccess', 'Category', 'Subscription']));
       dispatch(notificationsApi.util.invalidateTags(['Inbox']));
     } catch {
       setError(ar
