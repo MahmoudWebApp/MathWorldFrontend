@@ -51,6 +51,17 @@ Detailed release acceptance: [MATHWORLD_UI_BRAND_ACCEPTANCE.md](MATHWORLD_UI_BRA
 - **Android external launcher:** a pixel-level audit found the native `android/.../drawable-nodpi/launch_image.png` was still an opaque **black square**, and the adaptive foreground used 64.8% of the full bitmap. Generator code now regenerates native splash, round/mipmap/adaptive icons from the approved transparent logo with safe margins. **Do not consider this done until the automated regeneration bot commit and latest strict pixel audit have both completed.**
 - Website favicon, iOS app icons and Flutter Web PWA generated images are already free of black corners and previously passed audit.
 
+## Learner UI parity and accessible math workflow — current batch
+
+- **Flutter stages and categories:** list refresh/empty recovery, one-column category layout on narrow phones or enlarged fonts, and readable unlimited Free/locked Premium status. The same two-Free-category/unlimited-problems policy is unchanged.
+- **Flutter problem details:** answer option feedback is labeled for accessibility, reduced-motion preferences are respected, metadata pills wrap instead of overflowing. Legacy unlimited-practice banner is not repeated above every question.
+- **Next.js stages, categories and problem search:** empty state plus in-place retry; retained selected stage/category/search filters on network retry; Arabic search controls have explicit labels.
+- **Next.js question detail:** navigate to a different question without carrying over the prior answer, submission result, retry state or time; automatically scrolling to explanations respects reduced-motion.
+- **Premium pre-answer solutions:** replace raw backend option IDs with the actual correct math option content on Next.js and Flutter. The backend still grants and authorizes access.
+- **Admin analytics:** small-phone KPI cards no longer crush into two columns at 320px; stage comparison charts can scroll horizontally to keep long Arabic labels legible.
+- **Accessibility:** problem answer feedback and errors exposed as live status/alerts, attempt-history disclosure exposes its expanded state, and category stage parallax honors reduced-motion preferences.
+- **Verification:** Next.js TypeScript/build and Flutter analyze/RTL/brand checks run on PR branches; report success only for a checked SHA. Android APK and physical device visual verification remain pending.
+
 ## Next high-priority acceptance work
 
 1. **Pull-request review and integration:** finish latest CI, review migrations and auth rules, check production parity on a staging environment, and smoke test web and mobile against migrated disposable PostgreSQL. No merges until all checks pass.
