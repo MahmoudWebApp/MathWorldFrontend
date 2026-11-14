@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
-import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate, useReducedMotion } from 'framer-motion';
 import { CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
 import { getStageVisual, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
@@ -39,6 +39,7 @@ interface CategoryPremiumCardProps {
   stageId: number;
   iconUrl?: string | null;
   locked: boolean;
+  freeCategory: boolean;
 }
 
 interface OtherStagePremiumCardProps {
@@ -59,35 +60,41 @@ function CategoryPremiumCard({
   stageId,
   iconUrl,
   locked,
+  freeCategory,
 }: CategoryPremiumCardProps) {
+  const reduceMotion = useReducedMotion();
+  const name = locale === 'ar' ? category.NameAr : category.NameEn;
+  const icon = iconUrl?.trim() ?? '';
+  const iconIsPath = icon.startsWith('https://') || icon.startsWith('/');
+  const iconIsGlyph = icon.length > 0 && [...icon].length <= 4 && !icon.includes('/') && !icon.includes('\\');
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: index * 0.05, type: "spring" }}
+      transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : Math.min(index * 0.04, 0.24) }}
       className="h-full"
     >
       <Link
         href={locked ? '/premium' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
-        aria-label={locked ? (locale === 'ar' ? 'فئة مقفلة - ترقية إلى Premium' : 'Locked category - upgrade to Premium') : undefined}
-        className={`brand-surface math-card group relative flex h-[240px] flex-col justify-between overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-2xl ${style.hoverShadow}`}
+        aria-label={locked ? (locale === 'ar' ? name + ': فئة Premium مقفلة' : name + ': Premium category, locked') : undefined}
+        className={`brand-surface math-card group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-3xl p-5 outline-none transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:min-h-[245px] sm:p-6 ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
         <div
-          className="absolute inset-0 rounded-[2.5rem] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
           style={{ background: style.spotlight }}
         />
 
-        {locked && (
+        {(locked || freeCategory) && (
           <div className="absolute end-5 top-5 z-20 flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">
-            <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
-            {locale === 'ar' ? 'Premium' : 'Premium'}
+            {locked && <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />}
+            {locked ? "Premium" : (locale === "ar" ? "مجاني" : "Free")}
           </div>
         )}
         {/* Header: Icon & Name */}
-        <div className="relative z-10 flex flex-col gap-6">
+        <div className="relative z-10 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
+            <div className={`flex h-14 w-14 shrink-0 items-center justify-center sm:h-16 sm:w-16 rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
               {iconUrl ? (
                 iconUrl.startsWith('http') || iconUrl.startsWith('/') ? (
                   <Image src={iconUrl} alt="icon" width={32} height={32} className="h-8 w-8 object-contain" />
@@ -99,13 +106,13 @@ function CategoryPremiumCard({
               )}
             </div>
             {/* Minimal Arrow Button */}
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
               <DirectionalArrow direction="forward" size={20} />
             </div>
           </div>
           
-          <h3 className={`mb-4 text-2xl font-bold leading-tight transition-colors ${style.hoverText}`}>
-            {locale === 'ar' ? category.NameAr : category.NameEn}
+          <h3 className={`break-words text-lg font-bold leading-snug sm:text-xl transition-colors ${style.hoverText}`}>
+            {name}
           </h3>
         </div>
 
@@ -342,7 +349,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 lg:gap-6">
             {sortedCategories.map((category, index) => {
               const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
               const style = CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length];
@@ -358,6 +365,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   locale={locale}
                   stageId={stageId}
                   iconUrl={iconUrl}
+                  freeCategory={access?.FreeCategoryIds.includes(category.Id) === true}
                   locked={!isPremium && !access?.FreeCategoryIds.includes(category.Id)}
                 />
               );
