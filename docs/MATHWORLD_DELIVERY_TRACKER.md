@@ -82,6 +82,16 @@ Detailed release acceptance: [MATHWORLD_UI_BRAND_ACCEPTANCE.md](MATHWORLD_UI_BRA
 - **Static draft audit:** checked the two 32-question CSVs and the proposed 16-category CSV. All 64 question rows have four nonempty distinct answer options, one integer correct-option index from 1 to 4, filled bilingual prompt/solution fields, and no duplicate content keys. The 16 proposals pass basic icon-key shape and unique content-key checks. Exactly 16 questions and four category proposals per stage; 4 questions per existing category ID (1–16). This **does not certify mathematical/pedagogical accuracy, actual staging IDs, translations, editorial approval or publication**.
 - No live content was imported, submitted to the API or published. Changes remain on draft PRs only; latest CI, physical-device RTL and staging acceptance are still required.
 
+## November 14 — Free category admin configuration and mobile learner directory
+
+- **Backend route gap fixed:** `PUT /api/admin/categories/{id}` and `DELETE /api/admin/categories/{id}` are what the admin dashboard calls. Previously this route lacked the populated-category stage-move guard and saved-Free-selection deletion guard already present on the separate `/api/categories/{id}` route; the active admin endpoints now enforce both.
+- **New admin Free selection:** authenticated active admins can select exactly two distinct categories belonging to each stage using `PUT /api/admin/stages/{stageId}/free-categories`. The selection is saved to the existing `StageFreeCategorySelections` table with editor ID and timestamp; problem reads still use the server-side entitlement service. No daily question quota.
+- **Web admin UX:** an explicit stage-scoped editor lists available categories, allows exactly two selections, shows fetching/error/empty/retry states, and requires confirmation before saving. Switching stages clears stale choices. Changes to Free access are not applied to production in this work.
+- **Integration checks:** disposable PostgreSQL CI covers anonymous/student rejection, invalid/cross-stage selections, saved catalog response, Free access change, blocked deletion on both category management routes, and blocked stage moves for populated and explicitly Free-selected categories.
+- **Admin student directory:** a dedicated responsive card layout for narrow phones with name/email, active state, stage, Free/Premium, solves, points, last activity, and detail navigation. Stale-filter results are hidden and stage-filter API errors offer retry; the desktop table remains.
+- **Release status:** Backend CI passed on `0ef27be18` after these changes, including PostgreSQL suites. Frontend CI must be checked for its latest SHA; physical screenshot and migrated staging checks remain open.
+- All changes are on feature branches only, not merged or published.
+
 ## Next high-priority acceptance work
 
 1. **Pull-request review and integration:** finish latest CI, review migrations and auth rules, check production parity on a staging environment, and smoke test web and mobile against migrated disposable PostgreSQL. No merges until all checks pass.
