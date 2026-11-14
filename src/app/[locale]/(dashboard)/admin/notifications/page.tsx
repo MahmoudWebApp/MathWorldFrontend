@@ -21,13 +21,17 @@ export default function AdminNotificationsPage() {
     event.preventDefault();
     setResult('');
     setError('');
-    const id = Number(learnerId);
-    if (!Number.isSafeInteger(id) || id <= 0 ||
+    const id = Number(learnerId.trim());
+    if (!/^[0-9]+$/.test(learnerId.trim()) || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647 ||
       !titleAr.trim() || !titleEn.trim() || !bodyAr.trim() || !bodyEn.trim()) {
       setError(ar ? 'أدخل رقم طالب صحيح وكل النصوص بالعربية والإنجليزية.'
         : 'Enter a valid learner ID and both languages.');
       return;
     }
+    const confirmed = window.confirm(ar
+      ? `تأكيد إرسال إشعار داخل التطبيق إلى الطالب رقم ${id} فقط؟ لا يمكن سحب الإشعار بعد الإرسال.\n\n${titleAr.trim()}`
+      : `Send an in-app notification to learner #${id} only? This action cannot be undone.\n\n${titleEn.trim()}`);
+    if (!confirmed) return;
     try {
       const notice = await send({
         learnerId: id,
@@ -68,7 +72,7 @@ export default function AdminNotificationsPage() {
         className="space-y-5 rounded-2xl border bg-card p-5 sm:p-6">
         <label className="block space-y-2">
           <span className="font-semibold">{ar ? 'رقم الطالب' : 'Learner ID'}</span>
-          <input type="number" min="1" required value={learnerId}
+          <input type="text" inputMode="numeric" pattern="[0-9]+" autoComplete="off" required value={learnerId}
             onChange={(e) => setLearnerId(e.target.value)}
             className="w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary"
             placeholder={ar ? 'رقم المستخدم في لوحة الأدمن' : 'User ID from admin dashboard'} />
@@ -99,12 +103,20 @@ export default function AdminNotificationsPage() {
               className="w-full resize-y rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary" />
           </label>
         </div>
+        {learnerId.trim() && (titleAr.trim() || titleEn.trim()) && (
+          <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
+            <p className="font-semibold">{ar ? 'معاينة المستلم والعنوان قبل الإرسال' : 'Preview recipient and title before sending'}</p>
+            <p dir="ltr">Learner ID: {learnerId}</p>
+            {titleAr.trim() && <p dir="rtl">{titleAr.trim()}</p>}
+            {titleEn.trim() && <p dir="ltr">{titleEn.trim()}</p>}
+          </div>
+        )}
         {error && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
         {result && <p role="status" className="rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{result}</p>}
         <button disabled={isLoading} type="submit"
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-50">
           <Send className="h-4 w-4" />
-          {isLoading ? (ar ? 'جارٍ الإرسال' : 'Sending') : (ar ? 'إرسال الإشعار' : 'Send notification')}
+          {isLoading ? (ar ? 'جارٍ الإرسال' : 'Sending') : (ar ? 'مراجعة وإرسال الإشعار' : 'Review and send notification')}
         </button>
       </form>
     </main>
