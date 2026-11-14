@@ -2,7 +2,7 @@
 
 import { useLocale } from 'next-intl';
 import { Crown, Infinity } from 'lucide-react';
-import { useGetDailyQuotaQuery } from '@/store/api/usersApi';
+import { useGetStudentEntitlementQuery } from '@/store/api/usersApi';
 
 /** Legacy component name retained for existing imports. There is no daily cap. */
 export function DailyQuotaCard({
@@ -13,13 +13,14 @@ export function DailyQuotaCard({
   compact?: boolean;
 }) {
   const ar = useLocale() === 'ar';
-  const { data, isLoading, isError } = useGetDailyQuotaQuery(stageId ?? 0, {
+  // Legacy component name, but access comes from the real subscription
+  // endpoint. A daily quota must never block Free practice.
+  const { data, isLoading } = useGetStudentEntitlementQuery(undefined, {
     skip: stageId == null || stageId <= 0,
-    refetchOnMountOrArgChange: true,
   });
   if (stageId == null || stageId <= 0) return null;
 
-  const premium = data?.SubscriptionType === 'Premium';
+  const premium = data?.IsPremium === true;
   const title = ar ? 'الممارسة بلا حد يومي' : 'Unlimited daily practice';
 
   return (
@@ -33,20 +34,16 @@ export function DailyQuotaCard({
         </span>
         <div className="space-y-2">
           <h3 className="font-bold">{title}</h3>
-          {data && <p className="text-sm text-muted-foreground">{ar ? data.NameAr : data.NameEn}</p>}
           {isLoading && <p role="status" className="text-sm text-muted-foreground">
             {ar ? 'جارٍ التحقق من صلاحياتك…' : 'Checking your access…'}
           </p>}
-          {isError && <p role="alert" className="text-sm text-destructive">
-            {ar ? 'تعذر التحقق من صلاحيات المرحلة.' : 'Stage access could not be verified.'}
-          </p>}
-          {data && <p className="text-sm">
+          <p className="text-sm">
             {premium
               ? (ar ? 'Premium: جميع الفئات مفتوحة، ويمكنك حل أي عدد من المسائل.'
                 : 'Premium: every category is unlocked with unlimited questions.')
               : (ar ? 'مجاني: يمكنك حل أي عدد من المسائل ضمن الفئتين المفتوحتين بهذه المرحلة.'
                 : 'Free: solve unlimited questions in two unlocked categories in this stage.')}
-          </p>}
+          </p>
         </div>
       </div>
     </section>
