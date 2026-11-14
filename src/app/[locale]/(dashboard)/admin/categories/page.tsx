@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, FileSpreadsheet } from "lucide-react";
 // Tooltip components are configured globally.
 import {
   Tooltip,
@@ -255,6 +255,14 @@ function AdminCategoriesPageContent() {
               : "Choose a category in this stage to view its questions and add new ones."}
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/categories/import"
+            className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+          >
+            <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+            {locale === "ar" ? "فحص فئات CSV" : "Preview category CSV"}
+          </Link>
         <Button
           onClick={openCreateModal}
           className="gap-2"
@@ -263,6 +271,7 @@ function AdminCategoriesPageContent() {
           <Add className="h-4 w-4" />
           {t("admin.categories.addNew")}
         </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
