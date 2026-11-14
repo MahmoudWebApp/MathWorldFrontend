@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/Button";
-import { useGetCategoriesQuery } from "@/store/api/categoriesApi";
+import { useGetCategoriesQuery, useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from "@/store/api/categoriesApi";
+import { useSelector } from "react-redux";
 import { useGetStagesQuery } from "@/store/api/stagesApi";
 import { useSearchProblemsQuery } from "@/store/api/problemsApi";
 import type { ProblemPreview } from "@/store/api/types";
@@ -76,6 +77,11 @@ function ProblemsPageClient() {
   // These come from URL and are fixed
   const stageId = urlStageId;
   const categoryId = urlCategoryId;
+  const authenticated = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Student");
+  const { data: access, isLoading: accessLoading, isError: accessError } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
+  const { data: subscription, isLoading: subscriptionLoading } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
+  const accessPending = Boolean(categoryId && stageId) && (accessLoading || (authenticated && subscriptionLoading));
+  const categoryLocked = Boolean(categoryId && stageId && access && subscription?.IsPremium !== true && !access.FreeCategoryIds.includes(Number(categoryId)));
 
   // ── API queries ─────────────────────────────────────────
   const { data: categories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
@@ -86,6 +92,7 @@ function ProblemsPageClient() {
     isLoading: searchLoading,
     error: searchError,
     isFetching,
+    refetch: refetchProblems,
   } = useSearchProblemsQuery(
     {
       Q: debouncedSearch || "",
@@ -95,7 +102,7 @@ function ProblemsPageClient() {
       PageSize: DEFAULT_PAGE_SIZE,
       locale: locale,
     },
-    { skip: false },
+    { skip: categoryLocked || accessPending || (Boolean(categoryId && stageId) && accessError) },
   );
 
   // ── Derived data ────────────────────────────────────────
@@ -162,8 +169,15 @@ function ProblemsPageClient() {
       ? t("search.searchInStage", { stage: stageName })
       : t("search.placeholder");
 
+  if (categoryId && stageId && accessError) {
+    return <section role="alert" className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-2xl font-bold">{locale === "ar" ? "تعذر التحقق من صلاحيات الفئة" : "Unable to verify category access"}</h1><Link href={`/stages/${stageId}`} className="rounded-xl border px-5 py-3">{locale === "ar" ? "العودة إلى المرحلة" : "Back to stage"}</Link></section>;
+  }
+  if (categoryLocked) {
+    return <section className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-3xl font-bold">{locale === "ar" ? "هذه الفئة مقفلة" : "This category is locked"}</h1><p className="mb-6">{locale === "ar" ? "الفئتان المجانيتان بلا حد يومي، وباقي الفئات مع Premium." : "Two free categories offer unlimited daily practice. Premium unlocks the rest."}</p><Link href="/premium" className="rounded-xl border px-5 py-3">Premium</Link></section>;
+  }
+
   // ── Early return: full page loader ───────────────────────
-  if (isLoading && !searchResults) {
+  if ((isLoading || accessPending) && !searchResults) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-20 flex flex-col justify-center items-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -215,7 +229,8 @@ function ProblemsPageClient() {
           <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/50 z-10" />
 
           <input
-            type="text"
+            type="search"
+            aria-label={searchPlaceholder}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={searchPlaceholder}
@@ -232,7 +247,7 @@ function ProblemsPageClient() {
                 type="button"
                 onClick={clearSearch}
                 className="p-1 rounded-full hover:bg-muted transition-colors"
-                aria-label="Clear search"
+                aria-label={locale === "ar" ? "مسح البحث" : "Clear search"}
               >
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -250,10 +265,12 @@ function ProblemsPageClient() {
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
             &ldquo;{debouncedSearch}&rdquo;
             <button
+              type="button"
+              aria-label={locale === "ar" ? "مسح البحث" : "Clear search"}
               onClick={clearSearch}
-              className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+              className="hover:bg-primary/20 rounded-full p-1 transition-colors"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           </span>
         </div>
@@ -298,7 +315,7 @@ function ProblemsPageClient() {
             {t("common.errorLoadingData")}
           </p>
           <Button
-            onClick={() => window.location.reload()}
+            onClick={() => void refetchProblems()}
             variant="outline"
             className="mt-4"
           >

@@ -32,6 +32,29 @@ export interface CategoryDto {
   Order: number;
 }
 
+export interface StageCategoryAccessDto {
+  StageId: number;
+  FreeCategoryIds: number[];
+  FreeCategoryCount: number;
+  HasSavedFreeSelection?: boolean;
+  Categories: Array<{
+    Id: number;
+    NameAr: string;
+    NameEn: string;
+    Icon: string;
+    Order: number;
+    IsFree: boolean;
+  }>;
+}
+
+export interface StudentSubscriptionDto {
+  SubscriptionType: 'Free' | 'Premium';
+  IsPremium: boolean;
+  PremiumExpiresAtUtc?: string | null;
+  FreeCategoriesPerStage: number;
+  DailyNewProblemsLimit?: number | null;
+}
+
 // ============================================
 // API Definition
 // ============================================
@@ -39,13 +62,38 @@ export interface CategoryDto {
 export const categoriesApi = createApi({
   reducerPath: 'categoriesApi',
   baseQuery,
-  tagTypes: ['Category'],
+  tagTypes: ['Category', 'StageAccess', 'Subscription'],
   endpoints: (builder) => ({
 
     // Public: Get all categories - returns translated names based on Accept-Language
     getCategories: builder.query<CategoryDto[], string>({
       query: () => '/categories',
       providesTags: ['Category'],
+    }),
+
+    getStageCategoryAccess: builder.query<StageCategoryAccessDto, number>({
+      query: (stageId) => `/stages/${stageId}/free-categories`,
+      providesTags: (_result, _error, stageId) => [
+        { type: 'StageAccess', id: stageId },
+      ],
+    }),
+    getStudentSubscription: builder.query<StudentSubscriptionDto, void>({
+      query: () => '/users/subscription',
+      providesTags: ['Subscription'],
+    }),
+    updateStageFreeCategories: builder.mutation<
+      { StageId: number; FreeCategoryIds: number[] },
+      { stageId: number; categoryIds: [number, number] }
+    >({
+      query: ({ stageId, categoryIds }) => ({
+        url: `/admin/stages/${stageId}/free-categories`,
+        method: 'PUT',
+        body: { CategoryIds: categoryIds },
+      }),
+      invalidatesTags: (_result, _error, { stageId }) => [
+        'Category',
+        { type: 'StageAccess', id: stageId },
+      ],
     }),
 
     // Admin: Get all categories (bilingual)
@@ -75,7 +123,7 @@ export const categoriesApi = createApi({
         if (result.error) return { error: result.error };
         return { data: result.data as CategoryDto };
       },
-      invalidatesTags: ['Category'],
+      invalidatesTags: ['Category', 'StageAccess'],
     }),
 
     // Admin: Update category with optional icon upload
@@ -97,7 +145,9 @@ export const categoriesApi = createApi({
         if (result.error) return { error: result.error };
         return { data: result.data as CategoryDto };
       },
-      invalidatesTags: (_result, _error, { Id }) => [{ type: 'Category', id: Id }],
+      invalidatesTags: (_result, _error, { Id }) => [
+        { type: 'Category', id: Id }, 'Category', 'StageAccess',
+      ],
     }),
 
     // Admin: Delete category
@@ -106,13 +156,16 @@ export const categoriesApi = createApi({
         url: `/admin/categories/${Id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Category'],
+      invalidatesTags: ['Category', 'StageAccess'],
     }),
   }),
 });
 
 export const {
   useGetCategoriesQuery,
+  useGetStageCategoryAccessQuery,
+  useUpdateStageFreeCategoriesMutation,
+  useGetStudentSubscriptionQuery,
   useGetAdminCategoriesQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,

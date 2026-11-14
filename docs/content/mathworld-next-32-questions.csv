@@ -1,0 +1,33 @@
+﻿ContentKey,StageId,CategoryId,QuestionTextAr,QuestionTextEn,DetailedSolutionAr,DetailedSolutionEn,Points,Option1,Option2,Option3,Option4,CorrectOption
+s1_num_03,1,1,ما ناتج 9 × 7؟,What is 9 × 7?,نضرب 9 في 7 فنحصل على 63.,9 times 7 equals 63.,10,56,63,72,54,2
+s1_num_04,1,1,ما ناتج 84 ÷ 7؟,What is 84 ÷ 7?,لأن 7 × 12 = 84 فالناتج 12.,"Because 7 × 12 = 84, the quotient is 12.",10,11,12,13,14,2
+s1_alg_03,1,2,إذا كان 5س = 35، فما قيمة س؟,"If 5x = 35, what is x?",نقسم الطرفين على 5، فنحصل على س = 7.,Divide both sides by 5 to get x = 7.,10,5,6,7,8,3
+s1_alg_04,1,2,ما العدد التالي في المتتالية 3، 6، 9، 12؟,"What comes next in 3, 6, 9, 12?",نضيف 3 كل مرة، فيكون العدد التالي 15.,Add 3 each time; the next number is 15.,10,13,14,15,16,3
+s1_geo_03,1,3,مثلث قاعدته 10 سم وارتفاعه 6 سم، فما مساحته؟,A triangle has base 10 cm and height 6 cm. What is its area?,المساحة = (10 × 6) ÷ 2 = 30 سم².,Area = 10 × 6 ÷ 2 = 30 cm².,10,16,30,60,40,2
+s1_geo_04,1,3,كم قياس كل زاوية داخلية في المربع؟,What is the measure of each interior angle of a square?,جميع زوايا المربع قائمة، أي 90 درجة.,Every angle of a square is 90 degrees.,10,45,60,90,180,3
+s1_dat_03,1,4,ما المنوال في البيانات 2، 3، 3، 5؟,"What is the mode of 2, 3, 3, 5?",العدد 3 تكرر مرتين، أكثر من بقية القيم، فهو المنوال.,"The value 3 occurs twice, more than any other value, so it is the mode.",10,2,3,4,5,2
+s1_dat_04,1,4,في صف 4 طلاب يحبون التفاح و6 يحبون الموز. كم عددهم معاً؟,"Four students like apples and six like bananas. Assuming these are separate groups, how many students are there altogether?",نجمع 4 + 6 = 10 طلاب، لأن المجموعتين منفصلتان.,"The groups do not overlap, so 4 + 6 = 10 students.",10,8,9,10,11,3
+s2_num_03,2,5,أي الأعداد التالية أولي؟,Which of these numbers is prime?,29 لا يقبل القسمة إلا على 1 ونفسه.,29 has no positive divisors except 1 and 29.,12,21,25,27,29,4
+s2_num_04,2,5,ما الجذر التربيعي الموجب للعدد 144؟,What is the positive square root of 144?,لأن 12 × 12 = 144، فالجذر الموجب هو 12.,"Since 12 × 12 = 144, the positive square root is 12.",12,10,11,12,13,3
+s2_alg_03,2,6,حلّ المعادلة 4س − 5 = 19.,Solve 4x − 5 = 19.,4س = 24، إذن س = 6.,"4x = 24, so x = 6.",12,4,5,6,7,3
+s2_alg_04,2,6,إذا كانت د(س) = 2س − 1، فما د(5)؟,"If f(x) = 2x − 1, what is f(5)?",نعوض س = 5، فنحصل على 2 × 5 − 1 = 9.,Substitute x = 5: 2 × 5 − 1 = 9.,12,7,8,9,10,3
+s2_rat_03,2,7,ما قيمة 30% من 200؟,What is 30% of 200?,30/100 × 200 = 60.,30/100 × 200 = 60.,12,30,50,60,70,3
+s2_rat_04,2,7,ثمن 6 أقلام متطابقة 18 دولاراً. كم ثمن 5 أقلام؟,Six identical pens cost $18. How much do five cost?,ثمن القلم الواحد 18 ÷ 6 = 3، إذن ثمن 5 أقلام 15.,"Each pen costs 18/6 = 3, so five cost 15.",12,12,15,18,21,2
+s2_geo_03,2,8,زاويتان متجاورتان على خط مستقيم، إحداهما 120 درجة. فما الأخرى؟,Two adjacent angles form a straight line. One is 120°. Find the other.,مجموعهما 180 درجة، إذن 180 − 120 = 60.,"They sum to 180°, so the other is 60°.",12,40,50,60,120,3
+s2_geo_04,2,8,كم مجموع الزوايا الداخلية لسداسي بسيط؟,What is the sum of the interior angles of a simple hexagon?,نستخدم (عدد الأضلاع − 2) × 180 = (6 − 2) × 180 = 720.,(n − 2) × 180° = (6 − 2) × 180° = 720°.,12,540,600,720,900,3
+s3_alg_03,3,9,ما مميز المعادلة س² − 4س + 4 = 0؟,Find the discriminant of x² − 4x + 4 = 0.,المميز = ب² − 4أج = 16 − 16 = 0.,The discriminant is b² − 4ac = 16 − 16 = 0.,15,-4,0,4,8,2
+s3_alg_04,3,9,حلّل س² + 7س + 12.,Factor x² + 7x + 12.,نبحث عن عددين مجموعهما 7 وحاصل ضربهما 12، وهما 3 و4.,Two numbers adding to 7 and multiplying to 12 are 3 and 4.,15,(x+1)(x+12),(x+2)(x+6),(x+3)(x+4),(x-3)(x-4),3
+s3_tri_03,3,10,ما قيمة جتا 60 درجة؟,What is cos 60°?,جتا 60 درجة يساوي نصفاً.,Cos 60° equals one half.,15,0,\frac{1}{2},\frac{\sqrt{3}}{2},1,2
+s3_tri_04,3,10,ما قيمة جا²(30°) + جتا²(30°)؟,What is sin²(30°) + cos²(30°)?,حسب المتطابقة المثلثية الأساسية، المجموع يساوي 1.,"By the Pythagorean identity, sin²θ + cos²θ = 1.",15,0,\frac{1}{2},1,2,3
+s3_cal_03,3,11,ما مشتقة الدالة د(س) = 5س²؟,Differentiate f(x) = 5x².,باستخدام قاعدة القوة، د'(س) = 10س.,"By the power rule, f'(x) = 10x.",15,5x,10x,5x^2,x^{10},2
+s3_cal_04,3,11,ما التكامل غير المحدد لـ 3س² بالنسبة إلى س؟,Find the indefinite integral of 3x² with respect to x.,التكامل يساوي س³ + ثابت.,The antiderivative is x³ + C.,15,3x^3+C,x^3+C,6x+C,x^2+C,2
+s3_sta_03,3,12,ما متوسط الأعداد 4، 6، 8؟,"What is the mean of 4, 6, 8?",المجموع 18، نقسم على 3 فنحصل على 6.,The sum is 18; divide by 3 to get 6.,15,4,5,6,7,3
+s3_sta_04,3,12,عند رمي نرد عادل، ما احتمال ظهور عدد زوجي؟,"When rolling a fair six-sided die, what is the probability of an even number?",الأعداد الزوجية 2 و4 و6، وعددها 3 من 6، فالاحتمال 1/2.,"Even results are 2, 4 and 6: 3 of 6 outcomes, probability 1/2.",15,\frac{1}{6},\frac{1}{3},\frac{1}{2},\frac{2}{3},3
+s4_mul_03,4,13,احسب المشتقة الجزئية بالنسبة إلى ص للدالة د(س،ص) = س ص².,"Find the partial derivative with respect to y of f(x,y) = xy².",نعتبر س ثابتاً، فنشتق ص² لنحصل على 2س ص.,Treat x as constant; the derivative is 2xy.,20,x^2,2xy,xy,2x,2
+s4_mul_04,4,13,ما تدرّج الدالة د(س،ص) = 3س + 2ص؟,"Find the gradient of f(x,y) = 3x + 2y.",المشتقتان الجزئيتان هما 3 و2، لذلك التدرج (3،2).,"Partial derivatives are 3 and 2, so the gradient is (3,2).",20,"(2, 3)","(3, 2)","(3, 3)","(2, 2)",2
+s4_lin_03,4,14,ما محدد مصفوفة الوحدة من الرتبة 2؟,What is the determinant of the 2×2 identity matrix?,محدد مصفوفة الوحدة يساوي 1.,The determinant of the identity matrix is 1.,20,0,1,-1,2,2
+s4_lin_04,4,14,ما مجموع المتجهين (2،3) و(4،−1)؟,"What is the sum of (2,3) and (4,−1)?",نجمع المركبات: (2 + 4، 3 − 1) = (6،2).,"Add components: (2 + 4, 3 − 1) = (6,2).",20,"(6, 4)","(2, 2)","(6, 2)","(4, 6)",3
+s4_ode_03,4,15,ما الحل العام للمعادلة التفاضلية ص' = 0؟,What is the general solution to y' = 0?,إذا كانت المشتقة صفراً فالدالة ثابتة: ص = ثابت.,A zero derivative implies a constant function: y = C.,20,y=x+C,y=C,y=e^x,y=x^2+C,2
+s4_ode_04,4,15,حل المعادلة ص' = ص مع الشرط ص(0) = 2.,Solve y' = y with initial condition y(0) = 2.,الحل العام ص = ج هـ^س، وبالتعويض عند صفر نحصل على ج = 2.,General solution y = Ce^x; at x = 0 we get C = 2.,20,y=2e^{-x},y=e^{2x},y=2e^x,y=2x,3
+s4_ana_03,4,16,ما نهاية 1/ن² عندما ن تؤول إلى اللانهاية؟,What is the limit of 1/n² as n approaches infinity?,المقام يزداد بلا حد، فتقترب القيمة من الصفر.,"The denominator grows without bound, so the fraction tends to zero.",20,-1,0,1,\infty,2
+s4_ana_04,4,16,كم تساوي نهاية |س| عندما س تقترب من الصفر؟,What is the limit of |x| as x approaches zero?,عند اقتراب س من الصفر فإن |س| تقترب من الصفر.,"As x approaches zero, |x| approaches zero.",20,0,1,2,3,1

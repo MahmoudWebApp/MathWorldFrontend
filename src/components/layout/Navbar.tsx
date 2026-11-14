@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
+import { NotificationBell } from '@/components/layout/NotificationBell';
+import { notificationsApi } from '@/store/api/notificationsApi';
 import { AdminNavDropdown, AdminNavMobile, ADMIN_NAV_ITEMS } from '@/components/admin/AdminNavigation';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -97,6 +99,7 @@ function NavbarContent() {
     dispatch(stagesApi.util.resetApiState());
     dispatch(statsApi.util.resetApiState());
     dispatch(usersApi.util.resetApiState());
+    dispatch(notificationsApi.util.resetApiState());
     setUserMenuOpen(false);
     router.push('/');
   };
@@ -287,6 +290,8 @@ function NavbarContent() {
               {locale === 'ar' ? 'EN' : 'عربي'}
             </Button>
 
+            {mounted && isAuthenticated && <NotificationBell isAuthenticated={isAuthenticated} />}
+
             {/* Auth Section */}
             {!mounted || isLoading ? (
               <div className="h-9 w-24 rounded-full bg-muted animate-pulse" />
@@ -326,6 +331,18 @@ function NavbarContent() {
                         </Link>
                         <Link href="/dashboard/error-notebook" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <NotebookTabs className="h-4 w-4" />{t('nav.errorNotebook')}
+                        </Link>
+                        <Link href="/daily-challenge" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <CircleCheckBig className="h-4 w-4" />
+                          {locale === 'ar' ? 'تحدي اليوم' : 'Daily challenge'}
+                        </Link>
+                        <Link href="/journey" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <Layers3 className="h-4 w-4" />
+                          {locale === 'ar' ? 'رحلتي في الرياضيات' : 'My learning journey'}
+                        </Link>
+                        <Link href="/premium" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <BookMarked className="h-4 w-4" />
+                          {locale === 'ar' ? 'اشتراكي ومميزات Premium' : 'My plan & Premium'}
                         </Link>
                         <Link href="/learning-stage"
                           className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary"

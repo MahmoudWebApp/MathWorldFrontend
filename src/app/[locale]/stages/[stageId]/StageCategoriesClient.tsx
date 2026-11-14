@@ -1,7 +1,14 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { useGetCategoriesQuery, type CategoryDto } from '@/store/api/categoriesApi';
+import {
+  useGetCategoriesQuery,
+  useGetStageCategoryAccessQuery,
+  useGetStudentSubscriptionQuery,
+  type CategoryDto,
+} from '@/store/api/categoriesApi';
+import { useSelector } from 'react-redux';
+import { LockKeyhole } from 'lucide-react';
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
 import {
   AlertCircle,
@@ -10,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
-import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate, useReducedMotion } from 'framer-motion';
 import { CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
 import { getStageVisual, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
@@ -31,6 +38,8 @@ interface CategoryPremiumCardProps {
   locale: string;
   stageId: number;
   iconUrl?: string | null;
+  locked: boolean;
+  freeCategory: boolean;
 }
 
 interface OtherStagePremiumCardProps {
@@ -50,46 +59,58 @@ function CategoryPremiumCard({
   locale,
   stageId,
   iconUrl,
+  locked,
+  freeCategory,
 }: CategoryPremiumCardProps) {
+  const reduceMotion = useReducedMotion();
+  const name = locale === 'ar' ? category.NameAr : category.NameEn;
+  const icon = iconUrl?.trim() ?? '';
+  const iconIsPath = icon.startsWith('https://') || icon.startsWith('/');
+  const iconIsGlyph = icon.length > 0 && [...icon].length <= 4 && !icon.includes('/') && !icon.includes('\\');
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: index * 0.05, type: "spring" }}
+      transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : Math.min(index * 0.04, 0.24) }}
       className="h-full"
     >
       <Link
-        href={`/problems?categoryId=${category.Id}&stageId=${stageId}`}
-        className={`brand-surface math-card group relative flex h-[240px] flex-col justify-between overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-2xl ${style.hoverShadow}`}
+        href={locked ? '/premium' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
+        aria-label={locked ? (locale === 'ar' ? name + ': فئة Premium مقفلة' : name + ': Premium category, locked') : undefined}
+        className={`brand-surface math-card group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-3xl p-5 outline-none transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:min-h-[245px] sm:p-6 ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
         <div
-          className="absolute inset-0 rounded-[2.5rem] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
           style={{ background: style.spotlight }}
         />
 
+        {(locked || freeCategory) && (
+          <div className="absolute end-5 top-5 z-20 flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">
+            {locked && <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />}
+            {locked ? "Premium" : (locale === "ar" ? "مجاني" : "Free")}
+          </div>
+        )}
         {/* Header: Icon & Name */}
-        <div className="relative z-10 flex flex-col gap-6">
+        <div className="relative z-10 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
-              {iconUrl ? (
-                iconUrl.startsWith('http') || iconUrl.startsWith('/') ? (
-                  <Image src={iconUrl} alt="icon" width={32} height={32} className="h-8 w-8 object-contain" />
-                ) : (
-                  <span className="text-3xl">{iconUrl}</span>
-                )
+            <div className={`flex h-14 w-14 shrink-0 items-center justify-center sm:h-16 sm:w-16 rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
+              {iconIsPath ? (
+                <Image src={icon} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" className="h-8 w-8 object-contain" />
+              ) : iconIsGlyph ? (
+                <span aria-hidden="true" className="text-3xl">{icon}</span>
               ) : (
-                <span className="font-serif text-2xl font-bold text-primary">{math.symbol}</span>
+                <span aria-hidden="true" className="font-serif text-2xl font-bold text-primary">{math.symbol}</span>
               )}
             </div>
             {/* Minimal Arrow Button */}
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
               <DirectionalArrow direction="forward" size={20} />
             </div>
           </div>
           
-          <h3 className={`mb-4 text-2xl font-bold leading-tight transition-colors ${style.hoverText}`}>
-            {locale === 'ar' ? category.NameAr : category.NameEn}
+          <h3 className={`break-words text-lg font-bold leading-snug sm:text-xl transition-colors ${style.hoverText}`}>
+            {name}
           </h3>
         </div>
 
@@ -112,6 +133,7 @@ function OtherStagePremiumCard({
   locale,
 }: OtherStagePremiumCardProps) {
   const isRtl = locale === 'ar';
+  const reduceMotion = useReducedMotion();
   const stageName = isRtl ? stage.NameAr : stage.NameEn;
   const visual = getStageVisual(stage);
   const style = visual.style;
@@ -140,6 +162,7 @@ function OtherStagePremiumCard({
     
     mouseXPixel.set(mouseX);
     mouseYPixel.set(mouseY);
+    if (reduceMotion) return;
     x.set(mouseX / width - 0.5);
     y.set(mouseY / height - 0.5);
   };
@@ -151,10 +174,10 @@ function OtherStagePremiumCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 30, scale: 0.95 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1, type: "spring" }}
+      transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : index * 0.1, type: "spring" }}
       style={{ perspective: 1000 }}
     >
       <Link
@@ -163,7 +186,7 @@ function OtherStagePremiumCard({
         onMouseLeave={handleMouseLeave}
       >
         <motion.div
-          style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+          style={reduceMotion ? undefined : { rotateX, rotateY, transformStyle: "preserve-3d" }}
           className="brand-surface math-card group relative overflow-hidden rounded-2xl p-5 backdrop-blur-md transition-all duration-300 hover:border-brand-secondary/25 hover:shadow-xl"
         >
           <motion.div
@@ -175,20 +198,20 @@ function OtherStagePremiumCard({
           
           <div className="flex items-center gap-4 relative z-10" style={{ transformStyle: "preserve-3d" }}>
             <motion.div
-              style={{ translateZ: 30 }}
+              style={reduceMotion ? undefined : { translateZ: 30 }}
               className="flex-shrink-0 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
             >
               <StageIconBadge stage={stage} size="md" />
             </motion.div>
 
-            <motion.div style={{ translateZ: 20 }} className="flex-1 min-w-0">
+            <motion.div style={reduceMotion ? undefined : { translateZ: 20 }} className="flex-1 min-w-0">
               <h3 className={`font-bold text-base truncate ${style.hoverText} transition-colors`}>
                 {stageName}
               </h3>
             </motion.div>
 
             <motion.div 
-              style={{ translateZ: 40 }}
+              style={reduceMotion ? undefined : { translateZ: 40 }}
               className={`flex h-9 w-9 items-center justify-center rounded-full bg-background/50 border border-primary/10 ${style.hoverBg} group-hover:border-transparent transition-colors duration-300 flex-shrink-0`}
             >
               <DirectionalChevron direction="forward" className="h-4 w-4 text-muted-foreground transition-transform group-hover:text-white group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
@@ -210,19 +233,23 @@ interface StageCategoriesClientProps {
 export default function StageCategoriesClient({ stageId }: StageCategoriesClientProps) {
   const t = useTranslations();
   const locale = useLocale();
+  const authenticated = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Student");
+  const { data: access, isLoading: accessLoading, isError: accessError, refetch: refetchAccess } = useGetStageCategoryAccessQuery(stageId, { skip: !Number.isSafeInteger(stageId) || stageId <= 0 });
+  const { data: subscription, isLoading: subscriptionLoading, isError: subscriptionError, refetch: refetchSubscription } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
+  const isAdmin = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Admin");
+  const isPremium = isAdmin || subscription?.IsPremium === true;
 
-  
-  const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
-  const { data: stages, isLoading: stagesLoading } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
+  const { data: allCategories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
+  const { data: stages, isLoading: stagesLoading, refetch: refetchStages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const currentStage = stages?.find(s => s.Id === stageId);
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
   const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0));
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
-  const isLoading = categoriesLoading || stagesLoading;
+  const isLoading = categoriesLoading || stagesLoading || accessLoading || (authenticated && subscriptionLoading);
 
-  if (categoriesError) {
+  if (categoriesError || accessError || (authenticated && subscriptionError)) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
@@ -237,7 +264,12 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </div>
             <p className="text-xl font-bold">{t('common.errorLoadingData')}</p>
             <button
-              onClick={() => window.location.reload()}
+              type="button" onClick={() => {
+                void refetchCategories();
+                void refetchStages();
+                if (Number.isSafeInteger(stageId) && stageId > 0) void refetchAccess();
+                if (authenticated) void refetchSubscription();
+              }}
               className="px-6 py-3 mt-4 bg-primary text-primary-foreground font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 active:scale-95 transition-all"
             >
               {t('common.retry')}
@@ -300,6 +332,26 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
           </motion.div>
         </div>
 
+        {!isLoading && access && !isPremium && (
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+            <LockKeyhole className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+            <p className="min-w-0 flex-1 leading-6 text-foreground">
+              {locale === 'ar'
+                ? 'حساب Free: فئتان مفتوحتان في كل مرحلة، ومسائل بلا حد ضمنهما. بقية الفئات لمشتركي Premium.'
+                : 'Free: two categories per stage, with unlimited questions in them. Other categories require Premium.'}
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href="/premium" className="font-bold text-primary underline underline-offset-4">
+                {locale === 'ar' ? 'مزايا Premium' : 'Premium benefits'}
+              </Link>
+              <Link href="/dashboard/redeem"
+                className="rounded-xl border border-primary/25 bg-background px-3 py-2 font-bold text-primary hover:bg-primary/10">
+                {locale === 'ar' ? 'عندي كود هدية' : 'Redeem gift code'}
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Main Categories Grid */}
         {isLoading ? (
           <div className="flex justify-center items-center min-h-[30vh]">
@@ -322,7 +374,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 lg:gap-6">
             {sortedCategories.map((category, index) => {
               const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
               const style = CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length];
@@ -338,6 +390,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   locale={locale}
                   stageId={stageId}
                   iconUrl={iconUrl}
+                  freeCategory={access?.FreeCategoryIds.includes(category.Id) === true}
+                  locked={!isPremium && !access?.FreeCategoryIds.includes(category.Id)}
                 />
               );
             })}

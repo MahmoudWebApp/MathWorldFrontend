@@ -36,15 +36,16 @@ import {
   type ProblemForPublic,
   type ProblemForStudent,
   useGetProblemAttemptsQuery,
+  useGetProblemDiagramQuery,
   useGetProblemQuery,
+  useLazyGetPremiumSolutionQuery,
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
   useCheckFavoriteQuery,
   useToggleFavoriteMutation,
-  useGetDailyQuotaQuery,
+  useGetStudentEntitlementQuery,
 } from "@/store/api/usersApi";
-import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
 import { Badge } from "@/components/ui/Badge";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
@@ -52,6 +53,8 @@ import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
+import { GeometryDiagram, isGeometryScene } from "@/components/math/GeometryDiagram";
+import { AdminGeometryEditor } from "@/components/admin/AdminGeometryEditor";
 
 function isStudentProblem(
   problem: ProblemDetail | undefined,
@@ -152,14 +155,21 @@ export default function ProblemPage() {
     },
   );
 
+  // Optional forward-compatible geometry payload. Older API responses have no diagram.
+  const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
+  const embeddedDiagram = isGeometryScene(rawDiagram) ? rawDiagram : null;
+  const { data: fetchedDiagram } = useGetProblemDiagramQuery(problemId, {
+    skip: !Number.isSafeInteger(problemId) || problemId <= 0,
+  });
+  const [diagramOverride, setDiagramOverride] = useState<{ problemId: number; scene: unknown } | null>(null);
+  const remoteDiagram = diagramOverride?.problemId === problemId
+    ? diagramOverride.scene
+    : fetchedDiagram;
+  const diagram = diagramOverride?.problemId === problemId && diagramOverride.scene === null
+    ? null
+    : isGeometryScene(remoteDiagram) ? remoteDiagram : embeddedDiagram;
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
-  const { data: dailyQuota, refetch: refetchDailyQuota } =
-    useGetDailyQuotaQuery(studentProblem?.StageId ?? 0, {
-      skip: !isAuthenticated || !studentProblem,
-      refetchOnMountOrArgChange: true,
-    });
-
   const {
     data: attemptHistory,
     isFetching: isAttemptHistoryLoading,
@@ -175,6 +185,11 @@ export default function ProblemPage() {
     skip: !isAuthenticated || Number.isNaN(problemId),
   });
 
+  const { data: entitlement } = useGetStudentEntitlementQuery(undefined, {
+    skip: !isAuthenticated || !studentProblem,
+  });
+  const [loadPremiumSolution, { data: premiumSolution, isFetching: isLoadingPremiumSolution, isError: premiumSolutionError }] = useLazyGetPremiumSolutionQuery();
+
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
 
@@ -186,6 +201,20 @@ export default function ProblemPage() {
   const [submitError, setSubmitError] = useState("");
   const [activeTab, setActiveTab] = useState<"question" | "video">("question");
   const [historyExpanded, setHistoryExpanded] = useState(false);
+
+  // The same dynamic route component can remain mounted when navigating
+  // between question IDs. Never expose a previous question's selected answer,
+  // result or pre-answer Premium solution in the next question.
+  useEffect(() => {
+    setSelectedOptionId(null);
+    setLocalAnswerResult(null);
+    setSubmissionDone(false);
+    setRetryMode(false);
+    setSubmitError("");
+    setActiveTab("question");
+    setHistoryExpanded(false);
+    attemptStartedAtRef.current = Date.now();
+  }, [problemId]);
 
   useEffect(() => {
     if (!studentProblem || retryMode) {
@@ -212,7 +241,9 @@ export default function ProblemPage() {
 
     const timer = window.setTimeout(() => {
       solutionRef.current?.scrollIntoView({
-        behavior: "smooth",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
         block: "start",
       });
     }, 200);
@@ -277,10 +308,6 @@ export default function ProblemPage() {
 
   const canRetry =
     localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
-  const newQuestionQuotaExhausted =
-    !!studentProblem && !studentProblem.HasAttempted && !localAnswerResult
-    && !!dailyQuota && !dailyQuota.Unlimited && dailyQuota.Remaining === 0;
-
   const canAnswer =
     isAuthenticated &&
     !!studentProblem &&
@@ -436,7 +463,6 @@ export default function ProblemPage() {
     if (
       !studentProblem ||
       !canAnswer ||
-      newQuestionQuotaExhausted ||
       isSubmitting ||
       effectiveSelectedOptionId === null
     ) {
@@ -460,9 +486,6 @@ export default function ProblemPage() {
       setSubmissionDone(true);
       setRetryMode(false);
       setHistoryExpanded(true);
-      // Quota is derived on the server; refresh after every successful answer.
-      await refetchDailyQuota();
-
       await refetchProblem();
 
       if (studentProblem.HasAttempted) {
@@ -473,15 +496,12 @@ export default function ProblemPage() {
         status?: number;
         data?: { Message?: string; message?: string };
       };
-      if (normalized.status === 429) {
-        await refetchDailyQuota();
-      }
       setSubmitError(
         normalized.data?.Message || normalized.data?.message ||
         (normalized.status === 429
           ? isArabic
-            ? "استهلكت حصة المسائل الجديدة لهذا المستوى اليوم. تقدر تعيد المسائل السابقة."
-            : "Today's allowance is used for this stage. You can still retry previous problems."
+            ? "طلبات كثيرة خلال وقت قصير. حاول مرة أخرى بعد قليل."
+            : "Too many requests. Please try again shortly."
           : t("common.error")),
       );
     }
@@ -774,10 +794,46 @@ export default function ProblemPage() {
         </div>
       )}
 
-      {studentProblem && (
-        <div className="mb-5">
-          <DailyQuotaCard stageId={studentProblem.StageId} compact />
-        </div>
+      {studentProblem && entitlement?.CanRevealSolutionBeforeAnswer && (
+        <section className="mb-5 rounded-2xl border border-primary/25 bg-primary/5 p-4">
+          <Button
+            variant="outline"
+            disabled={isLoadingPremiumSolution}
+            onClick={() => void loadPremiumSolution(problemId)}
+          >
+            {isLoadingPremiumSolution
+              ? (isArabic ? "جارٍ تحميل الحل..." : "Loading solution...")
+              : (isArabic ? "عرض الحل مسبقاً — Premium" : "Reveal solution early — Premium")}
+          </Button>
+          {premiumSolutionError && (
+            <p role="alert" className="mt-3 text-sm text-destructive">
+              {isArabic ? "تعذّر عرض الحل. حاول مجدداً." : "Could not load the solution. Please retry."}
+            </p>
+          )}
+          {premiumSolution?.ProblemId === problemId && (
+            <div className="mt-4 space-y-3">
+              {premiumSolution.DetailedSolution && (
+                <RichText text={premiumSolution.DetailedSolution} isArabic={isArabic} />
+              )}
+              {premiumSolution.CorrectOptionId !== null &&
+                studentProblem.Options.some(option => option.Id === premiumSolution.CorrectOptionId) && (
+                  <div className="rounded-xl border border-primary/15 bg-background p-3">
+                    <p className="mb-2 text-sm font-bold">
+                      {isArabic ? "الإجابة الصحيحة:" : "Correct answer:"}
+                    </p>
+                    <LatexPreview
+                      latex={studentProblem.Options.find(
+                        option => option.Id === premiumSolution.CorrectOptionId,
+                      )?.LatexCode ?? ""}
+                    />
+                  </div>
+                )}
+              {premiumSolution.YoutubeSolutionUrl && getYouTubeVideoId(premiumSolution.YoutubeSolutionUrl) && (
+                <YoutubeEmbed url={premiumSolution.YoutubeSolutionUrl} />
+              )}
+            </div>
+          )}
+        </section>
       )}
       <div className="grid grid-cols-1 gap-8">
         <div
@@ -820,6 +876,7 @@ export default function ProblemPage() {
                 isArabic={isArabic}
                 className="mb-6 text-lg"
               />
+              {diagram && <GeometryDiagram scene={diagram} locale={locale} />}
 
               {!isAuthenticated && isPublicProblem(problem) && (
                 <div className="border-t py-8 text-center">
@@ -908,7 +965,7 @@ export default function ProblemPage() {
                   </div>
 
                   {submitError && (
-                    <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                    <div role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                       {submitError}
                     </div>
                   )}
@@ -918,7 +975,7 @@ export default function ProblemPage() {
                       <Button
                         onClick={handleSubmit}
                         disabled={
-                          isSubmitting || newQuestionQuotaExhausted ||
+                          isSubmitting ||
                           effectiveSelectedOptionId === null
                         }
                         className="gap-2 transition-all"
@@ -943,6 +1000,9 @@ export default function ProblemPage() {
 
                   {showResult && (
                     <div
+                      role="status"
+                      aria-live="polite"
+                      aria-atomic="true"
                       className={`mt-6 animate-in rounded-xl border p-5 duration-300 fade-in zoom-in ${
                         isCorrect
                           ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
@@ -1062,6 +1122,15 @@ export default function ProblemPage() {
           )}
         </div>
 
+        {adminProblem && (
+          <AdminGeometryEditor
+            problemId={problemId}
+            locale={locale}
+            initialScene={diagram}
+            onSaved={(scene) => setDiagramOverride({ problemId, scene })}
+          />
+        )}
+
         {showSolutionSection && solutionText && (
           <div
             ref={solutionRef}
@@ -1081,6 +1150,8 @@ export default function ProblemPage() {
             <button
               type="button"
               onClick={() => setHistoryExpanded((value) => !value)}
+              aria-expanded={historyExpanded}
+              aria-controls="problem-attempt-history"
               className="flex w-full items-center justify-between gap-3 p-5 text-start hover:bg-muted/40"
             >
               <span className="flex items-center gap-2 font-semibold">
@@ -1095,7 +1166,7 @@ export default function ProblemPage() {
             </button>
 
             {historyExpanded && (
-              <div className="border-t p-5">
+              <div id="problem-attempt-history" className="border-t p-5">
                 {isAttemptHistoryLoading ? (
                   <div className="flex items-center justify-center py-8 text-muted-foreground">
                     <Loader2 className="me-2 h-5 w-5 animate-spin" />

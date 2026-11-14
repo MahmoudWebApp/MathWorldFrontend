@@ -32,10 +32,10 @@ export default function AdminUsersPage() {
     Subscription: tier || undefined,
     Page: page, PageSize: 10,
   };
-  const { data, isLoading, isFetching, isError, refetch } = useGetAdminLearnersQuery(filters, {
+  const { currentData: data, isLoading, isFetching, isError, refetch } = useGetAdminLearnersQuery(filters, {
     refetchOnMountOrArgChange: true,
   });
-  const { data: stages } = useGetAdminStagesQuery();
+  const { data: stages, isError: stagesError, refetch: retryStages } = useGetAdminStagesQuery();
   const label = ar ? {
     title: 'إدارة الطلاب', sub: 'ملفات المتعلمين وتقدمهم ونشاطهم حسب المرحلة',
     search: 'بحث باسم الطالب أو البريد الإلكتروني', allStages: 'كل المراحل',
@@ -78,6 +78,14 @@ export default function AdminUsersPage() {
         </Link>
       </div>
       <section aria-label={label.search} className="math-card mb-6 rounded-2xl border border-border p-4 md:p-5">
+        {stagesError && (
+          <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">
+            <span>{ar ? 'تعذر تحميل قائمة المراحل؛ بقية الفلاتر لا تزال متاحة.' : 'Could not load stages; the other filters remain available.'}</span>
+            <button type="button" onClick={() => void retryStages()} className="rounded-lg border border-current px-3 py-1.5 font-semibold">
+              {label.retry}
+            </button>
+          </div>
+        )}
         <div className="mb-3 flex items-center gap-2 font-semibold">
           <SlidersHorizontal className="h-5 w-5 text-primary" aria-hidden />
           {label.title}
@@ -138,7 +146,36 @@ export default function AdminUsersPage() {
           <div className="p-12 text-center text-muted-foreground">{label.empty}</div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="grid gap-3 p-3 sm:grid-cols-2 md:hidden">
+              {data.Learners.map(u => (
+                <article key={u.Id} className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4">
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link href={`/admin/users/${u.Id}`} className="block break-words font-semibold text-primary hover:underline">
+                        {u.FullName}
+                      </Link>
+                      <p className="mt-1 break-all text-xs text-muted-foreground" dir="ltr">{u.Email}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-md px-2 py-1 text-xs ${
+                      u.IsActive ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
+                    }`}>{u.IsActive ? label.active : label.disabled}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="rounded-lg bg-muted px-2 py-1">{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</span>
+                    <span className="rounded-lg bg-muted px-2 py-1">{u.SubscriptionType}</span>
+                  </div>
+                  <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 text-sm">
+                    <div><dt className="text-xs text-muted-foreground">{label.solved}</dt><dd className="font-semibold tabular-nums">{u.SolvedProblems}</dd></div>
+                    <div><dt className="text-xs text-muted-foreground">{label.points}</dt><dd className="font-semibold tabular-nums">{u.TotalAwardedPoints}</dd></div>
+                    <div className="col-span-2"><dt className="text-xs text-muted-foreground">{label.recent}</dt><dd>{fmt(u.LastAttemptAt)}</dd></div>
+                  </dl>
+                  <Link href={`/admin/users/${u.Id}`} className="inline-flex items-center gap-2 rounded-lg border border-primary/20 px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
+                    {label.detail}<DirectionalArrow direction="forward" className="h-4 w-4" />
+                  </Link>
+                </article>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[770px] text-sm">
                 <thead className="bg-muted/40 text-muted-foreground">
                   <tr>
@@ -171,11 +208,11 @@ export default function AdminUsersPage() {
             <div className="flex items-center justify-between gap-3 border-t border-border p-4 text-sm">
               <span className="text-muted-foreground">{label.page} {data.Page} / {Math.max(data.TotalPages, 1)}</span>
               <div className="flex gap-2">
-                <button type="button" disabled={page <= 1} onClick={() => setPage((v) => v - 1)}
+                <button type="button" disabled={isFetching || page <= 1} onClick={() => setPage((v) => v - 1)}
                   className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">
                   <DirectionalArrow direction="back" className="h-4 w-4" />{label.previous}
                 </button>
-                <button type="button" disabled={page >= data.TotalPages} onClick={() => setPage((v) => v + 1)}
+                <button type="button" disabled={isFetching || page >= data.TotalPages} onClick={() => setPage((v) => v + 1)}
                   className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">
                   {label.next}<DirectionalArrow direction="forward" className="h-4 w-4" />
                 </button>

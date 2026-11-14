@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import {
   AlertCircle,
+  BookOpenText,
   Loader2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -15,7 +16,7 @@ import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 export default function StagesPageClient() {
   const t = useTranslations();
   const locale = useLocale();
-  const { data: stages, isLoading, error } = useGetStagesQuery(locale, {
+  const { data: stages, isLoading, error, refetch } = useGetStagesQuery(locale, {
     refetchOnMountOrArgChange: true,
   });
 
@@ -34,7 +35,7 @@ export default function StagesPageClient() {
             </div>
             <p className="text-xl font-bold">{t('common.errorLoadingData')}</p>
             <button
-              onClick={() => window.location.reload()}
+              type="button" onClick={() => void refetch()}
               className="mt-4 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/25 active:scale-95"
             >
               {t('common.retry')}
@@ -77,6 +78,20 @@ export default function StagesPageClient() {
         {isLoading ? (
           <div className="flex min-h-[30vh] items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        ) : !stages?.length ? (
+          <div role="status" className="mx-auto max-w-xl rounded-3xl border border-primary/15 bg-card p-6 text-center shadow-sm sm:p-10">
+            <BookOpenText className="mx-auto mb-4 h-10 w-10 text-primary" aria-hidden="true" />
+            <h2 className="text-xl font-bold">
+              {locale === 'ar' ? 'لا توجد مراحل تعليمية منشورة حالياً' : 'No learning stages are available yet'}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              {locale === 'ar' ? 'حاول تحديث القائمة لاحقاً أو أعد المحاولة الآن.' : 'Refresh the stage list or try again later.'}
+            </p>
+            <button type="button" onClick={() => void refetch()}
+              className="mt-5 rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">
+              {t('common.retry')}
+            </button>
           </div>
         ) : (
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 pb-20 md:grid-cols-2 lg:gap-8 xl:grid-cols-4">

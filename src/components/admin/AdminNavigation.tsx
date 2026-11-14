@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
-  BarChart3, BookOpenText, ChevronDown, FolderTree,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound,
+  BarChart3, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList, Gift,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,24 @@ export const ADMIN_NAV_ITEMS = [
     group: 'management',
   },
   {
+    href: '/admin/premium-codes',
+    icon: Gift,
+    labelAr: 'أكواد هدية Premium',
+    labelEn: 'Premium gift codes',
+    descriptionAr: 'إنشاء أكواد مجانية لمرة واحدة ومراقبة استخدامها',
+    descriptionEn: 'Issue one-time Premium gifts and review redemptions',
+    group: 'management',
+  },
+  {
+    href: '/admin/notifications',
+    icon: BellRing,
+    labelAr: 'إشعارات الطلاب',
+    labelEn: 'Learner notifications',
+    descriptionAr: 'إرسال رسالة ثنائية اللغة إلى طالب محدد',
+    descriptionEn: 'Send a bilingual in-app notice to one learner',
+    group: 'management',
+  },
+  {
     href: '/admin/stages',
     icon: GraduationCap,
     labelAr: 'المستويات التعليمية',
@@ -55,6 +73,24 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Categories',
     descriptionAr: 'اختر فئة لعرض وإضافة مسائلها',
     descriptionEn: 'Organize topics by stage',
+    group: 'content',
+  },
+  {
+    href: '/admin/free-categories',
+    icon: LockKeyhole,
+    labelAr: 'الفئات المجانية وPremium',
+    labelEn: 'Free & Premium access',
+    descriptionAr: 'مراجعة الفئتين المجانيتين لكل مرحلة',
+    descriptionEn: 'Review the two free categories per stage',
+    group: 'content',
+  },
+  {
+    href: '/admin/problems/review',
+    icon: ClipboardList,
+    labelAr: 'مراجعة دفعات المسائل',
+    labelEn: 'Question review batches',
+    descriptionAr: 'مراجعة المسائل الثنائية اللغة واعتمادها قبل النشر',
+    descriptionEn: 'Review, approve and safely publish question batches',
     group: 'content',
   },
   {

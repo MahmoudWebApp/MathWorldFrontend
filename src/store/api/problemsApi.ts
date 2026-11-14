@@ -1,4 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
+import type { PremiumSolution } from '@/lib/premium-api';
+import type { GeometryScene } from '@/components/math/GeometryDiagram';
 import { baseQuery } from './baseQuery';
 import type { PagedProblemsResponse, ProblemPreview } from './types';
 
@@ -274,6 +276,32 @@ export const problemsApi = createApi({
       providesTags: ['Problem'],
     }),
 
+    getProblemDiagram: builder.query<GeometryScene | null, number>({
+      query: (problemId) => `/problems/${problemId}/diagram`,
+      providesTags: (_result, _error, problemId) => [{ type: 'Problem', id: problemId }],
+    }),
+
+    upsertAdminProblemDiagram: builder.mutation<void, { problemId: number; scene: GeometryScene }>({
+      query: ({ problemId, scene }) => ({
+        url: `/admin/problems/${problemId}/diagram`,
+        method: 'PUT',
+        body: { scene },
+      }),
+      invalidatesTags: (_result, _error, { problemId }) => [{ type: 'Problem', id: problemId }],
+    }),
+
+    deleteAdminProblemDiagram: builder.mutation<void, number>({
+      query: (problemId) => ({
+        url: `/admin/problems/${problemId}/diagram`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, problemId) => [{ type: 'Problem', id: problemId }],
+    }),
+
+    getPremiumSolution: builder.query<PremiumSolution, number>({
+      query: (problemId) => `/problems/${problemId}/premium-solution`,
+    }),
+
     createProblem: builder.mutation<{ Id: number }, CreateProblemRequest>({
       query: (body) => ({
         url: '/admin/problems',
@@ -309,7 +337,11 @@ export const problemsApi = createApi({
 
 export const {
   useSearchProblemsQuery,
+  useGetProblemDiagramQuery,
+  useUpsertAdminProblemDiagramMutation,
+  useDeleteAdminProblemDiagramMutation,
   useGetProblemQuery,
+  useLazyGetPremiumSolutionQuery,
   useGetProblemAttemptsQuery,
   useSubmitAnswerMutation,
   useGetCategoryProblemsQuery,

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
 
 import { ProblemCard } from "@/components/problems/ProblemCard";
+import { StudentAchievementsPanel } from "@/components/dashboard/StudentAchievementsPanel";
 import {
   Heart,
   Award,
@@ -13,7 +14,6 @@ import {
 } from "iconsax-reactjs";
 import { NotebookTabs, Trophy, Target } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
-import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
@@ -146,9 +146,6 @@ export default function UserDashboardPage() {
             </Link>
           </div>
 
-          <div className="mb-5">
-            <DailyQuotaCard stageId={stageId} compact />
-          </div>
           {journey && (
             <>
               <div className="mb-3 flex items-end justify-between">
@@ -212,6 +209,24 @@ export default function UserDashboardPage() {
       >
         {isArabic ? 'ربط Google أو Facebook بحسابي' : 'Connect Google or Facebook'}
       </Link>
+
+      <Link
+        href="/dashboard/analytics"
+        className="mb-8 ms-3 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+      >
+        <NotebookTabs className="h-4 w-4" aria-hidden="true" />
+        {isArabic ? 'تقريري المتقدم وتصدير النتائج (Premium)' : 'My analytics and report exports (Premium)'}
+      </Link>
+
+      <Link
+        href="/dashboard/leaderboard"
+        className="mb-8 ms-3 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+      >
+        <Trophy className="h-4 w-4" aria-hidden="true" />
+        {isArabic ? 'ترتيب طلاب مرحلتي' : 'My stage leaderboard'}
+      </Link>
+
+      <StudentAchievementsPanel />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
