@@ -25,6 +25,7 @@
 - Leaderboards: authenticated backend stage-only ranking for all/last-7/last-30-days using first-try points and unique solves; peers are anonymous. Next.js page and Flutter existing leaderboard screen now surfaced. Privacy/authorization covered in disposable PostgreSQL integration tests.
 - Premium reports: server-authorized personal attempt analytics and Excel-friendly CSV export with Arabic UTF-8 BOM. Web report includes CSV download + browser print/save-as-PDF (not a generated server PDF); Flutter shows the metrics and provides **clipboard CSV** only (not native XLSX/PDF download).
 - Editorial integration test: new PostgreSQL-backed CI checks JWT-owned inbox, subscription notice, milestone, anonymized leaderboard, badge counts, safe draft approve/publish, Premium private report and UTF-8 export. At latest successful snapshot the suite was green.
+- Category proposals: `docs/content/mathworld-proposed-16-new-categories.csv` drafts four new bilingual categories per stage (IDs intentionally omitted to preserve existing stage/category history). This is **not** an automatic import or published content.
 - Visual identity: Web BrandMark and Flutter BrandMark were visually compared; both use the violet/pink cap/sigma/x² mark. Actual launch icons need a device check.
 
 ## Next high-priority acceptance work
@@ -35,7 +36,7 @@
 4. **Web/Flutter parity:** test Arabic/English, RTL, accessible text, responsive screens, offline/error states, launch screen/icon on actual Android and iOS devices.
 5. **Student journey:** backend points, badges, stage-specific leaderboards and error notebook are present on branches; complete UI QA, stage isolation, learning recommendations, challenges and optional richer animations. Server-driven entitlements throughout.
 6. **Premium UX:** $5/year is a target, not a live checkout. Admin grants, audit and private analytics/CSV are implemented on branches; improve native file export on mobile and true PDF production, coupon planning, and eventual payment provider after legal/business readiness.
-7. **Content/editor tooling:** bulk CSV review and controlled publish, categorical SVG icon key migration, video links, mathematics diagrams and validation.
+7. **Content/editor tooling:** approved publication of the 64 question drafts, editorial approval of 16 proposed new categories, a dedicated safe category-import/review path, categorical SVG icon key migration, video links, mathematics diagrams and validation.
 8. **Security/production:** backups, restore test, monitoring, migration rehearsal, protected config/secrets, VPS/domain and final release gates.
 9. **Growth:** YouTube, TikTok, Facebook accounts/content pipeline and educational videos after core product readiness.
 
