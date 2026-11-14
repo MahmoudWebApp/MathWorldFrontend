@@ -21,7 +21,7 @@ export function DailyQuotaCard({
   if (stageId == null || stageId <= 0) return null;
 
   const premium = data?.IsPremium === true;
-  const title = ar ? 'الممارسة بلا حد يومي' : 'Unlimited daily practice';
+  const title = ar ? 'تدرّب بلا حدود' : 'Unlimited practice';
 
   return (
     <section
@@ -38,7 +38,10 @@ export function DailyQuotaCard({
             {ar ? 'جارٍ التحقق من صلاحياتك…' : 'Checking your access…'}
           </p>}
           <p className="text-sm">
-            {premium
+            {!data
+              ? (ar ? 'حل بلا حدود ضمن الفئات المفتوحة بحسابك.'
+                : 'Unlimited practice in your unlocked categories.')
+              : premium
               ? (ar ? 'Premium: جميع الفئات مفتوحة، ويمكنك حل أي عدد من المسائل.'
                 : 'Premium: every category is unlocked with unlimited questions.')
               : (ar ? 'مجاني: يمكنك حل أي عدد من المسائل ضمن الفئتين المفتوحتين بهذه المرحلة.'
