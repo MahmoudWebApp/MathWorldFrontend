@@ -815,12 +815,19 @@ export default function ProblemPage() {
               {premiumSolution.DetailedSolution && (
                 <RichText text={premiumSolution.DetailedSolution} isArabic={isArabic} />
               )}
-              {premiumSolution.CorrectOptionId !== null && (
-                <p className="text-sm font-medium">
-                  {isArabic ? "رقم خيار الإجابة الصحيحة:" : "Correct answer option ID:"}
-                  {" "}{premiumSolution.CorrectOptionId}
-                </p>
-              )}
+              {premiumSolution.CorrectOptionId !== null &&
+                studentProblem.Options.some(option => option.Id === premiumSolution.CorrectOptionId) && (
+                  <div className="rounded-xl border border-primary/15 bg-background p-3">
+                    <p className="mb-2 text-sm font-bold">
+                      {isArabic ? "الإجابة الصحيحة:" : "Correct answer:"}
+                    </p>
+                    <LatexPreview
+                      latex={studentProblem.Options.find(
+                        option => option.Id === premiumSolution.CorrectOptionId,
+                      )?.LatexCode ?? ""}
+                    />
+                  </div>
+                )}
               {premiumSolution.YoutubeSolutionUrl && getYouTubeVideoId(premiumSolution.YoutubeSolutionUrl) && (
                 <YoutubeEmbed url={premiumSolution.YoutubeSolutionUrl} />
               )}
