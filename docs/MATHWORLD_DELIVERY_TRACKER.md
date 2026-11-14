@@ -62,6 +62,16 @@ Detailed release acceptance: [MATHWORLD_UI_BRAND_ACCEPTANCE.md](MATHWORLD_UI_BRA
 - **Accessibility:** problem answer feedback and errors exposed as live status/alerts, attempt-history disclosure exposes its expanded state, and category stage parallax honors reduced-motion preferences.
 - **Verification:** Next.js TypeScript/build and Flutter analyze/RTL/brand checks run on PR branches; report success only for a checked SHA. Android APK and physical device visual verification remain pending.
 
+## November 14 — admin and geometry UI continuation
+
+- **Admin category management (Next.js):** explicit bilingual load-failure state with retry for both stage/category API requests; category-list empty state and scrollable minimum-width table on small phones. No category was created or published.
+- **Admin problem management (Next.js):** API list failures are no longer shown as empty results, filter and page selections are kept when retrying, pagination is disabled during failed/active fetches, and failed save reports a visible message while leaving the draft untouched.
+- **Geometry editor (Next.js):** changing problem IDs resets the draft and saved scene so another problem cannot accidentally inherit it; a successful diagram deletion clears its editor text, and JSON input stays LTR inside Arabic layout.
+- **Geometry parity (Next.js + Flutter):** all primitive coordinates are bounded to +/-10,000; signed angle sweeps render in the same direction; empty/full-turn arcs are rejected consistently. Flutter geometry tests cover the safety boundary and signed angles.
+- **Flutter problem diagrams:** added visible bilingual captions and a responsive bordered figure with color-scheme-aware contrast; removed the redundant surrounding glass card.
+- **Verification:** Next.js production build/typecheck and brand audit passed for web commit `6eb9a461`. Flutter analyze/geometry, brand checks and Android builds must be evaluated against the latest mobile commit `51282257`, not the earlier successful APK. Physical launcher-icon verification, staging APIs and Arabic/English device QA remain open.
+- All changes are committed to the existing feature branches only. No main merges, app-store uploads or deployed API changes.
+
 ## Next high-priority acceptance work
 
 1. **Pull-request review and integration:** finish latest CI, review migrations and auth rules, check production parity on a staging environment, and smoke test web and mobile against migrated disposable PostgreSQL. No merges until all checks pass.
