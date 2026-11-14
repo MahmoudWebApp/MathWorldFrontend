@@ -46,7 +46,6 @@ import {
   useToggleFavoriteMutation,
   useGetStudentEntitlementQuery,
 } from "@/store/api/usersApi";
-import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
 import { Badge } from "@/components/ui/Badge";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
@@ -795,11 +794,6 @@ export default function ProblemPage() {
         </div>
       )}
 
-      {studentProblem && (
-        <div className="mb-5">
-          <DailyQuotaCard stageId={studentProblem.StageId} compact />
-        </div>
-      )}
       {studentProblem && entitlement?.CanRevealSolutionBeforeAnswer && (
         <section className="mb-5 rounded-2xl border border-primary/25 bg-primary/5 p-4">
           <Button
