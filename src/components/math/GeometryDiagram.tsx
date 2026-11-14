@@ -18,7 +18,7 @@ export interface GeometryScene {
   altTextEn: string;
 }
 
-const finite = (...values: unknown[]) => values.every(value => typeof value === 'number' && Number.isFinite(value));
+const finite = (...values: unknown[]) => values.every(value => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 10000);
 const validText = (text?: unknown) => text === undefined || (typeof text === 'string' && text.length <= 80);
 const bounded = (n: number) => Number.isFinite(n) && Math.abs(n) <= 10000;
 
@@ -54,7 +54,8 @@ export function isGeometryScene(value: unknown): value is GeometryScene {
         break;
       case 'angle':
         if (!finite(item.cx, item.cy, item.radius, item.startDegrees, item.endDegrees) ||
-            item.radius <= 0) return false;
+            item.radius <= 0 || Math.abs(item.endDegrees - item.startDegrees) <= 0 ||
+            Math.abs(item.endDegrees - item.startDegrees) >= 360) return false;
         break;
       case 'axes':
         if (!finite(item.originX, item.originY, item.xLength, item.yLength) ||
@@ -91,8 +92,8 @@ export function GeometryDiagram({ scene, locale = 'ar' }: { scene: GeometryScene
             if (item.type === 'angle') {
               const start = anglePoint(item.cx, item.cy, item.radius, item.startDegrees);
               const end = anglePoint(item.cx, item.cy, item.radius, item.endDegrees);
-              const delta = ((item.endDegrees - item.startDegrees) % 360 + 360) % 360;
-              return <path key={item.id} d={`M ${start.x} ${start.y} A ${item.radius} ${item.radius} 0 ${delta > 180 ? 1 : 0} 0 ${end.x} ${end.y}`} />;
+              const sweep = item.endDegrees - item.startDegrees;
+              return <path key={item.id} d={`M ${start.x} ${start.y} A ${item.radius} ${item.radius} 0 ${Math.abs(sweep) > 180 ? 1 : 0} ${sweep > 0 ? 0 : 1} ${end.x} ${end.y}`} />;
             }
             if (item.type === 'axes') return <g key={item.id}>
               <line x1={item.originX-item.xLength} y1={item.originY} x2={item.originX+item.xLength} y2={item.originY} markerEnd={`url(#${markerId})`} />
