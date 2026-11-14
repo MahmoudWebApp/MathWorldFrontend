@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
+import { Link } from '@/i18n/routing';
 import { Bell, CheckCheck, LoaderCircle } from 'lucide-react';
 import {
   useGetInboxQuery,
@@ -129,9 +130,12 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
               </button>
             ))}
           </div>
-          <p className="border-t border-border px-4 py-2 text-center text-xs text-muted-foreground">
-            {ar ? 'نهاية إشعارات آخر 30 يوماً' : 'End of notifications from the last 30 days'}
-          </p>
+          <div className="border-t border-border p-3 text-center">
+            <Link href="/notifications" onClick={() => setOpen(false)}
+              className="inline-flex min-h-10 items-center justify-center rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+              {ar ? 'عرض كل الإشعارات' : 'View all notifications'}
+            </Link>
+          </div>
         </section>
       )}
     </div>
