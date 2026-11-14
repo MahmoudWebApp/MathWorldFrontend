@@ -73,6 +73,15 @@ Detailed release acceptance: [MATHWORLD_UI_BRAND_ACCEPTANCE.md](MATHWORLD_UI_BRA
 - **Android shipping gate (new finding):** current `android/app/build.gradle.kts` uses `signingConfigs.getByName("debug")` even under `buildTypes.release`. Thus CI produces an installable **release-mode, debug-signed QA APK**, not an APK signed for Google Play. Production upload signing, final application ID, key handling and device icon validation are tracked in [mobile issue #13](https://github.com/MahmoudWebApp/mathworld-mobile/issues/13).
 - All changes are committed to the existing feature branches only. No main merges, app-store uploads or deployed API changes.
 
+## November 14 — admin editorial UX, import validation and notification safety
+
+- **Category admin:** removed a duplicated empty-results table row; category image upload now checks PNG/JPEG/WebP and a 2 MB client limit, and explains that an existing stored icon cannot be deleted with the local preview reset. The create/edit modal scrolls on small phones. The backend remains the authority on image upload constraints.
+- **Editorial review queue:** Arabic/English problem text and solutions use the shared rich-math renderer; each answer option has a LaTeX preview and the correct answer is highlighted. Filters clear the previously selected batch; list/detail API errors have retry controls, and mobile metadata reflows.
+- **CSV imports:** the API's validation codes now have explanatory Arabic/English messages; category/question stage ID lookups expose retry states; long results and tables scroll on narrow screens, and file pickers have visible focus. The question import explicitly distinguishes a write-free dry run from saving a protected, unpublished editorial draft.
+- **Manual notice composer:** strict decimal-only student IDs, a visible recipient/title preview and an explicit confirmation before sending a single in-app notice. No bulk, SMS, email or push sending was added.
+- **Static draft audit:** checked the two 32-question CSVs and the proposed 16-category CSV. All 64 question rows have four nonempty distinct answer options, one integer correct-option index from 1 to 4, filled bilingual prompt/solution fields, and no duplicate content keys. The 16 proposals pass basic icon-key shape and unique content-key checks. Exactly 16 questions and four category proposals per stage; 4 questions per existing category ID (1–16). This **does not certify mathematical/pedagogical accuracy, actual staging IDs, translations, editorial approval or publication**.
+- No live content was imported, submitted to the API or published. Changes remain on draft PRs only; latest CI, physical-device RTL and staging acceptance are still required.
+
 ## Next high-priority acceptance work
 
 1. **Pull-request review and integration:** finish latest CI, review migrations and auth rules, check production parity on a staging environment, and smoke test web and mobile against migrated disposable PostgreSQL. No merges until all checks pass.
