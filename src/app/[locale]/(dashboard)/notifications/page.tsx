@@ -17,7 +17,7 @@ function safeAppPath(path: string | null): path is string {
   // Do not navigate to third-party URLs or ambiguous encoded/local redirects.
   return !!path && path.startsWith('/') && !path.startsWith('//') &&
     !path.includes('\\') && !path.includes('://') &&
-    !/[?#%\\u0000-\\u001f]/.test(path);
+    !/[?#%\x00-\x1f]/.test(path);
 }
 
 export default function NotificationsPage() {
