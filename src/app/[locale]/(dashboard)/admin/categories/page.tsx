@@ -78,6 +78,7 @@ function AdminCategoriesPageContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [iconError, setIconError] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -165,6 +166,7 @@ function AdminCategoriesPageContent() {
       Icon: null,
     });
     setPreviewUrl(null);
+    setIconError('');
     setStageError(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -193,6 +195,7 @@ function AdminCategoriesPageContent() {
     });
     setSelectedStageId(category.StageId);
     setPreviewUrl(category.Icon || null);
+    setIconError('');
     setIsEditing(true);
     setIsModalOpen(true);
     setStageError(false);
@@ -207,6 +210,7 @@ function AdminCategoriesPageContent() {
       Icon: null,
     });
     setPreviewUrl(null);
+    setIconError('');
     setIsEditing(false);
     setIsModalOpen(true);
     setStageError(false);
@@ -214,13 +218,18 @@ function AdminCategoriesPageContent() {
 
   const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (previewUrl && previewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      setFormData((prev) => ({ ...prev, Icon: file }));
-      setPreviewUrl(URL.createObjectURL(file));
+    setIconError('');
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) ||
+        file.size > 2 * 1024 * 1024) {
+      setIconError(locale === 'ar'
+        ? 'اختر صورة PNG أو JPG أو WebP لا تتجاوز 2MB.'
+        : 'Choose a PNG, JPG or WebP image up to 2MB.');
+      e.target.value = '';
+      return;
     }
+    setFormData((prev) => ({ ...prev, Icon: file }));
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
   if (isLoading || isLoadingStages)
@@ -462,19 +471,7 @@ function AdminCategoriesPageContent() {
                   </tr>
                 ))}
 
-                {filteredCategories?.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="p-8 text-center text-muted-foreground bg-muted/10"
-                    >
-                      {selectedStageId
-                        ? t("admin.categories.noCategoriesForStage")
-                        : t("common.noData")}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
+               </tbody>
             </table>
           </div>
         </CardContent>
@@ -487,7 +484,10 @@ function AdminCategoriesPageContent() {
           onClick={handleCloseModal}
         >
           <div
-            className="brand-surface p-6 rounded-2xl w-full max-w-md shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label={isEditing ? t("admin.categories.edit") : t("admin.categories.add")}
+            className="brand-surface max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl p-4 shadow-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4 pb-3 border-b">
@@ -560,7 +560,7 @@ function AdminCategoriesPageContent() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       onChange={handleIconChange}
                       className="hidden"
                     />
@@ -573,7 +573,7 @@ function AdminCategoriesPageContent() {
                     >
                       {t("admin.categories.uploadIcon")}
                     </Button>
-                    {previewUrl && (
+                    {formData.Icon && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -591,6 +591,12 @@ function AdminCategoriesPageContent() {
                     )}
                   </div>
                 </div>
+                {iconError && <p role="alert" className="mt-2 text-sm text-destructive">{iconError}</p>}
+                {isEditing && previewUrl && !formData.Icon && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {locale === 'ar' ? 'الأيقونة الحالية محفوظة؛ لتغييرها ارفع صورة جديدة.' : 'The existing icon is saved. Upload a new image to replace it.'}
+                  </p>
+                )}
               </div>
 
               <div>
