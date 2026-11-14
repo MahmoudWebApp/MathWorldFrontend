@@ -52,8 +52,8 @@ function AdminCategoriesPageContent() {
   const t = useTranslations();
   const locale = useLocale();
   const searchParams = useSearchParams();
-  const { data: categories, isLoading, refetch } = useGetAdminCategoriesQuery();
-  const { data: stages } = useGetAdminStagesQuery();
+  const { data: categories, isLoading, isError: categoriesError, refetch } = useGetAdminCategoriesQuery();
+  const { data: stages, isLoading: isLoadingStages, isError: stagesError, refetch: refetchStages } = useGetAdminStagesQuery();
 
   const [createCategory, { isLoading: isCreating }] =
     useCreateCategoryMutation();
@@ -223,12 +223,23 @@ function AdminCategoriesPageContent() {
     }
   };
 
-  if (isLoading)
+  if (isLoading || isLoadingStages)
     return (
-      <div className="p-8 text-center lg:px-24 md:px-16 px-4">
+      <div role="status" className="p-8 text-center lg:px-24 md:px-16 px-4">
         {t("common.loading")}
       </div>
     );
+
+  if (categoriesError || stagesError) return (
+    <div className="container mx-auto px-4 py-12 text-center" role="alert">
+      <p className="mb-4 font-medium text-destructive">
+        {locale === "ar" ? "تعذر تحميل المراحل أو الفئات. تحقق من الاتصال ثم حاول مجدداً." : "Could not load stages or categories. Check your connection and try again."}
+      </p>
+      <Button type="button" variant="outline" onClick={() => { void refetch(); void refetchStages(); }}>
+        {locale === "ar" ? "إعادة المحاولة" : "Retry"}
+      </Button>
+    </div>
+  );
 
   return (
     <div className="container mx-auto py-8 lg:px-24 md:px-16 px-4">
@@ -244,7 +255,7 @@ function AdminCategoriesPageContent() {
         ]}
         className="mb-6"
       />
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">
             {t("admin.categories.title")}
@@ -276,7 +287,7 @@ function AdminCategoriesPageContent() {
 
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Filter className="h-5 w-5" />
               <span className="font-medium">
@@ -290,7 +301,7 @@ function AdminCategoriesPageContent() {
                 setStageError(false);
               }}
             >
-              <SelectTrigger className="w-[200px] h-11">
+              <SelectTrigger className="h-11 w-full min-w-[180px] sm:w-[220px]">
                 <SelectValue placeholder={t("admin.categories.selectStage")} />
               </SelectTrigger>
               <SelectContent>
@@ -314,7 +325,7 @@ function AdminCategoriesPageContent() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-center">
+            <table className="w-full min-w-[620px] text-center">
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <th className="p-4">{t("admin.categories.icon")}</th>
@@ -325,6 +336,11 @@ function AdminCategoriesPageContent() {
                 </tr>
               </thead>
               <tbody>
+                {filteredCategories?.length === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
+                    {locale === "ar" ? "لا توجد فئات ضمن هذه المرحلة بعد. يمكنك إضافة فئة جديدة." : "No categories in this stage yet. You can add a new category."}
+                  </td></tr>
+                )}
                 {filteredCategories?.map((category) => (
                   <tr
                     key={category.Id}
