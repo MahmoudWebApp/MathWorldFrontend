@@ -36,6 +36,7 @@ export interface StageCategoryAccessDto {
   StageId: number;
   FreeCategoryIds: number[];
   FreeCategoryCount: number;
+  HasSavedFreeSelection?: boolean;
   Categories: Array<{
     Id: number;
     NameAr: string;
