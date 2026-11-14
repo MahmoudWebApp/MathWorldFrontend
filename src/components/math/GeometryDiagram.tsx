@@ -30,7 +30,8 @@ export function isGeometryScene(value: unknown): value is GeometryScene {
   if (scene.schemaVersion !== 1 || !view || !bounded(view.width) || !bounded(view.height) ||
       view.width <= 0 || view.height <= 0 || !Array.isArray(scene.objects) ||
       scene.objects.length > 100 || typeof scene.altTextAr !== 'string' ||
-      typeof scene.altTextEn !== 'string' || scene.altTextAr.length > 500 ||
+      typeof scene.altTextEn !== 'string' || !scene.altTextAr.trim() ||
+      !scene.altTextEn.trim() || scene.altTextAr.length > 500 ||
       scene.altTextEn.length > 500) return false;
   const ids = new Set<string>();
   for (const item of scene.objects) {
