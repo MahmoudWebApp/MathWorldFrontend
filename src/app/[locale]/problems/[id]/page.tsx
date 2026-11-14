@@ -44,7 +44,6 @@ import {
 import {
   useCheckFavoriteQuery,
   useToggleFavoriteMutation,
-  useGetDailyQuotaQuery,
   useGetStudentEntitlementQuery,
 } from "@/store/api/usersApi";
 import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
@@ -172,12 +171,6 @@ export default function ProblemPage() {
     : isGeometryScene(remoteDiagram) ? remoteDiagram : embeddedDiagram;
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
-  const { data: dailyQuota, refetch: refetchDailyQuota } =
-    useGetDailyQuotaQuery(studentProblem?.StageId ?? 0, {
-      skip: !isAuthenticated || !studentProblem,
-      refetchOnMountOrArgChange: true,
-    });
-
   const {
     data: attemptHistory,
     isFetching: isAttemptHistoryLoading,
@@ -300,10 +293,6 @@ export default function ProblemPage() {
 
   const canRetry =
     localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
-  const newQuestionQuotaExhausted =
-    !!studentProblem && !studentProblem.HasAttempted && !localAnswerResult
-    && !!dailyQuota && !dailyQuota.Unlimited && dailyQuota.Remaining === 0;
-
   const canAnswer =
     isAuthenticated &&
     !!studentProblem &&
@@ -459,7 +448,6 @@ export default function ProblemPage() {
     if (
       !studentProblem ||
       !canAnswer ||
-      newQuestionQuotaExhausted ||
       isSubmitting ||
       effectiveSelectedOptionId === null
     ) {
@@ -483,9 +471,6 @@ export default function ProblemPage() {
       setSubmissionDone(true);
       setRetryMode(false);
       setHistoryExpanded(true);
-      // Quota is derived on the server; refresh after every successful answer.
-      await refetchDailyQuota();
-
       await refetchProblem();
 
       if (studentProblem.HasAttempted) {
@@ -496,15 +481,12 @@ export default function ProblemPage() {
         status?: number;
         data?: { Message?: string; message?: string };
       };
-      if (normalized.status === 429) {
-        await refetchDailyQuota();
-      }
       setSubmitError(
         normalized.data?.Message || normalized.data?.message ||
         (normalized.status === 429
           ? isArabic
-            ? "استهلكت حصة المسائل الجديدة لهذا المستوى اليوم. تقدر تعيد المسائل السابقة."
-            : "Today's allowance is used for this stage. You can still retry previous problems."
+            ? "طلبات كثيرة خلال وقت قصير. حاول مرة أخرى بعد قليل."
+            : "Too many requests. Please try again shortly."
           : t("common.error")),
       );
     }
@@ -976,7 +958,7 @@ export default function ProblemPage() {
                       <Button
                         onClick={handleSubmit}
                         disabled={
-                          isSubmitting || newQuestionQuotaExhausted ||
+                          isSubmitting ||
                           effectiveSelectedOptionId === null
                         }
                         className="gap-2 transition-all"
