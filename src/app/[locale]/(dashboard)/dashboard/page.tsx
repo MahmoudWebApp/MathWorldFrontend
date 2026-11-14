@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
 
 import { ProblemCard } from "@/components/problems/ProblemCard";
+import { StudentAchievementsPanel } from "@/components/dashboard/StudentAchievementsPanel";
 import {
   Heart,
   Award,
@@ -224,6 +225,8 @@ export default function UserDashboardPage() {
         <Trophy className="h-4 w-4" aria-hidden="true" />
         {isArabic ? 'ترتيب طلاب مرحلتي' : 'My stage leaderboard'}
       </Link>
+
+      <StudentAchievementsPanel />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
