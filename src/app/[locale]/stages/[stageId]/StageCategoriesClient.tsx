@@ -340,9 +340,15 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                 ? 'حساب Free: فئتان مفتوحتان في كل مرحلة، ومسائل بلا حد ضمنهما. بقية الفئات لمشتركي Premium.'
                 : 'Free: two categories per stage, with unlimited questions in them. Other categories require Premium.'}
             </p>
-            <Link href="/premium" className="font-bold text-primary underline underline-offset-4">
-              {locale === 'ar' ? 'مزايا Premium' : 'Premium benefits'}
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <Link href="/premium" className="font-bold text-primary underline underline-offset-4">
+                {locale === 'ar' ? 'مزايا Premium' : 'Premium benefits'}
+              </Link>
+              <Link href="/dashboard/redeem"
+                className="rounded-xl border border-primary/25 bg-background px-3 py-2 font-bold text-primary hover:bg-primary/10">
+                {locale === 'ar' ? 'عندي كود هدية' : 'Redeem gift code'}
+              </Link>
+            </div>
           </div>
         )}
 
