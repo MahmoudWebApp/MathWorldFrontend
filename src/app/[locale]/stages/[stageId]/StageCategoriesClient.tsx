@@ -95,14 +95,12 @@ function CategoryPremiumCard({
         <div className="relative z-10 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center sm:h-16 sm:w-16 rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
-              {iconUrl ? (
-                iconUrl.startsWith('http') || iconUrl.startsWith('/') ? (
-                  <Image src={iconUrl} alt="icon" width={32} height={32} className="h-8 w-8 object-contain" />
-                ) : (
-                  <span className="text-3xl">{iconUrl}</span>
-                )
+              {iconIsPath ? (
+                <Image src={icon} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+              ) : iconIsGlyph ? (
+                <span aria-hidden="true" className="text-3xl">{icon}</span>
               ) : (
-                <span className="font-serif text-2xl font-bold text-primary">{math.symbol}</span>
+                <span aria-hidden="true" className="font-serif text-2xl font-bold text-primary">{math.symbol}</span>
               )}
             </div>
             {/* Minimal Arrow Button */}
@@ -326,6 +324,20 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
           </motion.div>
         </div>
+
+        {!isLoading && access && !isPremium && (
+          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+            <LockKeyhole className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+            <p className="min-w-0 flex-1 leading-6 text-foreground">
+              {locale === 'ar'
+                ? 'حساب Free: فئتان مفتوحتان في كل مرحلة، ومسائل بلا حد ضمنهما. بقية الفئات لمشتركي Premium.'
+                : 'Free: two categories per stage, with unlimited questions in them. Other categories require Premium.'}
+            </p>
+            <Link href="/premium" className="font-bold text-primary underline underline-offset-4">
+              {locale === 'ar' ? 'مزايا Premium' : 'Premium benefits'}
+            </Link>
+          </div>
+        )}
 
         {/* Main Categories Grid */}
         {isLoading ? (
