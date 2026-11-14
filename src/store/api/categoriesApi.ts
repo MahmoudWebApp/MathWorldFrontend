@@ -49,6 +49,7 @@ export interface StageCategoryAccessDto {
 export interface StudentSubscriptionDto {
   SubscriptionType: 'Free' | 'Premium';
   IsPremium: boolean;
+  PremiumExpiresAtUtc?: string | null;
   FreeCategoriesPerStage: number;
   DailyNewProblemsLimit?: number | null;
 }
