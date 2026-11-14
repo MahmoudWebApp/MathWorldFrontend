@@ -1,0 +1,46 @@
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQuery } from './baseQuery';
+
+export interface InboxNotification {
+  Id: number;
+  Type: string;
+  TitleAr: string;
+  TitleEn: string;
+  BodyAr: string;
+  BodyEn: string;
+  TargetPath: string | null;
+  CreatedAtUtc: string;
+  ReadAtUtc: string | null;
+}
+
+export interface InboxSnapshot {
+  Items: InboxNotification[];
+  UnreadCount: number;
+}
+
+// Backend filters by JWT identity and the last 30 days. No mock notifications.
+export const notificationsApi = createApi({
+  reducerPath: 'notificationsApi',
+  baseQuery,
+  tagTypes: ['Inbox'],
+  endpoints: (builder) => ({
+    getInbox: builder.query<InboxSnapshot, void>({
+      query: () => ({ url: '/notifications', params: { take: 30 } }),
+      providesTags: ['Inbox'],
+    }),
+    markNotificationRead: builder.mutation<void, number>({
+      query: (id) => ({ url: `/notifications/${id}/read`, method: 'PUT' }),
+      invalidatesTags: ['Inbox'],
+    }),
+    markAllNotificationsRead: builder.mutation<void, void>({
+      query: () => ({ url: '/notifications/read-all', method: 'PUT' }),
+      invalidatesTags: ['Inbox'],
+    }),
+  }),
+});
+
+export const {
+  useGetInboxQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+} = notificationsApi;
