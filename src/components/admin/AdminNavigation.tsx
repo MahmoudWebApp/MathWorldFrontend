@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
   BarChart3, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList, Gift,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,15 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Students',
     descriptionAr: 'بحث وملفات الطلاب وتقدّمهم ومحاولاتهم',
     descriptionEn: 'Find learners and review progress and attempts',
+    group: 'management',
+  },
+  {
+    href: '/admin/premium-codes',
+    icon: Gift,
+    labelAr: 'أكواد هدية Premium',
+    labelEn: 'Premium gift codes',
+    descriptionAr: 'إنشاء أكواد مجانية لمرة واحدة ومراقبة استخدامها',
+    descriptionEn: 'Issue one-time Premium gifts and review redemptions',
     group: 'management',
   },
   {
