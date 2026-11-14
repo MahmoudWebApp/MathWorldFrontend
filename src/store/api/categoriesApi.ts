@@ -61,7 +61,7 @@ export interface StudentSubscriptionDto {
 export const categoriesApi = createApi({
   reducerPath: 'categoriesApi',
   baseQuery,
-  tagTypes: ['Category', 'StageAccess'],
+  tagTypes: ['Category', 'StageAccess', 'Subscription'],
   endpoints: (builder) => ({
 
     // Public: Get all categories - returns translated names based on Accept-Language
@@ -78,6 +78,7 @@ export const categoriesApi = createApi({
     }),
     getStudentSubscription: builder.query<StudentSubscriptionDto, void>({
       query: () => '/users/subscription',
+      providesTags: ['Subscription'],
     }),
     updateStageFreeCategories: builder.mutation<
       { StageId: number; FreeCategoryIds: number[] },
