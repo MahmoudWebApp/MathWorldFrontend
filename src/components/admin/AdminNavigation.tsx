@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
   BarChart3, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -73,6 +73,15 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Free & Premium access',
     descriptionAr: 'مراجعة الفئتين المجانيتين لكل مرحلة',
     descriptionEn: 'Review the two free categories per stage',
+    group: 'content',
+  },
+  {
+    href: '/admin/problems/review',
+    icon: ClipboardList,
+    labelAr: 'مراجعة دفعات المسائل',
+    labelEn: 'Question review batches',
+    descriptionAr: 'مراجعة المسائل الثنائية اللغة واعتمادها قبل النشر',
+    descriptionEn: 'Review, approve and safely publish question batches',
     group: 'content',
   },
   {
