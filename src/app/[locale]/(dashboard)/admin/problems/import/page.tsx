@@ -12,6 +12,7 @@ import {
 } from '@/store/api/curriculumApi';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
 import { useGetAdminCategoriesQuery } from '@/store/api/categoriesApi';
+import { curriculumImportError } from '@/lib/curriculum-import-errors';
 
 const COLUMNS = [
   'ContentKey', 'StageId', 'CategoryId', 'QuestionTextAr', 'QuestionTextEn',
@@ -95,8 +96,8 @@ export default function CurriculumCsvPreviewPage() {
   const [previewBatch, { isLoading }] = usePreviewCurriculumImportMutation();
   const [submitDraft, { isLoading: isSubmittingDraft }] = useSubmitCurriculumDraftMutation();
   const [savedBatchId, setSavedBatchId] = useState<number | null>(null);
-  const { data: stages } = useGetAdminStagesQuery();
-  const { data: categories } = useGetAdminCategoriesQuery();
+  const { data: stages, isLoading: loadingStages, isError: stagesError, refetch: retryStages } = useGetAdminStagesQuery();
+  const { data: categories, isLoading: loadingCategories, isError: categoriesError, refetch: retryCategories } = useGetAdminCategoriesQuery();
 
   const downloadTemplate = () => {
     const blob = new Blob(['\uFEFF' + COLUMNS.join(',') + '\r\n'], { type: 'text/csv;charset=utf-8' });
@@ -163,8 +164,8 @@ export default function CurriculumCsvPreviewPage() {
         </p>
         <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm font-medium">
           <ShieldCheck className="me-2 inline h-4 w-4 text-primary" aria-hidden="true" />
-          {ar ? 'وضع المعاينة فقط: لن يتم نشر أو حفظ أي مسألة بقاعدة البيانات.'
-            : 'Dry-run only: no questions are saved or published.'}
+          {ar ? 'الفحص الأولي لا يحفظ ولا ينشر. بعد نجاحه يمكنك إرسال دفعة مسودة للمراجعة؛ هذه الخطوة تحفظ المسودة فقط دون إظهار المسائل للطلاب.'
+            : 'The initial preview saves and publishes nothing. After it passes, you may submit a draft for editorial review; this saves an unpublished draft only.'}
         </p>
       </div>
       <section className="space-y-4 rounded-2xl border bg-card p-5">
@@ -174,7 +175,7 @@ export default function CurriculumCsvPreviewPage() {
             <FileDown className="h-4 w-4" />
             {ar ? 'تنزيل قالب CSV' : 'Download CSV template'}
           </button>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
             <FileSpreadsheet className="h-4 w-4" />
             {ar ? 'اختيار ملف CSV' : 'Select CSV file'}
             <input className="sr-only" type="file" accept=".csv,text/csv"
@@ -191,7 +192,7 @@ export default function CurriculumCsvPreviewPage() {
           <div className="space-y-3">
             <p className="font-semibold">{ar ? 'المسائل المقروءة:' : 'Parsed questions:'} {draft.length}</p>
             <div className="max-h-64 overflow-auto rounded-xl border">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[640px] text-sm" aria-label={ar ? 'ملخص ملف المسائل' : 'Question CSV rows'}>
                 <thead className="bg-muted/60">
                   <tr><th className="p-3 text-start">ContentKey</th><th className="p-3 text-start">StageId</th><th className="p-3 text-start">CategoryId</th><th className="p-3 text-start">{ar ? 'السؤال' : 'Question'}</th></tr>
                 </thead>
@@ -221,6 +222,7 @@ export default function CurriculumCsvPreviewPage() {
             {ar ? 'الصالح:' : 'Valid:'} {preview.ValidCount} / {preview.Total}
             {' · '}{ar ? 'غير الصالح:' : 'Invalid:'} {preview.InvalidCount}
           </p>
+          <div className="max-h-[36rem] space-y-3 overflow-y-auto">
           {preview.Results.map((item, i) => (
             <div key={`${item.ContentKey}-${i}`} className="rounded-xl border p-3">
               <div className="flex items-center justify-between gap-3">
@@ -229,9 +231,12 @@ export default function CurriculumCsvPreviewPage() {
                   {item.Valid ? (ar ? 'صالح' : 'Valid') : (ar ? 'أخطاء' : 'Errors')}
                 </span>
               </div>
-              {item.Errors.length > 0 && <p className="mt-1 text-sm text-destructive" dir="ltr">{item.Errors.join(', ')}</p>}
+              {item.Errors.length > 0 && <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-destructive">
+                {item.Errors.map((code, n) => <li key={`${code}-${n}`}>{curriculumImportError(code, ar)}</li>)}
+              </ul>}
             </div>
           ))}
+          </div>
           {preview.CanProceedToEditorialReview && savedBatchId == null && (
             <button type="button" disabled={isSubmittingDraft} onClick={() => void saveForReview()}
               className="rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-foreground disabled:opacity-50">
@@ -258,6 +263,11 @@ export default function CurriculumCsvPreviewPage() {
       )}
       <section className="rounded-2xl border p-5">
         <h2 className="mb-3 font-semibold">{ar ? 'معرفات المراحل والفئات الحالية' : 'Current stage and category IDs'}</h2>
+        {(loadingStages || loadingCategories) && <p role="status" className="mb-3 text-sm text-muted-foreground">{ar ? 'جارٍ تحميل المراحل والفئات…' : 'Loading stages and categories…'}</p>}
+        {(stagesError || categoriesError) && <div role="alert" className="mb-3 space-y-2 text-sm text-destructive">
+          <p>{ar ? 'تعذّر تحميل معرفات المراحل أو الفئات. افحص المعرفات قبل إرسال الدفعة للمراجعة.' : 'Could not load stage/category IDs. Verify identifiers before submitting the batch.'}</p>
+          <button type="button" onClick={() => { void retryStages(); void retryCategories(); }} className="rounded-lg border border-current px-3 py-2 font-semibold">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
+        </div>}
         <div className="grid gap-3 md:grid-cols-2">
           {stages?.map(stage => (
             <div key={stage.Id} className="rounded-xl bg-muted/40 p-3 text-sm">
