@@ -287,6 +287,33 @@ export interface StudentPremiumAnalyticsReport {
   Categories: PremiumCategoryStatistics[];
 }
 
+export interface StageLeaderboardEntry {
+  Rank: number;
+  DisplayName: string;
+  SolvedProblems: number;
+  Points: number;
+  FirstTryCorrect: number;
+  IsCurrentUser: boolean;
+}
+
+export interface StageLeaderboardReport {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  Period: 'all' | 'weekly' | 'monthly';
+  Page: number;
+  PageSize: number;
+  TotalLearners: number;
+  MyRank: number | null;
+  Entries: StageLeaderboardEntry[];
+}
+
+export interface StageLeaderboardFilter {
+  stageId: number;
+  period: 'all' | 'weekly' | 'monthly';
+  page: number;
+}
+
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
@@ -331,6 +358,13 @@ export const usersApi = createApi({
       providesTags: (_data, _error, stageId) => [
         { type: 'DailyQuota', id: stageId },
       ],
+    }),
+
+    getStageLeaderboard: builder.query<StageLeaderboardReport, StageLeaderboardFilter>({
+      query: ({ stageId, period, page }) => ({
+        url: '/users/leaderboard',
+        params: { stageId, period, page, pageSize: 20 },
+      }),
     }),
 
     getLearningJourney: builder.query<LearningJourney, number>({
@@ -508,6 +542,7 @@ export const {
   useGetLearningStageQuery,
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,
+  useGetStageLeaderboardQuery,
   useGetDailyQuotaQuery,
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
