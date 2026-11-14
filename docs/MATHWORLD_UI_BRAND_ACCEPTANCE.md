@@ -2,6 +2,18 @@
 
 **Status:** Mandatory pre-release checklist (14 Nov 2026). Do **not** treat green CI, installed image files, or a working splash as proof the brand is approved. Android launcher icons remain a **device verification gate**.
 
+## Implemented since this checklist was first drafted
+
+- **Flutter in-app mark:** removed rounded clipping and `BoxFit.cover`; wordmark now stays left-to-right inside Arabic layouts.
+- **Android external icon:** explicit `android:roundIcon`, source PNGs inspected by Python/Pillow CI and verified transparent at corners. Physical launcher mask and clean-install validation remain required.
+- **iOS home-screen icon:** all 20-sized image variants regenerated from existing transparent MathWorld source with lavender/pink (not black) opaque corners.
+- **iOS native launch:** previously blank assets replaced by branded mark at @1x/@2x/@3x, storyboard launch background set to MathWorld purple.
+- **Flutter Web PWA:** all four icon assets, favicon and manifest synchronized with the approved identity.
+- **Next.js browser/PWA icons:** generated `.ico`, 16/32px favicons, Apple touch, 192/512px PWA icons and `src/app/favicon.ico` from the transparent approved mark, with no opaque black corners.
+- **Automated brand audits:** `mathworld-mobile/tools/inspect_brand_assets.py` and `MathWorldFrontend/tools/audit_web_brand.py` verify actual image pixels, not merely source paths. The builds still require on-device visual approval.
+- **UI accessibility fixes:** Next.js primary-foreground contrast, keyboard focus, reduced-motion and small admin metric cards; Flutter narrow-screen stats, metric scaling, directional wordmark and semantic progress.
+- **IMPORTANT:** source assets and outputs are committed only to development PRs. No app store release, signed APK installation or live redeployment was performed.
+
 ## Approved identity / source of truth
 
 - Brand: MathWorld, cap + sigma + x² mark; original geometry must remain unchanged.
@@ -23,7 +35,7 @@
 | iOS external icon | `ios/Runner/Assets.xcassets/AppIcon.appiconset/` | Image set present | Real iPhone and Xcode asset verification |
 | Flutter Web PWA | `web/manifest.json`, `web/favicon.png`, `web/icons/` | Manifest rebranded on dev branch | Image assets still require visual matching |
 
-**Not yet verified:** transparency of actual PNG pixel data, that all scaled icons contain the approved final mark (not older images), launcher caching on an updated install, or real-device rendering. Rebuilding an APK does **not** replace an already installed icon until a new version is installed (some Android launchers cache icons).
+**Verified automatically:** transparency and background of inspected PNGs plus generated iOS/PWA icons. **Not yet verified:** all physical device launcher masks, cached icons on an updated installation, real iOS app launch, or the installed APK. Rebuilding an APK does **not** replace an already installed icon until a new version is installed (some launchers cache icons).
 
 ## UI/UX release acceptance checklist
 
