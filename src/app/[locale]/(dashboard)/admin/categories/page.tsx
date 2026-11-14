@@ -580,8 +580,14 @@ function AdminCategoriesPageContent() {
                         size="sm"
                         className="text-red-500 w-full hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                         onClick={() => {
-                          setPreviewUrl(null);
+                          // Cancelling a new upload must restore the saved icon,
+                          // not suggest that the existing image was deleted.
+                          const existingIcon = isEditing
+                            ? categories?.find((item) => item.Id === formData.Id)?.Icon ?? null
+                            : null;
+                          setPreviewUrl(existingIcon);
                           setFormData((prev) => ({ ...prev, Icon: null }));
+                          setIconError('');
                           if (fileInputRef.current)
                             fileInputRef.current.value = "";
                         }}
