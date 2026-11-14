@@ -209,6 +209,14 @@ export default function UserDashboardPage() {
         {isArabic ? 'ربط Google أو Facebook بحسابي' : 'Connect Google or Facebook'}
       </Link>
 
+      <Link
+        href="/dashboard/analytics"
+        className="mb-8 ms-3 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+      >
+        <NotebookTabs className="h-4 w-4" aria-hidden="true" />
+        {isArabic ? 'تقريري المتقدم وتصدير النتائج (Premium)' : 'My analytics and report exports (Premium)'}
+      </Link>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {isLoading
