@@ -256,6 +256,37 @@ export interface AdminSubscriptionHistory {
   Records: AdminSubscriptionAuditRecord[];
 }
 
+export interface PremiumCategoryStatistics {
+  StageId: number;
+  CategoryId: number;
+  StageNameAr: string;
+  StageNameEn: string;
+  CategoryNameAr: string;
+  CategoryNameEn: string;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  ErrorNotebookProblems: number;
+  Attempts: number;
+  CorrectAttempts: number;
+  IncorrectAttempts: number;
+  FirstTryCorrect: number;
+  AwardedPoints: number;
+  TimeSpentSeconds: number;
+}
+
+export interface StudentPremiumAnalyticsReport {
+  GeneratedAtUtc: string;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  Attempts: number;
+  CorrectAttempts: number;
+  IncorrectAttempts: number;
+  FirstTryCorrect: number;
+  AwardedPoints: number;
+  TimeSpentSeconds: number;
+  Categories: PremiumCategoryStatistics[];
+}
+
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
@@ -313,6 +344,9 @@ export const usersApi = createApi({
     getStudentEntitlement: builder.query<StudentEntitlement, void>({
       query: () => '/users/subscription',
       providesTags: ['Subscription'],
+    }),
+    getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, void>({
+      query: () => '/users/premium-analytics',
     }),
 
     updateAdminLearnerSubscription: builder.mutation<
@@ -476,6 +510,7 @@ export const {
   useGetLearningJourneyQuery,
   useGetDailyQuotaQuery,
   useGetStudentEntitlementQuery,
+  useGetPremiumAnalyticsQuery,
   useUpdateAdminLearnerSubscriptionMutation,
   useGetAdminLearnerSubscriptionHistoryQuery,
   useGetProfileQuery,
