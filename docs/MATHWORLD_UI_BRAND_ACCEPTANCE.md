@@ -37,6 +37,21 @@
 
 **Verified automatically:** transparency and background of inspected PNGs plus generated iOS/PWA icons. **Not yet verified:** all physical device launcher masks, cached icons on an updated installation, real iOS app launch, or the installed APK. Rebuilding an APK does **not** replace an already installed icon until a new version is installed (some launchers cache icons).
 
+### Android external icon correction — latest development batch
+
+- Original Android `drawable-nodpi/launch_image.png` was a **300 × 300 opaque black bitmap**, layered over the purple launch background. The file has now been regenerated from the approved transparent PNG, so the native launch no longer carries a baked-in black rectangle.
+- Original adaptive foreground was approximately **64.8% of the 432 px canvas** in its largest alpha dimension; it has been regenerated with **52% graphic content** inside a safe central mask region.
+- The five Android `mipmap-*` resolutions now share one transparent symbol for regular and round launchers. The previous `ic_launcher_foreground.png` and adaptive foreground also share the approved source.
+- Image changes were committed by the development-branch generator (13 Android PNG files), not by a production release.
+- **Required before marking done:** latest automated audit passes (transparent corners + 56% upper bound for adaptive alpha extent), a signed release APK installs, and an actual Android launcher clean-install/upgrade screenshot confirms no crop/black block.
+
+### Learner UI parity — latest development batch
+
+- Flutter stage categories have tested responsive breakpoints (320/390/430 px one column, enlarged type one column), visible Free/Premium badges, gift-code CTA on locked categories, fallback for invalid category icon strings and accessible category progress.
+- Next.js categories use compact cards, a visible arrow, keyboard focus, reduced motion, Free badge, a bilingual explanation of **two free categories with unlimited solving**, and a subscription-error fail-closed state.
+- Problem search empty state in Flutter has clear-search and pull-to-refresh. Flutter shared GlassCard uses Ink so pressed-state feedback is visible.
+- **Free question count is unlimited:** removed dormant ten-per-day button-disable logic from both web and Flutter problem submission. Legacy practice labels no longer query the retired quota API.
+
 ## UI/UX release acceptance checklist
 
 ### Design system, Web + Flutter
