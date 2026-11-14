@@ -314,6 +314,23 @@ export interface StageLeaderboardFilter {
   page: number;
 }
 
+export interface MathBadge {
+  Key: string;
+  TitleAr: string;
+  TitleEn: string;
+  RequiredSolved: number;
+  Earned: boolean;
+  CurrentProgress: number;
+}
+
+export interface StudentAchievements {
+  UniqueSolved: number;
+  EarnedCount: number;
+  TotalBadges: number;
+  NextMilestone: number | null;
+  Badges: MathBadge[];
+}
+
 export const usersApi = createApi({
   reducerPath: 'usersApi',
   baseQuery,
@@ -358,6 +375,10 @@ export const usersApi = createApi({
       providesTags: (_data, _error, stageId) => [
         { type: 'DailyQuota', id: stageId },
       ],
+    }),
+
+    getAchievements: builder.query<StudentAchievements, void>({
+      query: () => '/users/achievements',
     }),
 
     getStageLeaderboard: builder.query<StageLeaderboardReport, StageLeaderboardFilter>({
@@ -543,6 +564,7 @@ export const {
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,
   useGetStageLeaderboardQuery,
+  useGetAchievementsQuery,
   useGetDailyQuotaQuery,
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
