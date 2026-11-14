@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
 import { Link } from '@/i18n/routing';
 import { BellRing, CheckCheck, ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react';
 import {
@@ -23,6 +25,8 @@ function safeAppPath(path: string | null): path is string {
 export default function NotificationsPage() {
   const locale = useLocale();
   const ar = locale === 'ar';
+  const role = useSelector((state: RootState) => state.auth.user?.Role);
+  const backPath = role === 'Admin' ? '/admin' : '/dashboard';
   const [skip, setSkip] = useState(0);
   const [actionError, setActionError] = useState('');
   const { currentData: inbox, isLoading, isFetching, isError, refetch } =
@@ -63,8 +67,8 @@ export default function NotificationsPage() {
 
   return (
     <main className="container mx-auto max-w-4xl space-y-6 px-4 py-8">
-      <Link href="/dashboard" className="text-sm font-semibold text-primary hover:underline">
-        {ar ? 'العودة للوحة التحكم' : 'Back to dashboard'}
+      <Link href={backPath} className="text-sm font-semibold text-primary hover:underline">
+        {ar ? (role === 'Admin' ? 'العودة لإدارة المنصة' : 'العودة للوحة التحكم') : (role === 'Admin' ? 'Back to admin' : 'Back to dashboard')}
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
