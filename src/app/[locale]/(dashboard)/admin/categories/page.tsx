@@ -39,6 +39,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/Tooltip";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { StageFreeCategoryAccessEditor } from "@/components/admin/StageFreeCategoryAccessEditor";
 
 export default function AdminCategoriesPage() {
   return (
@@ -330,6 +331,10 @@ function AdminCategoriesPageContent() {
           </div>
         </CardContent>
       </Card>
+
+      {selectedStageId && (
+        <StageFreeCategoryAccessEditor stageId={selectedStageId} locale={locale} />
+      )}
 
       <Card>
         <CardContent className="p-0">
