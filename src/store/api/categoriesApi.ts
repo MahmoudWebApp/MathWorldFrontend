@@ -71,47 +71,13 @@ export const categoriesApi = createApi({
 
     getStageCategoryAccess: builder.query<StageCategoryAccessDto, number>({
       query: (stageId) => `/stages/${stageId}/free-categories`,
-      providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
-      providesTags: ['Category'],
-      providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
-      providesTags: (_result, _error, stageId) => [{ type: 'StageAccess', id: stageId }],
-    }),
-    updateStageFreeCategories: builder.mutation<{ StageId: number; FreeCategoryIds: number[] }, { stageId: number; categoryIds: number[] }>({
-      query: ({ stageId, categoryIds }) => ({
-        url: `/admin/stages/${stageId}/free-categories`,
-        method: 'PUT',
-        body: { CategoryIds: categoryIds },
-      }),
-      async onQueryStarted({ stageId }, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          dispatch(categoriesApi.util.invalidateTags([{ type: 'Category' }]));
-          dispatch(categoriesApi.util.invalidateTags(['Category']));
-        } catch { /* mutation error is handled by the UI */ }
-      },
+      providesTags: (_result, _error, stageId) => [
+        { type: 'StageAccess', id: stageId },
+      ],
     }),
     getStudentSubscription: builder.query<StudentSubscriptionDto, void>({
       query: () => '/users/subscription',
     }),
-
-    updateStageFreeCategories: builder.mutation<void, { stageId: number; categoryIds: number[] }>({
-      query: ({ stageId, categoryIds }) => ({
-        url: `/admin/stages/${stageId}/free-categories`,
-        method: 'PUT',
-        body: { CategoryIds: categoryIds },
-      }),
-      invalidatesTags: (_result, _error, { stageId }) => [{ type: 'StageAccess', id: stageId }],
-    }),
-
-    updateStageFreeCategories: builder.mutation<{ StageId: number; FreeCategoryIds: number[] }, { stageId: number; categoryIds: number[] }>({
-      query: ({ stageId, categoryIds }) => ({
-        url: `/admin/stages/${stageId}/free-categories`,
-        method: 'PUT',
-        body: { CategoryIds: categoryIds },
-      }),
-      invalidatesTags: (_result, _error, { stageId }) => [{ type: 'StageAccess', id: stageId }],
-    }),
-
     updateStageFreeCategories: builder.mutation<
       { StageId: number; FreeCategoryIds: number[] },
       { stageId: number; categoryIds: [number, number] }
@@ -121,15 +87,10 @@ export const categoriesApi = createApi({
         method: 'PUT',
         body: { CategoryIds: categoryIds },
       }),
-      async onQueryStarted({ stageId }, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          dispatch(categoriesApi.util.invalidateTags(['Category']));
-          dispatch(categoriesApi.util.invalidateTags([{ type: 'StageAccess', id: stageId }]));
-        } catch {
-          // Preserve the previous catalog when saving fails.
-        }
-      },
+      invalidatesTags: (_result, _error, { stageId }) => [
+        'Category',
+        { type: 'StageAccess', id: stageId },
+      ],
     }),
 
     // Admin: Get all categories (bilingual)
@@ -199,10 +160,7 @@ export const {
   useGetCategoriesQuery,
   useGetStageCategoryAccessQuery,
   useUpdateStageFreeCategoriesMutation,
-  useUpdateStageFreeCategoriesMutation,
-  useUpdateStageFreeCategoriesMutation,
   useGetStudentSubscriptionQuery,
-  useUpdateStageFreeCategoriesMutation,
   useGetAdminCategoriesQuery,
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
