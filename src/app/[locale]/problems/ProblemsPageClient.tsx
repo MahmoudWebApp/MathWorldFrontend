@@ -92,6 +92,7 @@ function ProblemsPageClient() {
     isLoading: searchLoading,
     error: searchError,
     isFetching,
+    refetch: refetchProblems,
   } = useSearchProblemsQuery(
     {
       Q: debouncedSearch || "",
@@ -228,7 +229,8 @@ function ProblemsPageClient() {
           <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/50 z-10" />
 
           <input
-            type="text"
+            type="search"
+            aria-label={searchPlaceholder}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={searchPlaceholder}
@@ -245,7 +247,7 @@ function ProblemsPageClient() {
                 type="button"
                 onClick={clearSearch}
                 className="p-1 rounded-full hover:bg-muted transition-colors"
-                aria-label="Clear search"
+                aria-label={locale === "ar" ? "مسح البحث" : "Clear search"}
               >
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -263,10 +265,12 @@ function ProblemsPageClient() {
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
             &ldquo;{debouncedSearch}&rdquo;
             <button
+              type="button"
+              aria-label={locale === "ar" ? "مسح البحث" : "Clear search"}
               onClick={clearSearch}
-              className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+              className="hover:bg-primary/20 rounded-full p-1 transition-colors"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           </span>
         </div>
@@ -311,7 +315,7 @@ function ProblemsPageClient() {
             {t("common.errorLoadingData")}
           </p>
           <Button
-            onClick={() => window.location.reload()}
+            onClick={() => void refetchProblems()}
             variant="outline"
             className="mt-4"
           >
