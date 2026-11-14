@@ -9,6 +9,7 @@ import { statsApi } from './api/statsApi';
 import localeReducer from './slices/localeSlice';
 import { stagesApi } from './api/stagesApi';
 import { curriculumApi } from './api/curriculumApi';
+import { notificationsApi } from './api/notificationsApi';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -20,6 +21,7 @@ export const store = configureStore({
     [statsApi.reducerPath]: statsApi.reducer,
     [stagesApi.reducerPath]: stagesApi.reducer,
     [curriculumApi.reducerPath]: curriculumApi.reducer,
+    [notificationsApi.reducerPath]: notificationsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -30,6 +32,7 @@ export const store = configureStore({
       statsApi.middleware,
       stagesApi.middleware,
       curriculumApi.middleware,
+      notificationsApi.middleware,
     ),
 });
 
