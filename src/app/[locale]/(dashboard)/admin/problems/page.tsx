@@ -452,9 +452,9 @@ function AdminProblemsPageContent() {
   if (view === "form") {
     return (
       <div className="min-h-screen bg-muted/10 pb-20">
-        <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b shadow-sm mb-8">
-          <div className="mx-auto lg:px-24 md:px-16 px-4 py-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+        <div className="relative sm:sticky sm:top-0 z-40 bg-background/90 backdrop-blur-md border-b shadow-sm mb-8">
+          <div className="mx-auto lg:px-24 md:px-16 px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -464,7 +464,7 @@ function AdminProblemsPageContent() {
                 <DirectionalArrow direction="back" className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-primary">
+                <h1 className="text-xl font-bold text-primary sm:text-2xl">
                   {editingId
                     ? t("admin.problems.edit")
                     : t("admin.problems.add")}
@@ -481,7 +481,7 @@ function AdminProblemsPageContent() {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <Link href={`/${locale}/admin/problems/guide`} target="_blank">
                 <Button
                   variant="ghost"
@@ -958,7 +958,7 @@ function AdminProblemsPageContent() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           {!isSearching && totalProblems > 0 && (
             <span className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium">
               {t("admin.problems.total")}: {totalProblems}
