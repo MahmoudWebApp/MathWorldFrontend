@@ -30,15 +30,21 @@ export function StageFreeCategoryAccessEditor({ stageId, locale }: Props) {
   // A stage switch must never carry a previous stage's IDs into a write.
   useEffect(() => {
     setSelected(catalog?.FreeCategoryIds ?? []);
+  }, [stageId, catalog]);
+
+  useEffect(() => {
     setError('');
     setStatus('');
-  }, [stageId, catalog]);
+  }, [stageId]);
 
   const choices = catalog?.Categories ?? [];
   const isValid = selected.length === 2 &&
     new Set(selected).size === 2 &&
     selected.every(id => choices.some(c => c.Id === id));
-  const unchanged = isValid && selected.every(id => catalog?.FreeCategoryIds.includes(id));
+  // The default pair is not pinned yet: allow saving the same two IDs to
+  // protect Free entitlements from future editorial reorder operations.
+  const unchanged = isValid && catalog?.HasSavedFreeSelection === true &&
+    selected.every(id => catalog?.FreeCategoryIds.includes(id));
   const canSubmit = !!catalog && isValid && !unchanged && !isSaving && !isFetching;
 
   const toggle = (id: number) => {
@@ -101,6 +107,13 @@ export function StageFreeCategoryAccessEditor({ stageId, locale }: Props) {
         </div>
       ) : (
         <>
+          {!catalog.HasSavedFreeSelection && choices.length >= 2 && (
+            <p className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm">
+              {ar
+                ? 'الاختيار الحالي افتراضي بحسب ترتيب الفئات. يمكنك تثبيت نفس الفئتين بزر الحفظ قبل إعادة ترتيب التصنيفات، حتى لا تتغير صلاحيات Free بالخطأ.'
+                : 'The current Free pair is determined by category order. Save the same pair to pin it before reordering categories, so access cannot change accidentally.'}
+            </p>
+          )}
           {choices.length < 2 ? (
             <p className="mt-4 text-sm text-muted-foreground">
               {ar ? 'أضف فئتين على الأقل لهذه المرحلة قبل ضبط Free.' : 'Add at least two categories to this stage before configuring Free access.'}
