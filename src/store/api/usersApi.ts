@@ -323,6 +323,43 @@ export interface MathBadge {
   CurrentProgress: number;
 }
 
+export interface AdminPremiumGift {
+  Id: number;
+  Label: string;
+  PremiumDays: number;
+  CreatedByAdminId: number;
+  CreatedAtUtc: string;
+  ExpiresAtUtc: string;
+  RedeemedByUserId: number | null;
+  RedeemedAtUtc: string | null;
+  RevokedAtUtc: string | null;
+  Status: 'Available' | 'Redeemed' | 'Revoked' | 'Expired';
+}
+
+export interface PremiumGiftPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Codes: AdminPremiumGift[];
+}
+
+export interface NewlyCreatedPremiumGift {
+  Id: number;
+  Code: string; // One-time reveal only; never returned in list responses
+  Label: string;
+  PremiumDays: number;
+  CreatedAtUtc: string;
+  ExpiresAtUtc: string;
+  SingleUse: boolean;
+  PaymentRequired: boolean;
+}
+
+export interface PremiumGiftRedemption {
+  SubscriptionType: 'Premium';
+  PremiumExpiresAtUtc: string;
+  GrantedDays: number;
+}
+
 export interface StudentAchievements {
   UniqueSolved: number;
   EarnedCount: number;
@@ -346,6 +383,7 @@ export const usersApi = createApi({
     'AdminLearners',
     'DailyQuota',
     'Subscription',
+    'PremiumCodes',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -375,6 +413,43 @@ export const usersApi = createApi({
       providesTags: (_data, _error, stageId) => [
         { type: 'DailyQuota', id: stageId },
       ],
+    }),
+
+    getAdminPremiumCodes: builder.query<PremiumGiftPage, number>({
+      query: (page = 1) => ({
+        url: '/admin/premium-codes',
+        params: { page, pageSize: 20 },
+      }),
+      providesTags: ['PremiumCodes'],
+    }),
+
+    createAdminPremiumCode: builder.mutation<
+      NewlyCreatedPremiumGift,
+      { Label: string; PremiumDays: number; ExpiresInDays: number }
+    >({
+      query: (body) => ({
+        url: '/admin/premium-codes',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PremiumCodes'],
+    }),
+
+    revokeAdminPremiumCode: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/admin/premium-codes/${id}/revoke`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['PremiumCodes'],
+    }),
+
+    redeemPremiumCode: builder.mutation<PremiumGiftRedemption, string>({
+      query: (code) => ({
+        url: '/users/premium-codes/redeem',
+        method: 'POST',
+        body: { Code: code.trim() },
+      }),
+      invalidatesTags: ['Subscription', 'User', 'Dashboard', 'DailyQuota'],
     }),
 
     getAchievements: builder.query<StudentAchievements, void>({
@@ -568,6 +643,10 @@ export const {
   useGetDailyQuotaQuery,
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
+  useGetAdminPremiumCodesQuery,
+  useCreateAdminPremiumCodeMutation,
+  useRevokeAdminPremiumCodeMutation,
+  useRedeemPremiumCodeMutation,
   useUpdateAdminLearnerSubscriptionMutation,
   useGetAdminLearnerSubscriptionHistoryQuery,
   useGetProfileQuery,
