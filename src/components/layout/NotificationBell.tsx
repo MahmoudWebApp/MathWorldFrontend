@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Bell, CheckCheck, LoaderCircle } from 'lucide-react';
+import { Bell, CheckCheck, ExternalLink, LoaderCircle } from 'lucide-react';
 import {
   useGetInboxQuery,
   useMarkNotificationReadMutation,
@@ -16,6 +16,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
   const ar = locale === 'ar';
   const containerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
+  const [actionError, setActionError] = useState('');
   const { data, isLoading, isError, isFetching, refetch } = useGetInboxQuery(undefined, {
     skip: !isAuthenticated,
     pollingInterval: 60000,
@@ -48,9 +49,13 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
 
   const unread = data?.UnreadCount ?? 0;
   const readNotice = async (notice: InboxNotification) => {
+    setActionError('');
     if (!notice.ReadAtUtc) {
       try { await markRead(notice.Id).unwrap(); }
-      catch { return; }
+      catch {
+        setActionError(ar ? 'تعذّر تعليم الإشعار كمقروء.' : 'Could not mark notification as read.');
+        return;
+      }
     }
     // Only permit same-app absolute paths; do not trust external URLs from API data.
     const path = notice.TargetPath;
@@ -64,7 +69,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
     <div ref={containerRef} className="relative shrink-0">
       <button
         type="button"
-        onClick={() => { setOpen(!open); if (!open) refetch(); }}
+        onClick={() => { setOpen(!open); setActionError(''); if (!open) void refetch(); }}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={ar ? 'الإشعارات' : 'Notifications'}
@@ -89,7 +94,12 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
             </div>
             {unread > 0 && (
               <button type="button" disabled={markingAll}
-                onClick={() => void markAll().unwrap().catch(() => undefined)}
+                onClick={() => {
+                  setActionError('');
+                  void markAll().unwrap().catch(() =>
+                    setActionError(ar ? 'تعذّر تعليم الإشعارات كمقروءة.' : 'Could not mark all notifications as read.')
+                  );
+                }}
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
               >
                 <CheckCheck className="h-4 w-4" aria-hidden="true" />
@@ -130,10 +140,16 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
               </button>
             ))}
           </div>
+          {actionError && (
+            <p role="alert" className="border-t border-destructive/20 px-4 py-2 text-sm text-destructive">
+              {actionError}
+            </p>
+          )}
           <div className="border-t border-border p-3 text-center">
             <Link href="/notifications" onClick={() => setOpen(false)}
               className="inline-flex min-h-10 items-center justify-center rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
               {ar ? 'عرض كل الإشعارات' : 'View all notifications'}
+              <ExternalLink className="ms-2 h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </section>
