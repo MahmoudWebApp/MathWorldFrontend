@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
   BarChart3, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,15 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Students',
     descriptionAr: 'بحث وملفات الطلاب وتقدّمهم ومحاولاتهم',
     descriptionEn: 'Find learners and review progress and attempts',
+    group: 'management',
+  },
+  {
+    href: '/admin/notifications',
+    icon: BellRing,
+    labelAr: 'إشعارات الطلاب',
+    labelEn: 'Learner notifications',
+    descriptionAr: 'إرسال رسالة ثنائية اللغة إلى طالب محدد',
+    descriptionEn: 'Send a bilingual in-app notice to one learner',
     group: 'management',
   },
   {
