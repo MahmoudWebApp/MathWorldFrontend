@@ -958,7 +958,7 @@ export default function ProblemPage() {
                   </div>
 
                   {submitError && (
-                    <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                    <div role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                       {submitError}
                     </div>
                   )}
@@ -993,6 +993,9 @@ export default function ProblemPage() {
 
                   {showResult && (
                     <div
+                      role="status"
+                      aria-live="polite"
+                      aria-atomic="true"
                       className={`mt-6 animate-in rounded-xl border p-5 duration-300 fade-in zoom-in ${
                         isCorrect
                           ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
@@ -1140,6 +1143,8 @@ export default function ProblemPage() {
             <button
               type="button"
               onClick={() => setHistoryExpanded((value) => !value)}
+              aria-expanded={historyExpanded}
+              aria-controls="problem-attempt-history"
               className="flex w-full items-center justify-between gap-3 p-5 text-start hover:bg-muted/40"
             >
               <span className="flex items-center gap-2 font-semibold">
@@ -1154,7 +1159,7 @@ export default function ProblemPage() {
             </button>
 
             {historyExpanded && (
-              <div className="border-t p-5">
+              <div id="problem-attempt-history" className="border-t p-5">
                 {isAttemptHistoryLoading ? (
                   <div className="flex items-center justify-center py-8 text-muted-foreground">
                     <Loader2 className="me-2 h-5 w-5 animate-spin" />
