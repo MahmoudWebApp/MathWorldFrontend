@@ -232,13 +232,13 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const t = useTranslations();
   const locale = useLocale();
   const authenticated = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Student");
-  const { data: access, isLoading: accessLoading, isError: accessError } = useGetStageCategoryAccessQuery(stageId, { skip: !Number.isSafeInteger(stageId) || stageId <= 0 });
-  const { data: subscription, isLoading: subscriptionLoading, isError: subscriptionError } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
+  const { data: access, isLoading: accessLoading, isError: accessError, refetch: refetchAccess } = useGetStageCategoryAccessQuery(stageId, { skip: !Number.isSafeInteger(stageId) || stageId <= 0 });
+  const { data: subscription, isLoading: subscriptionLoading, isError: subscriptionError, refetch: refetchSubscription } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
   const isAdmin = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Admin");
   const isPremium = isAdmin || subscription?.IsPremium === true;
 
-  const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
-  const { data: stages, isLoading: stagesLoading } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
+  const { data: allCategories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
+  const { data: stages, isLoading: stagesLoading, refetch: refetchStages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const currentStage = stages?.find(s => s.Id === stageId);
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
@@ -262,7 +262,12 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </div>
             <p className="text-xl font-bold">{t('common.errorLoadingData')}</p>
             <button
-              onClick={() => window.location.reload()}
+              type="button" onClick={() => {
+                void refetchCategories();
+                void refetchStages();
+                if (Number.isSafeInteger(stageId) && stageId > 0) void refetchAccess();
+                if (authenticated) void refetchSubscription();
+              }}
               className="px-6 py-3 mt-4 bg-primary text-primary-foreground font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 active:scale-95 transition-all"
             >
               {t('common.retry')}
