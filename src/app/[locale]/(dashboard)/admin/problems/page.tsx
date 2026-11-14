@@ -29,6 +29,7 @@ import {
   ListChecks,
   HelpCircle,
   Lightbulb,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -957,6 +958,12 @@ function AdminProblemsPageContent() {
               {t("admin.problems.total")}: {totalProblems}
             </span>
           )}
+          <Link href={`/${locale}/admin/problems/import`}>
+            <Button variant="outline" className="gap-2 shadow-sm" size="lg">
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+              <span>{locale === "ar" ? "معاينة CSV" : "CSV preview"}</span>
+            </Button>
+          </Link>
           <Link href={`/${locale}/admin/problems/guide`}>
             <Button variant="outline" className="gap-2 shadow-sm" size="lg">
               <BookOpen className="h-5 w-5 text-primary" />
