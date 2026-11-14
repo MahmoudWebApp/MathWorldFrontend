@@ -16,6 +16,10 @@ export interface InboxNotification {
 export interface InboxSnapshot {
   Items: InboxNotification[];
   UnreadCount: number;
+  TotalCount: number;
+  HasMore: boolean;
+  Skip: number;
+  Take: number;
 }
 
 // Backend filters by JWT identity and the last 30 days. No mock notifications.
@@ -35,6 +39,13 @@ export const notificationsApi = createApi({
   endpoints: (builder) => ({
     getInbox: builder.query<InboxSnapshot, void>({
       query: () => ({ url: '/notifications', params: { take: 30 } }),
+      providesTags: ['Inbox'],
+    }),
+    getInboxPage: builder.query<InboxSnapshot, { skip: number; take?: number }>({
+      query: ({ skip, take = 30 }) => ({
+        url: '/notifications',
+        params: { take, skip },
+      }),
       providesTags: ['Inbox'],
     }),
     markNotificationRead: builder.mutation<void, number>({
@@ -60,6 +71,7 @@ export const notificationsApi = createApi({
 
 export const {
   useGetInboxQuery,
+  useGetInboxPageQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
   useSendAdminNotificationMutation,
