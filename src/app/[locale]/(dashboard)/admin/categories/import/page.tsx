@@ -10,6 +10,7 @@ import {
   type ProposedStageCategory,
 } from '@/store/api/curriculumApi';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
+import { curriculumImportError } from '@/lib/curriculum-import-errors';
 
 const HEADERS = [
   'ContentKey', 'StageId', 'Order', 'NameAr', 'NameEn',
@@ -85,7 +86,7 @@ export default function AdminProposedCategoryImportPage() {
   const [preview, setPreview] = useState<CategoryImportPreview | null>(null);
   const [error, setError] = useState('');
   const [runPreview, { isLoading }] = usePreviewCategoriesImportMutation();
-  const { data: stages } = useGetAdminStagesQuery();
+  const { data: stages, isLoading: loadingStages, isError: stagesError, refetch: retryStages } = useGetAdminStagesQuery();
 
   const downloadTemplate = () => {
     const csv = '\uFEFF' + HEADERS.join(',') + '\r\n';
@@ -154,7 +155,7 @@ export default function AdminProposedCategoryImportPage() {
             className="rounded-xl border px-4 py-2.5 text-sm font-semibold hover:bg-muted">
             {ar ? 'تنزيل قالب الفئات' : 'Download category template'}
           </button>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
             <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
             {ar ? 'اختيار CSV' : 'Choose CSV'}
             <input type="file" className="sr-only" accept=".csv,text/csv"
@@ -178,7 +179,7 @@ export default function AdminProposedCategoryImportPage() {
               {ar ? 'عدد الفئات المقروءة:' : 'Proposed categories:'} {drafts.length}
             </p>
             <div className="max-h-80 overflow-auto rounded-xl border">
-              <table className="w-full min-w-[580px] border-collapse text-sm">
+              <table className="w-full min-w-[580px] border-collapse text-sm" aria-label={ar ? 'ملخص ملف الفئات' : 'Category CSV rows'}>
                 <thead className="bg-muted/50">
                   <tr>
                     <th className="p-3 text-start">ContentKey</th>
@@ -222,7 +223,9 @@ export default function AdminProposedCategoryImportPage() {
                 </span>
               </span>
               {result.Errors.length > 0 &&
-                <p dir="ltr" className="mt-2 text-sm text-destructive">{result.Errors.join(', ')}</p>}
+                <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-destructive">
+                  {result.Errors.map((code, n) => <li key={`${code}-${n}`}>{curriculumImportError(code, ar)}</li>)}
+                </ul>}
             </div>
           ))}
           <p className="text-sm font-semibold text-muted-foreground">
@@ -234,6 +237,10 @@ export default function AdminProposedCategoryImportPage() {
       )}
       <section className="rounded-2xl border p-5">
         <h2 className="mb-3 font-semibold">{ar ? 'معرفات المراحل الحالية' : 'Current stage IDs'}</h2>
+        {loadingStages && <p role="status" className="mb-3 text-sm text-muted-foreground">{ar ? 'جارٍ تحميل المراحل…' : 'Loading stages…'}</p>}
+        {stagesError && <div role="alert" className="mb-3 space-y-2 text-sm text-destructive"><p>{ar ? 'تعذر تحميل المراحل. يمكن معاينة الملف لكن يجب التأكد من معرفاتها.' : 'Could not load stage IDs. You can still preview, but stage IDs must be verified.'}</p>
+          <button type="button" onClick={() => void retryStages()} className="rounded-lg border border-current px-3 py-2 font-semibold">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
+        </div>}
         <div className="flex flex-wrap gap-2">
           {stages?.map(stage => (
             <span key={stage.Id} className="rounded-xl bg-muted px-3 py-2 text-sm">
