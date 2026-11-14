@@ -17,22 +17,32 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
   const ar = locale === 'ar';
   const [upsertDiagram] = useUpsertAdminProblemDiagramMutation();
   const [deleteDiagram] = useDeleteAdminProblemDiagramMutation();
-  const [json, setJson] = useState(() => JSON.stringify(initialScene ?? {
+  const emptyScene: GeometryScene = {
     schemaVersion: 1,
     viewport: { width: 360, height: 260 },
     altTextAr: 'رسم هندسي',
     altTextEn: 'Geometry diagram',
     objects: [],
-  }, null, 2));
+  };
+  const [json, setJson] = useState(() => JSON.stringify(initialScene ?? emptyScene, null, 2));
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [scene, setScene] = useState<GeometryScene | null>(initialScene ?? null);
 
+  // A different problem must never inherit the previous problem's draft.
+  // Clearing initialScene also clears a deleted or not-yet-created diagram.
   useEffect(() => {
-    if (!initialScene) return;
-    setJson(JSON.stringify(initialScene, null, 2));
-    setScene(initialScene);
-  }, [initialScene]);
+    const blank: GeometryScene = {
+      schemaVersion: 1,
+      viewport: { width: 360, height: 260 },
+      altTextAr: 'رسم هندسي',
+      altTextEn: 'Geometry diagram',
+      objects: [],
+    };
+    setJson(JSON.stringify(initialScene ?? blank, null, 2));
+    setScene(initialScene ?? null);
+    setMessage('');
+  }, [problemId, initialScene]);
 
   let parsed: GeometryScene | null = null;
   try {
@@ -68,6 +78,7 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     try {
       await deleteDiagram(problemId).unwrap();
       setScene(null);
+      setJson(JSON.stringify(emptyScene, null, 2));
       onSaved?.(null);
       setMessage(ar ? 'تم حذف الرسم' : 'Diagram removed');
     } catch {
@@ -81,9 +92,9 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
       <button type="button" onClick={useExample} className="mb-3 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600">
         {ar ? 'تحميل مثال مثلث قائم (دون حفظ)' : 'Load right-triangle example (not saved)'}
       </button>
-      <textarea aria-label={ar ? 'بيانات الرسم' : 'Diagram JSON'} spellCheck={false} value={json}
+      <textarea aria-label={ar ? 'بيانات الرسم' : 'Diagram JSON'} spellCheck={false} value={json} dir="ltr"
         onChange={e => { setJson(e.target.value); setMessage(''); }} rows={12}
-        className="w-full rounded-lg border border-slate-300 bg-transparent p-3 font-mono text-xs dark:border-slate-700" />
+        className="w-full min-w-0 rounded-lg border border-slate-300 bg-transparent p-3 font-mono text-xs dark:border-slate-700" />
       {!valid && <p role="alert" className="mt-2 text-sm text-red-600">{ar ? 'صيغة الرسم غير صالحة أو أكبر من الحد المسموح.' : 'Invalid diagram format or size.'}</p>}
       {parsed && <GeometryDiagram scene={parsed} locale={locale} />}
       <div className="mt-3 flex flex-wrap gap-3">
