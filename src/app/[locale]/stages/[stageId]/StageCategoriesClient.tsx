@@ -133,6 +133,7 @@ function OtherStagePremiumCard({
   locale,
 }: OtherStagePremiumCardProps) {
   const isRtl = locale === 'ar';
+  const reduceMotion = useReducedMotion();
   const stageName = isRtl ? stage.NameAr : stage.NameEn;
   const visual = getStageVisual(stage);
   const style = visual.style;
@@ -161,6 +162,7 @@ function OtherStagePremiumCard({
     
     mouseXPixel.set(mouseX);
     mouseYPixel.set(mouseY);
+    if (reduceMotion) return;
     x.set(mouseX / width - 0.5);
     y.set(mouseY / height - 0.5);
   };
@@ -172,10 +174,10 @@ function OtherStagePremiumCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 30, scale: 0.95 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.1, type: "spring" }}
+      transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : index * 0.1, type: "spring" }}
       style={{ perspective: 1000 }}
     >
       <Link
@@ -184,7 +186,7 @@ function OtherStagePremiumCard({
         onMouseLeave={handleMouseLeave}
       >
         <motion.div
-          style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+          style={reduceMotion ? undefined : { rotateX, rotateY, transformStyle: "preserve-3d" }}
           className="brand-surface math-card group relative overflow-hidden rounded-2xl p-5 backdrop-blur-md transition-all duration-300 hover:border-brand-secondary/25 hover:shadow-xl"
         >
           <motion.div
@@ -196,20 +198,20 @@ function OtherStagePremiumCard({
           
           <div className="flex items-center gap-4 relative z-10" style={{ transformStyle: "preserve-3d" }}>
             <motion.div
-              style={{ translateZ: 30 }}
+              style={reduceMotion ? undefined : { translateZ: 30 }}
               className="flex-shrink-0 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
             >
               <StageIconBadge stage={stage} size="md" />
             </motion.div>
 
-            <motion.div style={{ translateZ: 20 }} className="flex-1 min-w-0">
+            <motion.div style={reduceMotion ? undefined : { translateZ: 20 }} className="flex-1 min-w-0">
               <h3 className={`font-bold text-base truncate ${style.hoverText} transition-colors`}>
                 {stageName}
               </h3>
             </motion.div>
 
             <motion.div 
-              style={{ translateZ: 40 }}
+              style={reduceMotion ? undefined : { translateZ: 40 }}
               className={`flex h-9 w-9 items-center justify-center rounded-full bg-background/50 border border-primary/10 ${style.hoverBg} group-hover:border-transparent transition-colors duration-300 flex-shrink-0`}
             >
               <DirectionalChevron direction="forward" className="h-4 w-4 text-muted-foreground transition-transform group-hover:text-white group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
