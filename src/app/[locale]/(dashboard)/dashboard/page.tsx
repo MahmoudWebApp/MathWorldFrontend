@@ -13,7 +13,6 @@ import {
 } from "iconsax-reactjs";
 import { NotebookTabs, Trophy, Target } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
-import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
@@ -146,9 +145,6 @@ export default function UserDashboardPage() {
             </Link>
           </div>
 
-          <div className="mb-5">
-            <DailyQuotaCard stageId={stageId} compact />
-          </div>
           {journey && (
             <>
               <div className="mb-3 flex items-end justify-between">
