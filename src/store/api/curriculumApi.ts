@@ -58,6 +58,35 @@ export interface CurriculumImportPreview {
   Results: { ContentKey: string; Valid: boolean; Errors: string[] }[];
 }
 
+export interface ProposedStageCategory {
+  ContentKey: string;
+  StageId: number;
+  Order: number;
+  NameAr: string;
+  NameEn: string;
+  SuggestedIconKey: string;
+  ReviewStatus: 'Proposed';
+  NotesAr: string;
+  NotesEn: string;
+}
+
+export interface CategoryImportPreview {
+  DryRun: boolean;
+  Published: boolean;
+  ExistingCategoriesUnchanged: boolean;
+  Total: number;
+  ValidCount: number;
+  InvalidCount: number;
+  RequiresEditorialApproval: boolean;
+  SupportsAutomaticCategoryPublishing: boolean;
+  Results: {
+    Row: number;
+    ContentKey: string;
+    Valid: boolean;
+    Errors: string[];
+  }[];
+}
+
 export type CurriculumDraftStatus = 'Pending' | 'Approved' | 'Rejected' | 'Published';
 
 export interface CurriculumDraft {
@@ -89,6 +118,16 @@ export const curriculumApi = createApi({
   baseQuery,
   tagTypes: ['CurriculumDraft', 'CurriculumReadiness'],
   endpoints: builder => ({
+    previewCategoriesImport: builder.mutation<
+      CategoryImportPreview,
+      { Categories: ProposedStageCategory[] }
+    >({
+      query: (body) => ({
+        url: '/admin/curriculum/categories/preview',
+        method: 'POST',
+        body,
+      }),
+    }),
     previewCurriculumImport: builder.mutation<CurriculumImportPreview, { Problems: ProposedCurriculumProblem[] }>({
       query: body => ({ url: '/admin/curriculum/import/preview', method: 'POST', body }),
     }),
@@ -142,6 +181,7 @@ export const curriculumApi = createApi({
 export const {
   useGetCurriculumReadinessQuery,
   usePreviewCurriculumImportMutation,
+  usePreviewCategoriesImportMutation,
   useGetCurriculumDraftsQuery,
   useGetCurriculumDraftQuery,
   useSubmitCurriculumDraftMutation,
