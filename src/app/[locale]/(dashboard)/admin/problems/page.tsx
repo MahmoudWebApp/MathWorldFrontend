@@ -132,7 +132,7 @@ function AdminProblemsPageContent() {
 
   const [
     fetchProblems,
-    { data: searchResult, isLoading: isSearching, isFetching },
+    { data: searchResult, isLoading: isSearching, isFetching, isError: searchError },
   ] = useLazyGetAdminProblemsQuery();
 
   const problems: ProblemAdminDetail[] = searchResult?.Results || [];
@@ -181,6 +181,7 @@ function AdminProblemsPageContent() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [form, setForm] = useState<ExtendedCreateProblemRequest>(emptyForm);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [saveError, setSaveError] = useState('');
   const [viewingProblem, setViewingProblem] =
     useState<ProblemAdminDetail | null>(null);
 
@@ -301,6 +302,7 @@ function AdminProblemsPageContent() {
         Options: emptyForm.Options.map(option => ({...option})) });
     }
     setFormErrors({});
+    setSaveError('');
     setView("form");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -310,11 +312,13 @@ function AdminProblemsPageContent() {
     setEditingId(null);
     setForm(emptyForm);
     setFormErrors({});
+    setSaveError('');
     setActiveField(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError('');
     if (!validateForm()) return;
     try {
       const cleanedForm = {
@@ -336,6 +340,7 @@ function AdminProblemsPageContent() {
       closeForm();
     } catch (err) {
       console.error("Failed to save problem", err);
+      setSaveError(locale === 'ar' ? 'تعذر حفظ المسألة. راجع الاتصال والصلاحيات ثم حاول مجدداً؛ لم تُفقد البيانات المدخلة.' : 'Could not save the problem. Check your connection and permissions, then retry. Your draft is preserved.');
     }
   };
 
@@ -516,6 +521,7 @@ function AdminProblemsPageContent() {
             className="max-w-5xl mx-auto space-y-8"
             noValidate
           >
+            {saveError && <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-medium text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">{saveError}</p>}
             {/* ── SECTION 1: Meta Information ── */}
             <div className="bg-background rounded-2xl border shadow-sm p-6 lg:p-8 space-y-6">
               <div className="flex items-center gap-2 border-b pb-3 mb-6">
@@ -1062,7 +1068,7 @@ function AdminProblemsPageContent() {
             </div>
           )}
           <div className="overflow-x-auto">
-            <table className="w-full text-center">
+            <table className="w-full min-w-[720px] text-center">
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <th className="p-5 font-semibold">ID</th>
@@ -1096,6 +1102,16 @@ function AdminProblemsPageContent() {
                       </div>
                     </td>
                   </tr>
+                ) : searchError ? (
+                  <tr><td colSpan={6} className="p-12 text-center">
+                    <div role="alert" className="flex flex-col items-center gap-3 text-destructive">
+                      <AlertCircle className="h-8 w-8" aria-hidden="true" />
+                      <p>{locale === 'ar' ? 'تعذر تحميل المسائل. الفلاتر الحالية محفوظة.' : 'Could not load problems. Your current filters are preserved.'}</p>
+                      <Button type="button" variant="outline" onClick={() => fetchProblems({ q: debouncedQ, categoryId: filters.CategoryId, stageId: filters.StageId, page: filters.Page, pageSize: filters.PageSize })}>
+                        {locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+                      </Button>
+                    </div>
+                  </td></tr>
                 ) : problems.length === 0 ? (
                   <tr>
                     <td
@@ -1228,7 +1244,7 @@ function AdminProblemsPageContent() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={filters.Page <= 1}
+                disabled={isFetching || searchError || filters.Page <= 1}
                 onClick={() =>
                   setFilters((prev) => ({ ...prev, Page: prev.Page - 1 }))
                 }
@@ -1239,7 +1255,7 @@ function AdminProblemsPageContent() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={filters.Page >= totalPages}
+                disabled={isFetching || searchError || filters.Page >= totalPages}
                 onClick={() =>
                   setFilters((prev) => ({ ...prev, Page: prev.Page + 1 }))
                 }
