@@ -146,7 +146,10 @@ export default function PremiumInformationPage() {
                 : 'Personal report, Excel-ready CSV and print-to-PDF. Teacher connections are planned.'}</span>
             </li>
           </ul>
-          <Link href="/dashboard/analytics" className="mt-8 inline-flex items-center justify-center rounded-xl border border-primary/30 bg-background px-5 py-3 text-sm font-bold text-primary hover:bg-primary/5">
+          <Link href="/dashboard/redeem" className="mt-8 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+            {ar ? 'عندي كود هدية Premium' : 'Redeem a Premium gift'}
+          </Link>
+          <Link href="/dashboard/analytics" className="mt-3 inline-flex items-center justify-center rounded-xl border border-primary/30 bg-background px-5 py-3 text-sm font-bold text-primary hover:bg-primary/5">
             {ar ? 'عرض تقريري الشخصي' : 'View my progress report'}
           </Link>
           <p className="mt-8 rounded-xl border border-primary/20 bg-background/70 px-4 py-3 text-center text-sm font-medium">
