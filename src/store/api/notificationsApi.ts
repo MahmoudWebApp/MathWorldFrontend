@@ -19,6 +19,15 @@ export interface InboxSnapshot {
 }
 
 // Backend filters by JWT identity and the last 30 days. No mock notifications.
+export interface SendAdminNotificationRequest {
+  learnerId: number;
+  TitleAr: string;
+  TitleEn: string;
+  BodyAr: string;
+  BodyEn: string;
+  TargetPath?: string | null;
+}
+
 export const notificationsApi = createApi({
   reducerPath: 'notificationsApi',
   baseQuery,
@@ -36,6 +45,16 @@ export const notificationsApi = createApi({
       query: () => ({ url: '/notifications/read-all', method: 'PUT' }),
       invalidatesTags: ['Inbox'],
     }),
+    sendAdminNotification: builder.mutation<
+      { Id: number; UserId: number; CreatedAtUtc: string },
+      SendAdminNotificationRequest
+    >({
+      query: ({ learnerId, ...body }) => ({
+        url: `/admin/notifications/learners/${learnerId}`,
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
@@ -43,4 +62,5 @@ export const {
   useGetInboxQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
+  useSendAdminNotificationMutation,
 } = notificationsApi;
