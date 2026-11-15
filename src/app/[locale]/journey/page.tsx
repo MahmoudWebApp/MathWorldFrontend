@@ -14,6 +14,15 @@ export default function JourneyPage() {
     refetchOnMountOrArgChange: true,
   });
 
+  const unfinished = (data?.Categories ?? [])
+    .filter(c => !c.IsLocked && c.TotalProblems > 0 && c.SolvedProblems < c.TotalProblems);
+  const recommended = [...unfinished].sort((a, b) => {
+    // Continue a started, unfinished topic first, then introduce a new one.
+    const started = Number(b.AttemptedProblems > 0) - Number(a.AttemptedProblems > 0);
+    if (started !== 0) return started;
+    return a.CompletionPercent - b.CompletionPercent || a.CategoryId - b.CategoryId;
+  })[0];
+
   return (
     <main className="container mx-auto max-w-5xl px-4 py-12" dir={ar ? 'rtl' : 'ltr'}>
       <h1 className="mb-3 text-3xl font-bold">{ar ? 'رحلتي في الرياضيات' : 'My mathematics journey'}</h1>
@@ -32,6 +41,23 @@ export default function JourneyPage() {
             <div className="rounded-2xl border bg-card p-5"><div className="text-sm text-muted-foreground">{ar ? 'مسائل محلولة' : 'Solved problems'}</div><strong className="text-3xl">{data.SolvedProblems} / {data.TotalProblems}</strong></div>
             <div className="rounded-2xl border bg-card p-5"><div className="text-sm text-muted-foreground">{ar ? 'إنجاز المرحلة' : 'Stage completion'}</div><strong className="text-3xl">{data.CompletionPercent}%</strong></div>
           </div>
+          {recommended && (
+            <section className="mb-8 rounded-2xl border border-primary/25 bg-primary/5 p-5">
+              <h2 className="text-lg font-bold">{ar ? 'الخطوة المقترحة لك' : 'Suggested next step'}</h2>
+              <p className="mt-2 font-semibold">{ar ? recommended.NameAr : recommended.NameEn}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {recommended.AttemptedProblems > 0
+                  ? (ar ? 'كمّل الفئة اللي بلّشت فيها لتحسّن تقدّمك.' :
+                    'Continue an unfinished category to improve your progress.')
+                  : (ar ? 'اكتشف فئة جديدة ومفتوحة ضمن حسابك.' :
+                    'Discover a new category already unlocked for your account.')}
+              </p>
+              <Link className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+                href={`/problems?stageId=${data.StageId}&categoryId=${recommended.CategoryId}`}>
+                {ar ? 'تابع حل المسائل' : 'Practice this category'}
+              </Link>
+            </section>
+          )}
           <h2 className="mb-4 text-xl font-bold">{ar ? 'تقدم الفئات' : 'Category progress'}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {data.Categories.map((category) => (
