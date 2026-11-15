@@ -31,6 +31,15 @@ export const ADMIN_NAV_ITEMS = [
     group: 'overview',
   },
   {
+    href: '/admin/activity',
+    icon: UsersRound,
+    labelAr: 'دخول ونشاط الطلاب',
+    labelEn: 'Learner activity',
+    descriptionAr: 'تسجيل الطلاب وآخر دخول وحل حسب المستوى',
+    descriptionEn: 'Sign-ups, last sign-ins and last practice',
+    group: 'overview',
+  },
+  {
     href: '/admin/audit',
     icon: History,
     labelAr: 'سجل العمليات',
