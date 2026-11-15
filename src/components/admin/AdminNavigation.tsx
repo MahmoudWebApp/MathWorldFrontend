@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
-  BarChart3, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
+  ChartNoAxesCombined, History, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
   GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList, Gift, TicketPercent,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
@@ -22,12 +22,21 @@ export const ADMIN_NAV_ITEMS = [
     group: 'overview',
   },
   {
-    href: '/admin/analytics',
-    icon: BarChart3,
-    labelAr: 'مركز الإحصائيات',
-    labelEn: 'Analytics center',
-    descriptionAr: 'نشاط الطلاب وأداء المراحل ونقاط الضعف',
-    descriptionEn: 'Student activity, stage trends and weak topics',
+    href: '/admin/engagement',
+    icon: ChartNoAxesCombined,
+    labelAr: 'نشاط المستويات والفئات',
+    labelEn: 'Stages & categories',
+    descriptionAr: 'الأكثر حلاً وأفضل طالب بكل مستوى وفئة',
+    descriptionEn: 'Active learners, top solvers and category usage',
+    group: 'overview',
+  },
+  {
+    href: '/admin/audit',
+    icon: History,
+    labelAr: 'سجل العمليات',
+    labelEn: 'Activity & audit log',
+    descriptionAr: 'تتبع ما نفّذه الطلاب والأدمن',
+    descriptionEn: 'Record student and administrator commands',
     group: 'overview',
   },
   {
