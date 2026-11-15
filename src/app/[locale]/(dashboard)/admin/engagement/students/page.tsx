@@ -13,7 +13,12 @@ export default function AdminLearnerActivityPage() {
   const [stageId, setStageId] = useState(0);
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [page, setPage] = useState(1);
-  const stages = useGetAdminEngagementOverviewQuery(30);
+  const stages = useGetAdminEngagementOverviewQuery(30, {
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    skipPollingIfUnfocused: true,
+    pollingInterval: 60_000,
+  });
   const result = useGetAdminEngagementStudentsQuery({
     page, ...(stageId ? { stageId } : {}), ...(term ? { search: term } : {}),
     ...(onlineOnly ? { onlineOnly: true } : {}),
