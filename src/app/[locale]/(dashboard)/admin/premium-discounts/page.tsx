@@ -7,8 +7,17 @@ import {
   useCreateAdminPremiumDiscountMutation,
   useDisableAdminPremiumDiscountMutation,
   useGetAdminPremiumDiscountsQuery,
+  useUpdateAdminPremiumDiscountSettingsMutation,
   type CreatedPremiumDiscount,
+  type AdminPremiumDiscount,
 } from '@/store/api/usersApi';
+
+const utcToLocal = (value: string) => {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return '';
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString().slice(0, 16);
+};
 
 const localToUtc = (value: string) => {
   const date = new Date(value);
@@ -27,11 +36,18 @@ export default function AdminPremiumDiscountsPage() {
   const [maxPerStudent, setMaxPerStudent] = useState('1');
   const [created, setCreated] = useState<CreatedPremiumDiscount | null>(null);
   const [disableId, setDisableId] = useState<number | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editStart, setEditStart] = useState('');
+  const [editEnd, setEditEnd] = useState('');
+  const [editMaxUses, setEditMaxUses] = useState('');
+  const [editPerStudent, setEditPerStudent] = useState('1');
+  const [editError, setEditError] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const { data, isLoading, isError, refetch } = useGetAdminPremiumDiscountsQuery(page);
   const [create, { isLoading: creating }] = useCreateAdminPremiumDiscountMutation();
   const [disable, { isLoading: disabling }] = useDisableAdminPremiumDiscountMutation();
+  const [updateSettings, { isLoading: savingSettings }] = useUpdateAdminPremiumDiscountSettingsMutation();
 
   const dateLabel = (value: string) => {
     const date = new Date(value);
@@ -74,6 +90,46 @@ export default function AdminPremiumDiscountsPage() {
     } catch {
       setError(ar ? 'تعذّر إنشاء الكود. تحقق من الصلاحيات والبيانات.' :
         'Could not create the code. Check your permissions and input.');
+    }
+  };
+
+  const openEdit = (code: AdminPremiumDiscount) => {
+    setEditId(code.Id);
+    setEditStart(utcToLocal(code.StartsAtUtc));
+    setEditEnd(utcToLocal(code.EndsAtUtc));
+    setEditMaxUses(code.MaxRedemptions?.toString() ?? '');
+    setEditPerStudent(code.MaxRedemptionsPerStudent?.toString() ?? '');
+    setEditError('');
+  };
+
+  const saveEdit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (editId === null) return;
+    setEditError('');
+    const starts = localToUtc(editStart);
+    const ends = localToUtc(editEnd);
+    const totalLimit = editMaxUses.trim() ? Number(editMaxUses) : null;
+    const perStudentLimit = editPerStudent.trim() ? Number(editPerStudent) : null;
+    if (!starts || !ends || new Date(ends) <= new Date(starts) || new Date(ends) <= new Date() ||
+      (totalLimit !== null && (!Number.isInteger(totalLimit) || totalLimit < 1)) ||
+      (perStudentLimit !== null && (!Number.isInteger(perStudentLimit) || perStudentLimit < 1))) {
+      setEditError(ar ? 'تحقق من فترة الصلاحية وحدود الاستخدام.' :
+        'Check the validity window and redemption limits.');
+      return;
+    }
+    try {
+      await updateSettings({
+        Id: editId,
+        Settings: {
+          StartsAtUtc: starts, EndsAtUtc: ends,
+          MaxRedemptions: totalLimit, MaxRedemptionsPerStudent: perStudentLimit,
+        },
+      }).unwrap();
+      setEditId(null);
+      setNotice(ar ? 'تم تحديث صلاحية الكود وحدود استخدامه.' : 'Discount validity and usage limits updated.');
+    } catch {
+      setEditError(ar ? 'تعذّر الحفظ. تأكد من أن الكود نشط وأن الحد ليس أقل من الاستخدامات.' :
+        'Could not save. Ensure the code is enabled and limits are not below existing use.');
     }
   };
 
@@ -204,10 +260,16 @@ export default function AdminPremiumDiscountsPage() {
                   {' · '}{ar ? 'لكل طالب' : 'Per student'}: {code.MaxRedemptionsPerStudent ?? '∞'}
                 </p>
               </div>
-              {code.Enabled && <button type="button" onClick={() => setDisableId(code.Id)}
-                className="self-center rounded-lg border border-destructive/30 px-3 py-2 text-sm text-destructive">
-                {ar ? 'تعطيل' : 'Disable'}
-              </button>}
+              {code.Enabled && <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => openEdit(code)}
+                  className="rounded-lg border px-3 py-2 text-sm text-primary">
+                  {ar ? 'تعديل الصلاحية' : 'Edit validity'}
+                </button>
+                <button type="button" onClick={() => setDisableId(code.Id)}
+                  className="rounded-lg border border-destructive/30 px-3 py-2 text-sm text-destructive">
+                  {ar ? 'تعطيل' : 'Disable'}
+                </button>
+              </div>}
             </article>)}
           </div>}
         <div className="flex justify-between border-t pt-3 text-sm">
@@ -218,6 +280,53 @@ export default function AdminPremiumDiscountsPage() {
             className="font-semibold text-primary disabled:opacity-40">{ar ? 'التالي' : 'Next'}</button>
         </div>
       </section>
+
+      {editId !== null && <div role="dialog" aria-modal="true" aria-labelledby="edit-discount-heading"
+        className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+        <form onSubmit={event => void saveEdit(event)}
+          className="w-full max-w-lg space-y-4 rounded-2xl bg-card p-5 shadow-xl">
+          <h2 id="edit-discount-heading" className="text-lg font-bold">
+            {ar ? 'تعديل صلاحية الكود' : 'Edit discount validity'}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {ar ? 'تغيير الحدود أو التواريخ لا يغيّر قيمة الخصم ولا يمس الطلبات المدفوعة سابقاً.'
+              : 'Changing dates or limits does not alter the discount amount or past paid orders.'}
+          </p>
+          <label className="block space-y-1">
+            <span className="text-sm">{ar ? 'بداية الصلاحية (توقيت جهازك)' : 'Start (local time)'}</span>
+            <input type="datetime-local" required value={editStart}
+              onChange={event => setEditStart(event.target.value)}
+              className="w-full rounded-lg border bg-background px-3 py-2" />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm">{ar ? 'نهاية الصلاحية (توقيت جهازك)' : 'End (local time)'}</span>
+            <input type="datetime-local" required value={editEnd}
+              onChange={event => setEditEnd(event.target.value)}
+              className="w-full rounded-lg border bg-background px-3 py-2" />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm">{ar ? 'الحد الإجمالي (فارغ = غير محدود)' : 'Total uses (empty = unlimited)'}</span>
+            <input type="number" min={1} step={1} value={editMaxUses}
+              onChange={event => setEditMaxUses(event.target.value)}
+              className="w-full rounded-lg border bg-background px-3 py-2" />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm">{ar ? 'لكل طالب (فارغ = غير محدود)' : 'Per student (empty = unlimited)'}</span>
+            <input type="number" min={1} step={1} value={editPerStudent}
+              onChange={event => setEditPerStudent(event.target.value)}
+              className="w-full rounded-lg border bg-background px-3 py-2" />
+          </label>
+          {editError && <p role="alert" className="text-sm text-destructive">{editError}</p>}
+          <div className="flex flex-wrap justify-end gap-2">
+            <button type="button" disabled={savingSettings} onClick={() => setEditId(null)}
+              className="rounded-lg border px-3 py-2">{ar ? 'إلغاء' : 'Cancel'}</button>
+            <button type="submit" disabled={savingSettings}
+              className="rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground disabled:opacity-50">
+              {savingSettings ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : (ar ? 'حفظ التعديلات' : 'Save changes')}
+            </button>
+          </div>
+        </form>
+      </div>}
 
       {disableId !== null && <div role="dialog" aria-modal="true"
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
