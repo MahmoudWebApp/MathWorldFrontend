@@ -378,6 +378,7 @@ export interface AdminPremiumDiscount {
   EndsAtUtc: string;
   Enabled: boolean;
   MaxRedemptions: number | null;
+  MaxRedemptionsPerStudent: number | null;
   RedemptionCount: number;
   CreatedAtUtc: string;
   Status: 'Scheduled' | 'Active' | 'Expired' | 'Disabled' | 'Exhausted';
@@ -397,6 +398,7 @@ export interface CreatePremiumDiscountRequest {
   StartsAtUtc: string;
   EndsAtUtc: string;
   MaxRedemptions: number | null;
+  MaxRedemptionsPerStudent: number | null;
 }
 
 export interface CreatedPremiumDiscount extends CreatePremiumDiscountRequest {
