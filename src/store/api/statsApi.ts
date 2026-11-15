@@ -112,6 +112,7 @@ export interface AdminEngagementStage {
   NameAr: string;
   NameEn: string;
   ActiveSolvers: number;
+  OnlineLearners: number;
   SuccessfulSolves: number;
   /** Newly registered students whose current stage is this stage. */
   Signups: number;
@@ -123,6 +124,8 @@ export interface AdminEngagementOverview {
   TotalStudents: number;
   NewStudents: number;
   ActiveSolvers: number;
+  OnlineLearners: number;
+  PresenceWindowMinutes: number;
   SuccessfulSolves: number;
   DailyActivity: AdminEngagementDay[];
   Stages: AdminEngagementStage[];
@@ -162,6 +165,8 @@ export interface AdminEngagementStudent {
   CurrentStageId: number | null;
   IsActive: boolean;
   LastPracticeAt: string | null;
+  LastHeartbeatAtUtc: string | null;
+  IsOnline: boolean;
   Attempts: number;
 }
 export interface AdminEngagementStudentPage {
