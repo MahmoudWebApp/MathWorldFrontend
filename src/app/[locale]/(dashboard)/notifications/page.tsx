@@ -33,6 +33,9 @@ export default function NotificationsPage() {
     useGetInboxPageQuery({ skip, take: PAGE_SIZE }, {
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
+      refetchOnReconnect: true,
+      pollingInterval: 60000,
+      skipPollingIfUnfocused: true,
     });
   const [markRead, { isLoading: markingRead }] = useMarkNotificationReadMutation();
   const [markAll, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
@@ -60,6 +63,12 @@ export default function NotificationsPage() {
     } catch {
       setActionError(ar ? 'تعذر تعليم جميع الإشعارات كمقروءة.' : 'Could not mark all notifications as read.');
     }
+  };
+
+  const formatNoticeDate = (value: string) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' :
+      new Intl.DateTimeFormat(ar ? 'ar' : 'en', { dateStyle: 'medium' }).format(date);
   };
 
   const start = Math.min(skip + 1, inbox?.TotalCount ?? 0);
@@ -126,7 +135,7 @@ export default function NotificationsPage() {
                   {ar ? notice.BodyAr : notice.BodyEn}
                 </span>
                 <time className="mt-3 block text-xs text-muted-foreground" dateTime={notice.CreatedAtUtc}>
-                  {new Intl.DateTimeFormat(ar ? 'ar' : 'en', { dateStyle: 'medium' }).format(new Date(notice.CreatedAtUtc))}
+                  {formatNoticeDate(notice.CreatedAtUtc)}
                 </time>
               </button>
             ))}
