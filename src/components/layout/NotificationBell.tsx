@@ -48,6 +48,11 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
   if (!isAuthenticated) return null;
 
   const unread = data?.UnreadCount ?? 0;
+  const formatNoticeDate = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return new Intl.DateTimeFormat(ar ? 'ar' : 'en', { dateStyle: 'medium' }).format(date);
+  };
   const readNotice = async (notice: InboxNotification) => {
     setActionError('');
     if (!notice.ReadAtUtc) {
@@ -122,7 +127,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
               </div>
             ) : !data?.Items.length ? (
               <div className="p-8 text-center text-sm text-muted-foreground">
-                {ar ? 'ما عندك إشعارات جديدة خلال آخر 30 يوماً' : 'No notifications in the last 30 days'}
+                {ar ? 'لا توجد إشعارات خلال آخر 30 يوماً' : 'No notifications in the last 30 days'}
               </div>
             ) : data.Items.map((notice) => (
               <button type="button" key={notice.Id}
@@ -134,9 +139,11 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
                   {!notice.ReadAtUtc && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />}
                 </span>
                 <span className="mt-1 block text-sm text-muted-foreground">{ar ? notice.BodyAr : notice.BodyEn}</span>
-                <time className="mt-2 block text-xs text-muted-foreground" dateTime={notice.CreatedAtUtc}>
-                  {new Intl.DateTimeFormat(ar ? 'ar' : 'en', { dateStyle: 'medium' }).format(new Date(notice.CreatedAtUtc))}
-                </time>
+                {formatNoticeDate(notice.CreatedAtUtc) && (
+                  <time className="mt-2 block text-xs text-muted-foreground" dateTime={notice.CreatedAtUtc}>
+                    {formatNoticeDate(notice.CreatedAtUtc)}
+                  </time>
+                )}
               </button>
             ))}
           </div>
