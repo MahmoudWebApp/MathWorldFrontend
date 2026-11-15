@@ -1,4 +1,4 @@
-# MathWorld — delivery tracker (14 November 2026)
+# MathWorld — delivery tracker (15 November 2026)
 
 > This document tracks the **feature branches**, not deployed production. A green CI build is not proof of a feature being deployed or tested end to end.
 
@@ -9,6 +9,18 @@
 | ASP.NET Backend | [#20](https://github.com/MahmoudWebApp/MathWordBackEnd/pull/20) | `feature/premium-entitlement-foundation` |
 | Next.js Web | [#18](https://github.com/MahmoudWebApp/MathWorldFrontend/pull/18) | `feature/premium-entitlements-client` |
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
+
+
+## November 15 — Premium discount and checkout foundation (feature branches only)
+
+- **Annual target price:** USD 5.00. Free remains two unlocked categories per stage with unlimited solving; no ten-question quota.
+- **Discounts:** backend cryptographic one-time code creation (`MD-...`), scheduled UTC validity, percentage/fixed-USD pricing, total usage cap, **per-student usage cap defaulting to one**, admin disable and validity/limit edits with row locking, student price quote. Both React and Flutter display bilingual price preview. Admin web has management screen, one-time code copy, schedule editor and usage display. Discount codes are distinct from redeemable `MW-...` Premium gifts.
+- **Order ledger:** checkout order table/migrations and EF snapshot, server-side amounts/unique references and provider payment IDs, status/audit timestamps. Students can prepare a **Pending** nonpayment order, list their own orders, see status, and cancel a local unpaid draft. Three-Pending-order limit enforced with transaction-level locking. There is no payment action in the UI.
+- **Flutter parity:** new Premium & discounts route from student settings includes quote/history/pagination/cancellation and gift-code navigation. API models and providers use the existing authenticated Dio pipeline.
+- **Admin audit:** read-only API and Next.js dashboard for order counts, paid/discount aggregates, long-pending orders, status filtering and pagination. Admin cannot mark an order paid.
+- **Settlement logic:** a backend service is implemented for **already independently verified provider receipts**, with order/coupon row locks, paid amount checks, coupon/per-student usage validation, duplicate-payment protection and atomic one-year entitlement updates/notification. It is **not called by any payment webhook yet** and cannot accept real payments without a provider adapter.
+- **Verification:** Flutter six latest matching CI workflows passed, including analyze and Android QA builds. Older backend/web build suites passed; newest checkout commits must pass CI again. Nothing was deployed or merged by these changes.
+- **Still blocked:** choosing a payment provider/merchant account, signed webhook/provider verification, refunds/chargebacks and reconciliation, staging PostgreSQL migration/integration QA, real-device RTL/LTR checks, official Android/iOS release signing and branding acceptance. Zero-cost coupon checkout is deliberately not enabled; use existing gift codes for no-payment grants.
 
 ## Confirmed on development branches — not yet merged/deployed
 
