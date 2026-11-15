@@ -20,6 +20,10 @@ export default function AdminDashboardPage() {
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const { data, isFetching, isError, refetch } = useGetAdminEngagementOverviewQuery(days, {
     refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+    pollingInterval: 60_000,
+    skipPollingIfUnfocused: true,
     pollingInterval: 60000,
   });
   const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
