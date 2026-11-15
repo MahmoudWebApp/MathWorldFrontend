@@ -101,6 +101,77 @@ export interface AdminStageDetail {
   DailyActivity: AdminActivityDay[];
 }
 
+export interface AdminEngagementDay {
+  DayUtc: string;
+  ActiveSolvers: number;
+  Signups: number;
+}
+
+export interface AdminEngagementStage {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  ActiveSolvers: number;
+  SuccessfulSolves: number;
+  /** Newly registered students whose current stage is this stage. */
+  Signups: number;
+}
+
+export interface AdminEngagementOverview {
+  GeneratedAtUtc: string;
+  WindowDays: number;
+  TotalStudents: number;
+  NewStudents: number;
+  ActiveSolvers: number;
+  SuccessfulSolves: number;
+  DailyActivity: AdminEngagementDay[];
+  Stages: AdminEngagementStage[];
+}
+
+export interface TopEngagementStudent {
+  Rank: number;
+  UserId: number;
+  FullName: string;
+  Solved: number;
+}
+
+export interface AdminEngagementCategory {
+  CategoryId: number;
+  NameAr: string;
+  NameEn: string;
+  ActiveSolvers: number;
+  AttemptsInWindow: number;
+  TotalSolved: number;
+  TopStudents: TopEngagementStudent[];
+}
+
+export interface AdminEngagementStageDetail {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  WindowDays: number;
+  TopStudents: TopEngagementStudent[];
+  Categories: AdminEngagementCategory[];
+}
+
+export interface AdminEngagementStudent {
+  Id: number;
+  FullName: string;
+  CreatedAt: string;
+  LastLoginAt: string | null;
+  CurrentStageId: number | null;
+  IsActive: boolean;
+  LastPracticeAt: string | null;
+  Attempts: number;
+}
+export interface AdminEngagementStudentPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Students: AdminEngagementStudent[];
+  Note: string;
+}
+
 export const statsApi = createApi({
   reducerPath: 'statsApi',
   baseQuery,
@@ -111,6 +182,24 @@ export const statsApi = createApi({
     // Calls: GET /api/stats
     getStats: builder.query<DashboardStats, void>({
       query: () => '/stats',
+      providesTags: ['Stats'],
+    }),
+
+    getAdminEngagementOverview: builder.query<AdminEngagementOverview, number>({
+      query: days => ({ url: '/admin/engagement/overview', params: { days } }),
+      providesTags: ['Stats'],
+    }),
+    getAdminEngagementStage: builder.query<AdminEngagementStageDetail, { stageId: number; days: number }>({
+      query: ({stageId, days}) => ({url: `/admin/engagement/stages/${stageId}`, params: { days }}),
+      providesTags: ['Stats'],
+    }),
+    getAdminEngagementStudents: builder.query<AdminEngagementStudentPage, {
+      page: number; stageId?: number; search?: string;
+    }>({
+      query: ({page, stageId, search}) => ({
+        url: '/admin/engagement/students',
+        params: { page, ...(stageId ? {stageId} : {}), ...(search ? {search} : {}) },
+      }),
       providesTags: ['Stats'],
     }),
 
@@ -145,6 +234,9 @@ export const statsApi = createApi({
 export const {
   useGetStatsQuery,
   useGetAdminStatsQuery,
+  useGetAdminEngagementOverviewQuery,
+  useGetAdminEngagementStageQuery,
+  useGetAdminEngagementStudentsQuery,
   useGetAdminAnalyticsOverviewQuery,
   useGetAdminAnalyticsStageQuery, 
 } = statsApi;
