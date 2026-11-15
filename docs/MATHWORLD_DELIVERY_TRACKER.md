@@ -22,6 +22,17 @@
 
 See [notification realtime rollout and acceptance checklist](NOTIFICATION_REALTIME_ROLLOUT.md).
 
+## November 15 — authenticated live notifications and SSE regression work
+
+- **Already present on development branches:** the ASP.NET API exposes `GET /api/notifications/stream` using authenticated Server-Sent Events. Events are recipient-scoped `inbox` refresh hints, **never** message contents. Admin messages, student achievement milestones, Premium grant/gift and independently verified payment settlement emit notifications after committed database changes. The web uses an authenticated foreground `fetch` stream; Flutter uses an authenticated foreground `HttpClient` stream. All clients retain 60-second inbox polling and refresh on reconnection as fallback.
+- **Reliability/security this batch:** the in-memory broker now limits a student or admin to **three concurrent open streams** and returns HTTP 429 before opening a fourth. Existing internal `Subscribe` API remains backward compatible; controllers use nullable `TrySubscribe`. Policy smoke covers isolation across different users, concurrent-stream caps and release on unsubscribe.
+- **Backend integration:** extended the disposable PostgreSQL presence suite to open two JWT-authenticated SSE streams concurrently, send separate private admin notices, verify each stream receives only its own refresh hint, reject anonymous listeners and verify events carry no private body. This test runs after the CI-only API restart, preserving the live authentication rate limit. No production DB writes.
+- **Web notification security:** compact-bell notification navigation now rejects query strings, fragments, encoded paths, control characters and backslashes, consistent with the full inbox. Browser typecheck/build checks passed on the reviewed notification change.
+- **Flutter SSE handling:** added a short event coalescing delay to avoid duplicate inbox requests when multiple hints or reconnects arrive together. Normal 60-second foreground polling remains. Android/Flutter QA workflow outcome needs verifying on the latest mobile commit.
+- **Technical boundary:** this is **foreground live in-app notification refresh**, not FCM/APNs lock-screen push. A single-process memory broker needs a distributed backplane if we move to multiple Backend instances; clients will still poll if a stream breaks. The existing Netlify build status stays stopped.
+
+**Still pending:** store push notifications, staging deployment/migration acceptance, physical-device bilingual QA, Google OAuth credentials, native Android/iOS Arabic PDF, approved category content, full admin monitoring QA and launch preparation. Payments remain deferred.
+
 ## November 15 — CI repair and admin monitoring reliability (latest batch)
 
 - **CI repaired without weakening authentication:** the disposable PostgreSQL editorial and presence suites previously shared one API process and hit the production-equivalent limit of five login/registration requests per minute per IP. The workflow now restarts *only the disposable test API* between suites; no production rate-limit or security setting changed. After the repair and new audit assertions, all **nine** backend PR checks passed on the reviewed commit.
