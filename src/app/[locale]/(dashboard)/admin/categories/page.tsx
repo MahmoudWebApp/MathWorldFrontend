@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/Tooltip";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { StageFreeCategoryAccessEditor } from "@/components/admin/StageFreeCategoryAccessEditor";
+import { getApiErrorMessage } from "@/lib/authSession";
 
 export default function AdminCategoriesPage() {
   return (
@@ -80,6 +81,8 @@ function AdminCategoriesPageContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [iconError, setIconError] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -122,6 +125,8 @@ function AdminCategoriesPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCreating || isUpdating) return;
+    setSaveError('');
 
     if (!selectedStageId) {
       setStageError(true);
@@ -152,13 +157,14 @@ function AdminCategoriesPageContent() {
       handleCloseModal();
       refetch();
     } catch (error) {
-      console.error("Failed to save category", error);
-      alert(t("common.errorSaving"));
+      setSaveError(getApiErrorMessage(error, t("common.errorSaving")));
     }
   };
 
   const handleCloseModal = () => {
+    if (isCreating || isUpdating) return;
     setIsModalOpen(false);
+    setSaveError('');
     setFormData({
       NameAr: "",
       NameEn: "",
@@ -173,19 +179,21 @@ function AdminCategoriesPageContent() {
   };
 
   const handleDelete = async (id: number) => {
+    if (deletingId !== null) return;
+    setDeleteError('');
     setDeletingId(id);
     try {
       await deleteCategory(id).unwrap();
       await refetch();
     } catch (error) {
-      console.error("Failed to delete category", error);
-      alert(t("common.errorDeleting"));
+      setDeleteError(getApiErrorMessage(error, t("common.errorDeleting")));
     } finally {
       setDeletingId(null);
     }
   };
 
   const openEditModal = (category: CategoryDto) => {
+    setSaveError('');
     setFormData({
       Id: category.Id,
       NameAr: category.NameAr,
@@ -203,6 +211,7 @@ function AdminCategoriesPageContent() {
   };
 
   const openCreateModal = () => {
+    setSaveError('');
     setFormData({
       NameAr: "",
       NameEn: "",
@@ -220,12 +229,16 @@ function AdminCategoriesPageContent() {
   const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setIconError('');
+    setSaveError('');
     if (!file) return;
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) ||
         file.size > 2 * 1024 * 1024) {
       setIconError(locale === 'ar'
         ? 'اختر صورة PNG أو JPG أو WebP لا تتجاوز 2MB.'
         : 'Choose a PNG, JPG or WebP image up to 2MB.');
+      // Do not submit a previously selected upload after an invalid replacement.
+      setFormData(prev => ({ ...prev, Icon: null }));
+      setPreviewUrl(isEditing ? categories?.find(cat => cat.Id === formData.Id)?.Icon ?? null : null);
       e.target.value = '';
       return;
     }
@@ -334,6 +347,12 @@ function AdminCategoriesPageContent() {
 
       {selectedStageId && (
         <StageFreeCategoryAccessEditor stageId={selectedStageId} locale={locale} />
+      )}
+
+      {deleteError && (
+        <div role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {deleteError}
+        </div>
       )}
 
       <Card>
@@ -528,6 +547,11 @@ function AdminCategoriesPageContent() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {saveError && (
+                <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                  {saveError}
+                </p>
+              )}
               {/* Icon Upload / Preview */}
               <div>
                 <label className="block mb-2 text-sm font-semibold">
@@ -669,6 +693,7 @@ function AdminCategoriesPageContent() {
                   variant="ghost"
                   type="button"
                   onClick={handleCloseModal}
+                  disabled={isCreating || isUpdating}
                 >
                   {t("common.cancel")}
                 </Button>
