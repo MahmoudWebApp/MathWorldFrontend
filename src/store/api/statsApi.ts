@@ -235,6 +235,7 @@ export interface AdminAuditFilter {
   days: number;
   role?: 'Admin' | 'Student';
   actorId?: number;
+  action?: string;
 }
 
 export const statsApi = createApi({
@@ -258,11 +259,12 @@ export const statsApi = createApi({
     }),
 
     getAdminAuditEvents: builder.query<AdminAuditPage, AdminAuditFilter>({
-      query: ({ page, days, role, actorId }) => ({
+      query: ({ page, days, role, actorId, action }) => ({
         url: '/admin/activity-audit',
         params: { page, pageSize: 30, days,
           ...(role ? { role } : {}),
           ...(actorId ? { actorId } : {}),
+          ...(action ? { action } : {}),
         },
       }),
     }),
