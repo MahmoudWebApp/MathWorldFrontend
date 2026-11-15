@@ -11,6 +11,17 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — UI/UX closure batch 1: focused admin analytics and reliable student screens
+
+Development PRs only; **no change to production Vercel, Render, Netlify or Supabase**.
+
+- **Admin monitoring, web:** stage engagement now compares the **top eight** topics by distinct active learners, rather than cramming an unlimited category list into a fixed-height bar chart. The chart height is content-aware and labels are abbreviated safely for narrow screens. The detailed leaderboard initially shows six category cards, with an accessible expand/collapse button for more. All-time solvers remain visibly separated from period-filtered activity. Chart accents match the selected stage's cyan/orange/emerald/violet identity and each stage card distinguishes last-five-minute contact from actual problem practice. In-flight stage switches no longer show stale metrics from another stage or reporting window.
+- **Student problem search, web:** uses `currentData` from RTK Query instead of stale last-result data; checks stage/category entitlement before displaying problems. A pending Premium request cannot falsely mark a Premium student as locked, and API errors have their own bilingual retry state rather than a misleading lock. Next/previous and numbered page buttons have accessible labels and `aria-current`.
+- **Stage category catalog, web:** smaller cards, reduced vertical padding and responsive grids improve phones and medium-width screens. Deleted/invalid stage links and failed stage lookups now have distinct bilingual error states; the loader is announced through `role=status`.
+- **Flutter home:** optional learning journey request failures are now visible as a compact bilingual retry card; previously errors were silently discarded. The rest of the dashboard remains available while retrying. The loading state is also visible with an animated progress indicator and geometric ornament.
+- **Flutter problems list:** the search bar now submits on Enter, clears immediately, and exposes an accessible clear tooltip. If a later page becomes empty when questions change, the learner gets a **back-to-first-page** action instead of being stranded on a false no-results page.
+- **Verification:** existing GitHub Actions typecheck, Flutter analyzer and Android APK smoke checks must all complete on the current development commits. **Physical-phone visual screenshots, RTL large-text QA and real API acceptance remain open**; passing static checks is not a completed manual UI audit.
+
 ## November 15 — release-closing batch: native mobile PDF + filtered activity exports
 
 - **Mobile Premium PDF:** `lib/services/premium_analytics_pdf_service.dart` generates actual A4 multi-page PDF files from the server-authorized `PremiumAnalyticsReport`, with Arabic/English headings and `pw.TextDirection.rtl` for Arabic. Noto Naskh Arabic Regular/Bold is embedded by `PdfGoogleFonts`; first-use download may require a connection. `premium_analytics_screen.dart` now offers a native `SharePlus` PDF button. Tests cover PDF signatures, pagination, empty and populated reports with injected test fonts; *font shaping on real Arabic Android/iOS devices is still an acceptance test*, not claimed passed.
