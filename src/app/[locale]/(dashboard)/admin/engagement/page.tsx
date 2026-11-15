@@ -120,7 +120,7 @@ export default function AdminEngagementPage() {
         </div>
         <div className="rounded-3xl border bg-card p-4 sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-bold"><Trophy className="h-5 w-5 text-amber-500" />
-            {ar ? 'الأكثر حلّاً في المستوى' : 'Top solvers in stage'}
+            {ar ? 'الأكثر حلّاً في المستوى (كل الوقت)' : 'Top solvers in stage (all time)'}
           </h2>
           {stage.data.TopStudents.length === 0 ? <p className="text-sm text-muted-foreground">
             {ar ? 'ما في حلول مسجّلة بعد.' : 'No solved problems yet.'}
@@ -136,7 +136,7 @@ export default function AdminEngagementPage() {
       </section>
 
       <section className="space-y-4">
-        <div><h2 className="text-xl font-bold">{ar ? 'أفضل الطلاب بكل فئة' : 'Top students per category'}</h2>
+        <div><h2 className="text-xl font-bold">{ar ? 'أفضل الطلاب بكل فئة (كل الوقت)' : 'Top students per category (all time)'}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {ar ? 'الترتيب مبني على عدد المسائل المختلفة المحلولة في كل فئة، خلال كامل سجل المنصة.'
               : 'Ranked by unique problems solved per category, across all recorded history.'}
