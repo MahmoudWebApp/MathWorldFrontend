@@ -75,7 +75,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
     }
     // Only permit same-app absolute paths; do not trust external URLs from API data.
     const path = notice.TargetPath;
-    if (path && path.startsWith('/') && !path.startsWith('//') && !path.includes('://') && !/[?#%\\\\\x00-\x1f]/.test(path)) {
+    if (path && path.startsWith('/') && !path.startsWith('//') && !path.includes('://') && !/[?#%\\\x00-\x1f]/.test(path)) {
       setOpen(false);
       window.location.assign(`/${locale}${path}`);
     }
