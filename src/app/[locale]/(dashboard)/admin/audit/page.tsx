@@ -13,6 +13,10 @@ export default function AdminAuditPage() {
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState('');
+  useEffect(() => {
+    const requestedId = new URLSearchParams(window.location.search).get('actorId') ?? '';
+    if (/^[1-9]\\d*$/.test(requestedId)) setUserId(requestedId);
+  }, []);
   // Allows the learner directory to open one student's private audit trail.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
