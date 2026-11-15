@@ -133,7 +133,7 @@ export default function AdminDashboardPage() {
         {[
           { href: '/admin/engagement', icon: ChartNoAxesCombined, ar: 'نشاط المستويات والفئات', en: 'Stages & categories',
             subAr: 'الأكثر حلاً، ترتيب الطلاب، ومقارنة الفئات', subEn: 'Top solvers, rankings, category usage' },
-          { href: '/admin/users', icon: UserRoundSearch, ar: 'الطلاب وحساباتهم', en: 'Learner directory',
+          { href: '/admin/engagement/students', icon: UserRoundSearch, ar: 'نشاط الطلاب ودخولهم', en: 'Learner activity',
             subAr: 'مين سجل وآخر دخول ونشاط', subEn: 'Registration, last login and activity' },
           { href: '/admin/audit', icon: History, ar: 'سجل العمليات', en: 'Activity & audit log',
             subAr: 'شو عمل كل طالب والأدمن داخل المنصة', subEn: 'Student and administrator actions' },
