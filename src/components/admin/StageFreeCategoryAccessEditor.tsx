@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   useGetStageCategoryAccessQuery,
   useUpdateStageFreeCategoriesMutation,
@@ -24,18 +24,28 @@ export function StageFreeCategoryAccessEditor({ stageId, locale }: Props) {
     });
   const [saveSelection, { isLoading: isSaving }] = useUpdateStageFreeCategoriesMutation();
   const [selected, setSelected] = useState<number[]>([]);
+  // Do not overwrite an unsaved selection on background query refetches.
+  const selectionDirty = useRef(false);
+  const activeStage = useRef(stageId);
+  activeStage.current = stageId;
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
 
   // A stage switch must never carry a previous stage's IDs into a write.
   useEffect(() => {
-    setSelected(catalog?.FreeCategoryIds ?? []);
-  }, [stageId, catalog]);
-
-  useEffect(() => {
+    selectionDirty.current = false;
+    setSelected([]);
     setError('');
     setStatus('');
   }, [stageId]);
+
+  // Server selections initialize this stage (and refresh after saves), while
+  // unsaved local checkbox choices survive silent background refetches.
+  useEffect(() => {
+    if (!selectionDirty.current && catalog) {
+      setSelected(catalog.FreeCategoryIds);
+    }
+  }, [stageId, catalog]);
 
   const choices = catalog?.Categories ?? [];
   const isValid = selected.length === 2 &&
@@ -49,6 +59,7 @@ export function StageFreeCategoryAccessEditor({ stageId, locale }: Props) {
 
   const toggle = (id: number) => {
     if (isSaving || isFetching) return;
+    selectionDirty.current = true;
     setStatus('');
     setError('');
     setSelected(current => current.includes(id)
@@ -72,9 +83,12 @@ export function StageFreeCategoryAccessEditor({ stageId, locale }: Props) {
         stageId,
         categoryIds: [selected[0], selected[1]],
       }).unwrap();
+      if (activeStage.current !== stageId) return;
+      selectionDirty.current = false;
       setStatus(ar ? 'تم حفظ الفئتين المجانيتين بنجاح.' : 'The two Free categories were saved.');
       void refetch();
     } catch {
+      if (activeStage.current !== stageId) return;
       setError(ar
         ? 'تعذّر حفظ الفئتين. راجع الاتصال وصلاحية الأدمن وتطابق الفئات مع المرحلة.'
         : 'Could not save the Free categories. Check admin access, network and category-stage consistency.');
