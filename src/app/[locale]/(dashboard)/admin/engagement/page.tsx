@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { ArrowLeft, Trophy, UsersRound, Shapes } from 'lucide-react';
+import { ArrowLeft, Trophy, UsersRound, Shapes, ChevronDown, RefreshCw } from 'lucide-react';
 import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   useGetAdminEngagementOverviewQuery,
@@ -22,6 +22,7 @@ export default function AdminEngagementPage() {
   const ar = useLocale() === 'ar';
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const [stageId, setStageId] = useState<number | null>(null);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -40,15 +41,27 @@ export default function AdminEngagementPage() {
     ? stageId : (overview.data?.Stages[0]?.StageId ?? 0);
   const stage = useGetAdminEngagementStageQuery({stageId: resolvedId, days}, {
     skip: resolvedId <= 0, refetchOnMountOrArgChange: true,
+    refetchOnFocus: true, refetchOnReconnect: true,
   });
   const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
 
-
-  const categoryChart = stage.data?.Categories.map(category => ({
+  // A stage with dozens of topics must not produce an unreadable 72px/row
+  // chart, nor bury the leaderboard below an endless list of cards.
+  const selectedStage = stage.currentData?.StageId === resolvedId &&
+    stage.currentData?.WindowDays === days ? stage.currentData : undefined;
+  const rankedCategories = [...(selectedStage?.Categories ?? [])]
+    .sort((a, b) => b.ActiveSolvers - a.ActiveSolvers ||
+      b.AttemptsInWindow - a.AttemptsInWindow || a.CategoryId - b.CategoryId);
+  const chartCategories = rankedCategories.slice(0, 8);
+  const categoryChart = chartCategories.map(category => ({
+    id: category.CategoryId,
     name: ar ? category.NameAr : category.NameEn,
     learners: category.ActiveSolvers,
-    solves: category.TotalSolved,
-  })) ?? [];
+  }));
+  const categoryCards = showAllCategories
+    ? rankedCategories : rankedCategories.slice(0, 6);
+  const hasOverflowCategories = rankedCategories.length > 6;
+  const chartHeight = Math.max(220, chartCategories.length * 42);
 
   return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-7 px-4 py-8 sm:px-6">
     <header className="space-y-2">
@@ -63,7 +76,7 @@ export default function AdminEngagementPage() {
     </header>
 
     <div className="flex flex-wrap gap-2" role="group" aria-label={ar ? 'الفترة الزمنية' : 'Time window'}>
-      {([7,30,90] as const).map(value => <button key={value} type="button" onClick={() => setDays(value)}
+      {([7,30,90] as const).map(value => <button key={value} type="button" onClick={() => { setDays(value); setShowAllCategories(false); }}
         aria-pressed={days === value} className={`rounded-xl border px-4 py-2 text-sm font-semibold ${days === value ? 'bg-primary text-primary-foreground' : 'bg-card'}`}>
         {value} {ar ? 'يوم' : 'days'}
       </button>)}
@@ -80,7 +93,7 @@ export default function AdminEngagementPage() {
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {(overview.data?.Stages ?? []).map((item, index) => {
         const style = variants[index % variants.length];
-        return <button key={item.StageId} type="button" onClick={() => setStageId(item.StageId)}
+        return <button key={item.StageId} type="button" onClick={() => { setStageId(item.StageId); setShowAllCategories(false); }}
           aria-pressed={item.StageId === resolvedId}
           className={`relative overflow-hidden rounded-2xl border p-4 text-start transition-all hover:shadow-md ${style.surface} ${item.StageId === resolvedId ? style.border + ' ring-2 ring-primary/40' : 'border-border'}`}>
           <StageGeometry variant={index} className={`pointer-events-none absolute -end-6 -top-8 h-24 w-24 opacity-20 ${style.text}`} />
@@ -92,30 +105,34 @@ export default function AdminEngagementPage() {
     </div>
 
     {stage.isError && <div role="alert" className="rounded-2xl border p-5">
+      <RefreshCw aria-hidden="true" className="mb-2 h-5 w-5 text-primary" />
       {ar ? 'تعذّر تحميل إحصائيات هذا المستوى.' : 'Could not load stage details.'}
       <button type="button" onClick={() => void stage.refetch()} className="ms-3 text-primary underline">
         {ar ? 'إعادة المحاولة' : 'Retry'}
       </button>
     </div>}
-    {stage.isLoading && <p role="status">{ar ? 'جارٍ تحليل نشاط المستوى…' : 'Loading stage engagement…'}</p>}
-    {stage.data && <>
+    {(stage.isFetching && !selectedStage) && <p role="status" className="rounded-2xl border bg-card p-5">
+      {ar ? 'جارٍ تحميل نشاط المستوى المختار…' : 'Loading the selected stage…'}
+    </p>}
+    {selectedStage && <>
       <section className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
         <div className="min-w-0 space-y-3 rounded-3xl border bg-card p-4 sm:p-6">
           <h2 className="flex items-center gap-2 text-lg font-bold"><Shapes className="h-5 w-5 text-primary" />
             {ar ? 'الطلاب النشطون حسب الفئة' : 'Active learners by category'}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {ar ? 'طلاب مختلفون حلّوا مسائل في كل فئة خلال الفترة المحددة.' : 'Distinct learners practicing each category in the chosen period.'}
+            {ar ? 'أكثر 8 فئات نشاطاً حسب عدد الطلاب المختلفين خلال الفترة المحددة.' : 'Top 8 categories by distinct learners practicing in the selected period.'}
           </p>
           {categoryChart.every(x => x.learners === 0) ? <p className="py-16 text-center text-sm text-muted-foreground">
             {ar ? 'ما في نشاط مسجّل خلال هالفترة.' : 'No practice recorded for this time window.'}
           </p> :
-            <div className="h-72 w-full" role="img" aria-label={ar ? 'مقارنة نشاط الفئات' : 'Category activity chart'}>
+            <div className="w-full min-w-0" style={{ height: chartHeight }} role="img" aria-label={ar ? 'مقارنة نشاط أكثر ثماني فئات' : 'Chart of eight most active categories'}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={categoryChart} layout="vertical" margin={{ top: 4, right: 6, bottom: 4, left: 12 }}>
                   <CartesianGrid strokeDasharray="3 5" horizontal={false} opacity={0.18} />
                   <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }}/>
-                  <YAxis dataKey="name" type="category" width={105} tick={{ fontSize: 10 }} />
+                  <YAxis dataKey="name" type="category" width={ar ? 108 : 116} tick={{ fontSize: 10 }}
+                    tickFormatter={label => String(label).length > 14 ? String(label).slice(0, 13) + '…' : String(label)} />
                   <Tooltip />
                   <Bar name={ar ? 'طلاب نشطون' : 'Active learners'} dataKey="learners" fill="#06b6d4" radius={[0,6,6,0]} />
                 </BarChart>
@@ -126,10 +143,10 @@ export default function AdminEngagementPage() {
           <h2 className="mb-4 flex items-center gap-2 text-lg font-bold"><Trophy className="h-5 w-5 text-amber-500" />
             {ar ? 'الأكثر حلّاً في المستوى (كل الوقت)' : 'Top solvers in stage (all time)'}
           </h2>
-          {stage.data.TopStudents.length === 0 ? <p className="text-sm text-muted-foreground">
+          {selectedStage.TopStudents.length === 0 ? <p className="text-sm text-muted-foreground">
             {ar ? 'ما في حلول مسجّلة بعد.' : 'No solved problems yet.'}
           </p> : <ol className="space-y-2">
-            {stage.data.TopStudents.slice(0,10).map(item => <li key={item.UserId}
+            {selectedStage.TopStudents.slice(0,10).map(item => <li key={item.UserId}
               className="flex items-center gap-3 rounded-xl bg-muted/40 p-3">
               <span className="w-7 shrink-0 text-center text-sm font-extrabold text-primary">{item.Rank}</span>
               <span className="min-w-0 flex-1 truncate text-sm font-semibold">{item.FullName}</span>
@@ -144,9 +161,14 @@ export default function AdminEngagementPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {ar ? 'الترتيب مبني على عدد المسائل المختلفة المحلولة في كل فئة، خلال كامل سجل المنصة.'
               : 'Ranked by unique problems solved per category, across all recorded history.'}
-          </p></div>
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {ar ? 'نعرض أول 6 فئات لتبقى الصفحة مرتبة؛ يمكن توسيع القائمة.' :
+              'Showing the top six topics to keep this page readable; expand for all categories.'}
+          </p>
+        </div>
         <div className="grid gap-3 md:grid-cols-2">
-          {stage.data.Categories.map((cat,index) => {
+          {categoryCards.map((cat,index) => {
             const color = variants[index % variants.length];
             return <article key={cat.CategoryId} className={`rounded-2xl border bg-card p-4 sm:p-5 ${color.border}`}>
               <div className="flex items-center gap-3">
@@ -167,6 +189,17 @@ export default function AdminEngagementPage() {
             </article>;
           })}
         </div>
+        {hasOverflowCategories && (
+          <button type="button" aria-expanded={showAllCategories}
+            onClick={() => setShowAllCategories(value => !value)}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border bg-card px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+            {showAllCategories
+              ? (ar ? 'عرض عدد أقل من الفئات' : 'Show fewer categories')
+              : (ar ? `عرض جميع الفئات (${n(rankedCategories.length)})` :
+                `Show all categories (${n(rankedCategories.length)})`)}
+            <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${showAllCategories ? 'rotate-180' : ''}`} />
+          </button>
+        )}
       </section>
     </>}
     <div className="flex flex-wrap gap-3 border-t pt-5">
