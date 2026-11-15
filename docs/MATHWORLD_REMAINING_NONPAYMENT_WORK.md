@@ -8,16 +8,42 @@ solving in those categories, and no daily ten-question quota.
 
 ## Netlify build-minute budget — urgent operational constraint
 
-On 2026-11-14, the Netlify `mahmoudTeam` account reached 75% of its
-November build-minute allowance. Until owner-approved release:
-**no automatic Netlify deploys, preview builds, production merges, or
-manual retries for development work**. Web PR #18 now uses the
+The Netlify `mahmoudTeam` account reached **100%** of its November
+build-minute allowance. The owner confirmed Netlify builds are **Stopped**.
+The owner also created `https://math-world-frontend.vercel.app` from
+`main`, configured Render CORS and confirmed the public web site loads
+its backend data. Vercel's ignored build step is set to `exit 0`.
+**Do not trigger automatic previews, production builds or manual retries
+on either host while implementing the draft feature branches.** Web PR #18 now uses the
 `[skip netlify]` marker; future web development commits must also carry
 this marker to protect against enabled branch deploys. Validate with
 GitHub Actions instead. The owner should switch the MathWorld site's
 Netlify **Build status** to **Stopped builds** in the project UI for the
 strongest safeguard. This has **not** been changed remotely.
 See [Netlify budget runbook](NETLIFY_BUILD_BUDGET_POLICY.md).
+
+## Release-readiness batch — responsive web, trustworthy reports, staging CORS
+
+- On the **web feature branch**, the mobile header now hides its redundant
+  account dropdown below `md` (all student/admin and logout links remain
+  in the accessible mobile drawer), with compact action spacing, labeled
+  theme/language/menu controls and a viewport-capped scrollable drawer.
+- Public platform impact statistics now use two compact cards per row on
+  normal phones, an explicit loading skeleton, and a bilingual retry state
+  if the API fails. Missing data is never presented as actual zeros.
+- On **Flutter**, Premium report parsing now requires nonnegative numeric
+  values, a valid timestamp, and a valid categories list rather than silently
+  replacing missing fields with zeros; supports PascalCase and camelCase JSON
+  keys. Regression tests cover valid empty reports, malformed payloads, and
+  both languages.
+- On the **Backend development branch**, a disposable PostgreSQL GitHub
+  Actions job now runs the Render-like CORS environment array with both
+  Vercel and Netlify origins, and checks that a third-party origin does not
+  receive `Access-Control-Allow-Origin`. This test first waits for backend
+  readiness, since DB migration/bootstrap may exceed a three-second sleep.
+- **No deployment** of these feature-branch changes; the working Vercel
+  `main` site stays unchanged. The latest CI results need verifying after
+  all new commits, separately from the previously successful runs.
 
 ## Implemented on feature branches — release QA still required
 
@@ -28,14 +54,16 @@ See [Netlify budget runbook](NETLIFY_BUILD_BUDGET_POLICY.md).
   suggest a next practice category from unlocked unfinished stage inventory.
 - Arabic/English responsive learner/admin interfaces on Next.js and Flutter,
   accessible basic math/geometry diagrams and progress widgets.
-- Inbox notifications (30-day pagination, read one/all, periodic client
-  refresh), admin student notifications, and app badges. Realtime push is NOT
-  implemented.
+- Inbox notifications (30-day pagination, read one/all), admin student
+  notifications, achievements and app badges. Authenticated **foreground
+  SSE inbox updates** exist on web/Flutter with reconnection and fallback
+  polling; native **background FCM/APNs push is NOT implemented**.
 - Premium personal analytics, CSV and **native XLSX** exports on Flutter/Next.js;
   web print-to-PDF is available. Native downloadable Arabic PDF on mobile
   is still unfinished.
-- Editorial draft import/review/publish workflow, 64 bilingual draft questions,
-  16 proposed additional categories. No live content publication.
+- Editorial draft import/review/publish workflow, **96 bilingual question drafts**
+  (32 of them tied to 16 proposed additional categories). No live content
+  publication; category IDs need approval before those rows are importable.
 - Google login code on mobile with backend token validation/account linking;
   disabled by default until native OAuth credentials/signing registered.
 
