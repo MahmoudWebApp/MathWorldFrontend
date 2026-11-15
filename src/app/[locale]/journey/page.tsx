@@ -14,14 +14,22 @@ export default function JourneyPage() {
     refetchOnMountOrArgChange: true,
   });
 
-  const unfinished = (data?.Categories ?? [])
-    .filter(c => c.IsLocked === false && c.TotalProblems > 0 && c.SolvedProblems < c.TotalProblems);
-  const recommended = [...unfinished].sort((a, b) => {
-    // Continue a started, unfinished topic first, then introduce a new one.
-    const started = Number(b.AttemptedProblems > 0) - Number(a.AttemptedProblems > 0);
-    if (started !== 0) return started;
-    return a.CompletionPercent - b.CompletionPercent || a.CategoryId - b.CategoryId;
-  })[0];
+  // Both web and Flutter recommend only categories unlocked by the API.
+  // A formerly-Premium topic may still have history but must never be offered
+  // as an actionable Free practice recommendation after entitlement expiry.
+  const available = (data?.Categories ?? [])
+    .filter(c => !c.IsLocked && c.TotalProblems > 0);
+  const nextSteps = available
+    .filter(c => c.SolvedProblems < c.TotalProblems)
+    .sort((a, b) => {
+      // Resume unfinished work first; then choose the least-completed topic.
+      const started = Number(b.AttemptedProblems > 0) - Number(a.AttemptedProblems > 0);
+      if (started !== 0) return started;
+      return a.CompletionPercent - b.CompletionPercent || a.CategoryId - b.CategoryId;
+    })
+    .slice(0, 3);
+  const recommended = nextSteps[0];
+  const reviewNeeded = available.filter(c => c.AttemptedProblems > c.SolvedProblems);
 
   return (
     <main className="container mx-auto max-w-5xl px-4 py-12" dir={ar ? 'rtl' : 'ltr'}>
@@ -58,21 +66,57 @@ export default function JourneyPage() {
               </Link>
             </section>
           )}
+          {reviewNeeded.length > 0 && (
+            <section className="mb-8 rounded-2xl border bg-card p-5">
+              <h2 className="text-lg font-bold">{ar ? 'راجع محاولاتك لتحسّن مستواك' : 'Review previous attempts'}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {ar
+                  ? `عندك ${reviewNeeded.length} فئة مفتوحة فيها مسائل جرّبتها ولم تحلّها بعد. دفتر الأخطاء بيساعدك تتدرّب عليها من جديد.`
+                  : `You have ${reviewNeeded.length} accessible topic(s) with attempted but unsolved problems. Use the error notebook to revisit them.`}
+              </p>
+              <Link href="/dashboard/error-notebook"
+                className="mt-4 inline-flex rounded-xl border border-primary/20 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                {ar ? 'افتح دفتر الأخطاء' : 'Open error notebook'}
+              </Link>
+            </section>
+          )}
+          {available.length > 0 && nextSteps.length === 0 && (
+            <section className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-5" role="status">
+              <h2 className="text-lg font-bold">{ar ? 'أكملت الفئات المفتوحة!' : 'All unlocked topics completed!'}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {ar ? 'ما في فئات مفتوحة غير مكتملة حالياً. فيك تراجع حلولك أو تختار مرحلة ثانية.' : 'There are no unfinished unlocked topics. Review your solutions or explore another stage.'}
+              </p>
+              <Link href="/dashboard/solved" className="mt-3 inline-flex font-semibold text-primary underline">
+                {ar ? 'راجع المسائل المحلولة' : 'Review solved problems'}
+              </Link>
+            </section>
+          )}
+          {data.Categories.length === 0 && (
+            <section role="status" className="mb-8 rounded-2xl border bg-card p-5">
+              <p>{ar ? 'ما في فئات متاحة لهذه المرحلة بعد. ارجع للمراحل أو حاول لاحقاً.' : 'There are no topics in this stage yet. Explore stages or try again later.'}</p>
+              <Link href="/stages" className="mt-3 inline-flex font-semibold text-primary underline">{ar ? 'عرض المراحل' : 'Browse stages'}</Link>
+            </section>
+          )}
           <h2 className="mb-4 text-xl font-bold">{ar ? 'تقدم الفئات' : 'Category progress'}</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {data.Categories.map((category) => (
               <div key={category.CategoryId} className="rounded-2xl border bg-card p-5">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h3 className="font-bold">{ar ? category.NameAr : category.NameEn}</h3>
-                  <span className="text-xs">{category.IsLocked ? (ar ? 'مقفلة' : 'Locked') : `${category.CompletionPercent}%`}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{category.IsLocked ? (ar ? 'Premium · مقفلة' : 'Premium · Locked') : category.TotalProblems === 0 ? (ar ? 'قريباً' : 'Coming soon') : `${category.CompletionPercent}%`}</span>
                 </div>
                 <div role="progressbar" aria-valuenow={category.CompletionPercent} aria-valuemin={0} aria-valuemax={100} aria-label={ar ? category.NameAr : category.NameEn} className="mb-3 h-2 overflow-hidden rounded-full bg-muted">
                   <div className="h-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, category.CompletionPercent))}%` }} />
                 </div>
                 <p className="mb-4 text-sm text-muted-foreground">{category.SolvedProblems} / {category.TotalProblems} · {ar ? 'متقنة' : 'Mastered'}: {category.MasteredProblems}</p>
-                <Link className="text-sm font-semibold text-primary underline" href={category.IsLocked ? '/premium' : `/problems?stageId=${data.StageId}&categoryId=${category.CategoryId}`}>
-                  {category.IsLocked ? 'Premium' : (ar ? 'تابع الحل' : 'Continue practicing')}
-                </Link>
+                {category.TotalProblems === 0 && !category.IsLocked ? (
+                  <span className="text-sm text-muted-foreground">{ar ? 'لم تُنشر مسائل لهذه الفئة بعد' : 'No published problems in this topic yet'}</span>
+                ) : (
+                  <Link className="inline-flex rounded-lg text-sm font-semibold text-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                    href={category.IsLocked ? '/premium' : `/problems?stageId=${data.StageId}&categoryId=${category.CategoryId}`}>
+                    {category.IsLocked ? (ar ? 'مزايا Premium' : 'Premium access') : category.SolvedProblems >= category.TotalProblems ? (ar ? 'راجع المسائل' : 'Review problems') : (ar ? 'تابع الحل' : 'Continue practicing')}
+                  </Link>
+                )}
               </div>
             ))}
           </div>
