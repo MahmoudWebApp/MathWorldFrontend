@@ -11,15 +11,16 @@ solving in those categories, and no daily ten-question quota.
 - Free/Premium authorization on the backend; pre-answer Premium solution,
   admin grants, time-limited gifts and audit.
 - Stage selection, lesson/category access, problems and answer history; points,
-  achievement badges, stage leaderboard and error notebook.
+  achievement badges, stage leaderboard and error notebook. Web/mobile now
+  suggest a next practice category from unlocked unfinished stage inventory.
 - Arabic/English responsive learner/admin interfaces on Next.js and Flutter,
   accessible basic math/geometry diagrams and progress widgets.
 - Inbox notifications (30-day pagination, read one/all, periodic client
   refresh), admin student notifications, and app badges. Realtime push is NOT
   implemented.
-- Premium personal analytics, CSV file export on Flutter/Next.js; web
-  print-to-PDF is available. True XLSX/Arabic PDF generation on mobile is NOT
-  finished.
+- Premium personal analytics, CSV and **native XLSX** exports on Flutter/Next.js;
+  web print-to-PDF is available. Native downloadable Arabic PDF on mobile
+  is still unfinished.
 - Editorial draft import/review/publish workflow, 64 bilingual draft questions,
   16 proposed additional categories. No live content publication.
 - Google login code on mobile with backend token validation/account linking;
@@ -35,9 +36,9 @@ solving in those categories, and no daily ten-question quota.
    verify live staging category IDs, render all formulas/diagrams, expand the
    starter corpus beyond 64 draft questions; keep publication behind admin
    explicit approval.
-3. **PDF/XLSX:** provide authentic Arabic-capable PDF and XLSX export with
-   bundled licensed fonts and a stable format rather than labeling CSV as
-   native Excel.
+3. **PDF:** finish authentic, downloadable Arabic-capable multi-page PDF
+   export on Android/iOS; native XLSX is implemented and should undergo a
+   physical-device Excel file-open acceptance test.
 4. **Notifications:** real-time client delivery only after a backend design
    (SignalR or equivalent) with auth, reconnect, offline consistency,
    deduplication and consent. FCM/Apple push requires separate credentials.
