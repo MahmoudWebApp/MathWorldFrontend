@@ -11,6 +11,17 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — owner-requested admin monitoring redesign and colorful learning stages
+
+- **Navigation:** desktop admin-specific mega-menu was removed; the single existing `System Admin` account dropdown now contains a compact, categorized list. The unused desktop dropdown component was deleted. The mobile drawer remains the only mobile admin navigation.
+- **Administrative monitoring:** `/admin` stays focused on new students and real daily practice activity. `/admin/engagement` splits out stage and category activity charts, all-time unique problem-solvers leaderboards, and best student per category. `/admin/engagement/students` lists student registration, last successful login, last saved practice and attempt count with stage/name filters; `/admin/audit` shows privacy-minimal admin/student event history with user/role/date filtering. Read-only monitoring is separate from `/admin/users` and content editing.
+- **Audit truth:** the existing append-only `PlatformActivityEvents` entity, migration and success-action middleware record server-observed operations. Existing login/register events are logged. Explicit web/mobile signout now calls `POST /api/users/session/sign-out` before local token deletion (best effort with timeouts). Browser closure/force-quit is **not** a verified logout; older unrecorded actions do not appear retroactively. JWT logout still only removes local credentials; the event does not revoke already issued stateless JWTs.
+- **Visual treatment:** web stage cards use original inline SVG geometric motifs with cyan, orange, emerald and violet accents; Flutter stage catalog, stage picker and topic cards use the same colored identities with low-contrast mathematical `CustomPainter` decorations. The logo remains unchanged, and shape/icon labels prevent color-only meaning.
+- **Verification:** server/Flutter/Web CI is being checked against latest commits; results from prior passing commits are not evidence that this newest batch passed. Staging migration and real-device screenshots remain outstanding.
+- **Owner-approved payment decision unchanged:** no payment platform integration or production activation until remaining non-payment work is complete and the owner explicitly reopens the decision.
+
+See [admin monitoring architecture and metric definitions](MATHWORLD_ADMIN_MONITORING_UX.md).
+
 ## November 15 — non-payment batch: native Excel, mobile sync and curriculum drafts
 
 - **Native XLSX, not renamed CSV:** ASP.NET exports an OOXML workbook from authorized, server-aggregated Premium analytics at `GET /api/users/premium-analytics/export.xlsx?lang=ar|en`. Bilingual headers, Arabic RTL option, frozen header, named worksheet, numeric totals and inline literal strings prevent formula execution; no third-party Excel service is used. Existing premium JWT/active-user checks apply to this export. The existing CSV is retained.
