@@ -11,6 +11,17 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — foreground live notifications (web, Flutter, backend)
+
+- **Realtime without an additional paid provider:** the ASP.NET API now exposes `GET /api/notifications/stream`, a JWT-header-authenticated Server-Sent Events stream. A bounded in-memory broker routes *content-free* `event: inbox` invalidation hints by authenticated account; no inbox text, tokens, or other students' identifiers travel in events. Streams revalidate active status, cap lifetime to five minutes or JWT expiry and are rate-limited per user.
+- **Committed notification sources:** admin personal notices, first-solve milestone notifications, manual Premium changes, gift-code activation, already-verified future settlement, and mark-read/read-all actions publish refresh hints only after persistence/transaction completion. This is in-app presence, **not** mobile OS push delivery.
+- **Next.js:** one authenticated foreground stream per account, reconnection with exponential backoff, no bearer redirects, shared RTK Query cache invalidation for bell and full-page inbox; existing one-minute foreground polling and focus/reconnect refresh remain safety nets. A 404/405 old backend uses polling only.
+- **Flutter:** `MainShell` opens/cancels a foreground-only `HttpClient` SSE stream with secure-storage JWT in a request header; it refreshes the Riverpod bell and full list, shuts off in background, avoids redirects and falls back to one-minute polling. No dependency added.
+- **Verification:** the disposable PostgreSQL integration checks for authenticated event frames and the policy-smoke tests for cross-user isolation passed in the reviewed Backend 9-check run. The matching earlier Next.js three-check CI run passed; newest security commits still require their own CI result. Flutter analyzers/navigation and icon audits passed on the checked earlier commit; final Android release/device acceptance is separate.
+- **Limits:** the broker is per process; multiple replicas require Redis/PostgreSQL pub-sub or another backplane. Background mobile push still requires FCM/APNs, device tokens, platform credentials and consent. No Netlify deployment or main-branch merge occurred.
+
+See [notification realtime rollout and acceptance checklist](NOTIFICATION_REALTIME_ROLLOUT.md).
+
 ## November 15 — CI repair and admin monitoring reliability (latest batch)
 
 - **CI repaired without weakening authentication:** the disposable PostgreSQL editorial and presence suites previously shared one API process and hit the production-equivalent limit of five login/registration requests per minute per IP. The workflow now restarts *only the disposable test API* between suites; no production rate-limit or security setting changed. After the repair and new audit assertions, all **nine** backend PR checks passed on the reviewed commit.
