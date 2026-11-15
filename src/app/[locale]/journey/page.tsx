@@ -15,7 +15,7 @@ export default function JourneyPage() {
   });
 
   const unfinished = (data?.Categories ?? [])
-    .filter(c => !c.IsLocked && c.TotalProblems > 0 && c.SolvedProblems < c.TotalProblems);
+    .filter(c => c.IsLocked === false && c.TotalProblems > 0 && c.SolvedProblems < c.TotalProblems);
   const recommended = [...unfinished].sort((a, b) => {
     // Continue a started, unfinished topic first, then introduce a new one.
     const started = Number(b.AttemptedProblems > 0) - Number(a.AttemptedProblems > 0);
