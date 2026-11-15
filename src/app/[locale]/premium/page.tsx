@@ -9,6 +9,7 @@ import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import {
   useQuotePremiumDiscountMutation,
   useGetPremiumCheckoutOrdersQuery,
+  useCancelPremiumCheckoutOrderMutation,
   type PremiumDiscountQuote,
 } from '@/store/api/usersApi';
 
@@ -54,6 +55,19 @@ export default function PremiumInformationPage() {
   const [discountError, setDiscountError] = useState(false);
   const [quoteDiscount, { isLoading: isQuoting }] = useQuotePremiumDiscountMutation();
   const [ordersPage, setOrdersPage] = useState(1);
+  const [cancelOrderId, setCancelOrderId] = useState<number | null>(null);
+  const [cancelError, setCancelError] = useState(false);
+  const [cancelOrder, { isLoading: cancelling }] = useCancelPremiumCheckoutOrderMutation();
+  const confirmCancel = async () => {
+    if (cancelOrderId === null) return;
+    setCancelError(false);
+    try {
+      await cancelOrder(cancelOrderId).unwrap();
+      setCancelOrderId(null);
+    } catch {
+      setCancelError(true);
+    }
+  };
   const {
     data: orders, isLoading: ordersLoading, isError: ordersError,
     refetch: refetchOrders,
@@ -284,6 +298,12 @@ export default function PremiumInformationPage() {
                           Refunded: ar ? 'مسترد' : 'Refunded',
                         } as Record<string, string>)[order.Status] ?? order.Status}
                       </p>
+                      {order.Status === 'Pending' && (
+                        <button type="button" onClick={() => { setCancelError(false); setCancelOrderId(order.Id); }}
+                          className="mt-2 rounded-lg border border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive">
+                          {ar ? 'إلغاء الطلب' : 'Cancel order'}
+                        </button>
+                      )}
                     </div>
                   </article>
                 ))}
@@ -303,6 +323,34 @@ export default function PremiumInformationPage() {
             </button>
           </div>
         </section>
+      )}
+      {cancelOrderId !== null && (
+        <div role="dialog" aria-modal="true" aria-labelledby="cancel-order-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-sm space-y-4 rounded-2xl bg-card p-6 shadow-xl">
+            <h2 id="cancel-order-title" className="text-lg font-extrabold">
+              {ar ? 'إلغاء طلب الاشتراك؟' : 'Cancel this checkout order?'}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {ar ? 'يمكن إلغاء الطلبات المبدئية فقط، قبل إرسالها إلى مزوّد الدفع.' :
+                'Only unpaid local drafts can be cancelled, before payment processing starts.'}
+            </p>
+            {cancelError && <p role="alert" className="text-sm text-destructive">
+              {ar ? 'تعذّر إلغاء الطلب. ربما تغيرت حالته؛ حدّث السجل.' :
+                'Could not cancel this order. Its status may have changed; refresh the list.'}
+            </p>}
+            <div className="flex justify-end gap-2">
+              <button type="button" disabled={cancelling} onClick={() => setCancelOrderId(null)}
+                className="rounded-lg border px-3 py-2 text-sm font-semibold">
+                {ar ? 'رجوع' : 'Back'}
+              </button>
+              <button type="button" disabled={cancelling} onClick={() => void confirmCancel()}
+                className="rounded-lg bg-destructive px-3 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50">
+                {cancelling ? (ar ? 'جارٍ الإلغاء…' : 'Cancelling…') : (ar ? 'تأكيد الإلغاء' : 'Confirm cancellation')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
