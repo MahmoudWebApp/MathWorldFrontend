@@ -17,6 +17,13 @@ function csvCell(value: unknown): string {
   return '"' + text.replace(/"/g, '""').replace(/[\r\n]/g, ' ') + '"';
 }
 
+function formatReportDate(value: string, locale: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ''
+    : new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(date);
+}
+
 function saveCsv(report: StudentPremiumAnalyticsReport) {
   const rows: unknown[][] = [[
     'StageId', 'CategoryId', 'StageAr', 'StageEn', 'CategoryAr', 'CategoryEn',
@@ -46,7 +53,8 @@ function saveCsv(report: StudentPremiumAnalyticsReport) {
   anchor.href = url;
   anchor.download = 'mathworld-personal-report.csv';
   anchor.click();
-  URL.revokeObjectURL(url);
+  // Keep the object URL alive until the browser has started the download.
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export default function PremiumAnalyticsPage() {
@@ -103,7 +111,7 @@ export default function PremiumAnalyticsPage() {
             <button type="button" onClick={() => saveCsv(report)}
               className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 font-semibold hover:bg-muted">
               <Download className="h-4 w-4" />
-              {ar ? 'Excel / CSV' : 'Excel / CSV'}
+              {ar ? 'تنزيل CSV (متوافق مع Excel)' : 'Download CSV (Excel-compatible)'}
             </button>
             <button type="button" onClick={() => window.print()}
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground">
@@ -175,9 +183,11 @@ export default function PremiumAnalyticsPage() {
                 <FileText className="h-5 w-5 text-primary" />
                 {ar ? 'التقدم حسب المرحلة والفئة' : 'Progress by stage and category'}
               </h2>
-              <time dateTime={report.GeneratedAtUtc} className="text-xs text-muted-foreground">
-                {new Intl.DateTimeFormat(ar ? 'ar' : 'en', {dateStyle:'medium'}).format(new Date(report.GeneratedAtUtc))}
-              </time>
+              {formatReportDate(report.GeneratedAtUtc, ar ? 'ar' : 'en') && (
+                <time dateTime={report.GeneratedAtUtc} className="text-xs text-muted-foreground">
+                  {formatReportDate(report.GeneratedAtUtc, ar ? 'ar' : 'en')}
+                </time>
+              )}
             </div>
             {report.Categories.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
