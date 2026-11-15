@@ -77,7 +77,7 @@ function CategoryPremiumCard({
       <Link
         href={locked ? '/premium' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
         aria-label={locked ? (locale === 'ar' ? name + ': فئة Premium مقفلة' : name + ': Premium category, locked') : undefined}
-        className={`brand-surface math-card group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-3xl p-5 outline-none transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:min-h-[245px] sm:p-6 ${style.hoverShadow}`}
+        className={`brand-surface math-card group relative flex min-h-[186px] min-w-0 flex-col justify-between overflow-hidden rounded-3xl p-4 outline-none transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:min-h-[220px] sm:p-5 lg:min-h-[245px] lg:p-6 ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
         <div
@@ -92,7 +92,7 @@ function CategoryPremiumCard({
           </div>
         )}
         {/* Header: Icon & Name */}
-        <div className="relative z-10 flex flex-col gap-4">
+        <div className="relative z-10 flex min-w-0 flex-col gap-3 sm:gap-4">
           <div className="flex items-center justify-between">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center sm:h-16 sm:w-16 rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
               {iconIsPath ? (
@@ -109,7 +109,7 @@ function CategoryPremiumCard({
             </div>
           </div>
           
-          <h3 className={`break-words text-lg font-bold leading-snug sm:text-xl transition-colors ${style.hoverText}`}>
+          <h3 className={`break-words text-base font-bold leading-snug sm:text-lg lg:text-xl transition-colors ${style.hoverText}`}>
             {name}
           </h3>
         </div>
@@ -287,10 +287,10 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-brand-secondary/8 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute inset-0 math-grid-bg opacity-30 pointer-events-none" />
 
-      <div className="container mx-auto px-6 lg:px-12 relative z-10">
+      <div className="container relative z-10 mx-auto min-w-0 px-4 sm:px-6 lg:px-12">
         
         {/* Header Section */}
-        <div className="mb-12 text-center md:text-start">
+        <div className="mb-8 text-center md:mb-12 md:text-start">
           <Link
             href="/stages"
             className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-6 group math-equation-chip bg-card/50 backdrop-blur-md px-4 py-2 rounded-full"
@@ -315,7 +315,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
               </div>
             </div>
             
-            <h1 className="brand-display-title text-foreground text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 tracking-tight">
+            <h1 className="brand-display-title mb-4 break-words text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl lg:text-6xl">
               <AccentHeadingText
                 text={currentStage
                   ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn)
@@ -374,7 +374,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 lg:gap-6">
+          <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 lg:gap-6">
             {sortedCategories.map((category, index) => {
               const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
               const style = CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length];
