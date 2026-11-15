@@ -65,6 +65,30 @@ solving in those categories, and no daily ten-question quota.
 - Social-media channels and educational video production require account
   ownership/content approval and should follow stable learner experience.
 
+## Payment-platform selection decision gate — after all other modifications
+
+**Owner decision (2026-11-15):** Do NOT choose, activate, integrate further, or
+deploy any payment platform during the remaining MathWorld development and QA.
+Finish the web, Android, iOS, learning content, Google sign-in, accessibility,
+analytics, administration, infrastructure and launch-acceptance modifications
+first. Keep currently written checkout scaffolding dormant and do not treat it
+as a live payment system.
+
+**Reopen this decision only after the owner explicitly approves it.** Compare
+Stripe Checkout, Paddle/Lemon Squeezy where legally available, Apple In-App
+Purchases, Google Play Billing, and optionally RevenueCat for synchronized
+cross-platform entitlements. Evaluate the actual target countries, merchant
+country eligibility, bank/payout support, fees on the planned USD 5 annual
+manual-renewal plan, taxes/refunds, store review policies, digital educational
+content classification and legitimate external-payment exceptions. Do NOT
+assume the app qualifies for Apple's reader-app exception or that paid voucher
+redemption is allowed in either store.
+
+Start launch testing with **Free (two categories per stage, unlimited questions)**
+and explicitly granted Premium for QA only. No real-money collections, sales of
+off-app redemption codes, student payment links or production activation until
+the deferred architecture is selected and legally/platform compliant.
+
 ## Explicitly deferred
 
 - Stripe Checkout and other online payment providers, coupons requiring live
