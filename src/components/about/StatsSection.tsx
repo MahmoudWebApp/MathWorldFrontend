@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { CircleCheckBig, Eye, FileText, Users, type LucideIcon } from 'lucide-react';
-import { motion, useMotionValueEvent, useSpring } from 'framer-motion';
+import { CircleCheckBig, Eye, FileText, Users, RefreshCw, type LucideIcon } from 'lucide-react';
+import { motion, useMotionValueEvent, useReducedMotion, useSpring } from 'framer-motion';
 
 import { useGetStatsQuery } from '@/store/api/statsApi';
 import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
@@ -36,32 +36,33 @@ interface StatItem {
 
 function StatCard({ stat, index, locale }: { stat: StatItem; index: number; locale: string }) {
   const t = useTranslations('about');
+  const reduceMotion = useReducedMotion();
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 28 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-30px' }}
-      transition={{ duration: 0.48, delay: index * 0.08 }}
-      whileHover={{ y: -6, scale: 1.015 }}
-      className={`impact-stat impact-stat-${stat.tone} group relative overflow-hidden rounded-[1.65rem] p-5 sm:p-6`}
+      transition={reduceMotion ? { duration: 0 } : { duration: 0.35, delay: index * 0.06 }}
+      whileHover={reduceMotion ? undefined : { y: -3 }}
+      className={`impact-stat impact-stat-${stat.tone} group relative min-w-0 overflow-hidden rounded-[1.35rem] p-4 sm:rounded-[1.65rem] sm:p-6`}
     >
       <span className="impact-stat-symbol pointer-events-none absolute -end-1 -top-7 select-none" dir="ltr">
         {stat.mathSymbol}
       </span>
 
       <div className="relative z-10 flex items-start justify-between gap-3">
-        <div className="impact-stat-icon flex h-11 w-11 items-center justify-center rounded-2xl">
+        <div className="impact-stat-icon flex h-9 w-9 items-center justify-center rounded-xl sm:h-11 sm:w-11 sm:rounded-2xl">
           <stat.icon className="h-5 w-5" strokeWidth={2} />
         </div>
         <span className="impact-live-dot mt-2 h-2 w-2 rounded-full" aria-hidden="true" />
       </div>
 
-      <div className="relative z-10 mt-8">
-        <div className="impact-number text-3xl font-black tracking-tight sm:text-4xl lg:text-[2.7rem]" dir="ltr">
+      <div className="relative z-10 mt-5 sm:mt-8">
+        <div className="impact-number text-2xl font-black tracking-tight sm:text-4xl lg:text-[2.7rem]" dir="ltr">
           {typeof stat.value === 'number' ? <PhysicsCounter value={stat.value} locale={locale} /> : '—'}
         </div>
-        <p className="mt-2 text-sm font-bold text-white/70 sm:text-base">
+        <p className="mt-2 break-words text-xs font-bold leading-5 text-white/80 sm:text-base">
           {t(stat.labelKey)}
         </p>
       </div>
@@ -74,7 +75,10 @@ function StatCard({ stat, index, locale }: { stat: StatItem; index: number; loca
 export function StatsSection() {
   const t = useTranslations('about');
   const locale = useLocale();
-  const { data, isFetching } = useGetStatsQuery();
+  const { data, isFetching, isLoading, isError, refetch } = useGetStatsQuery(undefined, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
 
   const stats: StatItem[] = [
     {
@@ -152,10 +156,33 @@ export function StatsSection() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {stats.map((stat, index) => (
-                <StatCard key={stat.labelKey} stat={stat} index={index} locale={locale} />
-              ))}
+            <div aria-live="polite" className="min-w-0">
+              {isError ? (
+                <div role="alert" className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-white/25 bg-white/10 p-5 text-center text-white">
+                  <p className="text-sm font-semibold sm:text-base">
+                    {locale === 'ar'
+                      ? 'تعذّر تحميل إحصائيات المنصة حالياً. جرّب مرة ثانية.'
+                      : 'Platform statistics are temporarily unavailable. Please retry.'}
+                  </p>
+                  <button type="button" onClick={() => void refetch()}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/15 px-4 py-2 text-sm font-bold transition hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                    <RefreshCw aria-hidden="true" className="h-4 w-4" />
+                    {locale === 'ar' ? 'إعادة المحاولة' : 'Try again'}
+                  </button>
+                </div>
+              ) : isLoading ? (
+                <div role="status" aria-label={locale === 'ar' ? 'جارٍ تحميل الإحصائيات' : 'Loading statistics'}
+                  className="grid grid-cols-1 gap-3 min-[355px]:grid-cols-2 sm:gap-4">
+                  {[0, 1, 2, 3].map(index =>
+                    <div key={index} className="h-40 animate-pulse rounded-2xl border border-white/15 bg-white/10 sm:h-48" />)}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 min-[355px]:grid-cols-2 sm:gap-4">
+                  {stats.map((stat, index) => (
+                    <StatCard key={stat.labelKey} stat={stat} index={index} locale={locale} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
