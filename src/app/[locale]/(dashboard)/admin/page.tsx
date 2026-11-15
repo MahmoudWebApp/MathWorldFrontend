@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Activity, UsersRound, UserPlus, BookCheck, ArrowUpRight, ChartNoAxesCombined, History, UserRoundSearch } from 'lucide-react';
+import { Activity, UsersRound, UserPlus, ArrowUpRight, ChartNoAxesCombined, History, UserRoundSearch, Radio } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useGetAdminEngagementOverviewQuery } from '@/store/api/statsApi';
 import { StageGeometry } from '@/components/math/StageGeometry';
@@ -27,7 +27,7 @@ export default function AdminDashboardPage() {
     { text: ar ? 'كل الطلاب المسجلين' : 'Registered learners', value: data.TotalStudents, icon: UsersRound },
     { text: ar ? 'تسجيلات جديدة' : 'New sign-ups', value: data.NewStudents, icon: UserPlus },
     { text: ar ? 'طلاب حلّوا مسائل' : 'Learners who practiced', value: data.ActiveSolvers, icon: Activity },
-    { text: ar ? 'حلول خلال الفترة' : 'Completed solutions', value: data.SuccessfulSolves, icon: BookCheck },
+    { text: ar ? 'متصلون خلال آخر 5 دقائق' : 'Seen in last 5 minutes', value: data.OnlineLearners, icon: Radio },
   ] : [];
   const trends = (data?.DailyActivity ?? []).map(day => ({
     label: new Date(day.DayUtc).toLocaleDateString(ar ? 'ar' : 'en', { day: 'numeric', month: 'short', timeZone: 'UTC' }),
@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
                   className="block rounded-xl border border-border/70 p-3 transition-colors hover:bg-muted/50">
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-bold">{ar ? stage.NameAr : stage.NameEn}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">{n(stage.ActiveSolvers)} {ar ? 'نشط' : 'active'}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{n(stage.ActiveSolvers)} {ar ? 'حلّ خلال الفترة' : 'practiced'} · <span className="text-emerald-700 dark:text-emerald-300">{n(stage.OnlineLearners)} {ar ? 'متصل مؤخراً' : 'recently online'}</span></span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted"><div style={{ width: `${share}%` }}
                     className={`h-full rounded-full ${index % 4 === 0 ? 'bg-cyan-500' : index % 4 === 1 ? 'bg-orange-500' : index % 4 === 2 ? 'bg-emerald-500' : 'bg-violet-500'}`} /></div>
