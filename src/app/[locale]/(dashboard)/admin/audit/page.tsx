@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { History, ShieldCheck, Users, RefreshCw } from 'lucide-react';
@@ -13,6 +13,14 @@ export default function AdminAuditPage() {
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState('');
+  // Allows the learner directory to open one student's private audit trail.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get('userId');
+    if (requested && /^\\d+$/.test(requested) && Number(requested) > 0) {
+      setUserId(requested);
+    }
+  }, []);
   const actorId = /^\d+$/.test(userId) && Number(userId) > 0 ? Number(userId) : undefined;
   const filter = { page, days, ...(role ? { role } : {}), ...(actorId ? { actorId } : {}) };
   const events = useGetAdminAuditEventsQuery(filter, { refetchOnMountOrArgChange: true });
@@ -27,8 +35,11 @@ export default function AdminAuditPage() {
   const actionName = (action: string) => {
     if (!ar) return action;
     const names: Record<string, string> = {
-      Login: 'تسجيل دخول', Logout: 'تسجيل خروج مؤكد',
-      Register: 'إنشاء حساب', CreateOrSubmit: 'إضافة أو تنفيذ',
+      LoggedIn: 'تسجيل دخول',
+      LoggedInGoogle: 'تسجيل دخول بقوقل',
+      LoggedInFacebook: 'تسجيل دخول بفيسبوك',
+      Registered: 'إنشاء حساب',
+      CreateOrSubmit: 'إضافة أو إرسال',
       Update: 'تعديل', Delete: 'حذف',
     };
     return names[action] ?? action;
