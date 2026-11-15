@@ -88,6 +88,9 @@ const translations = {
 
 const isEnabled = process.env.NEXT_PUBLIC_SOCIAL_LOGIN_ENABLED === 'true';
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
+const googleConfigured = /^\d+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/i.test(
+  googleClientId ?? '',
+);
 const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim();
 
 export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
@@ -95,6 +98,9 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
   const copy = locale === 'ar' ? translations.ar : translations.en;
   const dispatch = useDispatch<AppDispatch>();
   const googleButton = useRef<HTMLDivElement>(null);
+  // The SDK can callback twice before React commits a busy-state render.
+  const exchangeLock = useRef(false);
+  const renderedGoogle = useRef<{ node: HTMLDivElement; mode: Mode } | null>(null);
   const [facebookReady, setFacebookReady] = useState(false);
   const [busy, setBusy] = useState<Provider | null>(null);
   const [linked, setLinked] = useState<Provider | null>(null);
@@ -105,9 +111,11 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
   const [linkFacebook] = useLinkFacebookMutation();
 
   const exchange = useCallback(async (provider: Provider, token: string) => {
-    if (!token || busy) return;
+    if (!token || exchangeLock.current) return;
+    exchangeLock.current = true;
     setBusy(provider);
     setError('');
+    setLinked(null);
     try {
       if (mode === 'link') {
         if (provider === 'Google') {
@@ -135,16 +143,21 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
     } catch (reason) {
       setError(getApiErrorMessage(reason, copy.error));
     } finally {
+      exchangeLock.current = false;
       setBusy(null);
     }
   }, [
-    busy, mode, linkGoogle, linkFacebook, googleLogin, facebookLogin,
+    mode, linkGoogle, linkFacebook, googleLogin, facebookLogin,
     copy.error, dispatch, locale,
   ]);
 
   const initializeGoogle = useCallback(() => {
-    if (!isEnabled || !googleClientId ||
+    if (!isEnabled || !googleConfigured || !googleClientId ||
         !window.google?.accounts.id || !googleButton.current) return;
+
+    const node = googleButton.current;
+    if (renderedGoogle.current?.node === node &&
+        renderedGoogle.current.mode === mode) return;
 
     const sdk = window.google.accounts.id;
     sdk.initialize({
@@ -152,14 +165,15 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
       auto_select: false,
       callback: (response) => void exchange('Google', response.credential),
     });
-    googleButton.current.replaceChildren();
-    sdk.renderButton(googleButton.current, {
+    node.replaceChildren();
+    sdk.renderButton(node, {
       theme: 'outline',
       size: 'large',
       width: 280,
-      text: mode === 'link' ? 'continue_with' : 'continue_with',
+      text: 'continue_with',
       shape: 'pill',
     });
+    renderedGoogle.current = { node, mode };
   }, [exchange, mode]);
 
   const initializeFacebook = useCallback(() => {
@@ -178,12 +192,12 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
     initializeFacebook();
   }, [initializeGoogle, initializeFacebook]);
 
-  if (!isEnabled || (!googleClientId && !facebookAppId)) {
+  if (!isEnabled || (!googleConfigured && !facebookAppId)) {
     return null;
   }
 
   const handleFacebook = () => {
-    if (!facebookReady || !window.FB || busy) return;
+    if (!facebookReady || !window.FB || busy || exchangeLock.current) return;
     window.FB.login(
       (result) => {
         const token = result.authResponse?.accessToken;
@@ -199,7 +213,7 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
 
   return (
     <div className="mt-6 space-y-4">
-      {googleClientId && (
+      {googleConfigured && (
         <>
           <Script
             src="https://accounts.google.com/gsi/client"
