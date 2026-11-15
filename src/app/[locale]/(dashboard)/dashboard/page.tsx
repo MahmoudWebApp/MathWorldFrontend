@@ -47,7 +47,7 @@ export default function UserDashboardPage() {
     refetchOnMountOrArgChange: true,
   });
   const stageId = dashboard?.CurrentStageId;
-  const { data: journey, isLoading: loadingJourney } = useGetLearningJourneyQuery(
+  const { data: journey, isLoading: loadingJourney, isError: journeyError, refetch: retryJourney } = useGetLearningJourneyQuery(
     stageId ?? 0,
     { skip: stageId == null || stageId <= 0 },
   );
@@ -146,6 +146,23 @@ export default function UserDashboardPage() {
             </Link>
           </div>
 
+          {journeyError && (
+            <div role="alert" className="mb-5 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+              <p className="mb-3 text-sm text-foreground">
+                {isArabic ? "تعذّر تحميل تقدّم مرحلتك التعليمية. حاول مجدداً." : "We couldn't load your stage progress. Please try again."}
+              </p>
+              <button type="button" onClick={() => retryJourney()}
+                className="rounded-lg border border-primary/30 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                {isArabic ? "إعادة المحاولة" : "Retry"}
+              </button>
+            </div>
+          )}
+          {loadingJourney && !journey && (
+            <div role="status" className="mb-5 space-y-3" aria-label={isArabic ? "جارٍ تحميل التقدم" : "Loading progress"}>
+              <div className="h-3 w-full animate-pulse rounded bg-muted" />
+              <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+            </div>
+          )}
           {journey && (
             <>
               <div className="mb-3 flex items-end justify-between">
