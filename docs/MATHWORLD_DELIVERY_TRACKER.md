@@ -11,6 +11,14 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — Google mobile readiness and content review (payments deferred)
+
+- **Scope decision:** pause Stripe/checkout discussions and development; focus on remaining nonpayment work. See [Non-payment release backlog](MATHWORLD_REMAINING_NONPAYMENT_WORK.md).
+- **Flutter Google:** Google Sign-In 7.x code, account linking and backend JWT exchange existed already, but default APK hides the button. Hardened handling of canceled account-picker flows, clearing SDK session on logout, native platform/OAuth ID validation, and iOS callback URL-scheme guard. Added configuration unit tests and [OAuth setup instructions](https://github.com/MahmoudWebApp/mathworld-mobile/blob/feature/premium-entitlements-client/docs/GOOGLE_SIGN_IN_SETUP.md). Google Cloud Client ID, Android signature fingerprints, iOS URL scheme and physical device login remain unconfigured/unverified.
+- **Backend Google:** removed personally identifying social-auth email logging and a misleading default example OAuth client ID. Real `Google__ClientId` environment value is still required; no production configuration was changed.
+- **Draft math content:** inspected answer options and English explanations for all 64 proposed questions; repaired an ambiguous Arabic word problem about disjoint student groups. Logged staging editorial acceptance in [64-question audit](content/MATHWORLD_64_QUESTION_MATH_AUDIT.md). No content was published or imported.
+- **Verification:** existing backend build/PostgreSQL suites and Next.js build/typecheck suites passed on checked older commits. Flutter CI initially failed due to malformed config in one edit; source reconstruction fixed the syntax, and later runs must be checked against the repaired mobile SHA. Neither app stores nor production deployments have been touched.
+
 ## November 15 — Premium discount and checkout foundation (feature branches only)
 
 - **Annual target price:** USD 5.00. Free remains two unlocked categories per stage with unlimited solving; no ten-question quota.
