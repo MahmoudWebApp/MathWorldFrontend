@@ -360,6 +360,51 @@ export interface PremiumGiftRedemption {
   GrantedDays: number;
 }
 
+export interface PremiumDiscountQuote {
+  SubtotalUsd: number;
+  DiscountUsd: number;
+  TotalUsd: number;
+  Currency: 'USD';
+  EndsAtUtc: string;
+  Notice: 'PreviewOnlyRevalidateAtCheckout';
+}
+
+export interface AdminPremiumDiscount {
+  Id: number;
+  Label: string;
+  DiscountKind: 'Percentage' | 'FixedUsd';
+  Amount: number;
+  StartsAtUtc: string;
+  EndsAtUtc: string;
+  Enabled: boolean;
+  MaxRedemptions: number | null;
+  RedemptionCount: number;
+  CreatedAtUtc: string;
+  Status: 'Scheduled' | 'Active' | 'Expired' | 'Disabled' | 'Exhausted';
+}
+
+export interface AdminPremiumDiscountPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Codes: AdminPremiumDiscount[];
+}
+
+export interface CreatePremiumDiscountRequest {
+  Label: string;
+  DiscountKind: 'Percentage' | 'FixedUsd';
+  Amount: number;
+  StartsAtUtc: string;
+  EndsAtUtc: string;
+  MaxRedemptions: number | null;
+}
+
+export interface CreatedPremiumDiscount extends CreatePremiumDiscountRequest {
+  Id: number;
+  Code: string;
+  Enabled: boolean;
+}
+
 export interface StudentAchievements {
   UniqueSolved: number;
   EarnedCount: number;
@@ -384,6 +429,7 @@ export const usersApi = createApi({
     'DailyQuota',
     'Subscription',
     'PremiumCodes',
+    'PremiumDiscounts',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -450,6 +496,39 @@ export const usersApi = createApi({
         body: { Code: code.trim() },
       }),
       invalidatesTags: ['Subscription', 'User', 'Dashboard', 'DailyQuota'],
+    }),
+
+    quotePremiumDiscount: builder.mutation<PremiumDiscountQuote, string>({
+      query: (code) => ({
+        url: '/users/premium-discounts/quote',
+        method: 'POST',
+        body: { Code: code.trim() },
+      }),
+    }),
+
+    getAdminPremiumDiscounts: builder.query<AdminPremiumDiscountPage, number>({
+      query: (page = 1) => ({
+        url: '/admin/premium-discounts',
+        params: { page, pageSize: 20 },
+      }),
+      providesTags: ['PremiumDiscounts'],
+    }),
+
+    createAdminPremiumDiscount: builder.mutation<CreatedPremiumDiscount, CreatePremiumDiscountRequest>({
+      query: (body) => ({
+        url: '/admin/premium-discounts',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PremiumDiscounts'],
+    }),
+
+    disableAdminPremiumDiscount: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/admin/premium-discounts/${id}/disable`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['PremiumDiscounts'],
     }),
 
     getAchievements: builder.query<StudentAchievements, void>({
@@ -644,6 +723,10 @@ export const {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
   useGetAdminPremiumCodesQuery,
+  useQuotePremiumDiscountMutation,
+  useGetAdminPremiumDiscountsQuery,
+  useCreateAdminPremiumDiscountMutation,
+  useDisableAdminPremiumDiscountMutation,
   useCreateAdminPremiumCodeMutation,
   useRevokeAdminPremiumCodeMutation,
   useRedeemPremiumCodeMutation,
