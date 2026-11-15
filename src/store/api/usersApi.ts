@@ -405,6 +405,33 @@ export interface CreatedPremiumDiscount extends CreatePremiumDiscountRequest {
   Enabled: boolean;
 }
 
+export interface AdminPremiumCheckoutSummary {
+  TotalOrders: number;
+  Pending: number;
+  Paid: number;
+  Failed: number;
+  Cancelled: number;
+  Refunded: number;
+  PendingOlderThan24Hours: number;
+  PaidAmountUsd: number;
+  RedeemedDiscountUsd: number;
+  Currency: 'USD';
+  PaymentAvailable: boolean;
+}
+
+export interface AdminPremiumCheckoutOrder extends PremiumCheckoutOrder {
+  StudentId: number;
+  DiscountCodeId: number | null;
+  DiscountRedeemedAtUtc: string | null;
+}
+
+export interface AdminPremiumCheckoutOrderPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Orders: AdminPremiumCheckoutOrder[];
+}
+
 export interface PremiumCheckoutOrder {
   Id: number;
   OrderReference: string;
@@ -562,6 +589,21 @@ export const usersApi = createApi({
         method: 'POST',
       }),
       invalidatesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    getAdminPremiumCheckoutSummary: builder.query<AdminPremiumCheckoutSummary, void>({
+      query: () => '/admin/premium-checkout/summary',
+      providesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    getAdminPremiumCheckoutOrders: builder.query<
+      AdminPremiumCheckoutOrderPage, { Page: number; Status?: string }
+    >({
+      query: ({ Page, Status }) => ({
+        url: '/admin/premium-checkout/orders',
+        params: { page: Page, pageSize: 20, ...(Status ? { status: Status } : {}) },
+      }),
+      providesTags: ['PremiumCheckoutOrders'],
     }),
 
     getPremiumCheckoutOrders: builder.query<PremiumCheckoutOrderPage, number>({
@@ -782,6 +824,8 @@ export const {
   useGetAdminPremiumCodesQuery,
   useQuotePremiumDiscountMutation,
   useGetPremiumCheckoutOrdersQuery,
+  useGetAdminPremiumCheckoutSummaryQuery,
+  useGetAdminPremiumCheckoutOrdersQuery,
   useGetPremiumCheckoutOrderQuery,
   usePreparePremiumCheckoutOrderMutation,
   useCancelPremiumCheckoutOrderMutation,
