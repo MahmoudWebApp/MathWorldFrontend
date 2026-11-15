@@ -1,10 +1,12 @@
 'use client';
 
 import { useLocale } from 'next-intl';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { CheckCircle2, Crown, Infinity, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
+import { useQuotePremiumDiscountMutation, type PremiumDiscountQuote } from '@/store/api/usersApi';
 
 const freeAr = [
   'فئتان مفتوحتان بكل مرحلة تعليمية',
@@ -43,7 +45,23 @@ export default function PremiumInformationPage() {
     refetchOnMountOrArgChange: true,
   });
 
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountQuote, setDiscountQuote] = useState<PremiumDiscountQuote | null>(null);
+  const [discountError, setDiscountError] = useState(false);
+  const [quoteDiscount, { isLoading: isQuoting }] = useQuotePremiumDiscountMutation();
   const hasPremium = entitlement?.IsPremium === true;
+
+  const applyDiscount = async () => {
+    setDiscountError(false);
+    setDiscountQuote(null);
+    if (!discountCode.trim()) return;
+    try {
+      const quote = await quoteDiscount(discountCode.trim()).unwrap();
+      setDiscountQuote(quote);
+    } catch {
+      setDiscountError(true);
+    }
+  };
   const endsAt = entitlement?.PremiumExpiresAtUtc
     ? new Date(entitlement.PremiumExpiresAtUtc) : null;
   const expires = endsAt && Number.isFinite(endsAt.getTime())
@@ -146,6 +164,58 @@ export default function PremiumInformationPage() {
                 : 'Personal report, Excel-ready CSV and print-to-PDF. Teacher connections are planned.'}</span>
             </li>
           </ul>
+          {authenticated && !hasPremium && !isLoading && !isError && (
+            <div className="mt-7 space-y-3 rounded-2xl border border-primary/20 bg-background/80 p-4">
+              <h3 className="font-bold">{ar ? 'عندك كود خصم؟' : 'Have a discount code?'}</h3>
+              <p className="text-xs leading-6 text-muted-foreground">
+                {ar ? 'أدخل كود الخصم لمعرفة السعر خلال فترة صلاحيته. هذه معاينة وليست عملية شراء.'
+                  : 'Check your price while the code is valid. This is a preview, not a purchase.'}
+              </p>
+              <form className="flex flex-wrap gap-2" onSubmit={event => { event.preventDefault(); void applyDiscount(); }}>
+                <input
+                  dir="ltr"
+                  aria-label={ar ? 'كود الخصم' : 'Discount code'}
+                  autoComplete="off"
+                  value={discountCode}
+                  maxLength={60}
+                  onChange={event => {
+                    setDiscountCode(event.target.value);
+                    setDiscountQuote(null);
+                    setDiscountError(false);
+                  }}
+                  placeholder="MD-..."
+                  className="min-w-0 flex-1 rounded-xl border bg-background px-3 py-2 text-sm uppercase"
+                />
+                <button type="submit" disabled={isQuoting || !discountCode.trim()}
+                  className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50">
+                  {isQuoting ? (ar ? 'جارٍ التحقق…' : 'Checking…') : (ar ? 'تطبيق' : 'Apply')}
+                </button>
+              </form>
+              {discountError && <p role="alert" className="text-sm text-destructive">
+                {ar ? 'الكود غير صالح أو غير متاح حالياً أو انتهت صلاحيته.' : 'This code is invalid, unavailable or expired.'}
+              </p>}
+              {discountQuote && (
+                <div role="status" className="space-y-2 rounded-xl border border-primary/20 p-3 text-sm">
+                  <div className="flex justify-between gap-2">
+                    <span>{ar ? 'السعر الأساسي' : 'Original price'}</span>
+                    <span className="tabular-nums">${discountQuote.SubtotalUsd.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between gap-2 text-primary">
+                    <span>{ar ? 'الخصم' : 'Discount'}</span>
+                    <span className="tabular-nums">−${discountQuote.DiscountUsd.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between gap-2 border-t pt-2 font-extrabold">
+                    <span>{ar ? 'السعر بعد الخصم' : 'Discounted price'}</span>
+                    <span className="tabular-nums">${discountQuote.TotalUsd.toFixed(2)}</span>
+                  </div>
+                  <p className="text-xs leading-6 text-muted-foreground">
+                    {ar ? 'السعر غير محجوز. ستُراجع صلاحية الكود مجدداً عند تفعيل الدفع.'
+                      : 'Price is not reserved. The code must be checked again at checkout.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
           <Link href="/dashboard/redeem" className="mt-8 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
             {ar ? 'عندي كود هدية Premium' : 'Redeem a Premium gift'}
           </Link>
