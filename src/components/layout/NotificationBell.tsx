@@ -17,6 +17,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
   const containerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [readingId, setReadingId] = useState<number | null>(null);
   const { data, isLoading, isError, isFetching, refetch } = useGetInboxQuery(undefined, {
     skip: !isAuthenticated,
     pollingInterval: 60000,
@@ -55,11 +56,15 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
   };
   const readNotice = async (notice: InboxNotification) => {
     setActionError('');
+    if (readingId !== null) return;
     if (!notice.ReadAtUtc) {
+      setReadingId(notice.Id);
       try { await markRead(notice.Id).unwrap(); }
       catch {
         setActionError(ar ? 'تعذّر تعليم الإشعار كمقروء.' : 'Could not mark notification as read.');
         return;
+      } finally {
+        setReadingId(null);
       }
     }
     // Only permit same-app absolute paths; do not trust external URLs from API data.
@@ -77,7 +82,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
         onClick={() => { setOpen(!open); setActionError(''); if (!open) void refetch(); }}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={ar ? 'الإشعارات' : 'Notifications'}
+        aria-label={unread > 0 ? (ar ? `الإشعارات، ${unread} غير مقروءة` : `Notifications, ${unread} unread`) : (ar ? 'الإشعارات' : 'Notifications')}
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <Bell className="h-5 w-5" aria-hidden="true" />
@@ -131,8 +136,10 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
               </div>
             ) : data.Items.map((notice) => (
               <button type="button" key={notice.Id}
+                disabled={readingId !== null}
+                aria-label={`${ar ? notice.TitleAr : notice.TitleEn}${notice.ReadAtUtc ? '' : (ar ? '، غير مقروء' : ', unread')}`}
                 onClick={() => void readNotice(notice)}
-                className={`block w-full border-b border-border/60 px-4 py-3 text-start transition-colors last:border-0 hover:bg-muted/60 ${notice.ReadAtUtc ? '' : 'bg-primary/5'}`}
+                className={`block w-full border-b border-border/60 px-4 py-3 text-start transition-colors last:border-0 hover:bg-muted/60 disabled:cursor-wait disabled:opacity-70 ${notice.ReadAtUtc ? '' : 'bg-primary/5'}`}
               >
                 <span className="flex items-start justify-between gap-2">
                   <span className="text-sm font-semibold">{ar ? notice.TitleAr : notice.TitleEn}</span>
