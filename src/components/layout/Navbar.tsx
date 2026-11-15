@@ -30,7 +30,7 @@ import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { notificationsApi } from '@/store/api/notificationsApi';
-import { AdminNavDropdown, AdminNavMobile } from '@/components/admin/AdminNavigation';
+import { ADMIN_NAV_ITEMS, AdminNavMobile } from '@/components/admin/AdminNavigation';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
@@ -240,11 +240,6 @@ function NavbarContent() {
             >
               {t('nav.about')}
             </Link>
-            {mounted && isAuthenticated && user?.Role === 'Admin' && (
-              <div className="hidden md:block">
-                <AdminNavDropdown />
-              </div>
-            )}
           </div>
 
           {/* Actions & Search */}
@@ -314,9 +309,49 @@ function NavbarContent() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute end-0 top-full z-20 mt-2 w-56 rounded-2xl border bg-popover/95 backdrop-blur-xl p-2 shadow-xl"
+                        className={cn("absolute end-0 top-full z-20 mt-2 max-h-[min(75vh,680px)] overflow-y-auto overscroll-contain rounded-2xl border bg-popover/95 backdrop-blur-xl p-2 shadow-xl", user.Role === 'Admin' ? "w-[min(90vw,360px)]" : "w-56")}
                       >
                         <div className="px-3 py-2.5 text-xs text-muted-foreground border-b mb-2">{user.Email}</div>
+                        {user.Role === 'Admin' && (
+                          <nav aria-label={locale === 'ar' ? 'تنقل الأدمن' : 'Admin navigation'} className="space-y-1">
+                            <div className="px-3 pb-1 text-xs font-bold text-muted-foreground">
+                              {locale === 'ar' ? 'مراقبة المنصة' : 'Monitor platform'}
+                            </div>
+                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'overview').map(item => (
+                              <Link key={item.href} href={item.href}
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
+                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                                {locale === 'ar' ? item.labelAr : item.labelEn}
+                              </Link>
+                            ))}
+                            <div className="mx-2 my-2 border-t" />
+                            <div className="px-3 pb-1 text-xs font-bold text-muted-foreground">
+                              {locale === 'ar' ? 'إدارة الطلاب' : 'Learner administration'}
+                            </div>
+                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'management').map(item => (
+                              <Link key={item.href} href={item.href}
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
+                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                                {locale === 'ar' ? item.labelAr : item.labelEn}
+                              </Link>
+                            ))}
+                            <div className="mx-2 my-2 border-t" />
+                            <div className="px-3 pb-1 text-xs font-bold text-muted-foreground">
+                              {locale === 'ar' ? 'المستويات والفئات والمسائل' : 'Stages, categories and questions'}
+                            </div>
+                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'content').map(item => (
+                              <Link key={item.href} href={item.href}
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
+                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                                {locale === 'ar' ? item.labelAr : item.labelEn}
+                              </Link>
+                            ))}
+                            <div className="mx-2 my-2 border-t" />
+                          </nav>
+                        )}
                         {user.Role !== 'Admin' && (
                           <>
 
