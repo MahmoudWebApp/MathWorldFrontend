@@ -89,7 +89,44 @@ export default function AdminLearnerActivityPage() {
           {ar ? 'تعذّر جلب البيانات.' : 'Could not load learner activity.'}
         </p> : !result.data?.Students.length ? <p className="p-8 text-center text-muted-foreground">
           {ar ? 'لا يوجد طلاب مطابقون.' : 'No matching students.'}
-        </p> : <div className="overflow-x-auto">
+        </p> : <>
+          <div className="space-y-3 p-3 md:hidden">
+            {result.data.Students.map(student => (
+              <article key={student.Id} className="space-y-3 rounded-xl border bg-background/70 p-4 text-sm">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <Link href={`/admin/audit?actorId=${student.Id}`}
+                      className="font-bold text-primary hover:underline">{student.FullName}</Link>
+                    <p className="text-xs text-muted-foreground">#{student.Id}
+                      {' · '}{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}
+                    </p>
+                  </div>
+                  <span className={student.IsOnline
+                    ? 'rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300'
+                    : 'rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground'}>
+                    {student.IsOnline
+                      ? (ar ? 'اتصال حديث' : 'Recently online')
+                      : (ar ? 'لا يوجد اتصال حديث' : 'No recent heartbeat')}
+                  </span>
+                </div>
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-2">
+                  {[
+                    [ar ? 'مسجل منذ' : 'Registered', date(student.CreatedAt)],
+                    [ar ? 'آخر دخول' : 'Last login', date(student.LastLoginAt)],
+                    [ar ? 'آخر حل' : 'Last practice', date(student.LastPracticeAt)],
+                    [ar ? 'آخر اتصال' : 'Last heartbeat', date(student.LastHeartbeatAtUtc)],
+                  ].map(([label, value]) => <div key={label} className="min-w-0">
+                    <dt className="text-xs text-muted-foreground">{label}</dt>
+                    <dd className="font-semibold">{value}</dd>
+                  </div>)}
+                </dl>
+                <p className="border-t pt-2 font-semibold">
+                  {ar ? 'محاولات الحل' : 'Practice attempts'}: {n(student.Attempts)}
+                </p>
+              </article>
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[870px] text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>
@@ -125,7 +162,8 @@ export default function AdminLearnerActivityPage() {
               </tr>)}
             </tbody>
           </table>
-        </div>}
+          </div>
+        </>}
       <p className="border-t px-4 py-3 text-xs text-muted-foreground">
         {ar ? 'وجود اتصال حديث لا يضمن أن الطالب يشاهد الصفحة بنفس اللحظة؛ يتوقف التحديث في الخلفية وينتهي اعتباره متصلاً بعد خمس دقائق.'
           : 'Recent connectivity is not a live socket. Backgrounded clients pause heartbeats and are considered offline after five minutes.'}
