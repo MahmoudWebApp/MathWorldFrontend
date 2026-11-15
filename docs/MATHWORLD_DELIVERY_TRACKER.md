@@ -11,6 +11,15 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — closure QA and 10-question draft coverage across all 32 categories
+
+- **Android completed checkpoint:** Flutter's prior commit `1fdbe306` successfully completed all six workflows including **Mobile social auth Android build** and **Flutter Free-access tests and debug-signed Android QA APK**. This is a QA build, not a Play Store release-signed app. Later mobile commit `a645e83` adds a pull-to-refresh/empty-state fix in the error notebook; verify that exact commit's Android runs before claiming its APK passed.
+- **Flutter notebook:** An empty notebook can now be pulled down to refresh and has an explicit retry action. The unarchived empty state explains how to view older archived mistakes.
+- **Content expansion:** Added `mathworld-proposed-categories-96-expansion-drafts.csv` (96 bilingual drafts) and `mathworld-existing-categories-96-expansion-drafts.csv` (96 more). Together with the original 128, there are **320 distinct draft questions**: 160 mapped to 16 existing numeric categories and 160 mapped to 16 **proposed, uncreated** categories. Each category has **10 drafts**; each stage has 80 drafts.
+- **Structural CI gate:** `scripts/validate-content-drafts.mjs` and `.github/workflows/content-draft-integrity.yml` reject missing bilingual text/solutions, invalid options, duplicate keys/prompts, stage-to-category mapping errors, and insufficient category counts. The new GitHub workflow **passed** on commit `10686a71`. See `docs/content/MATHWORLD_320_QUESTION_CONTENT_GATE.md`.
+- **Critically NOT done:** educator verification of all math answers, Arabic/English curricula/notation, real staging category IDs, safe admin dry-run/editorial approval, publication of categories/questions, and physical Android/iOS inspection. **Ten drafts/category is not ten teacher-vetted/published questions/category.**
+- **Release constraints:** no merge, production migrations, publication, payment or rewarded ads; branch work only.
+
 ## November 15 — combined student UX, stage journey and content expansion (development branch)
 
 **Scope:** The owner approved running UI/UX improvements and curriculum/student-journey work together. This batch makes no release, live payment, ads, database updates, or content publication.
