@@ -81,12 +81,15 @@ function ProblemsPageClient() {
     state.auth.isAuthenticated ? state.auth.user?.Role : undefined);
   const authenticated = role === "Student";
   const isAdmin = role === "Admin";
-  const { data: access, isLoading: accessLoading, isError: accessError,
+  const { currentData: access, isLoading: accessLoading, isError: accessError,
     refetch: refetchAccess } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
   const { data: subscription, isLoading: subscriptionLoading, isError: subscriptionError,
     refetch: refetchSubscription } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
   const accessPending = Boolean(categoryId && stageId) && (accessLoading || (authenticated && subscriptionLoading));
+  // A pending Premium lookup is not proof that a category is locked.
+  // Wait for the authoritative entitlement answer before rendering a lock.
   const categoryLocked = Boolean(categoryId && stageId && access &&
+    !accessPending && !subscriptionError &&
     !isAdmin && subscription?.IsPremium !== true &&
     !access.FreeCategoryIds.includes(Number(categoryId)));
 
