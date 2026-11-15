@@ -1,0 +1,130 @@
+'use client';
+
+import { useState } from 'react';
+import { useLocale } from 'next-intl';
+import { Link } from '@/i18n/routing';
+import { Search, UserRoundSearch, RefreshCw } from 'lucide-react';
+import { useGetAdminEngagementOverviewQuery, useGetAdminEngagementStudentsQuery } from '@/store/api/statsApi';
+
+export default function AdminLearnerActivityPage() {
+  const ar = useLocale() === 'ar';
+  const [searchInput, setSearchInput] = useState('');
+  const [term, setTerm] = useState('');
+  const [stageId, setStageId] = useState(0);
+  const [page, setPage] = useState(1);
+  const stages = useGetAdminEngagementOverviewQuery(30);
+  const result = useGetAdminEngagementStudentsQuery({
+    page, ...(stageId ? { stageId } : {}), ...(term ? { search: term } : {}),
+  }, { refetchOnMountOrArgChange: true });
+  const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
+  const date = (value: string | null) => {
+    if (!value) return ar ? 'غير مسجّل' : 'Not recorded';
+    const parsed = new Date(value);
+    return Number.isFinite(parsed.getTime()) ? new Intl.DateTimeFormat(ar ? 'ar' : 'en', {
+      dateStyle: 'medium', timeStyle: 'short',
+    }).format(parsed) : '—';
+  };
+  const names = new Map(stages.data?.Stages.map(stage => [
+    stage.StageId, ar ? stage.NameAr : stage.NameEn,
+  ]) ?? []);
+  return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-6 px-4 py-8">
+    <header className="space-y-2">
+      <Link href="/admin" className="text-sm font-semibold text-primary underline">
+        {ar ? 'لوحة المراقبة' : 'Monitoring dashboard'}
+      </Link>
+      <h1 className="flex items-center gap-2 text-3xl font-black">
+        <UserRoundSearch className="h-7 w-7 text-primary"/>
+        {ar ? 'سجل استخدام الطلاب' : 'Learner activity directory'}
+      </h1>
+      <p className="max-w-3xl text-sm text-muted-foreground">
+        {ar ? 'تابع من سجل حساباً جديداً، آخر تسجيل دخول ناجح، آخر محاولة حل، وعدد المحاولات. لا نستنتج وقت الخروج من إغلاق المتصفح.'
+          : 'Review registrations, last successful login, last practice and attempts. Browser closing does not provide a reliable logout timestamp.'}
+      </p>
+    </header>
+    <section className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-[1fr_230px_auto]">
+      <form className="flex gap-2" onSubmit={event => {
+        event.preventDefault(); setTerm(searchInput.trim()); setPage(1);
+      }}>
+        <label className="relative block min-w-0 flex-1">
+          <span className="sr-only">{ar ? 'اسم الطالب' : 'Learner name'}</span>
+          <Search className="pointer-events-none absolute start-3 top-3 h-4 w-4 text-muted-foreground" />
+          <input value={searchInput} maxLength={80} onChange={e => setSearchInput(e.target.value)}
+            placeholder={ar ? 'ابحث باسم الطالب' : 'Search by learner name'}
+            className="w-full rounded-xl border bg-background py-2.5 ps-10 pe-3 text-sm" />
+        </label>
+        <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+          {ar ? 'بحث' : 'Search'}
+        </button>
+      </form>
+      <label className="block">
+        <span className="sr-only">{ar ? 'تصفية حسب المستوى' : 'Filter by stage'}</span>
+        <select className="w-full rounded-xl border bg-background px-3 py-2.5 text-sm" value={stageId}
+          onChange={e => { setStageId(Number(e.target.value)); setPage(1); }}>
+          <option value={0}>{ar ? 'كل المستويات' : 'All stages'}</option>
+          {(stages.data?.Stages ?? []).map(stage => <option key={stage.StageId} value={stage.StageId}>
+            {ar ? stage.NameAr : stage.NameEn}
+          </option>)}
+        </select>
+      </label>
+      <button type="button" onClick={() => void result.refetch()}
+        className="inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
+        <RefreshCw className="h-4 w-4"/>{ar ? 'تحديث' : 'Refresh'}
+      </button>
+    </section>
+    <section className="overflow-hidden rounded-2xl border bg-card">
+      <div className="flex flex-wrap justify-between gap-2 border-b p-4 text-sm">
+        <strong>{ar ? 'الطلاب' : 'Students'}: {result.data ? n(result.data.Total) : '—'}</strong>
+        <span className="text-muted-foreground">{ar ? 'الترتيب حسب تاريخ التسجيل' : 'Newest registrations first'}</span>
+      </div>
+      {result.isLoading ? <p role="status" className="p-8">{ar ? 'جارٍ تحميل الطلاب…' : 'Loading learners…'}</p>
+        : result.isError ? <p role="alert" className="p-8">
+          {ar ? 'تعذّر جلب البيانات.' : 'Could not load learner activity.'}
+        </p> : !result.data?.Students.length ? <p className="p-8 text-center text-muted-foreground">
+          {ar ? 'لا يوجد طلاب مطابقون.' : 'No matching students.'}
+        </p> : <div className="overflow-x-auto">
+          <table className="w-full min-w-[730px] text-sm">
+            <thead className="bg-muted/50 text-muted-foreground">
+              <tr>
+                <th className="p-3 text-start">{ar ? 'الطالب' : 'Learner'}</th>
+                <th className="p-3 text-start">{ar ? 'المستوى' : 'Stage'}</th>
+                <th className="p-3 text-start">{ar ? 'تاريخ التسجيل' : 'Registered'}</th>
+                <th className="p-3 text-start">{ar ? 'آخر دخول' : 'Last login'}</th>
+                <th className="p-3 text-start">{ar ? 'آخر حل' : 'Last practice'}</th>
+                <th className="p-3 text-end">{ar ? 'المحاولات' : 'Attempts'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.data.Students.map(student => <tr key={student.Id} className="border-t">
+                <td className="p-3 font-semibold">
+                  <Link href={`/admin/audit?actorId=${student.Id}`} className="text-primary hover:underline">
+                    {student.FullName}
+                  </Link>
+                  <span className="block text-xs font-normal text-muted-foreground">#{student.Id}
+                    {' · '}{student.IsActive ? (ar ? 'مفعّل' : 'Active') : (ar ? 'معطّل' : 'Disabled')}
+                  </span>
+                </td>
+                <td className="p-3">{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}</td>
+                <td className="p-3">{date(student.CreatedAt)}</td>
+                <td className="p-3">{date(student.LastLoginAt)}</td>
+                <td className="p-3">{date(student.LastPracticeAt)}</td>
+                <td className="p-3 text-end font-bold tabular-nums">{n(student.Attempts)}</td>
+              </tr>)}
+            </tbody>
+          </table>
+        </div>}
+      <div className="flex items-center justify-between gap-3 border-t p-4 text-sm">
+        <button type="button" disabled={page <= 1 || result.isFetching}
+          onClick={() => setPage(x => Math.max(1, x - 1))}
+          className="font-semibold text-primary disabled:opacity-40">
+          {ar ? 'السابق' : 'Previous'}
+        </button>
+        <span>{page} / {Math.max(1, Math.ceil((result.data?.Total ?? 0) / 20))}</span>
+        <button type="button" disabled={result.isFetching || !result.data || page * 20 >= result.data.Total}
+          onClick={() => setPage(x => x + 1)}
+          className="font-semibold text-primary disabled:opacity-40">
+          {ar ? 'التالي' : 'Next'}
+        </button>
+      </div>
+    </section>
+  </main>;
+}
