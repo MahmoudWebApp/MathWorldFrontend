@@ -21,7 +21,9 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
   const { data, isLoading, isError, isFetching, refetch } = useGetInboxQuery(undefined, {
     skip: !isAuthenticated,
     pollingInterval: 60000,
+    skipPollingIfUnfocused: true,
     refetchOnFocus: true,
+    refetchOnReconnect: true,
   });
   const [markRead] = useMarkNotificationReadMutation();
   const [markAll, { isLoading: markingAll }] = useMarkAllNotificationsReadMutation();
@@ -43,7 +45,11 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
   }, [open]);
 
   useEffect(() => {
-    if (!isAuthenticated) setOpen(false);
+    if (!isAuthenticated) {
+      setOpen(false);
+      setActionError('');
+      setReadingId(null);
+    }
   }, [isAuthenticated]);
 
   if (!isAuthenticated) return null;
