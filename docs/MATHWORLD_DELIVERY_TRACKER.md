@@ -11,6 +11,22 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — release-closing batch: native mobile PDF + filtered activity exports
+
+- **Mobile Premium PDF:** `lib/services/premium_analytics_pdf_service.dart` generates actual A4 multi-page PDF files from the server-authorized `PremiumAnalyticsReport`, with Arabic/English headings and `pw.TextDirection.rtl` for Arabic. Noto Naskh Arabic Regular/Bold is embedded by `PdfGoogleFonts`; first-use download may require a connection. `premium_analytics_screen.dart` now offers a native `SharePlus` PDF button. Tests cover PDF signatures, pagination, empty and populated reports with injected test fonts; *font shaping on real Arabic Android/iOS devices is still an acceptance test*, not claimed passed.
+- **Mobile dependencies:** pin `pdf` below 3.13 and `printing` below 5.15 for the current Flutter/Dart CI SDK. The `image` transitive codec is pinned to 4.10.2 because image 4.11.0 expects a newer `archive.ZLibDecoder.decodeLazy` than CI resolved. Confirm Android CI before release; test iOS separately (iOS project and OAuth native scheme also need validation).
+- **Audit export:** authenticated admins can download at most 10,000 recent audit rows via `GET /api/admin/activity-audit/export.csv`, filtered by time, role, actor and action. Export is UTF-8 with a BOM for Excel, CSV cells are escaped and spreadsheet-formula prefixes neutralized, data has no bodies/passwords/tokens, and a truncation row explicitly identifies partial exports. The bilingual admin timeline offers a real download button; disposable PostgreSQL tests validate student denial and admin-only access.
+- **Verification as of this batch:** the matching backend branch had 9/9 green PR checks and the matching web branch had 3/3 green checks. Flutter static analysis and bilingual navigation checks passed after the PDF changes, while full Android assembly may take longer; do not mark the mobile feature release-ready based on static checks alone.
+- **Operational guard:** the current user-tested Vercel `main` site and Render production API remain unchanged. Netlify auto-builds remain stopped, Vercel build ignored, no payment integrations or production migrations are triggered.
+
+### Blockers that cannot be finished without external inputs/approval
+
+- Owner-provided Google Cloud OAuth setup: Web audience client, Android debug/release/Play SHA registrations, final iOS bundle ID and URL scheme; signed physical-device tests.
+- Content editorial decisions: review/approve 96 draft questions and the 16 proposed categories before publishing into the live question bank.
+- Staging database and API credentials/environment (do not apply feature-branch migrations to production by inference), load, end-to-end and data retention checks.
+- Native iOS build pipeline, real-device RTL and accessibility screenshots, official Android/iOS store signing/accounts, backups/monitoring and release approval.
+- Stripe/mobile-store payments, ads, vouchers and tutor marketplace remain **explicitly deferred**; no live payment activation.
+
 ## November 15 — foreground live notifications (web, Flutter, backend)
 
 - **Realtime without an additional paid provider:** the ASP.NET API now exposes `GET /api/notifications/stream`, a JWT-header-authenticated Server-Sent Events stream. A bounded in-memory broker routes *content-free* `event: inbox` invalidation hints by authenticated account; no inbox text, tokens, or other students' identifiers travel in events. Streams revalidate active status, cap lifetime to five minutes or JWT expiry and are rate-limited per user.
