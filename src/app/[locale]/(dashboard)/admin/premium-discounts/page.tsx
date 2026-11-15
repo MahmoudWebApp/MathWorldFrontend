@@ -52,7 +52,7 @@ export default function AdminPremiumDiscountsPage() {
       !starts || !ends || new Date(ends) <= new Date(starts) ||
       new Date(ends) <= new Date() ||
       !Number.isFinite(numericAmount) || numericAmount < 0 ||
-      Math.round(numericAmount * 100) !== numericAmount * 100 ||
+      !/^\d+(?:\.\d{1,2})?$/.test(amount.trim()) ||
       numericAmount > (kind === 'Percentage' ? 100 : 5) ||
       (limit !== null && (!Number.isInteger(limit) || limit < 1))) {
       setError(ar ? 'تحقق من الاسم، قيمة الخصم، تاريخ البداية والنهاية، وحد الاستخدام.' :
@@ -105,6 +105,9 @@ export default function AdminPremiumDiscountsPage() {
           {ar ? 'حدد قيمة الخصم وفترة سريانه وعدد استخداماته. أكواد الخصم لا تفعّل اشتراكاً دون عملية دفع مؤكدة.'
             : 'Set discount value, validity window and usage cap. Discounts never activate Premium without verified checkout.'}
         </p>
+        <div><Link href="/admin/premium-checkout" className="inline-block text-sm font-semibold text-primary underline">
+          {ar ? 'متابعة طلبات الاشتراك وإحصائيات الدفع' : 'View checkout orders and payment summary'}
+        </Link></div>
         <Link href="/admin/premium-codes" className="inline-block text-sm font-semibold text-primary underline">
           {ar ? 'إدارة أكواد الهدايا المنفصلة' : 'Manage separate gift codes'}
         </Link>
