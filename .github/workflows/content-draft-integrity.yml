@@ -1,0 +1,34 @@
+name: Bilingual curriculum draft integrity
+
+on:
+  push:
+    branches:
+      - feature/premium-entitlements-client
+    paths:
+      - 'docs/content/**'
+      - 'scripts/validate-content-drafts.mjs'
+      - '.github/workflows/content-draft-integrity.yml'
+  pull_request:
+    paths:
+      - 'docs/content/**'
+      - 'scripts/validate-content-drafts.mjs'
+      - '.github/workflows/content-draft-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  content:
+    name: Validate 10 bilingual drafts per category
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Audit CSV structure, category mapping and duplicates
+        run: node scripts/validate-content-drafts.mjs
