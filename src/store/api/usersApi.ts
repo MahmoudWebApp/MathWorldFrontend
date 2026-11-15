@@ -401,6 +401,11 @@ export interface CreatePremiumDiscountRequest {
   MaxRedemptionsPerStudent: number | null;
 }
 
+export type UpdatePremiumDiscountSettings = Pick<
+  CreatePremiumDiscountRequest,
+  'StartsAtUtc' | 'EndsAtUtc' | 'MaxRedemptions' | 'MaxRedemptionsPerStudent'
+>;
+
 export interface CreatedPremiumDiscount extends CreatePremiumDiscountRequest {
   Id: number;
   Code: string;
@@ -573,6 +578,18 @@ export const usersApi = createApi({
         url: '/admin/premium-discounts',
         method: 'POST',
         body,
+      }),
+      invalidatesTags: ['PremiumDiscounts'],
+    }),
+
+    updateAdminPremiumDiscountSettings: builder.mutation<
+      Partial<AdminPremiumDiscount>,
+      { Id: number; Settings: UpdatePremiumDiscountSettings }
+    >({
+      query: ({ Id, Settings }) => ({
+        url: `/admin/premium-discounts/${Id}/settings`,
+        method: 'PUT',
+        body: Settings,
       }),
       invalidatesTags: ['PremiumDiscounts'],
     }),
@@ -834,6 +851,7 @@ export const {
   useGetAdminPremiumDiscountsQuery,
   useCreateAdminPremiumDiscountMutation,
   useDisableAdminPremiumDiscountMutation,
+  useUpdateAdminPremiumDiscountSettingsMutation,
   useCreateAdminPremiumCodeMutation,
   useRevokeAdminPremiumCodeMutation,
   useRedeemPremiumCodeMutation,
