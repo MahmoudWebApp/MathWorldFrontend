@@ -77,18 +77,23 @@ function ProblemsPageClient() {
   // These come from URL and are fixed
   const stageId = urlStageId;
   const categoryId = urlCategoryId;
-  const authenticated = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Student");
+  const role = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
+    state.auth.isAuthenticated ? state.auth.user?.Role : undefined);
+  const authenticated = role === "Student";
+  const isAdmin = role === "Admin";
   const { data: access, isLoading: accessLoading, isError: accessError } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
   const { data: subscription, isLoading: subscriptionLoading } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
   const accessPending = Boolean(categoryId && stageId) && (accessLoading || (authenticated && subscriptionLoading));
-  const categoryLocked = Boolean(categoryId && stageId && access && subscription?.IsPremium !== true && !access.FreeCategoryIds.includes(Number(categoryId)));
+  const categoryLocked = Boolean(categoryId && stageId && access &&
+    !isAdmin && subscription?.IsPremium !== true &&
+    !access.FreeCategoryIds.includes(Number(categoryId)));
 
   // ── API queries ─────────────────────────────────────────
   const { data: categories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
   const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const {
-    data: searchResults,
+    currentData: searchResults,
     isLoading: searchLoading,
     error: searchError,
     isFetching,
@@ -141,7 +146,7 @@ function ProblemsPageClient() {
     setPage(1);
   };
 
-  const isLoading = searchLoading || isFetching;
+  const isLoading = searchLoading || (isFetching && !searchResults);
 
   // Build breadcrumb
   const breadcrumbItems: { href: string; label: string }[] = [
@@ -177,7 +182,9 @@ function ProblemsPageClient() {
   }
 
   // ── Early return: full page loader ───────────────────────
-  if ((isLoading || accessPending) && !searchResults) {
+  // Never expose a previously cached category result while access or
+  // subscription status for the newly selected topic is unresolved.
+  if (accessPending || isLoading) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-20 flex flex-col justify-center items-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -296,8 +303,8 @@ function ProblemsPageClient() {
         </div>
       )}
 
-      {/* Results count */}
-      <p className="text-sm font-medium text-muted-foreground mb-6 flex items-center gap-2">
+      {/* Only show an authoritative count for the current query. */}
+      {!searchError && searchResults && <p className="text-sm font-medium text-muted-foreground mb-6 flex items-center gap-2">
         <span className="h-px bg-border flex-1"></span>
         <span>
           {totalResults > 0
@@ -305,7 +312,7 @@ function ProblemsPageClient() {
             : t("search.noResultsFound")}
         </span>
         <span className="h-px bg-border flex-1"></span>
-      </p>
+      </p>}
 
       {/* Error state */}
       {searchError ? (
@@ -371,6 +378,7 @@ function ProblemsPageClient() {
                 size="icon"
                 className="rounded-full"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label={locale === 'ar' ? 'الصفحة السابقة' : 'Previous page'}
                 disabled={currentPage === 1}
               >
                 <DirectionalChevron direction="back" className="h-5 w-5" />
@@ -406,7 +414,10 @@ function ProblemsPageClient() {
                   return pagesToShow.map((pageNum) => (
                     <button
                       key={pageNum}
+                      type="button"
                       onClick={() => setPage(pageNum)}
+                      aria-label={locale === 'ar' ? `الصفحة ${pageNum}` : `Page ${pageNum}`}
+                      aria-current={currentPage === pageNum ? 'page' : undefined}
                       className={`h-10 w-10 flex items-center justify-center rounded-full text-sm font-medium transition-all ${
                         currentPage === pageNum
                           ? "bg-primary text-primary-foreground shadow-md"
@@ -424,6 +435,7 @@ function ProblemsPageClient() {
                 size="icon"
                 className="rounded-full"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label={locale === 'ar' ? 'الصفحة التالية' : 'Next page'}
                 disabled={currentPage === totalPages}
               >
                 <DirectionalChevron direction="forward" className="h-5 w-5" />
