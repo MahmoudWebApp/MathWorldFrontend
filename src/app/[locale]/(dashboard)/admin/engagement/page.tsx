@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { ArrowLeft, Trophy, UsersRound, Shapes, ChevronDown, RefreshCw } from 'lucide-react';
+import { Trophy, UsersRound, Shapes, ChevronDown, RefreshCw } from 'lucide-react';
+import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   useGetAdminEngagementOverviewQuery,
@@ -69,7 +70,7 @@ export default function AdminEngagementPage() {
   return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-7 px-4 py-8 sm:px-6">
     <header className="space-y-2">
       <Link href="/admin" className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
-        <ArrowLeft className="h-4 w-4" /> {ar ? 'لوحة الإدارة' : 'Admin overview'}
+        <DirectionalArrow direction="back" className="h-4 w-4" /> {ar ? 'لوحة الإدارة' : 'Admin overview'}
       </Link>
       <h1 className="text-3xl font-extrabold">{ar ? 'نشاط المستويات والفئات' : 'Stage & category engagement'}</h1>
       <p className="text-sm text-muted-foreground">
@@ -93,14 +94,21 @@ export default function AdminEngagementPage() {
     </div>}
     {!overview.data && !overview.isError && <p role="status">{ar ? 'جارٍ التحميل…' : 'Loading…'}</p>}
 
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    {overview.data && overview.data.Stages.length === 0 && (
+      <section role="status" className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">
+        {ar ? 'لا توجد مراحل تعليمية تعرض إحصائياتها بعد. يمكنك مراجعة إعداد المراحل من الإدارة.'
+          : 'No educational stages are available for analytics yet. Check stage configuration in Admin.'}
+      </section>
+    )}
+
+    <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
       {(overview.data?.Stages ?? []).map((item, index) => {
         const style = variants[index % variants.length];
         return <button key={item.StageId} type="button" onClick={() => { setStageId(item.StageId); setShowAllCategories(false); }}
           aria-pressed={item.StageId === resolvedId}
-          className={`relative overflow-hidden rounded-2xl border p-4 text-start transition-all hover:shadow-md ${style.surface} ${item.StageId === resolvedId ? style.border + ' ring-2 ring-primary/40' : 'border-border'}`}>
+          className={`relative min-w-0 overflow-hidden rounded-2xl border p-4 text-start transition-all hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${style.surface} ${item.StageId === resolvedId ? style.border + ' ring-2 ring-primary/40' : 'border-border'}`}>
           <StageGeometry variant={index} className={`pointer-events-none absolute -end-6 -top-8 h-24 w-24 opacity-20 ${style.text}`} />
-          <span className="relative block text-sm font-bold">{ar ? item.NameAr : item.NameEn}</span>
+          <span className="relative block break-words text-sm font-bold">{ar ? item.NameAr : item.NameEn}</span>
           <strong className={`relative mt-4 block text-2xl font-black ${style.text}`}>{n(item.ActiveSolvers)}</strong>
           <span className="relative block text-xs text-muted-foreground">{ar ? 'تدرّبوا خلال الفترة' : 'Practiced in period'}</span>
           <span className="relative mt-2 block text-xs font-semibold text-foreground/80">
