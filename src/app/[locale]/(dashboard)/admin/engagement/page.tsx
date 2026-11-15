@@ -12,10 +12,10 @@ import {
 import { StageGeometry } from '@/components/math/StageGeometry';
 
 const variants = [
-  { border: 'border-cyan-400/35', surface: 'bg-cyan-500/10', text: 'text-cyan-700 dark:text-cyan-300' },
-  { border: 'border-amber-400/35', surface: 'bg-orange-500/10', text: 'text-amber-700 dark:text-amber-300' },
-  { border: 'border-emerald-400/35', surface: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-300' },
-  { border: 'border-violet-400/35', surface: 'bg-violet-500/10', text: 'text-violet-700 dark:text-violet-300' },
+  { border: 'border-cyan-400/35', surface: 'bg-cyan-500/10', text: 'text-cyan-700 dark:text-cyan-300', chart: '#0891b2' },
+  { border: 'border-amber-400/35', surface: 'bg-orange-500/10', text: 'text-amber-700 dark:text-amber-300', chart: '#ea580c' },
+  { border: 'border-emerald-400/35', surface: 'bg-emerald-500/10', text: 'text-emerald-700 dark:text-emerald-300', chart: '#059669' },
+  { border: 'border-violet-400/35', surface: 'bg-violet-500/10', text: 'text-violet-700 dark:text-violet-300', chart: '#8b5cf6' },
 ] as const;
 
 export default function AdminEngagementPage() {
@@ -62,6 +62,9 @@ export default function AdminEngagementPage() {
     ? rankedCategories : rankedCategories.slice(0, 6);
   const hasOverflowCategories = rankedCategories.length > 6;
   const chartHeight = Math.max(220, chartCategories.length * 42);
+  const stageVisualIndex = Math.max(0, overview.data?.Stages.findIndex(x =>
+    x.StageId === resolvedId) ?? 0);
+  const chartColor = variants[stageVisualIndex % variants.length].chart;
 
   return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-7 px-4 py-8 sm:px-6">
     <header className="space-y-2">
@@ -99,7 +102,10 @@ export default function AdminEngagementPage() {
           <StageGeometry variant={index} className={`pointer-events-none absolute -end-6 -top-8 h-24 w-24 opacity-20 ${style.text}`} />
           <span className="relative block text-sm font-bold">{ar ? item.NameAr : item.NameEn}</span>
           <strong className={`relative mt-4 block text-2xl font-black ${style.text}`}>{n(item.ActiveSolvers)}</strong>
-          <span className="relative text-xs text-muted-foreground">{ar ? 'طلاب نشطون' : 'Active learners'}</span>
+          <span className="relative block text-xs text-muted-foreground">{ar ? 'تدرّبوا خلال الفترة' : 'Practiced in period'}</span>
+          <span className="relative mt-2 block text-xs font-semibold text-foreground/80">
+            {n(item.OnlineLearners)} {ar ? 'اتصلوا آخر 5 دقائق' : 'Seen in last 5 minutes'}
+          </span>
         </button>;
       })}
     </div>
@@ -134,7 +140,7 @@ export default function AdminEngagementPage() {
                   <YAxis dataKey="name" type="category" width={ar ? 108 : 116} tick={{ fontSize: 10 }}
                     tickFormatter={label => String(label).length > 14 ? String(label).slice(0, 13) + '…' : String(label)} />
                   <Tooltip />
-                  <Bar name={ar ? 'طلاب نشطون' : 'Active learners'} dataKey="learners" fill="#06b6d4" radius={[0,6,6,0]} />
+                  <Bar name={ar ? 'طلاب نشطون' : 'Active learners'} dataKey="learners" fill={chartColor} radius={[0,6,6,0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>}
