@@ -31,7 +31,11 @@ export default function AdminEngagementPage() {
     if (Number.isSafeInteger(requestedStage) && requestedStage > 0) setStageId(requestedStage);
   }, []);
 
-  const overview = useGetAdminEngagementOverviewQuery(days, { refetchOnMountOrArgChange: true });
+  const overview = useGetAdminEngagementOverviewQuery(days, {
+    refetchOnMountOrArgChange: true, refetchOnFocus: true,
+    refetchOnReconnect: true, pollingInterval: 60_000,
+    skipPollingIfUnfocused: true,
+  });
   const resolvedId = stageId && overview.data?.Stages.some(s => s.StageId === stageId)
     ? stageId : (overview.data?.Stages[0]?.StageId ?? 0);
   const stage = useGetAdminEngagementStageQuery({stageId: resolvedId, days}, {
