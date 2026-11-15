@@ -405,6 +405,30 @@ export interface CreatedPremiumDiscount extends CreatePremiumDiscountRequest {
   Enabled: boolean;
 }
 
+export interface PremiumCheckoutOrder {
+  Id: number;
+  OrderReference: string;
+  Status: 'Pending' | 'Paid' | 'Failed' | 'Cancelled' | 'Refunded';
+  SubtotalUsd: number;
+  DiscountUsd: number;
+  TotalUsd: number;
+  Currency: 'USD';
+  CreatedAtUtc: string;
+  VerifiedPaidAtUtc: string | null;
+}
+
+export interface PremiumCheckoutOrderPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Orders: PremiumCheckoutOrder[];
+}
+
+export interface PreparedPremiumCheckoutOrder extends Omit<PremiumCheckoutOrder, 'VerifiedPaidAtUtc'> {
+  PaymentAvailable: false;
+  Notice: string;
+}
+
 export interface StudentAchievements {
   UniqueSolved: number;
   EarnedCount: number;
@@ -430,6 +454,7 @@ export const usersApi = createApi({
     'Subscription',
     'PremiumCodes',
     'PremiumDiscounts',
+    'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -529,6 +554,30 @@ export const usersApi = createApi({
         method: 'PUT',
       }),
       invalidatesTags: ['PremiumDiscounts'],
+    }),
+
+    getPremiumCheckoutOrders: builder.query<PremiumCheckoutOrderPage, number>({
+      query: (page = 1) => ({
+        url: '/users/premium-checkout/orders',
+        params: { page, pageSize: 10 },
+      }),
+      providesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    getPremiumCheckoutOrder: builder.query<PremiumCheckoutOrder, number>({
+      query: (id) => `/users/premium-checkout/orders/${id}`,
+      providesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    preparePremiumCheckoutOrder: builder.mutation<
+      PreparedPremiumCheckoutOrder, { DiscountCode?: string }
+    >({
+      query: (body) => ({
+        url: '/users/premium-checkout/orders',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PremiumCheckoutOrders'],
     }),
 
     getAchievements: builder.query<StudentAchievements, void>({
@@ -724,6 +773,9 @@ export const {
   useGetPremiumAnalyticsQuery,
   useGetAdminPremiumCodesQuery,
   useQuotePremiumDiscountMutation,
+  useGetPremiumCheckoutOrdersQuery,
+  useGetPremiumCheckoutOrderQuery,
+  usePreparePremiumCheckoutOrderMutation,
   useGetAdminPremiumDiscountsQuery,
   useCreateAdminPremiumDiscountMutation,
   useDisableAdminPremiumDiscountMutation,
