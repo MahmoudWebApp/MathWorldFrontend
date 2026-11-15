@@ -11,11 +11,13 @@ export default function AdminLearnerActivityPage() {
   const [searchInput, setSearchInput] = useState('');
   const [term, setTerm] = useState('');
   const [stageId, setStageId] = useState(0);
+  const [onlineOnly, setOnlineOnly] = useState(false);
   const [page, setPage] = useState(1);
   const stages = useGetAdminEngagementOverviewQuery(30);
   const result = useGetAdminEngagementStudentsQuery({
     page, ...(stageId ? { stageId } : {}), ...(term ? { search: term } : {}),
-  }, { refetchOnMountOrArgChange: true });
+    ...(onlineOnly ? { onlineOnly: true } : {}),
+  }, { refetchOnMountOrArgChange: true, pollingInterval: 60_000, skipPollingIfUnfocused: true });
   const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
   const date = (value: string | null) => {
     if (!value) return ar ? 'غير مسجّل' : 'Not recorded';
@@ -37,11 +39,11 @@ export default function AdminLearnerActivityPage() {
         {ar ? 'سجل استخدام الطلاب' : 'Learner activity directory'}
       </h1>
       <p className="max-w-3xl text-sm text-muted-foreground">
-        {ar ? 'تابع من سجل حساباً جديداً، آخر تسجيل دخول ناجح، آخر محاولة حل، وعدد المحاولات. لا نستنتج وقت الخروج من إغلاق المتصفح.'
-          : 'Review registrations, last successful login, last practice and attempts. Browser closing does not provide a reliable logout timestamp.'}
+        {ar ? 'راقب تسجيل الطلاب ومتى تدرّبوا، وفلتر آخر اتصال موثّق بالسيرفر خلال خمس دقائق. إغلاق المتصفح لا يعني خروجاً مؤكداً.'
+          : 'Review registrations and actual practice. Filter learners with a verified heartbeat in the last five minutes; browser closure is not a confirmed logout.'}
       </p>
     </header>
-    <section className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-[1fr_230px_auto]">
+    <section className="grid gap-3 rounded-2xl border bg-card p-4 lg:grid-cols-[minmax(0,1fr)_190px_auto_auto]">
       <form className="flex gap-2" onSubmit={event => {
         event.preventDefault(); setTerm(searchInput.trim()); setPage(1);
       }}>
@@ -66,6 +68,12 @@ export default function AdminLearnerActivityPage() {
           </option>)}
         </select>
       </label>
+      <label className="flex cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2.5 text-sm font-semibold">
+        <input type="checkbox" checked={onlineOnly}
+          onChange={event => { setOnlineOnly(event.target.checked); setPage(1); }}
+          className="h-4 w-4 accent-emerald-600" />
+        {ar ? 'متصلون خلال آخر 5 دقائق فقط' : 'Seen in the last 5 minutes only'}
+      </label>
       <button type="button" onClick={() => void result.refetch()}
         className="inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
         <RefreshCw className="h-4 w-4"/>{ar ? 'تحديث' : 'Refresh'}
@@ -82,7 +90,7 @@ export default function AdminLearnerActivityPage() {
         </p> : !result.data?.Students.length ? <p className="p-8 text-center text-muted-foreground">
           {ar ? 'لا يوجد طلاب مطابقون.' : 'No matching students.'}
         </p> : <div className="overflow-x-auto">
-          <table className="w-full min-w-[730px] text-sm">
+          <table className="w-full min-w-[870px] text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>
                 <th className="p-3 text-start">{ar ? 'الطالب' : 'Learner'}</th>
@@ -90,6 +98,7 @@ export default function AdminLearnerActivityPage() {
                 <th className="p-3 text-start">{ar ? 'تاريخ التسجيل' : 'Registered'}</th>
                 <th className="p-3 text-start">{ar ? 'آخر دخول' : 'Last login'}</th>
                 <th className="p-3 text-start">{ar ? 'آخر حل' : 'Last practice'}</th>
+                <th className="p-3 text-start">{ar ? 'آخر اتصال' : 'Last heartbeat'}</th>
                 <th className="p-3 text-end">{ar ? 'المحاولات' : 'Attempts'}</th>
               </tr>
             </thead>
@@ -102,16 +111,25 @@ export default function AdminLearnerActivityPage() {
                   <span className="block text-xs font-normal text-muted-foreground">#{student.Id}
                     {' · '}{student.IsActive ? (ar ? 'مفعّل' : 'Active') : (ar ? 'معطّل' : 'Disabled')}
                   </span>
+                  {student.IsOnline && <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                    {ar ? 'اتصل خلال 5 دقائق' : 'Seen within 5 min'}
+                  </span>}
                 </td>
                 <td className="p-3">{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}</td>
                 <td className="p-3">{date(student.CreatedAt)}</td>
                 <td className="p-3">{date(student.LastLoginAt)}</td>
                 <td className="p-3">{date(student.LastPracticeAt)}</td>
+                <td className="p-3">{date(student.LastHeartbeatAtUtc)}</td>
                 <td className="p-3 text-end font-bold tabular-nums">{n(student.Attempts)}</td>
               </tr>)}
             </tbody>
           </table>
         </div>}
+      <p className="border-t px-4 py-3 text-xs text-muted-foreground">
+        {ar ? 'وجود اتصال حديث لا يضمن أن الطالب يشاهد الصفحة بنفس اللحظة؛ يتوقف التحديث في الخلفية وينتهي اعتباره متصلاً بعد خمس دقائق.'
+          : 'Recent connectivity is not a live socket. Backgrounded clients pause heartbeats and are considered offline after five minutes.'}
+      </p>
       <div className="flex items-center justify-between gap-3 border-t p-4 text-sm">
         <button type="button" disabled={page <= 1 || result.isFetching}
           onClick={() => setPage(x => Math.max(1, x - 1))}
