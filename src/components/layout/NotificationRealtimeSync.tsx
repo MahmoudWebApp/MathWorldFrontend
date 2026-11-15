@@ -43,10 +43,13 @@ export function NotificationRealtimeSync({ token }: { token: string }) {
             Accept: 'text/event-stream',
           },
           cache: 'no-store',
+          redirect: 'error', // Never forward bearer tokens to redirected origins.
           signal: controller.signal,
         });
         // A signed-out, revoked or expired session never opens a stream.
-        if (response.status === 401 || response.status === 403) {
+        if ([401, 403, 404, 405].includes(response.status)) {
+          // Unauthenticated sessions or an older backend without SSE:
+          // keep the existing poll fallback instead of retrying pointlessly.
           stopped = true;
           return;
         }
