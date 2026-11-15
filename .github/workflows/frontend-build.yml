@@ -32,5 +32,16 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck
         run: pnpm typecheck
+      - name: Verify QA launch blocks the production API
+        shell: bash
+        run: |
+          printf 'NEXT_PUBLIC_API_BASE_URL=https://mathwordbackend.onrender.com/api\n' > .env.local
+          if node scripts/check-qa-api.mjs; then
+            echo 'QA preflight must refuse the known live API' >&2
+            exit 1
+          fi
+          printf 'NEXT_PUBLIC_API_BASE_URL=https://mathworld-staging.example.org/api\n' > .env.local
+          node scripts/check-qa-api.mjs
+          rm .env.local
       - name: Production build
         run: pnpm build
