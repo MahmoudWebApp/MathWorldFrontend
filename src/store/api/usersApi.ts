@@ -556,6 +556,14 @@ export const usersApi = createApi({
       invalidatesTags: ['PremiumDiscounts'],
     }),
 
+    cancelPremiumCheckoutOrder: builder.mutation<{ Id: number; Status: 'Cancelled' }, number>({
+      query: (id) => ({
+        url: `/users/premium-checkout/orders/${id}/cancel`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['PremiumCheckoutOrders'],
+    }),
+
     getPremiumCheckoutOrders: builder.query<PremiumCheckoutOrderPage, number>({
       query: (page = 1) => ({
         url: '/users/premium-checkout/orders',
@@ -776,6 +784,7 @@ export const {
   useGetPremiumCheckoutOrdersQuery,
   useGetPremiumCheckoutOrderQuery,
   usePreparePremiumCheckoutOrderMutation,
+  useCancelPremiumCheckoutOrderMutation,
   useGetAdminPremiumDiscountsQuery,
   useCreateAdminPremiumDiscountMutation,
   useDisableAdminPremiumDiscountMutation,
