@@ -172,6 +172,32 @@ export interface AdminEngagementStudentPage {
   Note: string;
 }
 
+export interface AdminPlatformAuditEntry {
+  Id: number;
+  ActorUserId: number;
+  ActorName: string;
+  ActorRole: 'Admin' | 'Student';
+  Action: string;
+  Resource: string;
+  ResourceId: string | null;
+  Origin: string;
+  CreatedAtUtc: string;
+}
+export interface AdminPlatformAuditPage {
+  Page: number;
+  PageSize: number;
+  Total: number;
+  Entries: AdminPlatformAuditEntry[];
+  HasMore: boolean;
+  Notice: string;
+}
+export interface AdminPlatformAuditFilters {
+  page: number;
+  days: 7 | 30 | 90 | 180;
+  role?: 'Admin' | 'Student';
+  userId?: number;
+}
+
 export const statsApi = createApi({
   reducerPath: 'statsApi',
   baseQuery,
@@ -183,6 +209,13 @@ export const statsApi = createApi({
     getStats: builder.query<DashboardStats, void>({
       query: () => '/stats',
       providesTags: ['Stats'],
+    }),
+
+    getAdminPlatformAudit: builder.query<AdminPlatformAuditPage, AdminPlatformAuditFilters>({
+      query: ({page, days, role, userId}) => ({
+        url: '/admin/activity-audit',
+        params: { page, days, ...(role ? {role} : {}), ...(userId ? {userId} : {}) },
+      }),
     }),
 
     getAdminEngagementOverview: builder.query<AdminEngagementOverview, number>({
@@ -237,6 +270,7 @@ export const {
   useGetAdminEngagementOverviewQuery,
   useGetAdminEngagementStageQuery,
   useGetAdminEngagementStudentsQuery,
+  useGetAdminPlatformAuditQuery,
   useGetAdminAnalyticsOverviewQuery,
   useGetAdminAnalyticsStageQuery, 
 } = statsApi;
