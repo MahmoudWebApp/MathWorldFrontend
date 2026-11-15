@@ -198,6 +198,40 @@ export interface AdminPlatformAuditFilters {
   userId?: number;
 }
 
+export interface AdminAuditEvent {
+  Id: number;
+  ActorUserId: number;
+  ActorRole: 'Admin' | 'Student';
+  ActorName: string | null;
+  Action: string;
+  Resource: string;
+  ResourceId: string | null;
+  Origin: string;
+  CreatedAtUtc: string;
+}
+export interface AdminAuditPage {
+  Entries: AdminAuditEvent[];
+  Total: number;
+  Page: number;
+  PageSize: number;
+  HasMore: boolean;
+  WindowDays: number;
+  Note: string;
+}
+export interface AdminAuditSummary {
+  WindowDays: number;
+  RecordedEvents: number;
+  UniqueStudents: number;
+  UniqueAdmins: number;
+  ByAction: Array<{ ActorRole: string; Action: string; Count: number }>;
+}
+export interface AdminAuditFilter {
+  page: number;
+  days: number;
+  role?: 'Admin' | 'Student';
+  actorId?: number;
+}
+
 export const statsApi = createApi({
   reducerPath: 'statsApi',
   baseQuery,
@@ -216,6 +250,19 @@ export const statsApi = createApi({
         url: '/admin/activity-audit',
         params: { page, days, ...(role ? {role} : {}), ...(userId ? {userId} : {}) },
       }),
+    }),
+
+    getAdminAuditEvents: builder.query<AdminAuditPage, AdminAuditFilter>({
+      query: ({ page, days, role, actorId }) => ({
+        url: '/admin/activity-audit',
+        params: { page, pageSize: 30, days,
+          ...(role ? { role } : {}),
+          ...(actorId ? { actorId } : {}),
+        },
+      }),
+    }),
+    getAdminAuditSummary: builder.query<AdminAuditSummary, number>({
+      query: days => ({ url: '/admin/activity-audit/summary', params: { days } }),
     }),
 
     getAdminEngagementOverview: builder.query<AdminEngagementOverview, number>({
@@ -268,6 +315,8 @@ export const {
   useGetStatsQuery,
   useGetAdminStatsQuery,
   useGetAdminEngagementOverviewQuery,
+  useGetAdminAuditEventsQuery,
+  useGetAdminAuditSummaryQuery,
   useGetAdminEngagementStageQuery,
   useGetAdminEngagementStudentsQuery,
   useGetAdminPlatformAuditQuery,
