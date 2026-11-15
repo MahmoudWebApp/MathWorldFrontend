@@ -40,6 +40,7 @@ import { stagesApi } from '@/store/api/stagesApi';
 import { statsApi } from '@/store/api/statsApi';
 import { usersApi } from '@/store/api/usersApi';
 import { clearAuthSession } from '@/lib/authSession';
+import { API_BASE_URL } from '@/store/api/baseQuery';
 import { useSearchParams } from 'next/navigation';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { sortStagesByOrder } from '@/lib/stageVisuals';
@@ -53,7 +54,7 @@ function NavbarContent() {
   const { theme, setTheme } = useTheme();
   const dispatch = useDispatch<AppDispatch>();
 
-  const { user, isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
+  const { user, isAuthenticated, isLoading, token } = useSelector((state: RootState) => state.auth);
   const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
   const orderedStages = sortStagesByOrder(stages ?? []);
 
@@ -90,7 +91,27 @@ function NavbarContent() {
     setShowSearch(false);
   }, [pathname]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Explicit sign-out audit is best-effort. Local session removal must
+    // always work even if offline or if the server endpoint is not deployed.
+    try {
+      if (token) {
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), 1200);
+        try {
+          await fetch(`${API_BASE_URL}/users/session/sign-out`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+            signal: controller.signal,
+          });
+        } finally {
+          window.clearTimeout(timer);
+        }
+      }
+    } catch {
+      // Closing a browser is never described as a verified server logout.
+    }
     dispatch(logout());
     clearAuthSession();
     dispatch(authApi.util.resetApiState());
