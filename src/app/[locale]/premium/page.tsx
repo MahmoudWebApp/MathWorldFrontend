@@ -6,7 +6,11 @@ import { useSelector } from 'react-redux';
 import { CheckCircle2, Crown, Infinity, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
-import { useQuotePremiumDiscountMutation, type PremiumDiscountQuote } from '@/store/api/usersApi';
+import {
+  useQuotePremiumDiscountMutation,
+  useGetPremiumCheckoutOrdersQuery,
+  type PremiumDiscountQuote,
+} from '@/store/api/usersApi';
 
 const freeAr = [
   'فئتان مفتوحتان بكل مرحلة تعليمية',
@@ -49,6 +53,11 @@ export default function PremiumInformationPage() {
   const [discountQuote, setDiscountQuote] = useState<PremiumDiscountQuote | null>(null);
   const [discountError, setDiscountError] = useState(false);
   const [quoteDiscount, { isLoading: isQuoting }] = useQuotePremiumDiscountMutation();
+  const [ordersPage, setOrdersPage] = useState(1);
+  const {
+    data: orders, isLoading: ordersLoading, isError: ordersError,
+    refetch: refetchOrders,
+  } = useGetPremiumCheckoutOrdersQuery(ordersPage, { skip: !authenticated });
   const hasPremium = entitlement?.IsPremium === true;
 
   const applyDiscount = async () => {
@@ -229,6 +238,72 @@ export default function PremiumInformationPage() {
           </p>
         </section>
       </div>
+      {authenticated && (
+        <section className="space-y-4 rounded-3xl border bg-card p-5 sm:p-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-extrabold">{ar ? 'سجل طلبات Premium' : 'Premium order history'}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {ar ? 'الطلبات المبدئية ليست مدفوعة ولا تفعّل الاشتراك.' :
+                  'Pending orders are not payments and do not activate a subscription.'}
+              </p>
+            </div>
+            <button type="button" onClick={() => void refetchOrders()}
+              className="rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
+              {ar ? 'تحديث' : 'Refresh'}
+            </button>
+          </div>
+          {ordersLoading ? <p role="status">{ar ? 'جارٍ تحميل الطلبات…' : 'Loading orders…'}</p> :
+            ordersError ? <p role="alert" className="text-sm text-destructive">
+              {ar ? 'تعذّر تحميل سجل الطلبات.' : 'Could not load order history.'}
+            </p> : !orders?.Orders.length ? <p className="text-sm text-muted-foreground">
+              {ar ? 'ما عندك طلبات اشتراك حتى الآن.' : 'You have no checkout orders yet.'}
+            </p> : (
+              <div className="space-y-3">
+                {orders.Orders.map(order => (
+                  <article key={order.Id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
+                    <div className="min-w-0 space-y-1">
+                      <p dir="ltr" className="break-all text-sm font-bold">{order.OrderReference}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Intl.DateTimeFormat(ar ? 'ar' : 'en', {
+                          dateStyle: 'medium', timeStyle: 'short',
+                        }).format(new Date(order.CreatedAtUtc))}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {ar ? 'الخصم' : 'Discount'}: ${order.DiscountUsd.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="text-end">
+                      <p className="font-extrabold tabular-nums">${order.TotalUsd.toFixed(2)} USD</p>
+                      <p className="text-sm text-muted-foreground">
+                        {({
+                          Pending: ar ? 'بانتظار الدفع' : 'Pending payment',
+                          Paid: ar ? 'مدفوع' : 'Paid',
+                          Failed: ar ? 'فشل' : 'Failed',
+                          Cancelled: ar ? 'ملغى' : 'Cancelled',
+                          Refunded: ar ? 'مسترد' : 'Refunded',
+                        } as Record<string, string>)[order.Status] ?? order.Status}
+                      </p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          <div className="flex items-center justify-between border-t pt-3 text-sm">
+            <button type="button" disabled={ordersPage <= 1 || ordersLoading}
+              onClick={() => setOrdersPage(p => Math.max(1, p - 1))}
+              className="font-semibold text-primary disabled:opacity-40">
+              {ar ? 'السابق' : 'Previous'}
+            </button>
+            <span>{ordersPage} / {Math.max(1, Math.ceil((orders?.Total ?? 0) / 10))}</span>
+            <button type="button" disabled={!orders || ordersLoading || ordersPage * 10 >= orders.Total}
+              onClick={() => setOrdersPage(p => p + 1)}
+              className="font-semibold text-primary disabled:opacity-40">
+              {ar ? 'التالي' : 'Next'}
+            </button>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
