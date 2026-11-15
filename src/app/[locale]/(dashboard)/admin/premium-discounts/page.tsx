@@ -24,6 +24,7 @@ export default function AdminPremiumDiscountsPage() {
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const [maxUses, setMaxUses] = useState('');
+  const [maxPerStudent, setMaxPerStudent] = useState('1');
   const [created, setCreated] = useState<CreatedPremiumDiscount | null>(null);
   const [disableId, setDisableId] = useState<number | null>(null);
   const [error, setError] = useState('');
@@ -48,13 +49,15 @@ export default function AdminPremiumDiscountsPage() {
     const ends = localToUtc(end);
     const numericAmount = Number(amount);
     const limit = maxUses.trim() ? Number(maxUses) : null;
+    const studentLimit = maxPerStudent.trim() ? Number(maxPerStudent) : null;
     if (label.trim().length < 3 || label.trim().length > 80 ||
       !starts || !ends || new Date(ends) <= new Date(starts) ||
       new Date(ends) <= new Date() ||
       !Number.isFinite(numericAmount) || numericAmount < 0 ||
       !/^\d+(?:\.\d{1,2})?$/.test(amount.trim()) ||
       numericAmount > (kind === 'Percentage' ? 100 : 5) ||
-      (limit !== null && (!Number.isInteger(limit) || limit < 1))) {
+      (limit !== null && (!Number.isInteger(limit) || limit < 1)) ||
+      (studentLimit !== null && (!Number.isInteger(studentLimit) || studentLimit < 1))) {
       setError(ar ? 'تحقق من الاسم، قيمة الخصم، تاريخ البداية والنهاية، وحد الاستخدام.' :
         'Check label, discount amount, start/end dates and usage limit.');
       return;
@@ -62,7 +65,8 @@ export default function AdminPremiumDiscountsPage() {
     try {
       const result = await create({
         Label: label.trim(), DiscountKind: kind, Amount: numericAmount,
-        StartsAtUtc: starts, EndsAtUtc: ends, MaxRedemptions: limit,
+        StartsAtUtc: starts, EndsAtUtc: ends,
+        MaxRedemptions: limit, MaxRedemptionsPerStudent: studentLimit,
       }).unwrap();
       setCreated(result);
       setPage(1);
@@ -146,6 +150,15 @@ export default function AdminPremiumDiscountsPage() {
               className="w-full rounded-xl border bg-background px-3 py-2" />
           </label>
           <label className="space-y-1 sm:col-span-2">
+            <span className="block text-sm font-semibold">
+              {ar ? 'عدد الاستخدامات لكل طالب (افتراضياً 1، اتركه فارغاً لغير المحدود)' :
+                'Redemptions per student (default 1, empty for unlimited)'}
+            </span>
+            <input type="number" min={1} step={1} value={maxPerStudent}
+              onChange={e => setMaxPerStudent(e.target.value)}
+              className="w-full rounded-xl border bg-background px-3 py-2" />
+          </label>
+          <label className="space-y-1 sm:col-span-2">
             <span className="block text-sm font-semibold">{ar ? 'الحد الأقصى للاستخدامات (اختياري)' : 'Maximum redemptions (optional)'}</span>
             <input type="number" min={1} step={1} value={maxUses} onChange={e => setMaxUses(e.target.value)}
               className="w-full rounded-xl border bg-background px-3 py-2" />
@@ -188,6 +201,7 @@ export default function AdminPremiumDiscountsPage() {
                 <p className="text-xs text-muted-foreground">{dateLabel(code.StartsAtUtc)} — {dateLabel(code.EndsAtUtc)}</p>
                 <p className="text-xs text-muted-foreground">
                   {ar ? 'الاستخدامات' : 'Uses'}: {code.RedemptionCount} / {code.MaxRedemptions ?? '∞'}
+                  {' · '}{ar ? 'لكل طالب' : 'Per student'}: {code.MaxRedemptionsPerStudent ?? '∞'}
                 </p>
               </div>
               {code.Enabled && <button type="button" onClick={() => setDisableId(code.Id)}
