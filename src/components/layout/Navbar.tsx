@@ -29,6 +29,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
 import { NotificationBell } from '@/components/layout/NotificationBell';
+import { NotificationRealtimeSync } from '@/components/layout/NotificationRealtimeSync';
 import { StudentPresenceHeartbeat } from '@/components/layout/StudentPresenceHeartbeat';
 import { notificationsApi } from '@/store/api/notificationsApi';
 import { ADMIN_NAV_ITEMS, AdminNavMobile } from '@/components/admin/AdminNavigation';
@@ -166,6 +167,7 @@ function NavbarContent() {
     <>
       {mounted && isAuthenticated && token && user?.Role === 'Student' &&
         <StudentPresenceHeartbeat token={token} />}
+      {mounted && isAuthenticated && token && <NotificationRealtimeSync token={token} />}
       {/* Scroll Progress Bar at the absolute top */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-primary via-brand-primary-light to-brand-secondary z-[60] origin-left shadow-[0_0_18px_rgba(92,36,255,0.38)]"
