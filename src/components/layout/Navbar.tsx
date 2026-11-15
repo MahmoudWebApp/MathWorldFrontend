@@ -347,9 +347,12 @@ function NavbarContent() {
                               </Link>
                             ))}
                             <div className="mx-2 my-2 border-t" />
-                            <div className="px-3 pb-1 text-xs font-bold text-muted-foreground">
-                              {locale === 'ar' ? 'إدارة الطلاب' : 'Learner administration'}
-                            </div>
+                            <details className="group rounded-xl">
+                              <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-muted [&::-webkit-details-marker]:hidden">
+                                {locale === 'ar' ? 'إدارة الطلاب والاشتراكات' : 'Learners & access'}
+                                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden />
+                              </summary>
+                              <div className="ps-2">
                             {ADMIN_NAV_ITEMS.filter(item => item.group === 'management').map(item => (
                               <Link key={item.href} href={item.href}
                                 onClick={() => setUserMenuOpen(false)}
@@ -358,10 +361,15 @@ function NavbarContent() {
                                 {locale === 'ar' ? item.labelAr : item.labelEn}
                               </Link>
                             ))}
+                              </div>
+                            </details>
                             <div className="mx-2 my-2 border-t" />
-                            <div className="px-3 pb-1 text-xs font-bold text-muted-foreground">
-                              {locale === 'ar' ? 'المستويات والفئات والمسائل' : 'Stages, categories and questions'}
-                            </div>
+                            <details className="group rounded-xl">
+                              <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-muted [&::-webkit-details-marker]:hidden">
+                                {locale === 'ar' ? 'إدارة المحتوى التعليمي' : 'Learning content'}
+                                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden />
+                              </summary>
+                              <div className="ps-2">
                             {ADMIN_NAV_ITEMS.filter(item => item.group === 'content').map(item => (
                               <Link key={item.href} href={item.href}
                                 onClick={() => setUserMenuOpen(false)}
@@ -370,6 +378,8 @@ function NavbarContent() {
                                 {locale === 'ar' ? item.labelAr : item.labelEn}
                               </Link>
                             ))}
+                              </div>
+                            </details>
                             <div className="mx-2 my-2 border-t" />
                           </nav>
                         )}
