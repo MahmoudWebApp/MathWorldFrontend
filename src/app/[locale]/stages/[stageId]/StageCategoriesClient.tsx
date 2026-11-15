@@ -240,7 +240,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const isPremium = isAdmin || subscription?.IsPremium === true;
 
   const { data: allCategories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
-  const { data: stages, isLoading: stagesLoading, refetch: refetchStages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
+  const { data: stages, isLoading: stagesLoading, isError: stagesError,
+    refetch: refetchStages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const currentStage = stages?.find(s => s.Id === stageId);
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
@@ -249,7 +250,24 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   const isLoading = categoriesLoading || stagesLoading || accessLoading || (authenticated && subscriptionLoading);
 
-  if (categoriesError || accessError || (authenticated && subscriptionError)) {
+  if (!stagesLoading && stages && !currentStage) {
+    return <section className="container mx-auto flex min-h-[50vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 text-center" role="alert">
+      <AlertCircle aria-hidden="true" className="h-10 w-10 text-primary" />
+      <h1 className="text-2xl font-extrabold">
+        {locale === 'ar' ? 'المرحلة التعليمية غير موجودة' : 'Educational stage not found'}
+      </h1>
+      <p className="text-sm text-muted-foreground">
+        {locale === 'ar'
+          ? 'قد يكون الرابط قديماً أو تغيرت المرحلة. اختر مرحلة من القائمة.'
+          : 'This stage may have moved or the link may be outdated. Choose another stage.'}
+      </p>
+      <Link href="/stages" className="rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">
+        {t('stages.backToStages')}
+      </Link>
+    </section>;
+  }
+
+  if (categoriesError || stagesError || accessError || (authenticated && subscriptionError)) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
@@ -354,8 +372,9 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
 
         {/* Main Categories Grid */}
         {isLoading ? (
-          <div className="flex justify-center items-center min-h-[30vh]">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <div role="status" aria-live="polite" className="flex min-h-[30vh] flex-col items-center justify-center gap-3">
+            <Loader2 aria-hidden="true" className="h-10 w-10 animate-spin text-primary" />
+            <span className="text-sm text-muted-foreground">{t('common.loading')}</span>
           </div>
         ) : sortedCategories.length === 0 ? (
           <motion.div 
