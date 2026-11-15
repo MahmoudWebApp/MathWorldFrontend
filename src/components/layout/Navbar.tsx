@@ -175,7 +175,7 @@ function NavbarContent() {
       />
 
       <header className="sticky top-0 z-50 w-full border-b border-brand-primary/10 bg-background/85 glass supports-[backdrop-filter]:bg-background/55 dark:border-brand-primary/20">
-        <nav className="container mx-auto px-6 lg:px-12 flex h-16 items-center justify-between gap-4">
+        <nav className="container mx-auto flex h-16 min-w-0 items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6 lg:px-12">
           
           <Link
             href="/"
@@ -269,7 +269,7 @@ function NavbarContent() {
           </div>
 
           {/* Actions & Search */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
             <div className="hidden md:flex items-center">
               <AnimatePresence mode="wait">
                 {showSearch ? (
@@ -303,11 +303,11 @@ function NavbarContent() {
               </AnimatePresence>
             </div>
 
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            <Button variant="ghost" size="icon" aria-label={theme === 'dark' ? (locale === 'ar' ? 'الوضع النهاري' : 'Light mode') : (locale === 'ar' ? 'الوضع الليلي' : 'Dark mode')} className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10 hover:text-primary sm:h-10 sm:w-10" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
               {mounted ? (theme === 'dark' ? <Sun1 className="h-5 w-5" /> : <Moon className="h-5 w-5" />) : <div className="h-5 w-5" />}
             </Button>
 
-            <Button variant="ghost" size="sm" className="rounded-full font-bold hover:bg-primary/10 hover:text-primary" onClick={toggleLocale}>
+            <Button variant="ghost" size="sm" aria-label={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'} className="h-9 shrink-0 rounded-full px-2 font-bold hover:bg-primary/10 hover:text-primary sm:px-3" onClick={toggleLocale}>
               {locale === 'ar' ? 'EN' : 'عربي'}
             </Button>
 
@@ -315,9 +315,9 @@ function NavbarContent() {
 
             {/* Auth Section */}
             {!mounted || isLoading ? (
-              <div className="h-9 w-24 rounded-full bg-muted animate-pulse" />
+              <div className="hidden h-9 w-24 animate-pulse rounded-full bg-muted md:block" />
             ) : isAuthenticated && user ? (
-              <div className="relative">
+              <div className="relative hidden md:block">
                 <Button variant="outline" className="flex items-center gap-2 rounded-full border-primary/20 hover:bg-primary/5 hover:border-primary/50" onClick={() => setUserMenuOpen(!userMenuOpen)}>
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20">
                     <User className="h-3.5 w-3.5 text-primary" />
@@ -438,7 +438,7 @@ function NavbarContent() {
               </div>
             )}
 
-            <Button variant="ghost" size="icon" className="md:hidden rounded-full" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <Button variant="ghost" size="icon" aria-label={locale === 'ar' ? (mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة') : (mobileMenuOpen ? 'Close menu' : 'Open menu')} aria-controls="mathworld-mobile-menu" aria-expanded={mobileMenuOpen} className="h-9 w-9 shrink-0 rounded-full md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <CloseCircle className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
@@ -451,7 +451,8 @@ function NavbarContent() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden border-t bg-background/95 backdrop-blur-xl px-4 py-4 space-y-3 overflow-hidden"
+              id="mathworld-mobile-menu"
+              className="max-h-[calc(100dvh-4rem)] space-y-3 overflow-y-auto overscroll-contain border-t bg-background/95 px-4 py-4 backdrop-blur-xl md:hidden"
             >
               {/* Mobile Search */}
               <form onSubmit={handleNavSearch} className="relative mb-4">
