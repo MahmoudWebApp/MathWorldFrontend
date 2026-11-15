@@ -10,6 +10,7 @@ import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 
 function PhysicsCounter({ value, locale }: { value: number; locale: string }) {
   const ref = useRef<HTMLSpanElement>(null);
+  const reduceMotion = useReducedMotion();
   const spring = useSpring(0, { mass: 0.9, stiffness: 46, damping: 18 });
   const formatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
 
@@ -20,10 +21,16 @@ function PhysicsCounter({ value, locale }: { value: number; locale: string }) {
   });
 
   useEffect(() => {
-    spring.set(value);
-  }, [spring, value]);
+    if (reduceMotion) {
+      // Screen readers and users with reduced-motion preferences should not
+      // have to wait for an animated number to become accurate.
+      if (ref.current) ref.current.textContent = formatter.format(value);
+    } else {
+      spring.set(value);
+    }
+  }, [spring, value, formatter, reduceMotion]);
 
-  return <span ref={ref}>{formatter.format(0)}</span>;
+  return <span ref={ref}>{formatter.format(reduceMotion ? value : 0)}</span>;
 }
 
 interface StatItem {
