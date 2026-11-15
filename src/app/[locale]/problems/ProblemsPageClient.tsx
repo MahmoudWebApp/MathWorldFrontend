@@ -81,8 +81,10 @@ function ProblemsPageClient() {
     state.auth.isAuthenticated ? state.auth.user?.Role : undefined);
   const authenticated = role === "Student";
   const isAdmin = role === "Admin";
-  const { data: access, isLoading: accessLoading, isError: accessError } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
-  const { data: subscription, isLoading: subscriptionLoading } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
+  const { data: access, isLoading: accessLoading, isError: accessError,
+    refetch: refetchAccess } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
+  const { data: subscription, isLoading: subscriptionLoading, isError: subscriptionError,
+    refetch: refetchSubscription } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
   const accessPending = Boolean(categoryId && stageId) && (accessLoading || (authenticated && subscriptionLoading));
   const categoryLocked = Boolean(categoryId && stageId && access &&
     !isAdmin && subscription?.IsPremium !== true &&
@@ -107,7 +109,8 @@ function ProblemsPageClient() {
       PageSize: DEFAULT_PAGE_SIZE,
       locale: locale,
     },
-    { skip: categoryLocked || accessPending || (Boolean(categoryId && stageId) && accessError) },
+    { skip: categoryLocked || accessPending ||
+      (Boolean(categoryId && stageId) && (accessError || (authenticated && subscriptionError))) },
   );
 
   // ── Derived data ────────────────────────────────────────
@@ -174,8 +177,30 @@ function ProblemsPageClient() {
       ? t("search.searchInStage", { stage: stageName })
       : t("search.placeholder");
 
-  if (categoryId && stageId && accessError) {
-    return <section role="alert" className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-2xl font-bold">{locale === "ar" ? "تعذر التحقق من صلاحيات الفئة" : "Unable to verify category access"}</h1><Link href={`/stages/${stageId}`} className="rounded-xl border px-5 py-3">{locale === "ar" ? "العودة إلى المرحلة" : "Back to stage"}</Link></section>;
+  if (categoryId && stageId && (accessError || (authenticated && subscriptionError))) {
+    return (
+      <section role="alert" className="container mx-auto max-w-2xl px-4 py-20 text-center">
+        <AlertCircle aria-hidden="true" className="mx-auto mb-4 h-10 w-10 text-destructive" />
+        <h1 className="mb-3 text-2xl font-bold">
+          {locale === 'ar' ? 'تعذّر التحقق من صلاحيات هذه الفئة' : 'Could not verify category access'}
+        </h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          {locale === 'ar' ? 'ما رح نعرض المحتوى كأنه مقفل حتى نتحقق من حالة الحساب.' :
+            'We will not label this content as locked until account access is verified.'}
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button type="button" onClick={() => {
+            if (accessError) void refetchAccess();
+            if (authenticated && subscriptionError) void refetchSubscription();
+          }}>
+            {t('common.retry')}
+          </Button>
+          <Link href={`/stages/${stageId}`} className="rounded-xl border px-5 py-3">
+            {locale === 'ar' ? 'العودة إلى المرحلة' : 'Back to stage'}
+          </Link>
+        </div>
+      </section>
+    );
   }
   if (categoryLocked) {
     return <section className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-3xl font-bold">{locale === "ar" ? "هذه الفئة مقفلة" : "This category is locked"}</h1><p className="mb-6">{locale === "ar" ? "الفئتان المجانيتان بلا حد يومي، وباقي الفئات مع Premium." : "Two free categories offer unlimited daily practice. Premium unlocks the rest."}</p><Link href="/premium" className="rounded-xl border px-5 py-3">Premium</Link></section>;
