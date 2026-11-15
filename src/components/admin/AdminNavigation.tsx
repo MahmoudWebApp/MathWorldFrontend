@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
   BarChart3, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList, Gift,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList, Gift, TicketPercent,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -46,6 +46,15 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Premium gift codes',
     descriptionAr: 'إنشاء أكواد مجانية لمرة واحدة ومراقبة استخدامها',
     descriptionEn: 'Issue one-time Premium gifts and review redemptions',
+    group: 'management',
+  },
+  {
+    href: '/admin/premium-discounts',
+    icon: TicketPercent,
+    labelAr: 'أكواد خصم Premium',
+    labelEn: 'Premium discounts',
+    descriptionAr: 'إنشاء خصومات محددة المدة وإدارة صلاحيتها واستخداماتها',
+    descriptionEn: 'Schedule checkout discounts and manage validity and usage',
     group: 'management',
   },
   {
