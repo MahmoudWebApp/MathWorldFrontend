@@ -11,6 +11,16 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — CI repair and admin monitoring reliability (latest batch)
+
+- **CI repaired without weakening authentication:** the disposable PostgreSQL editorial and presence suites previously shared one API process and hit the production-equivalent limit of five login/registration requests per minute per IP. The workflow now restarts *only the disposable test API* between suites; no production rate-limit or security setting changed. After the repair and new audit assertions, all **nine** backend PR checks passed on the reviewed commit.
+- **Audit coverage improved:** legacy admin category creation/update/deletion under `/api/categories` now produces success-only admin events alongside `/api/admin/*`. Action classification protects meaningful labels such as `Publish`, `Revoke`, `Disable` and `Notify`. The presence integration test confirms that student sign-out is visible only to authorized admins when filtered by the correct actor, and excludes passwords/email from event metadata.
+- **Audit UI:** the bilingual admin timeline now filters by action as well as role, user ID and date window. Fixed inconsistent `actorId`/`userId` deep-links from the student directory.
+- **Low-cost refresh:** admin monitoring and active-stage presence refresh every 60 seconds only while the browser tab is focused. Notification bell and full inbox do the same, refresh on focus/reconnection, and tolerate malformed notification timestamps. This is **foreground polling**, not real-time push or a verified immediate online/offline state.
+- **Budget protection:** the owner confirmed Netlify's build status is **Stopped**. All code changes remain on unmerged development PRs with no deployments. Do not reactivate automatic Netlify builds without explicit release approval.
+
+**Still outstanding:** full authenticated notification push architecture (SignalR/FCM/APNs), complete operational event coverage and retention policy, mobile native Arabic PDF, final Google OAuth/device acceptance, staging migrations/load tests, bilingual UI review with real devices, content approval and deployment readiness. Paid checkout remains explicitly deferred.
+
 ## November 15 — owner-requested admin monitoring redesign and colorful learning stages
 
 - **Navigation:** desktop admin-specific mega-menu was removed; the single existing `System Admin` account dropdown now contains a compact, categorized list. The unused desktop dropdown component was deleted. The mobile drawer remains the only mobile admin navigation.
