@@ -11,6 +11,16 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — non-payment batch: native Excel, mobile sync and curriculum drafts
+
+- **Native XLSX, not renamed CSV:** ASP.NET exports an OOXML workbook from authorized, server-aggregated Premium analytics at `GET /api/users/premium-analytics/export.xlsx?lang=ar|en`. Bilingual headers, Arabic RTL option, frozen header, named worksheet, numeric totals and inline literal strings prevent formula execution; no third-party Excel service is used. Existing premium JWT/active-user checks apply to this export. The existing CSV is retained.
+- **Web reporting:** student dashboard adds a real Excel workbook download via the authenticated RTK Query pipeline with blob validation, loading and failure feedback. Browser print-to-PDF remains available.
+- **Flutter reporting:** authenticated Dio binary request support, ZIP signature verification and XLSX file sharing on Android/iOS. Existing CSV copy/export remains. The existing mocked ApiClient in tests was updated after a CI analyzer error.
+- **Regression:** backend policy smoke checks validate the ZIP workbook parts, typed numeric totals, RTL worksheet direction, and that suspicious category names such as `=1+2` remain *text cells*, not executable Excel formulas. Full compatibility must still be checked with installed Excel and LibreOffice.
+- **Mobile state refresh:** polling no longer refreshes the inbox while app is backgrounded; returning foreground refreshes notifications, Premium entitlement, dashboard and student badges to reconcile admin changes.
+- **Content expansion:** added [32 bilingual proposed-category questions](content/mathworld-proposed-categories-32-question-drafts.csv), exactly two for each of the 16 unapproved category proposals. Every row uses `ProposedCategoryKey` instead of a live DB `CategoryId`; the file **cannot be imported as live questions until categories and IDs have been reviewed and approved**. With the two earlier 32-row draft CSVs, there are now 96 proposal rows, of which 32 require new category approval. Maths/translation/pedagogy need further human review; no question was published.
+- **Not finished:** native downloadable Arabic PDF on mobile, full PDF screenshot/print QA, approval of proposed categories/draft questions, real-time SignalR/FCM, Google OAuth registration/device login, device icon QA, staging migration/release rehearsals, VPS/domain/backups, and store signing. Payment remains deliberately deferred.
+
 ## November 15 — Google mobile readiness and content review (payments deferred)
 
 - **Scope decision:** pause Stripe/checkout discussions and development; focus on remaining nonpayment work. See [Non-payment release backlog](MATHWORLD_REMAINING_NONPAYMENT_WORK.md).
