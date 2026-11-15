@@ -6,6 +6,19 @@ the project owner. Do not conflate checkout scaffolding with a live payment
 system. The Free policy remains two unlocked categories **per stage**, unlimited
 solving in those categories, and no daily ten-question quota.
 
+## Netlify build-minute budget — urgent operational constraint
+
+On 2026-11-14, the Netlify `mahmoudTeam` account reached 75% of its
+November build-minute allowance. Until owner-approved release:
+**no automatic Netlify deploys, preview builds, production merges, or
+manual retries for development work**. Web PR #18 now uses the
+`[skip netlify]` marker; future web development commits must also carry
+this marker to protect against enabled branch deploys. Validate with
+GitHub Actions instead. The owner should switch the MathWorld site's
+Netlify **Build status** to **Stopped builds** in the project UI for the
+strongest safeguard. This has **not** been changed remotely.
+See [Netlify budget runbook](NETLIFY_BUILD_BUDGET_POLICY.md).
+
 ## Implemented on feature branches — release QA still required
 
 - Free/Premium authorization on the backend; pre-answer Premium solution,
