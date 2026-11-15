@@ -279,11 +279,12 @@ export const statsApi = createApi({
       providesTags: ['Stats'],
     }),
     getAdminEngagementStudents: builder.query<AdminEngagementStudentPage, {
-      page: number; stageId?: number; search?: string;
+      page: number; stageId?: number; search?: string; onlineOnly?: boolean;
     }>({
-      query: ({page, stageId, search}) => ({
+      query: ({page, stageId, search, onlineOnly}) => ({
         url: '/admin/engagement/students',
-        params: { page, ...(stageId ? {stageId} : {}), ...(search ? {search} : {}) },
+        params: { page, ...(stageId ? {stageId} : {}), ...(search ? {search} : {}),
+          ...(onlineOnly ? { onlineOnly: true } : {}) },
       }),
       providesTags: ['Stats'],
     }),
