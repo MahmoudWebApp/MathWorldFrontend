@@ -13,20 +13,18 @@ export default function AdminAuditPage() {
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState('');
+  const [action, setAction] = useState('');
   useEffect(() => {
-    const requestedId = new URLSearchParams(window.location.search).get('actorId') ?? '';
-    if (/^[1-9]\\d*$/.test(requestedId)) setUserId(requestedId);
-  }, []);
-  // Allows the learner directory to open one student's private audit trail.
-  useEffect(() => {
+    // Both links are accepted for backwards compatibility with the learner directory.
     const params = new URLSearchParams(window.location.search);
-    const requested = params.get('userId');
-    if (requested && /^\\d+$/.test(requested) && Number(requested) > 0) {
+    const requested = params.get('actorId') ?? params.get('userId') ?? '';
+    if (/^[1-9]\d*$/.test(requested) && Number.isSafeInteger(Number(requested))) {
       setUserId(requested);
     }
   }, []);
   const actorId = /^\d+$/.test(userId) && Number(userId) > 0 ? Number(userId) : undefined;
-  const filter = { page, days, ...(role ? { role } : {}), ...(actorId ? { actorId } : {}) };
+  const filter = { page, days, ...(role ? { role } : {}), ...(actorId ? { actorId } : {}),
+    ...(action ? { action } : {}) };
   const events = useGetAdminAuditEventsQuery(filter, { refetchOnMountOrArgChange: true });
   const summary = useGetAdminAuditSummaryQuery(days, { refetchOnMountOrArgChange: true });
   const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
@@ -36,6 +34,8 @@ export default function AdminAuditPage() {
       ? new Intl.DateTimeFormat(ar ? 'ar' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
       : '—';
   };
+  const actionOptions = Array.from(new Set((summary.data?.ByAction ?? []).map(row => row.Action)))
+    .filter(Boolean).sort();
   const actionName = (action: string) => {
     if (!ar) return action;
     const names: Record<string, string> = {
@@ -44,7 +44,12 @@ export default function AdminAuditPage() {
       LoggedInFacebook: 'تسجيل دخول بفيسبوك',
       Registered: 'إنشاء حساب',
       CreateOrSubmit: 'إضافة أو إرسال',
-      Update: 'تعديل', Delete: 'حذف',
+      Update: 'تعديل', Delete: 'حذف', Publish: 'نشر مسألة',
+      Approve: 'اعتماد', Reject: 'رفض', Redeem: 'استرداد كود',
+      Grant: 'منح صلاحية', Revoke: 'إلغاء صلاحية',
+      Disable: 'تعطيل', Notify: 'إرسال إشعار',
+      ExplicitSignOut: 'تسجيل خروج صريح',
+
     };
     return names[action] ?? action;
   };
@@ -87,7 +92,7 @@ export default function AdminAuditPage() {
           <RefreshCw className="h-4 w-4" />{ar ? 'تحديث' : 'Refresh'}
         </button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="block space-y-1">
           <span className="block text-sm font-semibold">{ar ? 'نوع الحساب' : 'Account type'}</span>
           <select value={role} onChange={e => { setRole(e.target.value as '' | 'Admin' | 'Student'); setPage(1); }}
@@ -102,6 +107,14 @@ export default function AdminAuditPage() {
           <input type="number" min="1" step="1" placeholder={ar ? 'كل المستخدمين' : 'All users'}
             value={userId} onChange={e => { setUserId(e.target.value); setPage(1); }}
             className="w-full rounded-xl border bg-background px-3 py-2" />
+        </label>
+        <label className="block space-y-1">
+          <span className="block text-sm font-semibold">{ar ? 'نوع العملية' : 'Action'}</span>
+          <select value={action} onChange={e => { setAction(e.target.value); setPage(1); }}
+            className="w-full rounded-xl border bg-background px-3 py-2">
+            <option value="">{ar ? 'جميع العمليات' : 'All actions'}</option>
+            {actionOptions.map(value => <option key={value} value={value}>{actionName(value)}</option>)}
+          </select>
         </label>
         <label className="block space-y-1">
           <span className="block text-sm font-semibold">{ar ? 'الفترة' : 'Date range'}</span>
