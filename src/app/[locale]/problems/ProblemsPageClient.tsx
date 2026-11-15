@@ -85,11 +85,16 @@ function ProblemsPageClient() {
     refetch: refetchAccess } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
   const { data: subscription, isLoading: subscriptionLoading, isError: subscriptionError,
     refetch: refetchSubscription } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
-  const accessPending = Boolean(categoryId && stageId) && (accessLoading || (authenticated && subscriptionLoading));
+  const scopedCategory = Boolean(categoryId && stageId);
+  const accessUnavailable = scopedCategory && !accessLoading && !accessError && !access;
+  const subscriptionUnavailable = authenticated && !subscriptionLoading && !subscriptionError && !subscription;
+  const accessPending = scopedCategory && (accessLoading || (authenticated && subscriptionLoading));
+  const accessFailed = accessError || accessUnavailable ||
+    (authenticated && (subscriptionError || subscriptionUnavailable));
   // A pending Premium lookup is not proof that a category is locked.
   // Wait for the authoritative entitlement answer before rendering a lock.
   const categoryLocked = Boolean(categoryId && stageId && access &&
-    !accessPending && !subscriptionError &&
+    !accessPending && !accessFailed &&
     !isAdmin && subscription?.IsPremium !== true &&
     !access.FreeCategoryIds.includes(Number(categoryId)));
 
@@ -113,7 +118,7 @@ function ProblemsPageClient() {
       locale: locale,
     },
     { skip: categoryLocked || accessPending ||
-      (Boolean(categoryId && stageId) && (accessError || (authenticated && subscriptionError))) },
+      (scopedCategory && accessFailed) },
   );
 
   // ── Derived data ────────────────────────────────────────
@@ -180,7 +185,7 @@ function ProblemsPageClient() {
       ? t("search.searchInStage", { stage: stageName })
       : t("search.placeholder");
 
-  if (categoryId && stageId && (accessError || (authenticated && subscriptionError))) {
+  if (scopedCategory && accessFailed) {
     return (
       <section role="alert" className="container mx-auto max-w-2xl px-4 py-20 text-center">
         <AlertCircle aria-hidden="true" className="mx-auto mb-4 h-10 w-10 text-destructive" />
@@ -193,8 +198,8 @@ function ProblemsPageClient() {
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button type="button" onClick={() => {
-            if (accessError) void refetchAccess();
-            if (authenticated && subscriptionError) void refetchSubscription();
+            if (accessError || accessUnavailable) void refetchAccess();
+            if (authenticated && (subscriptionError || subscriptionUnavailable)) void refetchSubscription();
           }}>
             {t('common.retry')}
           </Button>
