@@ -69,9 +69,9 @@ export default function AdminPremiumDiscountsPage() {
     if (label.trim().length < 3 || label.trim().length > 80 ||
       !starts || !ends || new Date(ends) <= new Date(starts) ||
       new Date(ends) <= new Date() ||
-      !Number.isFinite(numericAmount) || numericAmount < 0 ||
+      !Number.isFinite(numericAmount) || numericAmount <= 0 ||
       !/^\d+(?:\.\d{1,2})?$/.test(amount.trim()) ||
-      numericAmount > (kind === 'Percentage' ? 100 : 5) ||
+      numericAmount > (kind === 'Percentage' ? 99.99 : 4.99) ||
       (limit !== null && (!Number.isInteger(limit) || limit < 1)) ||
       (studentLimit !== null && (!Number.isInteger(studentLimit) || studentLimit < 1))) {
       setError(ar ? 'تحقق من الاسم، قيمة الخصم، تاريخ البداية والنهاية، وحد الاستخدام.' :
@@ -191,7 +191,7 @@ export default function AdminPremiumDiscountsPage() {
           </label>
           <label className="space-y-1">
             <span className="block text-sm font-semibold">{ar ? 'قيمة الخصم' : 'Discount amount'}</span>
-            <input required type="number" min={0} max={kind === 'Percentage' ? 100 : 5}
+            <input required type="number" min={0} max={kind === 'Percentage' ? 99.99 : 4.99}
               step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
               className="w-full rounded-xl border bg-background px-3 py-2" />
           </label>
@@ -205,6 +205,10 @@ export default function AdminPremiumDiscountsPage() {
             <input required type="datetime-local" value={end} onChange={e => setEnd(e.target.value)}
               className="w-full rounded-xl border bg-background px-3 py-2" />
           </label>
+          <p className="text-xs text-muted-foreground sm:col-span-2">
+            {ar ? 'الخصم الكامل (100%) يتم عبر كود هدية Premium المنفصل حالياً، وليس قسيمة شراء.'
+              : 'For 100% free Premium access, issue a separate gift code instead of a checkout coupon.'}
+          </p>
           <label className="space-y-1 sm:col-span-2">
             <span className="block text-sm font-semibold">
               {ar ? 'عدد الاستخدامات لكل طالب (افتراضياً 1، اتركه فارغاً لغير المحدود)' :
