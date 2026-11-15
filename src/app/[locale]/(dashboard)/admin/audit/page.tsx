@@ -3,9 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { History, ShieldCheck, Users, RefreshCw } from 'lucide-react';
+import { History, ShieldCheck, Users, RefreshCw, Download } from 'lucide-react';
 import { useGetAdminAuditEventsQuery, useGetAdminAuditSummaryQuery } from '@/store/api/statsApi';
 import { StageGeometry } from '@/components/math/StageGeometry';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
+import { API_BASE_URL } from '@/store/api/baseQuery';
 
 export default function AdminAuditPage() {
   const ar = useLocale() === 'ar';
@@ -14,6 +17,9 @@ export default function AdminAuditPage() {
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState('');
   const [action, setAction] = useState('');
+  const token = useSelector((state: RootState) => state.auth.token);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
   useEffect(() => {
     // Both links are accepted for backwards compatibility with the learner directory.
     const params = new URLSearchParams(window.location.search);
@@ -36,6 +42,49 @@ export default function AdminAuditPage() {
   };
   const actionOptions = Array.from(new Set((summary.data?.ByAction ?? []).map(row => row.Action)))
     .filter(Boolean).sort();
+  const downloadAudit = async () => {
+    if (exporting || !token || (userId.trim() && !actorId)) return;
+    setExporting(true);
+    setExportError('');
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 20000);
+    try {
+      const url = new URL(API_BASE_URL + '/admin/activity-audit/export.csv');
+      url.searchParams.set('days', String(days));
+      if (role) url.searchParams.set('role', role);
+      if (actorId) url.searchParams.set('actorId', String(actorId));
+      if (action) url.searchParams.set('action', action);
+      const response = await fetch(url, {
+        headers: { Authorization: 'Bearer ' + token, Accept: 'text/csv' },
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error('Export failed');
+      const blob = await response.blob();
+      if (!blob.size || blob.size > 15 * 1024 * 1024) {
+        throw new Error('Invalid audit export');
+      }
+      const localUrl = URL.createObjectURL(blob);
+      try {
+        const link = document.createElement('a');
+        link.href = localUrl;
+        link.download = 'mathworld-activity-audit.csv';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } finally {
+        window.setTimeout(() => URL.revokeObjectURL(localUrl), 10000);
+      }
+    } catch {
+      setExportError(ar
+        ? 'تعذّر تصدير السجل. تحقق من الاتصال والصلاحيات وأعد المحاولة.'
+        : 'Could not export the audit log. Check your connection and permissions.');
+    } finally {
+      window.clearTimeout(timeout);
+      setExporting(false);
+    }
+  };
+
   const actionName = (action: string) => {
     if (!ar) return action;
     const names: Record<string, string> = {
@@ -87,10 +136,19 @@ export default function AdminAuditPage() {
     <section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold">{ar ? 'تصفية الأحداث' : 'Filter actions'}</h2>
-        <button type="button" onClick={() => { void events.refetch(); void summary.refetch(); }}
-          className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
-          <RefreshCw className="h-4 w-4" />{ar ? 'تحديث' : 'Refresh'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" disabled={!token || exporting || Boolean(userId.trim() && !actorId)}
+            onClick={() => void downloadAudit()}
+            className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50">
+            <Download className="h-4 w-4" />
+            {exporting ? (ar ? 'جارٍ التصدير…' : 'Exporting…') :
+              (ar ? 'تصدير CSV' : 'Export CSV')}
+          </button>
+          <button type="button" onClick={() => { void events.refetch(); void summary.refetch(); }}
+            className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
+            <RefreshCw className="h-4 w-4" />{ar ? 'تحديث' : 'Refresh'}
+          </button>
+        </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="block space-y-1">
@@ -126,6 +184,11 @@ export default function AdminAuditPage() {
           </select>
         </label>
       </div>
+      {exportError && <p role="alert" className="text-sm text-destructive">{exportError}</p>}
+      <p className="text-xs text-muted-foreground">
+        {ar ? 'التصدير يلتزم بعوامل التصفية، ويقتصر على أحدث 10,000 حدث في الملف الواحد. لا يتضمن كلمات مرور أو محتوى الإجابات.'
+          : 'Export respects the filters and includes at most 10,000 recent events. Passwords and answer contents are never included.'}
+      </p>
       {userId.trim() && !actorId && <p role="alert" className="text-sm text-destructive">
         {ar ? 'أدخل رقم مستخدم صحيحاً.' : 'Enter a valid user ID.'}
       </p>}
