@@ -97,7 +97,7 @@ export default function AdminEngagementPage() {
     {stage.data && <>
       <section className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
         <div className="min-w-0 space-y-3 rounded-3xl border bg-card p-4 sm:p-6">
-          <h2 className="flex items-center gap-2 text-lg font-bold"><Shapes className="h-5 w-5 text-primary" />
+          <h2 className="flex items-center gap-2 text-lg font-bold"><Shapes className={`h-5 w-5 ${palette.text}`} />
             {ar ? 'الطلاب النشطون حسب الفئة' : 'Active learners by category'}
           </h2>
           <p className="text-xs text-muted-foreground">
