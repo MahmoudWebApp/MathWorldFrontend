@@ -38,8 +38,8 @@ export default function AdminEngagementPage() {
     skip: resolvedId <= 0, refetchOnMountOrArgChange: true,
   });
   const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
-  const currentIndex = overview.data?.Stages.findIndex(s => s.StageId === resolvedId) ?? 0;
-  const palette = variants[Math.max(0, currentIndex) % variants.length];
+
+
   const categoryChart = stage.data?.Categories.map(category => ({
     name: ar ? category.NameAr : category.NameEn,
     learners: category.ActiveSolvers,
