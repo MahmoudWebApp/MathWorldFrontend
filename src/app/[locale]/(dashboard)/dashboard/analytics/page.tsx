@@ -1,12 +1,14 @@
 'use client';
 
 import { useLocale } from 'next-intl';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { BarChart3, Download, FileText, LockKeyhole, Printer, RefreshCw } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
+  useExportPremiumAnalyticsXlsxMutation,
   type StudentPremiumAnalyticsReport,
 } from '@/store/api/usersApi';
 
@@ -67,6 +69,35 @@ export default function PremiumAnalyticsPage() {
   const { data: entitlement, isLoading: loadingEntitlement, isError: entitlementError,
     refetch: refetchEntitlement } = useGetStudentEntitlementQuery(undefined, { skip: !isStudent });
   const premium = entitlement?.IsPremium === true;
+  const [exportXlsx, { isLoading: exportingXlsx }] =
+    useExportPremiumAnalyticsXlsxMutation();
+  const [xlsxError, setXlsxError] = useState(false);
+  const downloadExcel = async () => {
+    setXlsxError(false);
+    try {
+      const blob = await exportXlsx(ar ? 'ar' : 'en').unwrap();
+      // Only a valid XLSX binary is downloadable. A 401/403 is handled
+      // by the same authenticated base query as normal report requests.
+      if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
+        !blob.type.includes('spreadsheetml.sheet')) {
+        throw new Error('Invalid XLSX response');
+      }
+      const url = URL.createObjectURL(blob);
+      try {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'mathworld-premium-analytics.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } finally {
+        window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+      }
+    } catch {
+      setXlsxError(true);
+    }
+  };
+
   const { data: report, isLoading, isError, refetch } = useGetPremiumAnalyticsQuery(undefined, {
     skip: !isStudent || !premium,
     refetchOnMountOrArgChange: true,
@@ -113,6 +144,13 @@ export default function PremiumAnalyticsPage() {
               <Download className="h-4 w-4" />
               {ar ? 'تنزيل CSV (متوافق مع Excel)' : 'Download CSV (Excel-compatible)'}
             </button>
+            <button type="button" disabled={exportingXlsx}
+              onClick={() => void downloadExcel()}
+              className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 font-semibold hover:bg-muted disabled:opacity-50">
+              <Download className="h-4 w-4" />
+              {exportingXlsx ? (ar ? 'جارٍ تجهيز Excel…' : 'Preparing Excel…') :
+                (ar ? 'تنزيل Excel حقيقي (XLSX)' : 'Download Excel workbook (XLSX)')}
+            </button>
             <button type="button" onClick={() => window.print()}
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground">
               <Printer className="h-4 w-4" />
@@ -122,6 +160,12 @@ export default function PremiumAnalyticsPage() {
         )}
       </div>
 
+      {xlsxError && (
+        <div role="alert" className="premium-report-actions rounded-xl border border-destructive/30 p-3 text-sm text-destructive">
+          {ar ? 'تعذّر تنزيل ملف Excel. تحقق من صلاحية Premium واتصال الإنترنت.'
+            : 'Unable to export Excel. Check Premium access and your connection.'}
+        </div>
+      )}
       {!isStudent ? (
         <div className="premium-report-actions rounded-2xl border p-6">
           <p className="mb-3">{ar ? 'سجّل الدخول بحساب طالب لعرض التقرير.' : 'Sign in with a student account to view the report.'}</p>
@@ -225,8 +269,8 @@ export default function PremiumAnalyticsPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground print:text-black">
-              {ar ? 'يمكن حفظ التقرير بصيغة PDF من نافذة الطباعة، أو تنزيل CSV لفتحه في Excel.'
-                : 'Use the print dialog to save a PDF, or download CSV for Excel.'}
+              {ar ? 'يمكن حفظ التقرير بصيغة PDF من نافذة الطباعة، أو تنزيل ملف Excel حقيقي بصيغة XLSX أو CSV.'
+                : 'Use the print dialog to save a PDF, or download a native Excel XLSX or CSV file.'}
             </p>
           </section>
         </>
