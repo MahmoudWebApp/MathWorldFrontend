@@ -24,7 +24,6 @@ export default function AdminDashboardPage() {
     refetchOnReconnect: true,
     pollingInterval: 60_000,
     skipPollingIfUnfocused: true,
-    pollingInterval: 60000,
   });
   const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
   const metrics = data ? [
