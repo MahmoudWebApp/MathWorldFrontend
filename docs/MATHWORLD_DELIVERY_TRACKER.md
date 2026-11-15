@@ -11,6 +11,20 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 15 — combined student UX, stage journey and content expansion (development branch)
+
+**Scope:** The owner approved running UI/UX improvements and curriculum/student-journey work together. This batch makes no release, live payment, ads, database updates, or content publication.
+
+- **Web journey** (`src/app/[locale]/journey/page.tsx`, commit `146f80f`): recommendation remains scoped to currently unlocked categories. Added review-notebook entry for accessible attempted-but-unsolved topics; explicit all-completed and no-published-content states; disabled unhelpful practice links on zero-inventory topics.
+- **Flutter dashboard** (`lib/screens/home/home_screen.dart`, commits `477be10`, `d1728b4`): unlocked stage topics appear ahead of Premium-locked topics in a compact, actionable list; direct category practice links, no fake locked actions, error-notebook entry and all-categories navigation. Pull-to-refresh reconciles dashboard and journey API queries together.
+- **Flutter stage onboarding** (`lib/screens/stages/learning_stage_screen.dart`, commit `1fdbe30`): labels saved current stage, explains past progress is retained, and uses a navigation-only action when the learner continues on their already-selected stage instead of sending an unnecessary server PUT.
+- **Admin analytics UI** (`src/app/[locale]/(dashboard)/admin/engagement/page.tsx`, commit `9c09880`): narrow mobile stage cards use one column, RTL back navigation uses the shared direction-aware control, selected cards get keyboard focus indication, and empty stage datasets are explained.
+- **New curriculum drafts** (`docs/content/mathworld-proposed-categories-next-32-question-drafts.csv`, commits `d6280ea` and `a3beea3`): 32 additional bilingual questions, four options and worked explanations; two prompts duplicated earlier files and were replaced before the audit.
+- **Draft inventory:** 128 questions in four 32-row CSVs; 16 existing category IDs and 16 proposed category keys, each with four drafts, 32 questions per each of four stages. The proposed categories are still **unpublished**, and these counts do not claim live inventory or the required ten reviewed problems per level.
+- **Editorial gate:** `docs/content/MATHWORLD_128_QUESTION_CONTENT_GATE.md` records quote-aware structural checks: all rows/columns parse, unique content keys, no repeated exact English prompt, complete bilingual fields, four distinct choices, 1..4 correct-option indices and matching proposal-to-stage mappings. This is **not** independent math curriculum review, runtime QA or authorization to import to production.
+- **QA:** Check each repository's **latest** GitHub Actions SHA before marking green. Native debug-signed Android build, Google OAuth device setup, physical launcher inspection, bilingual visual QA, migrated staging/end-to-end QA, and educator review are separate outstanding gates.
+- **Release protection:** Branch work only; Netlify builds stay stopped, no production migrations, no merges, no payment integrations, no content publication.
+
 ## November 15 — UI/UX closure batch 1: focused admin analytics and reliable student screens
 
 Development PRs only; **no change to production Vercel, Render, Netlify or Supabase**.
