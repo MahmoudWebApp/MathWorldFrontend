@@ -672,6 +672,17 @@ export const usersApi = createApi({
       query: () => '/users/subscription',
       providesTags: ['Subscription'],
     }),
+    exportPremiumAnalyticsXlsx: builder.mutation<Blob, 'ar' | 'en'>({
+      query: (lang) => ({
+        url: '/users/premium-analytics/export.xlsx',
+        method: 'GET',
+        params: { lang },
+        // Keep the authenticated baseQuery pipeline (JWT, locale, 401
+        // handling) while receiving real XLSX bytes, not JSON.
+        responseHandler: (response: Response) => response.blob(),
+      }),
+    }),
+
     getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, void>({
       query: () => '/users/premium-analytics',
     }),
@@ -840,6 +851,7 @@ export const {
   useGetDailyQuotaQuery,
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
+  useExportPremiumAnalyticsXlsxMutation,
   useGetAdminPremiumCodesQuery,
   useQuotePremiumDiscountMutation,
   useGetPremiumCheckoutOrdersQuery,
