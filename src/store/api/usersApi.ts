@@ -485,6 +485,8 @@ export const usersApi = createApi({
     'ErrorNotebook',
     'LearningStage',
     'LearningJourney',
+    'Leaderboard',
+    'Achievements',
     'AdminLearners',
     'DailyQuota',
     'Subscription',
@@ -653,6 +655,7 @@ export const usersApi = createApi({
 
     getAchievements: builder.query<StudentAchievements, void>({
       query: () => '/users/achievements',
+      providesTags: ['Achievements'],
     }),
 
     getStageLeaderboard: builder.query<StageLeaderboardReport, StageLeaderboardFilter>({
@@ -660,6 +663,7 @@ export const usersApi = createApi({
         url: '/users/leaderboard',
         params: { stageId, period, page, pageSize: 20 },
       }),
+      providesTags: ['Leaderboard'],
     }),
 
     getLearningJourney: builder.query<LearningJourney, number>({
