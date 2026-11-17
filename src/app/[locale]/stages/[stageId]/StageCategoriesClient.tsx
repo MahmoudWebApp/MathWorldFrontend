@@ -39,7 +39,6 @@ interface CategoryPremiumCardProps {
   stageId: number;
   iconUrl?: string | null;
   locked: boolean;
-  freeCategory: boolean;
 }
 
 interface OtherStagePremiumCardProps {
@@ -60,7 +59,6 @@ function CategoryPremiumCard({
   stageId,
   iconUrl,
   locked,
-  freeCategory,
 }: CategoryPremiumCardProps) {
   const reduceMotion = useReducedMotion();
   const name = locale === 'ar' ? category.NameAr : category.NameEn;
@@ -447,7 +445,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                       locale={locale}
                       stageId={stageId}
                       iconUrl={category.Icon}
-                      freeCategory={access?.FreeCategoryIds.includes(category.Id) === true}
                       locked={false}
                     />
                   ))}
@@ -475,7 +472,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                       locale={locale}
                       stageId={stageId}
                       iconUrl={category.Icon}
-                      freeCategory={false}
                       locked
                     />
                   ))}
