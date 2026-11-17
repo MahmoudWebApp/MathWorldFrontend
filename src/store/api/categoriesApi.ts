@@ -30,6 +30,8 @@ export interface CategoryDto {
   Icon: string;
   StageId: number;
   Order: number;
+  /** Null/undefined for older backend deployments. */
+  ProblemsCount?: number;
 }
 
 // ============================================
