@@ -17,6 +17,7 @@ import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
+import { useGetDailyChallengeQuery } from "@/store/api/stagesApi";
 
 // Helper function to calculate relative time from a date string
 function getRelativeTime(
@@ -51,6 +52,11 @@ export default function UserDashboardPage() {
     stageId ?? 0,
     { skip: stageId == null || stageId <= 0 },
   );
+  const { data: dailyPractice } = useGetDailyChallengeQuery(undefined, {
+    skip: !stageId || stageId <= 0 || dashboard?.Role !== "Student",
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  });
 
   useEffect(() => {
     if (!isLoading && !isError && dashboard?.Role === "Student" &&
@@ -196,6 +202,16 @@ export default function UserDashboardPage() {
                   <div className="text-xs text-muted-foreground">{journeyLabels.points}</div>
                 </div>
               </div>
+              {dailyPractice && dailyPractice.StageId === journey.StageId && (
+                <Link href="/journey"
+                  className="mb-5 flex min-h-12 flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                  <span>{isArabic ? "تحدّي اليوم الاختياري — بدون حد يومي للحل" : "Optional daily practice — no daily solving limit"}</span>
+                  <span className="tabular-nums">
+                    {dailyPractice.Completed}/{dailyPractice.Total}
+                    <DirectionalArrow direction="forward" />
+                  </span>
+                </Link>
+              )}
               <h3 className="mb-3 text-sm font-semibold">{journeyLabels.categories}</h3>
               <div className="mb-5 grid gap-2 sm:grid-cols-2">
                 {journey.Categories.map((category) => (
