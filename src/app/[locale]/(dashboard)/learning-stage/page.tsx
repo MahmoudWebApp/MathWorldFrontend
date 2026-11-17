@@ -19,8 +19,8 @@ const labels = {
     description:
       'سنرتب المسائل والتقدم وفق مرحلتك. يمكنك تغيير الاختيار لاحقًا دون فقدان محاولاتك أو نقاطك.',
     selected: 'المرحلة المختارة',
-    save: 'حفظ المرحلة ومتابعة التعلم',
-    change: 'حفظ التغيير',
+    save: 'حفظ المرحلة وعرض فئاتي المفتوحة',
+    change: 'حفظ التغيير وعرض فئاتي',
     loading: 'جاري تحميل المراحل...',
     error: 'تعذر تحميل المراحل. حاول تحديث الصفحة.',
     submitError: 'تعذر حفظ المرحلة. حاول مجددًا.',
@@ -32,8 +32,8 @@ const labels = {
     description:
       'We will personalize your problems and progress to this stage. You can change it later without losing attempts or points.',
     selected: 'Selected stage',
-    save: 'Save stage and continue',
-    change: 'Save changes',
+    save: 'Save stage and see unlocked topics',
+    change: 'Save changes and see my topics',
     loading: 'Loading stages...',
     error: 'Unable to load stages. Please refresh the page.',
     submitError: 'Could not save your stage. Please try again.',
@@ -66,8 +66,9 @@ export default function LearningStagePage() {
     setError('');
     try {
       await setLearningStage({ StageId: effectiveId }).unwrap();
-      // Reload the profile in AuthProvider as well as the dashboard queries.
-      window.location.assign(`/${locale}/dashboard`);
+      // Go straight to the stage's verified category catalogue. The
+      // learner should not get lost in an empty dashboard after switching.
+      window.location.assign(`/${locale}/stages/${effectiveId}`);
     } catch (reason) {
       setError(getApiErrorMessage(reason, copy.submitError));
     }
