@@ -8,6 +8,7 @@ import { usersApi } from './api/usersApi';
 import { statsApi } from './api/statsApi';
 import localeReducer from './slices/localeSlice';
 import { stagesApi } from './api/stagesApi';
+import { notificationsApi } from './api/notificationsApi';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -18,6 +19,7 @@ export const store = configureStore({
     [usersApi.reducerPath]: usersApi.reducer,
     [statsApi.reducerPath]: statsApi.reducer,
     [stagesApi.reducerPath]: stagesApi.reducer,
+    [notificationsApi.reducerPath]: notificationsApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -27,6 +29,7 @@ export const store = configureStore({
       usersApi.middleware,
       statsApi.middleware,
       stagesApi.middleware,
+      notificationsApi.middleware,
     ),
 });
 
