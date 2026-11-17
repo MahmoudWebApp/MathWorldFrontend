@@ -37,6 +37,8 @@ import { problemsApi } from '@/store/api/problemsApi';
 import { stagesApi } from '@/store/api/stagesApi';
 import { statsApi } from '@/store/api/statsApi';
 import { usersApi } from '@/store/api/usersApi';
+import { notificationsApi } from '@/store/api/notificationsApi';
+import { StudentNotificationsBell } from './StudentNotificationsBell';
 import { clearAuthSession } from '@/lib/authSession';
 import { useSearchParams } from 'next/navigation';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
@@ -97,6 +99,7 @@ function NavbarContent() {
     dispatch(stagesApi.util.resetApiState());
     dispatch(statsApi.util.resetApiState());
     dispatch(usersApi.util.resetApiState());
+    dispatch(notificationsApi.util.resetApiState());
     setUserMenuOpen(false);
     router.push('/');
   };
@@ -117,7 +120,8 @@ function NavbarContent() {
     dispatch(stagesApi.util.resetApiState());
     dispatch(statsApi.util.resetApiState());
     dispatch(usersApi.util.resetApiState());
-    
+    dispatch(notificationsApi.util.resetApiState());
+
     const currentQuery = searchParams.toString();
     const newPath = currentQuery ? `${pathname}?${currentQuery}` : pathname;
     
@@ -278,6 +282,10 @@ function NavbarContent() {
                 )}
               </AnimatePresence>
             </div>
+
+            {mounted && isAuthenticated && user?.Role === 'Student' && (
+              <StudentNotificationsBell />
+            )}
 
             <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
               {mounted ? (theme === 'dark' ? <Sun1 className="h-5 w-5" /> : <Moon className="h-5 w-5" />) : <div className="h-5 w-5" />}
