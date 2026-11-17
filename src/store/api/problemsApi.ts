@@ -3,6 +3,7 @@ import type { PremiumSolution } from '@/lib/premium-api';
 import type { GeometryScene } from '@/components/math/GeometryDiagram';
 import { baseQuery } from './baseQuery';
 import { usersApi } from './usersApi';
+import { stagesApi } from './stagesApi';
 import type { PagedProblemsResponse, ProblemPreview } from './types';
 
 export interface OptionForStudent {
@@ -251,6 +252,9 @@ export const problemsApi = createApi({
             'Dashboard', 'Solved', 'ErrorNotebook', 'User',
             'PremiumAnalytics',
           ]));
+          // The journey/daily-practice pages also use a separate stagesApi.
+          // Refresh their confirmed solved counts on the same successful write.
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
         } catch {
           // Do not show earned points or a changed rank for failed submissions.
         }
