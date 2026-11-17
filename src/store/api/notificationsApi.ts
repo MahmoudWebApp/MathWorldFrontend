@@ -20,11 +20,27 @@ export interface StudentNotificationsPage {
   HasMore: boolean;
 }
 
+export interface SendAnnouncementRequest {
+  TitleAr: string;
+  TitleEn: string;
+  BodyAr: string;
+  BodyEn: string;
+  StageId?: number | null;
+  ActionPath?: string | null;
+}
+
 export const notificationsApi = createApi({
   reducerPath: 'notificationsApi',
   baseQuery,
   tagTypes: ['StudentNotifications'],
   endpoints: (builder) => ({
+    sendAnnouncement: builder.mutation<{ Sent: number }, SendAnnouncementRequest>({
+      query: (body) => ({
+        url: '/admin/notifications/announce',
+        method: 'POST',
+        body,
+      }),
+    }),
     listNotifications: builder.query<StudentNotificationsPage, { page?: number; pageSize?: number }>({
       query: ({ page = 1, pageSize = 20 }) => ({
         url: '/notifications',
@@ -51,6 +67,7 @@ export const notificationsApi = createApi({
 });
 
 export const {
+  useSendAnnouncementMutation,
   useListNotificationsQuery,
   useNotificationUnreadCountQuery,
   useMarkNotificationReadMutation,
