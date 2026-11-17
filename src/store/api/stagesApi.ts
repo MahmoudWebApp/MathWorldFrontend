@@ -69,8 +69,12 @@ export const stagesApi = createApi({
       providesTags: ['Stage'],
     }),
 
-    getDailyChallenge: builder.query<DailyChallenge, void>({
-      query: () => '/users/daily-challenge',
+    getDailyChallenge: builder.query<DailyChallenge, number | void>({
+      // Stage-specific cache key prevents showing another stage's suggestions
+      // immediately after switching stages or returning from practice.
+      query: (stageId) => stageId
+        ? `/users/daily-challenge?stageId=${stageId}`
+        : '/users/daily-challenge',
     }),
     getLearningJourney: builder.query<LearningJourney, number | void>({
       query: (stageId) => stageId
