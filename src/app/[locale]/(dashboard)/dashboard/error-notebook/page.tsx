@@ -28,12 +28,25 @@ import {
 
 type NotebookTab = 'active' | 'archived';
 
+// Never treat malformed or absent review dates as overdue.
+function reviewTimestamp(problem: ErrorNotebookProblem) {
+  const parsed = problem.NextReviewAt ? Date.parse(problem.NextReviewAt) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
+}
+
+function isReviewDue(problem: ErrorNotebookProblem, now: number) {
+  return reviewTimestamp(problem) <= now;
+}
+
 export default function ErrorNotebookPage() {
   const t = useTranslations();
   const locale = useLocale();
   const isArabic = locale === 'ar';
   const [activeTab, setActiveTab] = useState<NotebookTab>('active');
   const [updatingProblemId, setUpdatingProblemId] = useState<number | null>(null);
+  const [selectedStageId, setSelectedStageId] = useState(0);
+  const [dueOnly, setDueOnly] = useState(false);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
 
   const {
     data: problems = [],
@@ -47,16 +60,24 @@ export default function ErrorNotebookPage() {
 
   const [setArchiveStatus] = useSetErrorNotebookArchiveMutation();
 
-  const visibleProblems = useMemo(
-    () =>
-      problems.filter((problem) =>
-        activeTab === 'archived' ? problem.IsArchived : !problem.IsArchived,
-      ),
-    [problems, activeTab],
-  );
+  const stages = useMemo(() => [...new Map(problems.map(problem => [
+    problem.StageId, problem.StageName,
+  ] as const)).entries()].sort(([a], [b]) => a - b), [problems]);
+  const visibleProblems = useMemo(() => {
+    const now = Date.now();
+    return problems.filter(problem =>
+      problem.IsArchived === (activeTab === 'archived') &&
+      (!selectedStageId || problem.StageId === selectedStageId) &&
+      (!dueOnly || isReviewDue(problem, now))
+    ).sort((a, b) => reviewTimestamp(a) - reviewTimestamp(b) ||
+      Date.parse(b.LastAttemptAt) - Date.parse(a.LastAttemptAt) || a.Id - b.Id);
+  }, [problems, activeTab, selectedStageId, dueOnly]);
 
-  const activeCount = problems.filter((problem) => !problem.IsArchived).length;
+  const activeCount = problems.filter(problem => !problem.IsArchived).length;
   const archivedCount = problems.length - activeCount;
+  const dueCount = problems.filter(problem => !problem.IsArchived &&
+    (!selectedStageId || problem.StageId === selectedStageId) && isReviewDue(problem, Date.now())).length;
+  const filtersActive = selectedStageId !== 0 || dueOnly;
 
   function getMasteryLabel(status: ErrorNotebookProblem['MasteryStatus']) {
     return t(`problem.mastery.${status}`);
@@ -67,13 +88,17 @@ export default function ErrorNotebookPage() {
       return t('errorNotebook.noReviewDate');
     }
 
+    const parsed = new Date(value);
+    if (!Number.isFinite(parsed.getTime())) return t('errorNotebook.noReviewDate');
     return new Intl.DateTimeFormat(locale, {
       dateStyle: 'medium',
       timeStyle: 'short',
-    }).format(new Date(value));
+    }).format(parsed);
   }
 
   async function handleArchive(problem: ErrorNotebookProblem) {
+    if (updatingProblemId !== null) return;
+    setArchiveError(null);
     setUpdatingProblemId(problem.Id);
 
     try {
@@ -81,6 +106,10 @@ export default function ErrorNotebookPage() {
         ProblemId: problem.Id,
         IsArchived: !problem.IsArchived,
       }).unwrap();
+    } catch {
+      setArchiveError(isArabic
+        ? 'ما قدرنا نحفظ حالة المسألة. جرّب مرة ثانية.'
+        : 'Could not save the problem status. Please retry.');
     } finally {
       setUpdatingProblemId(null);
     }
@@ -146,6 +175,26 @@ export default function ErrorNotebookPage() {
         </button>
       </div>
 
+      <div className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4">
+        <label className="min-w-[170px] flex-1 text-sm font-semibold">
+          <span className="mb-1 block">{isArabic ? 'المرحلة التعليمية' : 'Learning stage'}</span>
+          <select className="w-full rounded-lg border bg-background px-3 py-2" value={selectedStageId}
+            onChange={event => setSelectedStageId(Number(event.target.value))}>
+            <option value={0}>{isArabic ? 'جميع المراحل' : 'All stages'}</option>
+            {stages.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+          </select>
+        </label>
+        <button type="button" aria-pressed={dueOnly} onClick={() => setDueOnly(value => !value)}
+          className={`min-h-10 rounded-lg border px-4 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${dueOnly ? 'border-primary bg-primary/10 text-primary' : 'bg-background hover:bg-muted/50'}`}>
+          {isArabic ? `المراجعة المستحقة (${dueCount})` : `Due for review (${dueCount})`}
+        </button>
+        {filtersActive && <button type="button" onClick={() => { setSelectedStageId(0); setDueOnly(false); }}
+          className="min-h-10 rounded-lg px-3 text-sm font-semibold text-primary underline">
+          {isArabic ? 'إلغاء التصفية' : 'Clear filters'}
+        </button>}
+      </div>
+      {archiveError && <p role="alert" className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{archiveError}</p>}
+
       {isLoading ? (
         <div className="grid gap-4 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -174,16 +223,20 @@ export default function ErrorNotebookPage() {
               <Archive className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
             )}
             <h2 className="mb-2 text-xl font-semibold">
-              {activeTab === 'active'
+              {filtersActive ? (isArabic ? 'لا توجد مسائل مطابقة للتصفية' : 'No matching problems') : activeTab === 'active'
                 ? t('errorNotebook.emptyActiveTitle')
                 : t('errorNotebook.emptyArchivedTitle')}
             </h2>
             <p className="mx-auto mb-5 max-w-lg text-muted-foreground">
-              {activeTab === 'active'
+              {filtersActive ? (isArabic ? 'غيّر المرحلة أو ألغِ تصفية المراجعة المستحقة.' : 'Change the stage or clear the due-review filter.') : activeTab === 'active'
                 ? t('errorNotebook.emptyActiveDescription')
                 : t('errorNotebook.emptyArchivedDescription')}
             </p>
-            {activeTab === 'active' && (
+            {filtersActive ? (
+              <Button variant="outline" onClick={() => { setSelectedStageId(0); setDueOnly(false); }}>
+                {isArabic ? 'عرض كل المسائل' : 'Show all problems'}
+              </Button>
+            ) : activeTab === 'active' && (
               <Button asChild>
                 <Link href="/stages">{t('hero.browseStages')}</Link>
               </Button>
