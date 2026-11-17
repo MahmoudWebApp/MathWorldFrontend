@@ -11,6 +11,21 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 17 — daily practice surfaced across web and Flutter (development)
+
+- **Existing backend implementation discovered:** `GET /api/users/daily-challenge` already creates up to 5 repeatable, optional UTC-day **practice suggestions** per learner/stage from database-published, currently accessible problems. There is no 10-question daily limit or extra score; normal answer submission controls points and correctness.
+- **Web:** `src/app/[locale]/journey/page.tsx` displays those backend-selected questions and solved count, Arabic/English labels, graceful empty/loading/error states and direct practice links. It never hardcodes problem IDs or exposes correct answers.
+- **Flutter:** `lib/models/daily_challenge.dart`, `lib/providers/daily_challenge_provider.dart`, `lib/repositories/dashboard_repository.dart`, `lib/screens/home/home_screen.dart` display the same service-backed optional questions on the student home screen, invalidate the daily view after returning from practice and refresh it with dashboard/journey on pull-to-refresh. Parsing tests guard empty inventory and missing solved fields.
+- **Backend regression:** `tests/integration_learning_journey.py` validates student-only API authorization, Free-allowed categories, no correct answers/solutions, stable same-UTC-day questions, and solved progress after an answer.
+- **QA:** Web 4/4 checks and backend 9/9 checks passed on the reviewed daily-practice commits. Android APK workflow/three-project build **must be verified at latest pinned SHAs before marking finished**.
+- **No release:** development PRs only, no merge, no production DB changes, no live payments, no question publication or app-store deployment.
+
+## November 17 — due-review notebook across learning stages (development)
+
+- Web and Flutter mistake notebooks now have a stage filter and due-for-review filter, with clearer empty states. Web reports archive failures.
+- Backend `GET /api/users/error-notebook` preserves *accessible* mistakes across stage switches rather than hiding everything outside the current stage. Existing category entitlement still prevents exposing locked Free content. Disposable PostgreSQL Free tests cover the stage-switch regression.
+- The prior reviewed web, backend and Android Actions builds were green; production and physical-device testing remain separate gates.
+
 ## November 15 — closure QA and 10-question draft coverage across all 32 categories
 
 - **Android completed checkpoint:** Flutter's prior commit `1fdbe306` successfully completed all six workflows including **Mobile social auth Android build** and **Flutter Free-access tests and debug-signed Android QA APK**. This is a QA build, not a Play Store release-signed app. Later mobile commit `a645e83` adds a pull-to-refresh/empty-state fix in the error notebook; verify that exact commit's Android runs before claiming its APK passed.
