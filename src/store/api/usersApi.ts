@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import type { StudentEntitlement } from '@/lib/premium-api';
 import { baseQuery } from './baseQuery';
+import { stagesApi } from './stagesApi';
 import type { DashboardData, ProblemPreview } from './types';
 import type { MasteryStatus } from './problemsApi';
 
@@ -512,7 +513,18 @@ export const usersApi = createApi({
         method: 'PUT',
         body,
       }),
-      invalidatesTags: ['LearningStage', 'LearningJourney', 'Dashboard', 'User'],
+      invalidatesTags: ['LearningStage', 'LearningJourney', 'Dashboard', 'User', 'Leaderboard'],
+      async onQueryStarted(_body, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          // Stage-specific journey and daily suggestions live in stagesApi,
+          // not this slice. Clearing their caches prevents prior-stage data
+          // from flashing after a successful stage change.
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+        } catch {
+          // A rejected stage update must leave existing progress untouched.
+        }
+      },
     }),
 
     getDailyQuota: builder.query<StageDailyQuota, number>({
