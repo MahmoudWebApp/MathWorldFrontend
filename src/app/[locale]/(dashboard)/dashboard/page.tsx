@@ -11,7 +11,7 @@ import {
   Calendar,
   Warning2,
 } from "iconsax-reactjs";
-import { NotebookTabs, Trophy, Target } from "lucide-react";
+import { NotebookTabs, Trophy, Target, Crown } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
 import { Card, CardContent } from "@/components/ui/Card";
@@ -148,6 +148,11 @@ export default function UserDashboardPage() {
 
           <div className="mb-5">
             <DailyQuotaCard stageId={stageId} compact />
+            <Link href="/premium"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+              <Crown className="h-4 w-4" aria-hidden="true" />
+              {isArabic ? "مميزات Free وPremium" : "Free and Premium benefits"}
+            </Link>
           </div>
           {journey && (
             <>
