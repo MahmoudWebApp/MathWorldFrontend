@@ -127,7 +127,9 @@ function CategoryPremiumCard({
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
               aria-label={locale === 'ar' ? `ابدأ حل مسائل ${name}` : `Start practising ${name}`}
             >
-              {locale === 'ar' ? 'ابدأ حل المسائل' : 'Start solving'}
+              {category.ProblemsCount == null
+                ? (locale === 'ar' ? 'استعرض المسائل' : 'Browse questions')
+                : (locale === 'ar' ? 'ابدأ حل المسائل' : 'Start solving')}
             </Link>
           )}
         </div>
@@ -263,7 +265,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     isPremium || access?.FreeCategoryIds.includes(category.Id));
   const lockedCategories = sortedCategories.filter(category =>
     !isPremium && !access?.FreeCategoryIds.includes(category.Id));
-  const readyCount = unlockedCategories.filter(category => category.ProblemsCount !== 0).length;
+  const readyCount = unlockedCategories.filter(category => (category.ProblemsCount ?? 0) > 0).length;
+  const unknownCount = unlockedCategories.filter(category => category.ProblemsCount == null).length;
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   const isLoading = categoriesLoading || stagesLoading || accessLoading || (authenticated && subscriptionLoading);
@@ -390,10 +393,17 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
             <p className="mt-2 text-sm font-bold text-primary">
               {locale === 'ar'
-                ? `${unlockedCategories.length} فئة مفتوحة · ${readyCount} قابلة للاستكشاف`
-                : `${unlockedCategories.length} unlocked · ${readyCount} ready to explore`}
+                ? `${unlockedCategories.length} فئة مفتوحة · ${readyCount} فيها مسائل منشورة`
+                : `${unlockedCategories.length} unlocked · ${readyCount} with published questions`}
             </p>
-            {readyCount === 0 && (
+            {unknownCount > 0 && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                {locale === 'ar'
+                  ? 'عدد المسائل غير متاح من هذا الخادم لبعض الفئات. ممكن تستعرضها وتتحقق من وجود محتوى.'
+                  : 'The connected server has not returned a problem count for every topic. You can browse those topics to check.'}
+              </p>
+            )}
+            {readyCount === 0 && unknownCount === 0 && (
               <p className="mt-3 text-sm text-muted-foreground">
                 {locale === 'ar'
                   ? 'ما في فئات جاهزة للحل حاليًا. جرّب تحديث البيانات أو اختَر مرحلة ثانية.'
