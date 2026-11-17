@@ -67,6 +67,7 @@ function CategoryPremiumCard({
   const icon = iconUrl?.trim() ?? '';
   const iconIsPath = icon.startsWith('https://') || icon.startsWith('/');
   const iconIsGlyph = icon.length > 0 && [...icon].length <= 4 && !icon.includes('/') && !icon.includes('\\');
+  const noPublishedProblems = category.ProblemsCount === 0;
   return (
     <motion.div
       initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
@@ -74,10 +75,8 @@ function CategoryPremiumCard({
       transition={{ duration: reduceMotion ? 0 : 0.35, delay: reduceMotion ? 0 : Math.min(index * 0.04, 0.24) }}
       className="h-full"
     >
-      <Link
-        href={locked ? '/premium' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
-        aria-label={locked ? (locale === 'ar' ? name + ': فئة Premium مقفلة' : name + ': Premium category, locked') : undefined}
-        className={`brand-surface math-card group relative flex min-h-[186px] min-w-0 flex-col justify-between overflow-hidden rounded-3xl p-4 outline-none transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:min-h-[220px] sm:p-5 lg:min-h-[245px] lg:p-6 ${style.hoverShadow}`}
+      <div
+        className={`brand-surface math-card group relative flex min-h-[186px] min-w-0 flex-col justify-between overflow-hidden rounded-3xl p-4 sm:min-h-[220px] sm:p-5 lg:min-h-[245px] lg:p-6 ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
         <div
@@ -85,12 +84,12 @@ function CategoryPremiumCard({
           style={{ background: style.spotlight }}
         />
 
-        {(locked || freeCategory) && (
-          <div className="absolute end-5 top-5 z-20 flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">
-            {locked && <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />}
-            {locked ? "Premium" : (locale === "ar" ? "مجاني" : "Free")}
-          </div>
-        )}
+        <div className="absolute end-5 top-5 z-20 flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold">
+          {locked && <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />}
+          {locked
+            ? (locale === 'ar' ? 'مقفلة' : 'Locked')
+            : (locale === 'ar' ? 'مفتوحة' : 'Unlocked')}
+        </div>
         {/* Header: Icon & Name */}
         <div className="relative z-10 flex min-w-0 flex-col gap-3 sm:gap-4">
           <div className="flex items-center justify-between">
@@ -116,11 +115,25 @@ function CategoryPremiumCard({
 
         {/* Footer: Equation & Subtle decorative element */}
         <div className="relative z-10 mt-auto">
-          <p className="math-equation-chip inline-block rounded-md px-3 py-1 font-mono text-sm text-muted-foreground">
-            {math.equation}
-          </p>
+          {noPublishedProblems ? (
+            <p className="rounded-lg bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+              {locale === 'ar' ? 'ما في مسائل منشورة لهالفئة بعد' : 'No published questions in this topic yet'}
+            </p>
+          ) : locked ? (
+            <p className="text-sm text-muted-foreground">
+              {locale === 'ar' ? 'خارج الفئات المجانية المفتوحة لحسابك' : 'Not part of your currently unlocked topics'}
+            </p>
+          ) : (
+            <Link
+              href={`/problems?categoryId=${category.Id}&stageId=${stageId}`}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              aria-label={locale === 'ar' ? `ابدأ حل مسائل ${name}` : `Start practising ${name}`}
+            >
+              {locale === 'ar' ? 'ابدأ حل المسائل' : 'Start solving'}
+            </Link>
+          )}
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }
@@ -246,6 +259,13 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const currentStage = stages?.find(s => s.Id === stageId);
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
   const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0));
+  // Never infer that an absent API response means everything is Premium.
+  // Only the server's verified free-category IDs can lock Free content.
+  const unlockedCategories = sortedCategories.filter(category =>
+    isPremium || access?.FreeCategoryIds.includes(category.Id));
+  const lockedCategories = sortedCategories.filter(category =>
+    !isPremium && !access?.FreeCategoryIds.includes(category.Id));
+  const readyCount = unlockedCategories.filter(category => category.ProblemsCount !== 0).length;
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   const isLoading = categoriesLoading || stagesLoading || accessLoading || (authenticated && subscriptionLoading);
@@ -267,7 +287,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     </section>;
   }
 
-  if (categoriesError || stagesError || accessError || (authenticated && subscriptionError)) {
+  if (categoriesError || stagesError || accessError || (!accessLoading && !access) ||
+      (authenticated && subscriptionError)) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
@@ -280,7 +301,14 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             <div className="h-16 w-16 bg-destructive/10 rounded-full flex items-center justify-center mb-2">
               <AlertCircle className="h-8 w-8" />
             </div>
-            <p className="text-xl font-bold">{t('common.errorLoadingData')}</p>
+            <p className="text-xl font-bold">
+              {locale === 'ar' ? 'تعذّر التحقق من الفئات المتاحة' : 'Could not verify category access'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {locale === 'ar'
+                ? 'إذا كانت خدمة التطبيق أحدث من الخادم، ما رح نعتبر الفئات مقفلة أو نطلب اشتراك بدون تأكيد صلاحياتها.'
+                : 'If the server is older than the app, we will not invent locked topics or require membership without verified access.'}
+            </p>
             <button
               type="button" onClick={() => {
                 void refetchCategories();
@@ -350,70 +378,118 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
           </motion.div>
         </div>
 
-        {!isLoading && access && !isPremium && (
-          <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
-            <LockKeyhole className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-            <p className="min-w-0 flex-1 leading-6 text-foreground">
-              {locale === 'ar'
-                ? 'حساب Free: فئتان مفتوحتان في كل مرحلة، ومسائل بلا حد ضمنهما. بقية الفئات لمشتركي Premium.'
-                : 'Free: two categories per stage, with unlimited questions in them. Other categories require Premium.'}
+        {!isLoading && access && (
+          <div role="status" className="mb-7 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+            <h2 className="text-xl font-extrabold text-foreground">
+              {isPremium
+                ? (locale === 'ar' ? 'كل فئات مرحلتك مفتوحة' : 'All your stage topics are unlocked')
+                : (locale === 'ar' ? 'هاي فئاتك المفتوحة، ابدأ من هون' : 'These are your unlocked topics — start here')}
+            </h2>
+            <p className="mt-2 text-sm leading-7 text-muted-foreground">
+              {isPremium
+                ? (locale === 'ar' ? 'اختر فئة فيها مسائل منشورة وابدأ الحل.' : 'Pick a topic with published questions and start.')
+                : (locale === 'ar' ? 'عندك فئتان مفتوحتان مجاناً في كل مرحلة، وتقدر تحل كل مسائلها بلا حد. الفئات المقفلة موجودة بقسم منفصل تحت.' : 'You get two unlocked topics in each stage and unlimited practice in those topics. Other locked topics appear separately below.')}
             </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link href="/premium" className="font-bold text-primary underline underline-offset-4">
-                {locale === 'ar' ? 'مزايا Premium' : 'Premium benefits'}
-              </Link>
-              <Link href="/dashboard/redeem"
-                className="rounded-xl border border-primary/25 bg-background px-3 py-2 font-bold text-primary hover:bg-primary/10">
-                {locale === 'ar' ? 'عندي كود هدية' : 'Redeem gift code'}
-              </Link>
-            </div>
+            <p className="mt-2 text-sm font-bold text-primary">
+              {locale === 'ar'
+                ? `${unlockedCategories.length} فئة مفتوحة · ${readyCount} قابلة للاستكشاف`
+                : `${unlockedCategories.length} unlocked · ${readyCount} ready to explore`}
+            </p>
+            {readyCount === 0 && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                {locale === 'ar'
+                  ? 'ما في فئات جاهزة للحل حاليًا. جرّب تحديث البيانات أو اختَر مرحلة ثانية.'
+                  : 'No topics are ready to practise right now. Refresh or choose another stage.'}
+              </p>
+            )}
           </div>
         )}
 
-        {/* Main Categories Grid */}
+        {/* Show verified playable topics first; no dead-end or repeated Premium prompts. */}
         {isLoading ? (
           <div role="status" aria-live="polite" className="flex min-h-[30vh] flex-col items-center justify-center gap-3">
             <Loader2 aria-hidden="true" className="h-10 w-10 animate-spin text-primary" />
             <span className="text-sm text-muted-foreground">{t('common.loading')}</span>
           </div>
         ) : sortedCategories.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="brand-surface math-card text-center py-20 rounded-3xl backdrop-blur-md"
-          >
-            <div className="math-equation-chip mx-auto h-20 w-20 rounded-full flex items-center justify-center mb-6">
-              <Filter className="h-10 w-10 text-muted-foreground opacity-50" />
-            </div>
-            <h3 className="text-2xl font-bold text-foreground mb-3">
-              {t('categories.noCategories')}
-            </h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {t('categories.noCategoriesDesc')}
-            </p>
-          </motion.div>
+          <div className="brand-surface math-card rounded-3xl p-6 text-center sm:p-10" role="status">
+            <Filter aria-hidden="true" className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
+            <h3 className="mb-3 text-xl font-bold">{t('categories.noCategories')}</h3>
+            <p className="text-muted-foreground">{t('categories.noCategoriesDesc')}</p>
+            <Link href="/stages" className="mt-5 inline-flex min-h-11 items-center rounded-xl border px-4 py-2 font-semibold">
+              {t('stages.backToStages')}
+            </Link>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 lg:gap-6">
-            {sortedCategories.map((category, index) => {
-              const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
-              const style = CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length];
-              const iconUrl = category.Icon;
-
-              return (
-                <CategoryPremiumCard
-                  key={category.Id}
-                  category={category}
-                  index={index}
-                  math={math}
-                  style={style}
-                  locale={locale}
-                  stageId={stageId}
-                  iconUrl={iconUrl}
-                  freeCategory={access?.FreeCategoryIds.includes(category.Id) === true}
-                  locked={!isPremium && !access?.FreeCategoryIds.includes(category.Id)}
-                />
-              );
-            })}
+          <div className="space-y-10">
+            <section aria-labelledby="unlocked-topic-heading">
+              <h2 id="unlocked-topic-heading" className="mb-2 text-2xl font-extrabold">
+                {locale === 'ar' ? '1. ابدأ بالفئات المفتوحة' : '1. Start with your unlocked topics'}
+              </h2>
+              <p className="mb-5 text-sm text-muted-foreground">
+                {locale === 'ar' ? 'كل فئة عليها زر «ابدأ حل المسائل». الفئات اللي ما فيها مسائل منشورة مو قابلة للفتح.' : 'Tap Start solving to practise. Topics with no published questions do not open an empty list.'}
+              </p>
+              {unlockedCategories.length === 0 ? (
+                <p role="status" className="rounded-xl border bg-card p-5 text-sm">
+                  {locale === 'ar'
+                    ? 'ما في فئات مفتوحة بحسابك بهالمرحلة حالياً. اطلب من الإدارة التحقق من اختيار الفئتين المجانيتين.'
+                    : 'No unlocked topics are configured for this stage. Ask an administrator to check the two Free topic selections.'}
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 lg:gap-6">
+                  {unlockedCategories.map((category, index) => (
+                    <CategoryPremiumCard
+                      key={category.Id}
+                      category={category}
+                      index={index}
+                      math={MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length]}
+                      style={CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length]}
+                      locale={locale}
+                      stageId={stageId}
+                      iconUrl={category.Icon}
+                      freeCategory={access?.FreeCategoryIds.includes(category.Id) === true}
+                      locked={false}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+            {lockedCategories.length > 0 && (
+              <section aria-labelledby="locked-topic-heading" className="border-t border-border/50 pt-8">
+                <h2 id="locked-topic-heading" className="mb-2 text-xl font-bold">
+                  {locale === 'ar' ? '2. فئات إضافية مقفلة' : '2. Other locked topics'}
+                </h2>
+                <p className="mb-5 text-sm text-muted-foreground">
+                  {locale === 'ar'
+                    ? 'هاي الفئات مو ضمن حسابك المجاني. فيك تشوف تفاصيل الاشتراك بمكان واحد.'
+                    : 'These topics are not part of your Free account. See membership benefits in one place.'}
+                </p>
+                <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 lg:gap-6">
+                  {lockedCategories.map((category, index) => (
+                    <CategoryPremiumCard
+                      key={category.Id}
+                      category={category}
+                      index={index}
+                      math={MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length]}
+                      style={CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length]}
+                      locale={locale}
+                      stageId={stageId}
+                      iconUrl={category.Icon}
+                      freeCategory={false}
+                      locked
+                    />
+                  ))}
+                </div>
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <Link href="/premium" className="inline-flex min-h-11 items-center rounded-xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary">
+                    {locale === 'ar' ? 'تعرّف على مميزات الاشتراك' : 'View membership benefits'}
+                  </Link>
+                  <Link href="/dashboard/redeem" className="inline-flex min-h-11 items-center rounded-xl border px-4 py-2 text-sm font-semibold">
+                    {locale === 'ar' ? 'عندي كود هدية' : 'I have a gift code'}
+                  </Link>
+                </div>
+              </section>
+            )}
           </div>
         )}
 
