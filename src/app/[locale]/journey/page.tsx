@@ -3,6 +3,7 @@
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
+import { RichText } from '@/components/ui/RichText';
 import { useGetDailyChallengeQuery, useGetLearningJourneyQuery } from '@/store/api/stagesApi';
 
 export default function JourneyPage() {
@@ -96,9 +97,12 @@ export default function JourneyPage() {
                         : (ar ? 'بانتظار الحل' : 'To practice')}
                     </span>
                   </div>
-                  <p className="mb-3 line-clamp-2 text-sm font-medium">
-                    {ar ? problem.TitleAr : problem.TitleEn}
-                  </p>
+                  <RichText
+                    text={ar ? problem.TitleAr : problem.TitleEn}
+                    isArabic={ar}
+                    inline
+                    className="mb-3 line-clamp-2 text-sm font-medium"
+                  />
                   <Link href={`/problems/${problem.Id}`}
                     className="inline-flex min-h-9 items-center rounded-lg text-sm font-semibold text-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
                     {ar ? 'افتح المسألة' : 'Open problem'}
