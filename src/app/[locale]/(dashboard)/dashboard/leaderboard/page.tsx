@@ -26,7 +26,8 @@ export default function StudentLeaderboardPage() {
   const stageId = stage?.StageId;
   const { currentData: data, isLoading, isFetching, isError, refetch } = useGetStageLeaderboardQuery(
     { stageId: stageId ?? 0, period, page },
-    { skip: !isStudent || !stageId, refetchOnMountOrArgChange: true }
+    { skip: !isStudent || !stageId, refetchOnMountOrArgChange: true,
+      refetchOnFocus: true, refetchOnReconnect: true }
   );
 
   const periodLabel = (value: StageLeaderboardFilter['period']) => {
@@ -127,13 +128,23 @@ export default function StudentLeaderboardPage() {
                 <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                   <span><Users className="me-1 inline h-4 w-4" aria-hidden="true" />{ar ? 'المشاركون:' : 'Participants:'} {data.TotalLearners}</span>
                   <strong className="text-primary">{ar ? 'ترتيبك:' : 'Your rank:'} {data.MyRank ?? '—'}</strong>
+                  <button type="button" onClick={() => void refetch()}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold text-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                    aria-label={ar ? 'تحديث ترتيب المتفوقين' : 'Refresh stage leaderboard'}>
+                    <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
+                    {ar ? 'تحديث' : 'Refresh'}
+                  </button>
                 </div>
               </div>
               {data.Entries.length === 0 ? (
                 <div className="px-6 py-16 text-center text-muted-foreground">
                   <Trophy className="mx-auto mb-4 h-9 w-9 opacity-40" aria-hidden="true" />
-                  {ar ? 'ما في نتائج لهذه الفترة. حلّ مسائل حتى تظهر بالقائمة.'
-                    : 'No results for this period. Solve questions to appear here.'}
+                  <p>{ar ? 'ما في نتائج لهذه الفترة. حلّ مسائل حتى تظهر بالقائمة.'
+                    : 'No results for this period. Solve questions to appear here.'}</p>
+                  <Link href={`/stages/${stageId}`}
+                    className="mt-4 inline-flex min-h-10 items-center rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+                    {ar ? 'انتقل لفئات مرحلتي' : 'Browse my stage topics'}
+                  </Link>
                 </div>
               ) : (
                 <ol className="divide-y">
