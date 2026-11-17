@@ -153,6 +153,12 @@ export default function UserDashboardPage() {
             <DirectionalArrow direction="forward" className="h-4 w-4" />
           </Link>
 
+          <Link href="/leaderboard"
+            className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+            <Trophy className="h-4 w-4" aria-hidden="true" />
+            {isArabic ? "شوف ترتيبك بين طلاب مرحلتك" : "See your rank among stage learners"}
+          </Link>
+
           <div className="mb-5">
             <DailyQuotaCard stageId={stageId} compact />
             <Link href="/premium"
