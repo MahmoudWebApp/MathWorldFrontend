@@ -120,6 +120,16 @@ export interface AdminLearnerSummary {
   TotalAwardedPoints: number;
 }
 
+export interface AdminLearnerSubscriptionChange {
+  LearnerId: number;
+  SubscriptionType: 'Free' | 'Premium';
+}
+
+export interface AdminLearnerSubscriptionResult {
+  Id: number;
+  SubscriptionType: 'Free' | 'Premium';
+}
+
 export interface AdminLearnerDirectory {
   Learners: AdminLearnerSummary[];
   Total: number;
@@ -376,6 +386,18 @@ export const usersApi = createApi({
       providesTags: ['AdminLearners'],
     }),
 
+    setAdminLearnerSubscription: builder.mutation<
+      AdminLearnerSubscriptionResult,
+      AdminLearnerSubscriptionChange
+    >({
+      query: ({ LearnerId, SubscriptionType }) => ({
+        url: `/admin/learners/${LearnerId}/subscription`,
+        method: 'PUT',
+        body: { SubscriptionType },
+      }),
+      invalidatesTags: ['AdminLearners', 'User', 'Dashboard'],
+    }),
+
     getAdminLearnerDetail: builder.query<AdminLearnerDetail, AdminLearnerDrilldownQuery>({
       query: ({ LearnerId, StageId }) => ({
         url: `/admin/learners/${LearnerId}`,
@@ -424,6 +446,7 @@ export const {
   useGetAdminUsersQuery,
   useGetAdminLearnersQuery,
   useGetAdminLearnerDetailQuery,
+  useSetAdminLearnerSubscriptionMutation,
   useGetAdminLearnerAttemptsQuery,
   useGetDashboardQuery,
 } = usersApi;

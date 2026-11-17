@@ -10,6 +10,7 @@ import {
   Filter,
   Loader2,
   LockKeyhole,
+  LockOpen,
   Info,
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
@@ -110,15 +111,21 @@ function CategoryPremiumCard({
             <p className="inline-flex items-center gap-2 rounded-md bg-muted/50 px-3 py-1 text-sm text-muted-foreground">
               {locked ? <LockKeyhole className="h-4 w-4" /> : <Info className="h-4 w-4" />}
               {locked
-                ? locale === 'ar' ? 'متاحة مع Premium' : 'Premium category'
+                ? locale === 'ar' ? 'مقفلة' : 'Locked'
                 : locale === 'ar' ? 'لا توجد مسائل بعد' : 'No problems yet'}
             </p>
           ) : (
-            <p className="math-equation-chip inline-block rounded-md px-3 py-1 font-mono text-sm text-muted-foreground">
-              {category.ProblemsCount != null
-                ? locale === 'ar' ? `${category.ProblemsCount} مسألة` : `${category.ProblemsCount} problems`
-                : math.equation}
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1 text-sm font-bold text-primary">
+                <LockOpen className="h-4 w-4" aria-hidden="true" />
+                {locale === 'ar' ? 'مفتوحة' : 'Open'}
+              </span>
+              <span className="math-equation-chip inline-block rounded-md px-3 py-1 font-mono text-sm text-muted-foreground">
+                {category.ProblemsCount != null
+                  ? locale === 'ar' ? `${category.ProblemsCount} مسألة` : `${category.ProblemsCount} problems`
+                  : math.equation}
+              </span>
+            </div>
           )}
         </div>
       </Link>
@@ -232,8 +239,10 @@ interface StageCategoriesClientProps {
 export default function StageCategoriesClient({ stageId }: StageCategoriesClientProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const subscriptionType = useSelector((state: RootState) => state.auth.user?.SubscriptionType);
-  const isPremium = subscriptionType?.toLowerCase() === 'premium';
+  const isPremium = useSelector((state: RootState) =>
+    state.auth.user?.Role === 'Admin' ||
+    state.auth.user?.SubscriptionType?.toLowerCase() === 'premium'
+  );
 
   
   const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
@@ -323,6 +332,22 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
           </motion.div>
         </div>
+
+        <p
+          className="mb-6 flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-muted-foreground"
+        >
+          {isPremium ? <LockOpen className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+            : <Info className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />}
+          <span>
+            {isPremium
+              ? locale === 'ar'
+                ? 'كل فئات هذه المرحلة متاحة لحسابك.'
+                : 'All categories in this stage are available to your account.'
+              : locale === 'ar'
+                ? 'أول فئتين مفتوحتان مجاناً في كل مرحلة، وباقي الفئات ضمن Premium.'
+                : 'The first two categories per stage are free; the others require Premium.'}
+          </span>
+        </p>
 
         {/* Main Categories Grid */}
         {isLoading ? (
