@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
-  BarChart3, BookOpenText, ChevronDown, ClipboardCheck, FolderTree,
+  BarChart3, BellRing, BookOpenText, ChevronDown, ClipboardCheck, FolderTree,
   GraduationCap, LayoutDashboard, ShieldCheck, UsersRound,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
@@ -37,6 +37,15 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Students',
     descriptionAr: 'بحث وملفات الطلاب وتقدّمهم ومحاولاتهم',
     descriptionEn: 'Find learners and review progress and attempts',
+    group: 'management',
+  },
+  {
+    href: '/admin/notifications',
+    icon: BellRing,
+    labelAr: 'إشعارات الطلاب',
+    labelEn: 'Learner announcements',
+    descriptionAr: 'إرسال إشعار لجميع الطلاب أو لمرحلة محددة',
+    descriptionEn: 'Notify all learners or a selected stage',
     group: 'management',
   },
   {
