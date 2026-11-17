@@ -307,6 +307,8 @@ export interface StageLeaderboardReport {
   Page: number;
   PageSize: number;
   TotalLearners: number;
+  /** Active student accounts currently assigned to this stage, including non-solvers. */
+  StageParticipants?: number;
   MyRank: number | null;
   Entries: StageLeaderboardEntry[];
 }
