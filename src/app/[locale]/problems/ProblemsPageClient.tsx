@@ -86,6 +86,7 @@ function ProblemsPageClient() {
     isLoading: searchLoading,
     error: searchError,
     isFetching,
+    refetch: retrySearch,
   } = useSearchProblemsQuery(
     {
       Q: debouncedSearch || "",
@@ -135,6 +136,13 @@ function ProblemsPageClient() {
   };
 
   const isLoading = searchLoading || isFetching;
+  const lockedCategoryError = Boolean(
+    categoryId &&
+    searchError &&
+    typeof searchError === 'object' &&
+    'status' in searchError &&
+    searchError.status === 403
+  );
 
   // Build breadcrumb
   const breadcrumbItems: { href: string; label: string }[] = [
@@ -280,6 +288,7 @@ function ProblemsPageClient() {
       )}
 
       {/* Results count */}
+      {!searchError && (
       <p className="text-sm font-medium text-muted-foreground mb-6 flex items-center gap-2">
         <span className="h-px bg-border flex-1"></span>
         <span>
@@ -289,21 +298,44 @@ function ProblemsPageClient() {
         </span>
         <span className="h-px bg-border flex-1"></span>
       </p>
+      )}
 
       {/* Error state */}
       {searchError ? (
         <div className="text-center py-16 bg-destructive/5 rounded-3xl border border-destructive/10">
           <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4 opacity-80" />
           <p className="text-lg font-semibold text-destructive mb-2">
-            {t("common.errorLoadingData")}
+            {lockedCategoryError
+              ? locale === 'ar' ? 'هذه الفئة مقفلة لحسابك' : 'This category is locked for your account'
+              : t("common.errorLoadingData")}
           </p>
-          <Button
-            onClick={() => window.location.reload()}
-            variant="outline"
-            className="mt-4"
-          >
-            {t("common.retry")}
-          </Button>
+          <p className="mx-auto max-w-lg text-sm text-muted-foreground">
+            {lockedCategoryError
+              ? locale === 'ar'
+                ? 'أول فئتين من كل مرحلة مفتوحتان مجاناً ويمكنك حل مسائلهما بلا حد يومي.'
+                : 'The first two categories of each stage are free, with unlimited practice.'
+              : locale === 'ar'
+                ? 'تحقق من الاتصال ثم أعد المحاولة. لن تفقد البحث أو الفئة المختارة.'
+                : 'Check your connection and retry without losing your current filters.'}
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            {lockedCategoryError ? (
+              <>
+                <Link href="/premium"
+                  className="inline-flex items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+                  {locale === 'ar' ? 'معرفة مميزات الحساب' : 'Compare account benefits'}
+                </Link>
+                <Link href={stageId ? `/stages/${stageId}` : '/stages'}
+                  className="inline-flex items-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold">
+                  {locale === 'ar' ? 'العودة للفئات المفتوحة' : 'Back to open categories'}
+                </Link>
+              </>
+            ) : (
+              <Button onClick={() => void retrySearch()} variant="outline">
+                {t("common.retry")}
+              </Button>
+            )}
+          </div>
         </div>
       ) : (
         <>
@@ -321,8 +353,18 @@ function ProblemsPageClient() {
               </div>
               <p className="text-xl font-bold mb-2">{t("search.noResults")}</p>
               <p className="text-muted-foreground">
-                {t("search.tryDifferent")}
+                {debouncedSearch
+                  ? t("search.tryDifferent")
+                  : locale === 'ar'
+                    ? 'ما ظهرت مسائل بهذه القائمة حالياً. جرّب التحديث أو ارجع للفئات المتاحة.'
+                    : 'No problems appeared here. Refresh or return to available categories.'}
               </p>
+              {!debouncedSearch && (
+                <Button variant="outline" onClick={() => void retrySearch()} className="mt-6 gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  {t("common.retry")}
+                </Button>
+              )}
               {debouncedSearch && (
                 <Button
                   variant="outline"
