@@ -133,6 +133,37 @@ export default function UserDashboardPage() {
         )}
       </div>
 
+      {/* The primary learner action is always above statistics and optional tools. */}
+      <section aria-label={isArabic ? 'خطوتك التالية' : 'Your next step'}
+        className="mb-6 rounded-3xl border border-primary/25 bg-primary/5 p-5 md:p-7">
+        <p className="mb-2 text-sm font-bold text-primary">
+          {isArabic ? 'الخطوة الأولى' : 'Step one'}
+        </p>
+        <h2 className="text-2xl font-extrabold">
+          {stageId
+            ? (isArabic ? 'ابدأ الحل من فئاتك المفتوحة' : 'Start with your unlocked topics')
+            : (isArabic ? 'اختَر مرحلتك لتبدأ الرياضيات' : 'Choose your stage to get started')}
+        </h2>
+        <p className="mb-5 mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
+          {stageId
+            ? (isArabic
+              ? 'رح تشوف الفئتين المفتوحتين لحسابك أولاً، ومع كل فئة زر واضح لبدء حل المسائل بلا حد.'
+              : 'Your two Free topics appear first, each with a clear Start solving button and unlimited practice.')
+            : (isArabic
+              ? 'اختيار المرحلة بيحدد فئاتك ومسائلك، وتقدر تغيّرها لاحقاً بدون خسارة نقاطك.'
+              : 'Your stage determines which topics you can practise; you can change it later without losing progress.')}
+        </p>
+        <Link
+          href={stageId ? `/stages/${stageId}` : '/learning-stage'}
+          className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 py-3 font-extrabold text-primary-foreground hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          {stageId
+            ? (isArabic ? 'افتح فئاتي المفتوحة' : 'Open my unlocked topics')
+            : (isArabic ? 'اختيار المرحلة' : 'Choose learning stage')}
+          <DirectionalArrow direction="forward" size={18} />
+        </Link>
+      </section>
+
       {stageId != null && stageId > 0 && (
         <section className="math-card mb-8 rounded-3xl border border-primary/15 bg-card p-5 md:p-7">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
@@ -214,7 +245,7 @@ export default function UserDashboardPage() {
               )}
               <h3 className="mb-3 text-sm font-semibold">{journeyLabels.categories}</h3>
               <div className="mb-5 grid gap-2 sm:grid-cols-2">
-                {journey.Categories.map((category) => (
+                {journey.Categories.filter(category => category.IsLocked === false).slice(0, 4).map((category) => (
                   <div key={category.CategoryId} className="rounded-xl border border-border p-3">
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm">
                       <span>{isArabic ? category.NameAr : category.NameEn}</span>
@@ -229,7 +260,7 @@ export default function UserDashboardPage() {
               </div>
               <Link href={`/stages/${journey.StageId}`}
                 className="inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                {journeyLabels.practice}
+                {isArabic ? 'عرض كل فئات مرحلتي' : 'See all topics in my stage'}
               </Link>
             </>
           )}
@@ -248,7 +279,7 @@ export default function UserDashboardPage() {
         className="mb-8 ms-3 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
       >
         <NotebookTabs className="h-4 w-4" aria-hidden="true" />
-        {isArabic ? 'تقريري المتقدم وتصدير النتائج (Premium)' : 'My analytics and report exports (Premium)'}
+        {isArabic ? 'تقريري الشخصي' : 'My personal report'}
       </Link>
 
       <Link
