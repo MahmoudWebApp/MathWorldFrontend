@@ -52,7 +52,7 @@ export default function UserDashboardPage() {
     stageId ?? 0,
     { skip: stageId == null || stageId <= 0 },
   );
-  const { data: dailyPractice } = useGetDailyChallengeQuery(undefined, {
+  const { data: dailyPractice } = useGetDailyChallengeQuery(stageId ?? 0, {
     skip: !stageId || stageId <= 0 || dashboard?.Role !== "Student",
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
