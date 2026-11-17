@@ -11,6 +11,16 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 17 — stage-category reliability and consistent inventory (development)
+
+- **Root issue addressed:** the Flutter stage page and the Next.js category page formerly depended on *both* the general `/api/categories` list and the `/api/stages/{id}/free-categories` access catalog. A stale/failed list request could show an empty/error stage despite a valid access catalog. The stage page now renders categories, sort order, Free/Premium access, and question inventory from the **single authoritative stage-specific response**.
+- **Backend** (`Controllers/StageCategoryAccessController.cs`): `Categories[].ProblemsCount` is computed from published problems with matching stage/category IDs, defaulting to zero for truly empty topics. Category image URLs are normalized with the same storage service as `/api/categories`; no change to access enforcement, daily allowance, or migrations.
+- **Web** (`StageCategoriesClient.tsx`, `categoriesApi.ts`): stage catalog is authoritative; no second general-categories fetch can trigger a false error, while absent optional inventory counts from older servers remain *unknown*, not incorrectly empty.
+- **Flutter** (`stage_category_access.dart`, `stage_categories_screen.dart`): derives the displayed stage cards and known-empty checks from the catalog; screen retries/refreshes that source and the Premium entitlement separately. Anonymous visitors are no longer marked unlocked for categories reserved to Premium; admins retain full access.
+- **Regression tests:** extended existing disposable-PostgreSQL Free-category integration checks for count consistency and live changes; extended existing Flutter catalog parsing widget test for `ProblemsCount` and `Order`.
+- **Review gates:** as of the first post-commit check, Next.js four workflows passed; Backend PostgreSQL/build jobs and Flutter Android/debug-signed QA APK runs were still finishing. Re-check *latest SHAs*, device UX and integrated staging responses before any merge or deployment.
+- **No release:** all changes remain on feature branches. Zero database changes, content publication, checkout or deployment.
+
 ## November 17 — daily practice surfaced across web and Flutter (development)
 
 - **Existing backend implementation discovered:** `GET /api/users/daily-challenge` already creates up to 5 repeatable, optional UTC-day **practice suggestions** per learner/stage from database-published, currently accessible problems. There is no 10-question daily limit or extra score; normal answer submission controls points and correctness.
