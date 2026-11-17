@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
+import { getApiErrorMessage } from '@/lib/authSession';
 import {
   BarChart3, BookOpen, CheckCircle2, Clock3, ListChecks,
   Star, Users, AlertCircle,
@@ -12,6 +13,7 @@ import {
 import {
   useGetAdminLearnerDetailQuery,
   useGetAdminLearnerAttemptsQuery,
+  useSetAdminLearnerSubscriptionMutation,
 } from '@/store/api/usersApi';
 
 export default function AdminLearnerDetailPage() {
@@ -21,6 +23,12 @@ export default function AdminLearnerDetailPage() {
   const validId = Number.isSafeInteger(learnerId) && learnerId > 0;
   const [stageId, setStageId] = useState<number | undefined>();
   const [page, setPage] = useState(1);
+  const [selectedTier, setSelectedTier] = useState<'Free' | 'Premium' | null>(null);
+  const [tierMessage, setTierMessage] = useState('');
+  const [tierError, setTierError] = useState('');
+  const [setSubscription, { isLoading: savingTier }] =
+    useSetAdminLearnerSubscriptionMutation();
+
 
   const { data, isLoading, isError, refetch } = useGetAdminLearnerDetailQuery(
     { LearnerId: learnerId, StageId: stageId }, { skip: !validId, refetchOnMountOrArgChange: true },
@@ -49,6 +57,12 @@ export default function AdminLearnerDetailPage() {
     retry: 'إعادة المحاولة', empty: 'لا توجد محاولات لهذه المرحلة.',
     prev: 'السابق', next: 'التالي', page: 'صفحة', noCategories: 'لم تُحدد مرحلة لعرض التصنيفات.',
     noAttempts: 'لا يوجد سجل محاولات.',
+    manageTier: 'إدارة اشتراك الطالب', saveTier: 'حفظ الاشتراك',
+    tierHint: 'التغيير يطبّق فوراً على صلاحيات الطالب دون دفع إلكتروني.',
+    tierConfirm: 'هل تريد تغيير اشتراك الطالب الآن؟',
+    tierSuccess: 'تم تحديث الاشتراك. يُفضّل أن يحدّث الطالب صفحته لرؤية المميزات.',
+    tierError: 'تعذر تغيير اشتراك الطالب.',
+
   } : {
     back: 'Back to students', title: 'Learner profile', active: 'Active', disabled: 'Disabled',
     stage: 'Current stage', noStage: 'Not selected', joined: 'Joined',
@@ -67,6 +81,32 @@ export default function AdminLearnerDetailPage() {
     retry: 'Retry', empty: 'No attempts recorded in this stage.',
     prev: 'Previous', next: 'Next', page: 'Page', noCategories: 'Select a stage to see categories.',
     noAttempts: 'No recorded attempts.',
+    manageTier: 'Manage learner subscription', saveTier: 'Save plan',
+    tierHint: 'Changes take effect on the server immediately; no payment is charged.',
+    tierConfirm: 'Change this learner subscription now?',
+    tierSuccess: 'Plan updated. The learner should refresh to see the latest benefits.',
+    tierError: 'Could not update this learner subscription.',
+
+  };
+
+  const currentTier = data?.Learner.SubscriptionType === 'Premium'
+    ? 'Premium' : 'Free';
+  const effectiveTier = selectedTier ?? currentTier;
+  const saveTier = async () => {
+    if (!validId || savingTier || effectiveTier === currentTier) return;
+    if (!window.confirm(label.tierConfirm)) return;
+    setTierError('');
+    setTierMessage('');
+    try {
+      await setSubscription({
+        LearnerId: learnerId,
+        SubscriptionType: effectiveTier,
+      }).unwrap();
+      setSelectedTier(null);
+      setTierMessage(label.tierSuccess);
+    } catch (error) {
+      setTierError(getApiErrorMessage(error, label.tierError));
+    }
   };
 
   const nf = (n: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(n);
@@ -121,6 +161,34 @@ export default function AdminLearnerDetailPage() {
                 }`}>{data.Learner.IsActive ? label.active : label.disabled}</span>
                 <span className="rounded-xl border border-border px-3 py-2 text-sm">{data.Learner.SubscriptionType}</span>
               </div>
+            </div>
+            <div className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-muted/20 p-3">
+              <label className="flex flex-col gap-1 text-sm font-semibold">
+                <span>{label.manageTier}</span>
+                <select
+                  value={effectiveTier}
+                  onChange={(e) => {
+                    setSelectedTier(e.target.value as 'Free' | 'Premium');
+                    setTierError('');
+                    setTierMessage('');
+                  }}
+                  disabled={savingTier}
+                  className="rounded-xl border border-border bg-card px-4 py-2"
+                >
+                  <option value="Free">Free</option>
+                  <option value="Premium">Premium</option>
+                </select>
+              </label>
+              <button type="button"
+                disabled={savingTier || effectiveTier === currentTier}
+                onClick={saveTier}
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {savingTier ? label.loading : label.saveTier}
+              </button>
+              <p className="w-full text-xs text-muted-foreground">{label.tierHint}</p>
+              {tierMessage && <p role="status" className="w-full text-sm text-primary">{tierMessage}</p>}
+              {tierError && <p role="alert" className="w-full text-sm text-destructive">{tierError}</p>}
             </div>
             <dl className="mt-5 grid gap-3 border-t border-border pt-4 text-sm md:grid-cols-3 xl:grid-cols-4">
               {[
