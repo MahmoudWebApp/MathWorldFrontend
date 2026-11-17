@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
@@ -37,7 +37,15 @@ export default function StudentLeaderboardPage() {
   const stageTitle = data
     ? (ar ? data.NameAr : data.NameEn)
     : (ar ? stage?.NameAr : stage?.NameEn);
-  const pages = data ? Math.max(1, Math.ceil(data.TotalLearners / data.PageSize)) : 1;
+  const pages = data ? Math.max(1, Math.ceil(data.TotalLearners / Math.max(1, data.PageSize))) : 1;
+
+  // A previously valid page can become empty after a period change or
+  // updated ranking. Recover instead of telling the learner no one ranked.
+  useEffect(() => {
+    if (data && data.TotalLearners > 0 && page > pages) {
+      setPage(1);
+    }
+  }, [data, page, pages]);
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-10" dir={ar ? 'rtl' : 'ltr'}>
