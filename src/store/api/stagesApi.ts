@@ -59,7 +59,7 @@ export interface CreateStageRequest {
 export const stagesApi = createApi({
   reducerPath: 'stagesApi',
   baseQuery,
-  tagTypes: ['Stage'],
+  tagTypes: ['Stage', 'LearningJourney', 'DailyChallenge'],
   endpoints: (builder) => ({
     
     // ✅ PUBLIC: Get all stages (no auth required)
@@ -75,11 +75,13 @@ export const stagesApi = createApi({
       query: (stageId) => stageId
         ? `/users/daily-challenge?stageId=${stageId}`
         : '/users/daily-challenge',
+      providesTags: ['DailyChallenge'],
     }),
     getLearningJourney: builder.query<LearningJourney, number | void>({
       query: (stageId) => stageId
         ? `/users/journey?stageId=${stageId}`
         : '/users/journey',
+      providesTags: ['LearningJourney'],
     }),
 
     // Admin: Get all stages (requires auth)
