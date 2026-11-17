@@ -30,6 +30,8 @@ export interface CategoryDto {
   Icon: string;
   StageId: number;
   Order: number;
+  // Returned by updated backend; older API versions omit this field.
+  ProblemsCount?: number | null;
 }
 
 export interface StageCategoryAccessDto {
