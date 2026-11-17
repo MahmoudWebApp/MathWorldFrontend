@@ -2,7 +2,6 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import {
-  useGetCategoriesQuery,
   useGetStageCategoryAccessQuery,
   useGetStudentSubscriptionQuery,
   type CategoryDto,
@@ -252,13 +251,15 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const isAdmin = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) => state.auth.isAuthenticated && state.auth.user?.Role === "Admin");
   const isPremium = isAdmin || subscription?.IsPremium === true;
 
-  const { data: allCategories, isLoading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
   const { data: stages, isLoading: stagesLoading, isError: stagesError,
     refetch: refetchStages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const currentStage = stages?.find(s => s.Id === stageId);
-  const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
-  const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0));
+  // Keep category metadata, access and published inventory in the same
+  // server-owned snapshot. A second /categories call may be stale or fail.
+  const sortedCategories: CategoryDto[] = (access?.Categories ?? [])
+    .map(category => ({ ...category, StageId: stageId, ProblemsCount: category.ProblemsCount }))
+    .sort((a, b) => (a.Order || 0) - (b.Order || 0) || a.Id - b.Id);
   // Never infer that an absent API response means everything is Premium.
   // Only the server's verified free-category IDs can lock Free content.
   const unlockedCategories = sortedCategories.filter(category =>
@@ -269,7 +270,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const unknownCount = unlockedCategories.filter(category => category.ProblemsCount == null).length;
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
-  const isLoading = categoriesLoading || stagesLoading || accessLoading || (authenticated && subscriptionLoading);
+  const isLoading = stagesLoading || accessLoading || (authenticated && subscriptionLoading);
 
   if (!stagesLoading && stages && !currentStage) {
     return <section className="container mx-auto flex min-h-[50vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 py-16 text-center" role="alert">
@@ -288,7 +289,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     </section>;
   }
 
-  if (categoriesError || stagesError || accessError || (!accessLoading && !access) ||
+  if (stagesError || accessError || (!accessLoading && !access) ||
       (authenticated && subscriptionError)) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
@@ -312,7 +313,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
             <button
               type="button" onClick={() => {
-                void refetchCategories();
                 void refetchStages();
                 if (Number.isSafeInteger(stageId) && stageId > 0) void refetchAccess();
                 if (authenticated) void refetchSubscription();
