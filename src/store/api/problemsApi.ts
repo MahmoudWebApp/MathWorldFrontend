@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import type { PremiumSolution } from '@/lib/premium-api';
 import type { GeometryScene } from '@/components/math/GeometryDiagram';
 import { baseQuery } from './baseQuery';
+import { usersApi } from './usersApi';
 import type { PagedProblemsResponse, ProblemPreview } from './types';
 
 export interface OptionForStudent {
@@ -240,6 +241,19 @@ export const problemsApi = createApi({
         { type: 'Problem', id: ProblemId },
         { type: 'AttemptHistory', id: ProblemId },
       ],
+      async onQueryStarted(_body, { dispatch, queryFulfilled }) {
+        try {
+          // These are separate RTK Query APIs; invalidating Problem tags does
+          // not refresh usersApi. Run only after the server commits an attempt.
+          await queryFulfilled;
+          dispatch(usersApi.util.invalidateTags([
+            'Leaderboard', 'Achievements', 'LearningJourney',
+            'Dashboard', 'Solved', 'ErrorNotebook', 'User',
+          ]));
+        } catch {
+          // Do not show earned points or a changed rank for failed submissions.
+        }
+      },
     }),
 
     getCategoryProblems: builder.query<
