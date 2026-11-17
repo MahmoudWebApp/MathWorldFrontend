@@ -1,12 +1,16 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
 import { useGetCategoriesQuery, type CategoryDto } from '@/store/api/categoriesApi';
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
 import {
   AlertCircle,
   Filter,
   Loader2,
+  LockKeyhole,
+  Info,
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
@@ -31,6 +35,8 @@ interface CategoryPremiumCardProps {
   locale: string;
   stageId: number;
   iconUrl?: string | null;
+  locked: boolean;
+  empty: boolean;
 }
 
 interface OtherStagePremiumCardProps {
@@ -50,6 +56,8 @@ function CategoryPremiumCard({
   locale,
   stageId,
   iconUrl,
+  locked,
+  empty,
 }: CategoryPremiumCardProps) {
   return (
     <motion.div
@@ -59,7 +67,10 @@ function CategoryPremiumCard({
       className="h-full"
     >
       <Link
-        href={`/problems?categoryId=${category.Id}&stageId=${stageId}`}
+        href={locked || empty ? '#' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
+        onClick={(event) => { if (locked || empty) event.preventDefault(); }}
+        aria-disabled={locked || empty}
+        tabIndex={locked || empty ? -1 : undefined}
         className={`brand-surface math-card group relative flex h-[240px] flex-col justify-between overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-2xl ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
@@ -95,9 +106,20 @@ function CategoryPremiumCard({
 
         {/* Footer: Equation & Subtle decorative element */}
         <div className="relative z-10 mt-auto">
-          <p className="math-equation-chip inline-block rounded-md px-3 py-1 font-mono text-sm text-muted-foreground">
-            {math.equation}
-          </p>
+          {locked || empty ? (
+            <p className="inline-flex items-center gap-2 rounded-md bg-muted/50 px-3 py-1 text-sm text-muted-foreground">
+              {locked ? <LockKeyhole className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+              {locked
+                ? locale === 'ar' ? 'متاحة مع Premium' : 'Premium category'
+                : locale === 'ar' ? 'لا توجد مسائل بعد' : 'No problems yet'}
+            </p>
+          ) : (
+            <p className="math-equation-chip inline-block rounded-md px-3 py-1 font-mono text-sm text-muted-foreground">
+              {category.ProblemsCount != null
+                ? locale === 'ar' ? `${category.ProblemsCount} مسألة` : `${category.ProblemsCount} problems`
+                : math.equation}
+            </p>
+          )}
         </div>
       </Link>
     </motion.div>
@@ -210,6 +232,8 @@ interface StageCategoriesClientProps {
 export default function StageCategoriesClient({ stageId }: StageCategoriesClientProps) {
   const t = useTranslations();
   const locale = useLocale();
+  const subscriptionType = useSelector((state: RootState) => state.auth.user?.SubscriptionType);
+  const isPremium = subscriptionType?.toLowerCase() === 'premium';
 
   
   const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
@@ -217,7 +241,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
 
   const currentStage = stages?.find(s => s.Id === stageId);
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
-  const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0));
+  const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0) || a.Id - b.Id);
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   const isLoading = categoriesLoading || stagesLoading;
@@ -338,6 +362,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   locale={locale}
                   stageId={stageId}
                   iconUrl={iconUrl}
+                  locked={!isPremium && index >= 2}
+                  empty={category.ProblemsCount === 0}
                 />
               );
             })}
