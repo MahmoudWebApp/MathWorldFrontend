@@ -244,6 +244,13 @@ export default function UserDashboardPage() {
                 </Link>
               )}
               <h3 className="mb-3 text-sm font-semibold">{journeyLabels.categories}</h3>
+              {journey.Categories.every(category => category.IsLocked !== false) && (
+                <p className="mb-4 text-sm text-muted-foreground">
+                  {isArabic
+                    ? 'الفئات المفتوحة مو مؤكدة من بيانات التقدّم الحالية. افتح قائمة مرحلتك لتشوف الفئات المسموحة بدل تخمين صلاحياتك.'
+                    : 'Unlocked topics are not verified from this progress response. Open your stage catalogue to see which topics you can use.'}
+                </p>
+              )}
               <div className="mb-5 grid gap-2 sm:grid-cols-2">
                 {journey.Categories.filter(category => category.IsLocked === false).slice(0, 4).map((category) => (
                   <div key={category.CategoryId} className="rounded-xl border border-border p-3">
