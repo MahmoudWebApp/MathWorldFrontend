@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
-  BarChart3, BookOpenText, ChevronDown, FolderTree,
+  BarChart3, BookOpenText, ChevronDown, ClipboardCheck, FolderTree,
   GraduationCap, LayoutDashboard, ShieldCheck, UsersRound,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
@@ -55,6 +55,15 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Categories',
     descriptionAr: 'اختر فئة لعرض وإضافة مسائلها',
     descriptionEn: 'Organize topics by stage',
+    group: 'content',
+  },
+  {
+    href: '/admin/content-audit',
+    icon: ClipboardCheck,
+    labelAr: 'تدقيق المحتوى',
+    labelEn: 'Content audit',
+    descriptionAr: 'فئات فارغة، خيارات إجابة وحلول ناقصة',
+    descriptionEn: 'Empty categories, answer options and solution checks',
     group: 'content',
   },
   {
