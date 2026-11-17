@@ -249,6 +249,7 @@ export const problemsApi = createApi({
           dispatch(usersApi.util.invalidateTags([
             'Leaderboard', 'Achievements', 'LearningJourney',
             'Dashboard', 'Solved', 'ErrorNotebook', 'User',
+            'PremiumAnalytics',
           ]));
         } catch {
           // Do not show earned points or a changed rank for failed submissions.
