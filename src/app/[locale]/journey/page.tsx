@@ -3,7 +3,7 @@
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
-import { useGetLearningJourneyQuery } from '@/store/api/stagesApi';
+import { useGetDailyChallengeQuery, useGetLearningJourneyQuery } from '@/store/api/stagesApi';
 
 export default function JourneyPage() {
   const ar = useLocale() === 'ar';
@@ -12,6 +12,11 @@ export default function JourneyPage() {
   const { data, isLoading, isError, refetch } = useGetLearningJourneyQuery(undefined, {
     skip: !student,
     refetchOnMountOrArgChange: true,
+  });
+  const daily = useGetDailyChallengeQuery(undefined, {
+    skip: !student || !data?.StageId,
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
   });
 
   // Both web and Flutter recommend only categories unlocked by the API.
@@ -49,6 +54,59 @@ export default function JourneyPage() {
             <div className="rounded-2xl border bg-card p-5"><div className="text-sm text-muted-foreground">{ar ? 'مسائل محلولة' : 'Solved problems'}</div><strong className="text-3xl">{data.SolvedProblems} / {data.TotalProblems}</strong></div>
             <div className="rounded-2xl border bg-card p-5"><div className="text-sm text-muted-foreground">{ar ? 'إنجاز المرحلة' : 'Stage completion'}</div><strong className="text-3xl">{data.CompletionPercent}%</strong></div>
           </div>
+          <section className="mb-8 rounded-2xl border bg-card p-5" aria-labelledby="daily-practice-title">
+            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 id="daily-practice-title" className="text-lg font-bold">
+                  {ar ? 'تحدّي اليوم الاختياري' : 'Optional daily practice'}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {ar ? 'حتى 5 مسائل من فئاتك المفتوحة. هذا اقتراح للممارسة، وليس حدّاً يومياً للحل.'
+                    : 'Up to five questions from your unlocked topics. This is a suggestion, not a daily problem limit.'}
+                </p>
+              </div>
+              {daily.data && <span className="rounded-lg bg-primary/10 px-3 py-1 text-sm font-bold text-primary" aria-live="polite">
+                {daily.data.Completed} / {daily.data.Total}
+              </span>}
+            </div>
+            {daily.isLoading && <p role="status" className="text-sm text-muted-foreground">
+              {ar ? 'جارٍ تجهيز مسائل اليوم…' : "Loading today's practice…"}
+            </p>}
+            {daily.isError && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
+              <p>{ar ? 'تعذّر تحميل مسائل اليوم.' : "Couldn't load today's questions."}</p>
+              <button type="button" onClick={() => void daily.refetch()}
+                className="font-semibold text-primary underline">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
+            </div>}
+            {daily.data?.Total === 0 && <p className="text-sm text-muted-foreground">
+              {ar ? 'ما في مسائل منشورة ضمن فئاتك المفتوحة حالياً. فيك ترجع للمراحل وتراجع تقدّمك.'
+                : 'No published questions in your unlocked topics yet. You can browse stages or review your progress.'}
+            </p>}
+            {daily.data && daily.data.Total > 0 && <ol className="grid gap-2 sm:grid-cols-2">
+              {daily.data.Problems.map(problem => (
+                <li key={problem.Id} className="min-w-0 rounded-xl border bg-background/60 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span className="text-xs text-muted-foreground">
+                      {ar ? 'مسألة' : 'Problem'} #{problem.Id}
+                    </span>
+                    <span className={problem.IsSolved
+                      ? 'text-xs font-semibold text-emerald-700 dark:text-emerald-300'
+                      : 'text-xs text-muted-foreground'}>
+                      {problem.IsSolved
+                        ? (ar ? 'تم حلّها' : 'Solved')
+                        : (ar ? 'بانتظار الحل' : 'To practice')}
+                    </span>
+                  </div>
+                  <p className="mb-3 line-clamp-2 text-sm font-medium">
+                    {ar ? problem.TitleAr : problem.TitleEn}
+                  </p>
+                  <Link href={`/problems/${problem.Id}`}
+                    className="inline-flex min-h-9 items-center rounded-lg text-sm font-semibold text-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                    {ar ? 'افتح المسألة' : 'Open problem'}
+                  </Link>
+                </li>
+              ))}
+            </ol>}
+          </section>
           {recommended && (
             <section className="mb-8 rounded-2xl border border-primary/25 bg-primary/5 p-5">
               <h2 className="text-lg font-bold">{ar ? 'الخطوة المقترحة لك' : 'Suggested next step'}</h2>
