@@ -82,6 +82,8 @@ export interface JourneyCategory {
   CategoryId: number;
   NameAr: string;
   NameEn: string;
+  // Only the updated server returns this; undefined means not verified.
+  IsLocked?: boolean;
   TotalProblems: number;
   AttemptedProblems: number;
   SolvedProblems: number;
