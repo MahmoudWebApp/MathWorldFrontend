@@ -364,7 +364,7 @@ function ProblemsPageClient() {
                   <RotateCcw className="h-4 w-4" />
                   {t("common.retry")}
                 </Button>
-              )
+              )}
               {debouncedSearch && (
                 <Button
                   variant="outline"
