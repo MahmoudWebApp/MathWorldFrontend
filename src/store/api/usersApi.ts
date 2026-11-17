@@ -487,6 +487,7 @@ export const usersApi = createApi({
     'LearningJourney',
     'Leaderboard',
     'Achievements',
+    'PremiumAnalytics',
     'AdminLearners',
     'DailyQuota',
     'Subscription',
@@ -691,6 +692,7 @@ export const usersApi = createApi({
 
     getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, void>({
       query: () => '/users/premium-analytics',
+      providesTags: ['PremiumAnalytics'],
     }),
 
     updateAdminLearnerSubscription: builder.mutation<
