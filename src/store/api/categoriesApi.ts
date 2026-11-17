@@ -45,6 +45,7 @@ export interface StageCategoryAccessDto {
     NameEn: string;
     Icon: string;
     Order: number;
+    ProblemsCount?: number | null;
     IsFree: boolean;
   }>;
 }
