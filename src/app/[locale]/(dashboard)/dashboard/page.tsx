@@ -68,7 +68,7 @@ export default function UserDashboardPage() {
         points: "نقاط هذه المرحلة",
         categories: "التقدم حسب التصنيف",
         change: "تغيير المرحلة",
-        practice: "تصفح مسائل المرحلة",
+        practice: "ابدأ حل المسائل",
       }
     : {
         title: "My learning journey",
@@ -78,7 +78,7 @@ export default function UserDashboardPage() {
         points: "Stage points",
         categories: "Progress by topic",
         change: "Change stage",
-        practice: "Explore stage problems",
+        practice: "Start solving problems",
       };
 
   // Web and Flutter show the same stage-based learning journey.
@@ -146,6 +146,13 @@ export default function UserDashboardPage() {
             </Link>
           </div>
 
+          <Link href={`/stages/${stageId}`}
+            className="mb-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90 sm:w-auto">
+            <Target className="h-5 w-5" aria-hidden="true" />
+            {journeyLabels.practice}
+            <DirectionalArrow direction="forward" className="h-4 w-4" />
+          </Link>
+
           <div className="mb-5">
             <DailyQuotaCard stageId={stageId} compact />
             <Link href="/premium"
@@ -202,10 +209,7 @@ export default function UserDashboardPage() {
                   </div>
                 ))}
               </div>
-              <Link href={`/stages/${journey.StageId}`}
-                className="inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                {journeyLabels.practice}
-              </Link>
+
             </>
           )}
         </section>
