@@ -24,7 +24,7 @@ export default function StudentLeaderboardPage() {
   const { data: stage, isLoading: loadingStage, isError: stageError, refetch: reloadStage } =
     useGetLearningStageQuery(undefined, { skip: !isStudent });
   const stageId = stage?.StageId;
-  const { data, isLoading, isError, refetch } = useGetStageLeaderboardQuery(
+  const { currentData: data, isLoading, isFetching, isError, refetch } = useGetStageLeaderboardQuery(
     { stageId: stageId ?? 0, period, page },
     { skip: !isStudent || !stageId, refetchOnMountOrArgChange: true }
   );
@@ -102,7 +102,7 @@ export default function StudentLeaderboardPage() {
             </div>
           </section>
 
-          {isLoading ? (
+          {isLoading || (isFetching && !data) ? (
             <p role="status" className="py-12 text-center text-muted-foreground">{ar ? 'جارٍ جلب الترتيب…' : 'Loading rankings…'}</p>
           ) : isError || !data ? (
             <section role="alert" className="space-y-3 rounded-2xl border p-6">
