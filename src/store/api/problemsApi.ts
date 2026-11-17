@@ -134,6 +134,13 @@ export interface SubmitAnswerRequest {
   TimeSpentSeconds: number;
 }
 
+export interface ProblemSolutionPreview {
+  ProblemId: number;
+  CorrectOptionId?: number | null;
+  DetailedSolution?: string | null;
+  YoutubeSolutionUrl?: string | null;
+}
+
 export interface AnswerResult {
   IsCorrect: boolean;
   IsSolved: boolean;
@@ -204,6 +211,10 @@ export const problemsApi = createApi({
         },
       }),
       providesTags: ['Problem'],
+    }),
+
+    getSolutionPreview: builder.query<ProblemSolutionPreview, number>({
+      query: (problemId) => `/problems/${problemId}/solution-preview`,
     }),
 
     getProblem: builder.query<
@@ -310,6 +321,7 @@ export const problemsApi = createApi({
 export const {
   useSearchProblemsQuery,
   useGetProblemQuery,
+  useLazyGetSolutionPreviewQuery,
   useGetProblemAttemptsQuery,
   useSubmitAnswerMutation,
   useGetCategoryProblemsQuery,
