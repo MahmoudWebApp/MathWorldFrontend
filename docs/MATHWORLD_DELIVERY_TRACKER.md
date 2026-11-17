@@ -11,6 +11,15 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 17 — scoring visibility and student data refresh (development)
+
+- **Observed stale-cache path:** Flutter answer submission invalidated dashboard/problem lists but not the stage leaderboard, learning journey, daily-practice completion, achievement badges or Premium analytics. A student who solved a question could return to a cached rank/score until the next manual refresh. The existing backend leaderboard already aggregates canonical solved `UserProgresses` (including historic solves), and existing disposable PostgreSQL integration asserts a single solving learner is present; avoid changing ranking/privacy rules unnecessarily.
+- **Flutter:** `lib/providers/problem_details_provider.dart` now invalidates those score-dependent providers **only after a successful server answer submission**. Failed answers do not award speculative points. No design, endpoint, or entitlement changes.
+- **Next.js:** `problemsApi.submitAnswer.onQueryStarted` invalidates success-only ranking, achievements, dashboard, progress, error notebook and Premium analytics in `usersApi`; it also invalidates journey and daily-practice queries in **the separate** `stagesApi`, which previously could stay stale. `getStageLeaderboard`, `getAchievements`, `getPremiumAnalytics`, `getLearningJourney` and `getDailyChallenge` now supply the proper cache tags.
+- **Leaderboard filtering:** the web leaderboard uses `currentData` for the selected stage/period/page to avoid briefly presenting previous-filter entries while a new request loads.
+- **Verification:** CI runs for the updated Next.js and Flutter commits must complete; UI/API acceptance still requires the staging backend and a logged-in learner who submits correct and incorrect answers, changes periods, then opens leaderboard, journey and analytics. Android QA APKs are debug-signed, not Play-signed.
+- **Safety:** feature branches only; no production migrations, releases, content publication, checkout or advertising.
+
 ## November 17 — stage-category reliability and consistent inventory (development)
 
 - **Root issue addressed:** the Flutter stage page and the Next.js category page formerly depended on *both* the general `/api/categories` list and the `/api/stages/{id}/free-categories` access catalog. A stale/failed list request could show an empty/error stage despite a valid access catalog. The stage page now renders categories, sort order, Free/Premium access, and question inventory from the **single authoritative stage-specific response**.
