@@ -14,7 +14,7 @@ export default function JourneyPage() {
     skip: !student,
     refetchOnMountOrArgChange: true,
   });
-  const daily = useGetDailyChallengeQuery(undefined, {
+  const daily = useGetDailyChallengeQuery(data?.StageId ?? 0, {
     skip: !student || !data?.StageId,
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
