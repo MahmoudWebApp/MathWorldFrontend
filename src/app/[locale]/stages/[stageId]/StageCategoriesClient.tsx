@@ -68,10 +68,15 @@ function CategoryPremiumCard({
       className="h-full"
     >
       <Link
-        href={locked || empty ? '#' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
-        onClick={(event) => { if (locked || empty) event.preventDefault(); }}
-        aria-disabled={locked || empty}
-        tabIndex={locked || empty ? -1 : undefined}
+        href={locked ? '/premium' : empty ? '#' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
+        onClick={(event) => { if (empty && !locked) event.preventDefault(); }}
+        aria-disabled={empty && !locked}
+        aria-label={locked
+          ? locale === 'ar'
+            ? `${category.NameAr} — فئة مقفلة، اضغط لمعرفة السبب`
+            : `${category.NameEn} — locked category, learn why`
+          : undefined}
+        tabIndex={empty && !locked ? -1 : undefined}
         className={`brand-surface math-card group relative flex h-[240px] flex-col justify-between overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-2xl ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
@@ -245,8 +250,18 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   );
 
   
-  const { data: allCategories, isLoading: categoriesLoading, error: categoriesError } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
-  const { data: stages, isLoading: stagesLoading } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
+  const {
+    data: allCategories,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+    refetch: refetchCategories,
+  } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
+  const {
+    data: stages,
+    isLoading: stagesLoading,
+    error: stagesError,
+    refetch: refetchStages,
+  } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const currentStage = stages?.find(s => s.Id === stageId);
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
@@ -255,7 +270,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   const isLoading = categoriesLoading || stagesLoading;
 
-  if (categoriesError) {
+  if (categoriesError || stagesError) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
@@ -270,7 +285,10 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </div>
             <p className="text-xl font-bold">{t('common.errorLoadingData')}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                void refetchCategories();
+                void refetchStages();
+              }}
               className="px-6 py-3 mt-4 bg-primary text-primary-foreground font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 active:scale-95 transition-all"
             >
               {t('common.retry')}
