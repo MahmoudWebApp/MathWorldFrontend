@@ -101,6 +101,43 @@ export interface AdminStageDetail {
   DailyActivity: AdminActivityDay[];
 }
 
+export interface AdminContentAuditSummary {
+  TotalStages: number;
+  TotalCategories: number;
+  TotalProblems: number;
+  EmptyCategories: number;
+  ProblemsWithInvalidOptions: number;
+  ProblemsMissingArabicSolution: number;
+  ProblemsMissingEnglishSolution: number;
+  LearnersWithoutStage: number;
+}
+
+export interface AdminContentAuditCategory {
+  Id: number;
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  Order: number;
+  ProblemsCount: number;
+  MissingArabicSolutionCount: number;
+  MissingEnglishSolutionCount: number;
+  InvalidOptionsCount: number;
+}
+
+export interface AdminContentAuditStage {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  CategoriesCount: number;
+  ProblemsCount: number;
+}
+
+export interface AdminContentAudit {
+  Summary: AdminContentAuditSummary;
+  Stages: AdminContentAuditStage[];
+  Categories: AdminContentAuditCategory[];
+}
+
 export const statsApi = createApi({
   reducerPath: 'statsApi',
   baseQuery,
@@ -133,6 +170,12 @@ export const statsApi = createApi({
       providesTags: ['Stats'],
     }),
 
+    // Admin-only, read-only education inventory and quality checks.
+    getAdminContentAudit: builder.query<AdminContentAudit, void>({
+      query: () => '/admin/content-audit',
+      providesTags: ['Stats'],
+    }),
+
     // ✅ ADMIN: Get admin dashboard stats (requires auth)
     // Calls: GET /api/admin/stats
     getAdminStats: builder.query<DashboardStats, void>({
@@ -146,5 +189,6 @@ export const {
   useGetStatsQuery,
   useGetAdminStatsQuery,
   useGetAdminAnalyticsOverviewQuery,
-  useGetAdminAnalyticsStageQuery, 
+  useGetAdminAnalyticsStageQuery,
+  useGetAdminContentAuditQuery, 
 } = statsApi;
