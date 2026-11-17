@@ -11,6 +11,13 @@
 | Flutter Mobile | [#12](https://github.com/MahmoudWebApp/mathworld-mobile/pull/12) | `feature/premium-entitlements-client` |
 
 
+## November 17 — access freshness and guest route correction (development)
+
+- **Flutter stage category access and subscription** providers are now auto-disposed after leaving their listeners. Re-entering a stage refetches verified Free category selections and live Premium grants/expiry rather than keeping an indefinitely stale in-memory result; pull-to-refresh still forces refetch. This is particularly important when an admin changes a student's entitlement.
+- **Next.js stage category screen** now refetches the stage access catalog and student subscription on mount, window focus, and reconnect. The backend remains the only authorization authority. No speculative Free/Premium access is granted.
+- **Flutter stage category UI** now distinguishes Admin's full topic access from the Free tier explanation, explains to guests that sign-in is required to solve, and routes unauthenticated guests to login rather than a checkout service that requires a JWT. There is still just one membership benefits link for signed-in Free students.
+- No database mutation, production release, payment, or advertisement. Latest CI and real Android/Web staging with live admin-granted/revoked Premium accounts remain release gates.
+
 ## November 17 — scoring visibility and student data refresh (development)
 
 - **Observed stale-cache path:** Flutter answer submission invalidated dashboard/problem lists but not the stage leaderboard, learning journey, daily-practice completion, achievement badges or Premium analytics. A student who solved a question could return to a cached rank/score until the next manual refresh. The existing backend leaderboard already aggregates canonical solved `UserProgresses` (including historic solves), and existing disposable PostgreSQL integration asserts a single solving learner is present; avoid changing ranking/privacy rules unnecessarily.
