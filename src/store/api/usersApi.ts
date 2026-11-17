@@ -220,7 +220,7 @@ export interface AdminLearnerAttemptQuery extends AdminLearnerDrilldownQuery {
   Page: number;
 }
 
-/** Server-owned daily allowance; one Free allowance per educational stage. */
+/** Legacy response shape for stage-scoped usage statistics; no daily cap is enforced. */
 export interface StageDailyQuota {
   StageId: number;
   NameAr: string;
@@ -232,6 +232,35 @@ export interface StageDailyQuota {
   SubscriptionType: string;
   DayUtc: string;
   ResetsAtUtc: string;
+}
+
+export type LeaderboardPeriod = 'all' | 'weekly' | 'monthly';
+
+export interface StageLeaderboardEntry {
+  Rank: number;
+  DisplayName: string;
+  SolvedProblems: number;
+  Points: number;
+  FirstTryCorrect: number;
+  IsCurrentUser: boolean;
+}
+
+export interface StageLeaderboard {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  Period: LeaderboardPeriod;
+  Page: number;
+  PageSize: number;
+  TotalLearners: number;
+  MyRank: number | null;
+  Entries: StageLeaderboardEntry[];
+}
+
+export interface StageLeaderboardQuery {
+  StageId: number;
+  Period: LeaderboardPeriod;
+  Page: number;
 }
 
 export const usersApi = createApi({
@@ -248,6 +277,7 @@ export const usersApi = createApi({
     'LearningJourney',
     'AdminLearners',
     'DailyQuota',
+    'Leaderboard',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -277,6 +307,14 @@ export const usersApi = createApi({
       providesTags: (_data, _error, stageId) => [
         { type: 'DailyQuota', id: stageId },
       ],
+    }),
+
+    getLeaderboard: builder.query<StageLeaderboard, StageLeaderboardQuery>({
+      query: ({ StageId, Period, Page }) => ({
+        url: '/users/leaderboard',
+        params: { stageId: StageId, period: Period, page: Page, pageSize: 20 },
+      }),
+      providesTags: ['Leaderboard'],
     }),
 
     getLearningJourney: builder.query<LearningJourney, number>({
@@ -435,6 +473,7 @@ export const {
   useGetLearningStageQuery,
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,
+  useGetLeaderboardQuery,
   useGetDailyQuotaQuery,
   useGetProfileQuery,
   useGetFavoritesQuery,
