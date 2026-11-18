@@ -56,7 +56,8 @@
   --color-popover-foreground: #fbf8ff;
 
   --color-primary: #a78bfa;
-  --color-primary-foreground: #ffffff;
+  /* Dark text on bright violet passes contrast better than white. */
+  --color-primary-foreground: #160b28;
 
   --color-secondary: #39182e;
   --color-secondary-foreground: #fff2f9;

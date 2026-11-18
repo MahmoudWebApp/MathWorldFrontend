@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "qa:preflight": "node scripts/check-qa-api.mjs",
+    "qa:dev": "node scripts/check-qa-api.mjs && next dev --turbo"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

@@ -18,7 +18,7 @@ export function StudentNotificationsBell() {
     undefined, { pollingInterval: 60000, refetchOnFocus: true },
   );
   const { data, isLoading, isError, refetch } = useListNotificationsQuery(
-    { page: 1, pageSize: 20 },
+    { page: 1, pageSize: 20, locale: ar ? 'ar' : 'en' },
     { skip: !open, refetchOnMountOrArgChange: true },
   );
   const [markRead] = useMarkNotificationReadMutation();

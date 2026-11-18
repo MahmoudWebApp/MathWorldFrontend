@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
-  BarChart3, BellRing, BookOpenText, ChevronDown, ClipboardCheck, FolderTree,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound,
+  ChartNoAxesCombined, History, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList, Gift, TicketPercent,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -22,12 +21,30 @@ export const ADMIN_NAV_ITEMS = [
     group: 'overview',
   },
   {
-    href: '/admin/analytics',
-    icon: BarChart3,
-    labelAr: 'مركز الإحصائيات',
-    labelEn: 'Analytics center',
-    descriptionAr: 'نشاط الطلاب وأداء المراحل ونقاط الضعف',
-    descriptionEn: 'Student activity, stage trends and weak topics',
+    href: '/admin/engagement',
+    icon: ChartNoAxesCombined,
+    labelAr: 'نشاط المستويات والفئات',
+    labelEn: 'Stages & categories',
+    descriptionAr: 'الأكثر حلاً وأفضل طالب بكل مستوى وفئة',
+    descriptionEn: 'Active learners, top solvers and category usage',
+    group: 'overview',
+  },
+  {
+    href: '/admin/activity',
+    icon: UsersRound,
+    labelAr: 'دخول ونشاط الطلاب',
+    labelEn: 'Learner activity',
+    descriptionAr: 'تسجيل الطلاب وآخر دخول وحل حسب المستوى',
+    descriptionEn: 'Sign-ups, last sign-ins and last practice',
+    group: 'overview',
+  },
+  {
+    href: '/admin/audit',
+    icon: History,
+    labelAr: 'سجل العمليات',
+    labelEn: 'Activity & audit log',
+    descriptionAr: 'تتبع ما نفّذه الطلاب والأدمن',
+    descriptionEn: 'Record student and administrator commands',
     group: 'overview',
   },
   {
@@ -40,12 +57,30 @@ export const ADMIN_NAV_ITEMS = [
     group: 'management',
   },
   {
+    href: '/admin/premium-codes',
+    icon: Gift,
+    labelAr: 'أكواد هدية Premium',
+    labelEn: 'Premium gift codes',
+    descriptionAr: 'إنشاء أكواد مجانية لمرة واحدة ومراقبة استخدامها',
+    descriptionEn: 'Issue one-time Premium gifts and review redemptions',
+    group: 'management',
+  },
+  {
+    href: '/admin/premium-discounts',
+    icon: TicketPercent,
+    labelAr: 'أكواد خصم Premium',
+    labelEn: 'Premium discounts',
+    descriptionAr: 'إنشاء خصومات محددة المدة وإدارة صلاحيتها واستخداماتها',
+    descriptionEn: 'Schedule checkout discounts and manage validity and usage',
+    group: 'management',
+  },
+  {
     href: '/admin/notifications',
     icon: BellRing,
     labelAr: 'إشعارات الطلاب',
-    labelEn: 'Learner announcements',
-    descriptionAr: 'إرسال إشعار لجميع الطلاب أو لمرحلة محددة',
-    descriptionEn: 'Notify all learners or a selected stage',
+    labelEn: 'Learner notifications',
+    descriptionAr: 'إرسال رسالة ثنائية اللغة إلى طالب محدد',
+    descriptionEn: 'Send a bilingual in-app notice to one learner',
     group: 'management',
   },
   {
@@ -67,12 +102,21 @@ export const ADMIN_NAV_ITEMS = [
     group: 'content',
   },
   {
-    href: '/admin/content-audit',
-    icon: ClipboardCheck,
-    labelAr: 'تدقيق المحتوى',
-    labelEn: 'Content audit',
-    descriptionAr: 'فئات فارغة، خيارات إجابة وحلول ناقصة',
-    descriptionEn: 'Empty categories, answer options and solution checks',
+    href: '/admin/free-categories',
+    icon: LockKeyhole,
+    labelAr: 'الفئات المجانية وPremium',
+    labelEn: 'Free & Premium access',
+    descriptionAr: 'مراجعة الفئتين المجانيتين لكل مرحلة',
+    descriptionEn: 'Review the two free categories per stage',
+    group: 'content',
+  },
+  {
+    href: '/admin/problems/review',
+    icon: ClipboardList,
+    labelAr: 'مراجعة دفعات المسائل',
+    labelEn: 'Question review batches',
+    descriptionAr: 'مراجعة المسائل الثنائية اللغة واعتمادها قبل النشر',
+    descriptionEn: 'Review, approve and safely publish question batches',
     group: 'content',
   },
   {
@@ -85,83 +129,6 @@ export const ADMIN_NAV_ITEMS = [
     group: 'content',
   },
 ] as const;
-
-export function AdminNavDropdown() {
-  const locale = useLocale();
-  const pathname = usePathname();
-  const ar = locale === 'ar';
-  const [open, setOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => setOpen(false), [pathname]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function onOutsidePress(event: PointerEvent) {
-      if (!wrapperRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-    function onEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('pointerdown', onOutsidePress);
-    document.addEventListener('keydown', onEscape);
-    return () => {
-      document.removeEventListener('pointerdown', onOutsidePress);
-      document.removeEventListener('keydown', onEscape);
-    };
-  }, [open]);
-
-  const active = pathname === '/admin' || pathname.startsWith('/admin/');
-  return (
-    <div ref={wrapperRef} className="relative">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="mathworld-admin-navigation"
-        onClick={() => setOpen(value => !value)}
-        className={cn(
-          'flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-colors',
-          active
-            ? 'border-primary/30 bg-primary/10 text-primary'
-            : 'border-border text-foreground hover:border-primary/30 hover:bg-muted'
-        )}
-      >
-        <ShieldCheck className="h-4 w-4" aria-hidden />
-        {ar ? 'إدارة المنصة' : 'Administration'}
-        <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} aria-hidden />
-      </button>
-      {open && (
-        <nav
-          id="mathworld-admin-navigation"
-          aria-label={ar ? 'أقسام إدارة المنصة' : 'Administration sections'}
-          className="absolute end-0 top-full z-50 mt-3 max-h-[min(75vh,650px)] w-[min(92vw,380px)] overflow-y-auto rounded-2xl border border-border bg-popover p-2.5 shadow-2xl"
-        >
-          <div className="px-3 pb-2 pt-1 text-xs font-semibold text-muted-foreground">
-            {ar ? 'نظرة عامة' : 'Overview'}
-          </div>
-          {ADMIN_NAV_ITEMS.filter(item => item.group === 'overview').map(item => (
-            <AdminMenuLink key={item.href} item={item} ar={ar} pathname={pathname} close={() => setOpen(false)} />
-          ))}
-          <div className="mx-2 my-3 border-t border-border" />
-          <div className="px-3 pb-2 text-xs font-semibold text-muted-foreground">
-            {ar ? 'الإدارات' : 'Management'}
-          </div>
-          {ADMIN_NAV_ITEMS.filter(item => item.group === 'management').map(item => (
-            <AdminMenuLink key={item.href} item={item} ar={ar} pathname={pathname} close={() => setOpen(false)} />
-          ))}
-          <div className="mx-2 my-3 border-t border-border" />
-          <div className="px-3 pb-2 text-xs font-semibold text-muted-foreground">
-            {ar ? 'المحتوى التعليمي: مستويات ← فئات ← مسائل' : 'Learning content: Stages → Categories → Problems'}
-          </div>
-          {ADMIN_NAV_ITEMS.filter(item => item.group === 'content').map(item => (
-            <AdminMenuLink key={item.href} item={item} ar={ar} pathname={pathname} close={() => setOpen(false)} />
-          ))}
-        </nav>
-      )}
-    </div>
-  );
-}
 
 function AdminMenuLink({
   item, ar, pathname, close,

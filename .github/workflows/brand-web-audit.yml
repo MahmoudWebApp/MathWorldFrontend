@@ -1,0 +1,37 @@
+name: Web logo and PWA icon audit
+
+on:
+  push:
+    branches:
+      - feature/premium-entitlements-client
+    paths:
+      - "public/*favicon*"
+      - "public/*chrome*"
+      - "public/*apple-touch*"
+      - "public/*mark*"
+      - "tools/audit_web_brand.py"
+      - ".github/workflows/brand-web-audit.yml"
+  pull_request:
+    paths:
+      - "public/*favicon*"
+      - "public/*chrome*"
+      - "public/*apple-touch*"
+      - "public/*mark*"
+      - "tools/audit_web_brand.py"
+      - ".github/workflows/brand-web-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  icons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "Pillow>=11,<13"
+      - name: Inspect transparent mark, favicons and share icons
+        run: python tools/audit_web_brand.py

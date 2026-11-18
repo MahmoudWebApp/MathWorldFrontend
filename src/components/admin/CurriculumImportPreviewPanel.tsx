@@ -1,0 +1,67 @@
+'use client';
+
+import { useState } from 'react';
+import { useLocale } from 'next-intl';
+import { usePreviewCurriculumImportMutation, type ProposedCurriculumProblem, type CurriculumStageCoverage } from '@/store/api/curriculumApi';
+
+export function CurriculumImportPreviewPanel({ stages }: { stages: CurriculumStageCoverage[] }) {
+  const ar = useLocale() === 'ar';
+  const [source, setSource] = useState('[]');
+  const [localError, setLocalError] = useState('');
+  const [preview, { data, isLoading, error }] = usePreviewCurriculumImportMutation();
+
+  const submit = async () => {
+    setLocalError('');
+    let candidate: unknown;
+    try { candidate = JSON.parse(source); } catch {
+      setLocalError(ar ? 'ملف JSON غير صالح' : 'Invalid JSON'); return;
+    }
+    if (!Array.isArray(candidate) || candidate.length < 1 || candidate.length > 100 ||
+        candidate.some(item => !item || typeof item !== 'object' || Array.isArray(item))) {
+      setLocalError(ar ? 'أدخل مصفوفة تحتوي من 1 إلى 100 مسألة' : 'Enter an array of 1–100 problems');
+      return;
+    }
+    try { await preview({ Problems: candidate as ProposedCurriculumProblem[] }).unwrap(); }
+    catch { /* Render RTK Query error below. */ }
+  };
+
+  return (
+    <section className="space-y-3 rounded-xl border bg-card p-5">
+      <h2 className="text-lg font-semibold">{ar ? 'فحص دفعة مسائل قبل الاستيراد' : 'Curriculum batch dry-run'}</h2>
+      <p className="text-sm text-muted-foreground">
+        {ar ? 'ألصق مصفوفة JSON تحتوي معرفات المراحل والفئات الفعلية. الفحص لا يحفظ ولا ينشر أي مسألة.'
+          : 'Paste a JSON array using actual stage/category IDs. Preview never saves or publishes problems.'}
+      </p>
+      <p className="text-sm">{ar ? 'المراحل والفئات المتاحة لإعداد دفعتك يدوياً:' : 'Available stages and categories for manual authoring:'}</p>
+      <div className="max-h-40 overflow-y-auto rounded-lg border p-2 text-xs">
+        {stages.map(stage => <p key={stage.StageId}>
+          {ar ? stage.NameAr : stage.NameEn} (StageId: {stage.StageId}) —
+          {stage.Categories.map(category => `${ar ? category.NameAr : category.NameEn} [${category.CategoryId}]`).join(' · ')}
+        </p>)}
+      </div>
+      <textarea aria-label={ar ? 'مسائل بصيغة JSON' : 'Problems JSON'} value={source}
+        onChange={event => setSource(event.target.value)} rows={9} spellCheck={false}
+        className="w-full rounded-lg border bg-transparent p-3 font-mono text-xs" />
+      <button type="button" onClick={submit} disabled={isLoading}
+        className="rounded-lg bg-emerald-700 px-4 py-2 text-white disabled:opacity-50">
+        {isLoading ? '...' : ar ? 'فحص دون حفظ' : 'Validate without saving'}
+      </button>
+      {localError && <p role="alert" className="text-sm text-red-600">{localError}</p>}
+      {error && <p role="alert" className="text-sm text-red-600">{ar ? 'فشل التحقق. راجع الصلاحيات أو البيانات.' : 'Validation failed. Check permissions or payload.'}</p>}
+      {data && (
+        <div className="space-y-2 text-sm" role="status">
+          <p>{ar ? 'صحيحة' : 'Valid'}: {data.ValidCount} · {ar ? 'تحتاج تصحيح' : 'Invalid'}: {data.InvalidCount}</p>
+          <p className="font-medium">{ar ? 'معاينة فقط — لم تُنشر أي مسائل' : 'Dry-run only — no problems published'}</p>
+          {data.Results.map((item, index) => (
+            <div key={index} className="rounded-lg border p-2">
+              <strong dir="ltr">{item.ContentKey || `#${index + 1}`}</strong>
+              <span className={item.Valid ? 'ms-2 text-emerald-600' : 'ms-2 text-red-600'}>
+                {item.Valid ? (ar ? 'صحيحة' : 'Valid') : item.Errors.join(', ')}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}

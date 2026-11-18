@@ -1,10 +1,10 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { Infinity } from 'lucide-react';
-import { useGetDailyQuotaQuery } from '@/store/api/usersApi';
+import { Crown, Infinity } from 'lucide-react';
+import { useGetStudentEntitlementQuery } from '@/store/api/usersApi';
 
-/** Daily limits were retired: every account can practice without a daily cap. */
+/** Legacy component name retained for existing imports. There is no daily cap. */
 export function DailyQuotaCard({
   stageId,
   compact = false,
@@ -13,35 +13,40 @@ export function DailyQuotaCard({
   compact?: boolean;
 }) {
   const ar = useLocale() === 'ar';
-  const { data } = useGetDailyQuotaQuery(stageId ?? 0, {
+  // Legacy component name, but access comes from the real subscription
+  // endpoint. A daily quota must never block Free practice.
+  const { data, isLoading } = useGetStudentEntitlementQuery(undefined, {
     skip: stageId == null || stageId <= 0,
-    refetchOnMountOrArgChange: true,
   });
 
   if (stageId == null || stageId <= 0) return null;
 
+  const premium = data?.IsPremium === true;
+  const title = ar ? 'تدرّب بلا حدود' : 'Unlimited practice';
+
   return (
     <section
+      aria-label={title}
       className={`rounded-2xl border border-primary/20 bg-primary/5 ${compact ? 'p-4' : 'p-5'}`}
-      aria-label={ar ? 'حل مسائل بلا حدود' : 'Unlimited practice'}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-3">
         <span className="rounded-xl bg-primary/10 p-2.5 text-primary">
-          <Infinity className="h-5 w-5" aria-hidden />
+          {premium ? <Crown className="h-5 w-5" aria-hidden /> : <Infinity className="h-5 w-5" aria-hidden />}
         </span>
-        <div>
-          <h3 className="font-bold">
-            {ar ? 'حل مسائل بلا حدود' : 'Unlimited practice'}
-          </h3>
-          {data && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {ar ? data.NameAr : data.NameEn}
-            </p>
-          )}
-          <p className="mt-1 text-sm text-muted-foreground">
-            {ar
-              ? 'حل أي عدد من المسائل في الفئات المتاحة لحسابك، بدون حد يومي.'
-              : 'Solve as many problems as you like in your available categories, with no daily limit.'}
+        <div className="space-y-2">
+          <h3 className="font-bold">{title}</h3>
+          {isLoading && <p role="status" className="text-sm text-muted-foreground">
+            {ar ? 'جارٍ التحقق من صلاحياتك…' : 'Checking your access…'}
+          </p>}
+          <p className="text-sm">
+            {!data
+              ? (ar ? 'حل بلا حدود ضمن الفئات المفتوحة بحسابك.'
+                : 'Unlimited practice in your unlocked categories.')
+              : premium
+              ? (ar ? 'Premium: جميع الفئات مفتوحة، ويمكنك حل أي عدد من المسائل.'
+                : 'Premium: every category is unlocked with unlimited questions.')
+              : (ar ? 'مجاني: يمكنك حل أي عدد من المسائل ضمن الفئتين المفتوحتين بهذه المرحلة.'
+                : 'Free: solve unlimited questions in two unlocked categories in this stage.')}
           </p>
         </div>
       </div>

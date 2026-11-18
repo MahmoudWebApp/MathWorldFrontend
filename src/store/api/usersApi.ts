@@ -1,5 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
+import type { StudentEntitlement } from '@/lib/premium-api';
 import { baseQuery } from './baseQuery';
+import { stagesApi } from './stagesApi';
 import type { DashboardData, ProblemPreview } from './types';
 import type { MasteryStatus } from './problemsApi';
 
@@ -81,6 +83,8 @@ export interface JourneyCategory {
   CategoryId: number;
   NameAr: string;
   NameEn: string;
+  // Only the updated server returns this; undefined means not verified.
+  IsLocked?: boolean;
   TotalProblems: number;
   AttemptedProblems: number;
   SolvedProblems: number;
@@ -259,7 +263,67 @@ export interface StageDailyQuota {
   ResetsAtUtc: string;
 }
 
-export type LeaderboardPeriod = 'all' | 'weekly' | 'monthly';
+export interface AdminSubscriptionChange {
+  SubscriptionType: 'Free' | 'Premium';
+  PremiumExpiresAtUtc?: string | null;
+  Reason: string;
+}
+
+export interface AdminSubscriptionStatus {
+  LearnerId: number;
+  SubscriptionType: 'Free' | 'Premium';
+  PremiumExpiresAtUtc?: string | null;
+  Unlimited: boolean;
+}
+
+export interface AdminSubscriptionAuditRecord {
+  Id: number;
+  AdminId: number;
+  PreviousType: string;
+  NewType: string;
+  PreviousExpiresAtUtc?: string | null;
+  NewExpiresAtUtc?: string | null;
+  Reason: string;
+  ChangedAtUtc: string;
+}
+
+export interface AdminSubscriptionHistory {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Records: AdminSubscriptionAuditRecord[];
+}
+
+export interface PremiumCategoryStatistics {
+  StageId: number;
+  CategoryId: number;
+  StageNameAr: string;
+  StageNameEn: string;
+  CategoryNameAr: string;
+  CategoryNameEn: string;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  ErrorNotebookProblems: number;
+  Attempts: number;
+  CorrectAttempts: number;
+  IncorrectAttempts: number;
+  FirstTryCorrect: number;
+  AwardedPoints: number;
+  TimeSpentSeconds: number;
+}
+
+export interface StudentPremiumAnalyticsReport {
+  GeneratedAtUtc: string;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  Attempts: number;
+  CorrectAttempts: number;
+  IncorrectAttempts: number;
+  FirstTryCorrect: number;
+  AwardedPoints: number;
+  TimeSpentSeconds: number;
+  Categories: PremiumCategoryStatistics[];
+}
 
 export interface StageLeaderboardEntry {
   Rank: number;
@@ -270,22 +334,189 @@ export interface StageLeaderboardEntry {
   IsCurrentUser: boolean;
 }
 
-export interface StageLeaderboard {
+export interface StageLeaderboardReport {
   StageId: number;
   NameAr: string;
   NameEn: string;
-  Period: LeaderboardPeriod;
+  Period: 'all' | 'weekly' | 'monthly';
   Page: number;
   PageSize: number;
   TotalLearners: number;
+  /** Active student accounts currently assigned to this stage, including non-solvers. */
+  StageParticipants?: number;
   MyRank: number | null;
   Entries: StageLeaderboardEntry[];
 }
 
+export interface StageLeaderboardFilter {
+  stageId: number;
+  period: 'all' | 'weekly' | 'monthly';
+  page: number;
+}
+
+export type LeaderboardPeriod = 'all' | 'weekly' | 'monthly';
+export type StageLeaderboard = StageLeaderboardReport;
 export interface StageLeaderboardQuery {
   StageId: number;
   Period: LeaderboardPeriod;
   Page: number;
+}
+
+export interface MathBadge {
+  Key: string;
+  TitleAr: string;
+  TitleEn: string;
+  RequiredSolved: number;
+  Earned: boolean;
+  CurrentProgress: number;
+}
+
+export interface AdminPremiumGift {
+  Id: number;
+  Label: string;
+  PremiumDays: number;
+  CreatedByAdminId: number;
+  CreatedAtUtc: string;
+  ExpiresAtUtc: string;
+  RedeemedByUserId: number | null;
+  RedeemedAtUtc: string | null;
+  RevokedAtUtc: string | null;
+  Status: 'Available' | 'Redeemed' | 'Revoked' | 'Expired';
+}
+
+export interface PremiumGiftPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Codes: AdminPremiumGift[];
+}
+
+export interface NewlyCreatedPremiumGift {
+  Id: number;
+  Code: string; // One-time reveal only; never returned in list responses
+  Label: string;
+  PremiumDays: number;
+  CreatedAtUtc: string;
+  ExpiresAtUtc: string;
+  SingleUse: boolean;
+  PaymentRequired: boolean;
+}
+
+export interface PremiumGiftRedemption {
+  SubscriptionType: 'Premium';
+  PremiumExpiresAtUtc: string;
+  GrantedDays: number;
+}
+
+export interface PremiumDiscountQuote {
+  SubtotalUsd: number;
+  DiscountUsd: number;
+  TotalUsd: number;
+  Currency: 'USD';
+  EndsAtUtc: string;
+  Notice: 'PreviewOnlyRevalidateAtCheckout';
+}
+
+export interface AdminPremiumDiscount {
+  Id: number;
+  Label: string;
+  DiscountKind: 'Percentage' | 'FixedUsd';
+  Amount: number;
+  StartsAtUtc: string;
+  EndsAtUtc: string;
+  Enabled: boolean;
+  MaxRedemptions: number | null;
+  MaxRedemptionsPerStudent: number | null;
+  RedemptionCount: number;
+  CreatedAtUtc: string;
+  Status: 'Scheduled' | 'Active' | 'Expired' | 'Disabled' | 'Exhausted';
+}
+
+export interface AdminPremiumDiscountPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Codes: AdminPremiumDiscount[];
+}
+
+export interface CreatePremiumDiscountRequest {
+  Label: string;
+  DiscountKind: 'Percentage' | 'FixedUsd';
+  Amount: number;
+  StartsAtUtc: string;
+  EndsAtUtc: string;
+  MaxRedemptions: number | null;
+  MaxRedemptionsPerStudent: number | null;
+}
+
+export type UpdatePremiumDiscountSettings = Pick<
+  CreatePremiumDiscountRequest,
+  'StartsAtUtc' | 'EndsAtUtc' | 'MaxRedemptions' | 'MaxRedemptionsPerStudent'
+>;
+
+export interface CreatedPremiumDiscount extends CreatePremiumDiscountRequest {
+  Id: number;
+  Code: string;
+  Enabled: boolean;
+}
+
+export interface AdminPremiumCheckoutSummary {
+  TotalOrders: number;
+  Pending: number;
+  Paid: number;
+  Failed: number;
+  Cancelled: number;
+  Refunded: number;
+  PendingOlderThan24Hours: number;
+  PaidAmountUsd: number;
+  RedeemedDiscountUsd: number;
+  Currency: 'USD';
+  PaymentAvailable: boolean;
+}
+
+export interface AdminPremiumCheckoutOrder extends PremiumCheckoutOrder {
+  StudentId: number;
+  DiscountCodeId: number | null;
+  DiscountRedeemedAtUtc: string | null;
+}
+
+export interface AdminPremiumCheckoutOrderPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Orders: AdminPremiumCheckoutOrder[];
+}
+
+export interface PremiumCheckoutOrder {
+  Id: number;
+  OrderReference: string;
+  Status: 'Pending' | 'Paid' | 'Failed' | 'Cancelled' | 'Refunded';
+  SubtotalUsd: number;
+  DiscountUsd: number;
+  TotalUsd: number;
+  Currency: 'USD';
+  CreatedAtUtc: string;
+  VerifiedPaidAtUtc: string | null;
+}
+
+export interface PremiumCheckoutOrderPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Orders: PremiumCheckoutOrder[];
+}
+
+export interface PreparedPremiumCheckoutOrder extends Omit<PremiumCheckoutOrder, 'VerifiedPaidAtUtc'> {
+  PaymentAvailable: false;
+  Notice: string;
+}
+
+export interface StudentAchievements {
+  UniqueSolved: number;
+  EarnedCount: number;
+  TotalBadges: number;
+  NextMilestone: number | null;
+  Badges: MathBadge[];
 }
 
 export const usersApi = createApi({
@@ -300,9 +531,15 @@ export const usersApi = createApi({
     'ErrorNotebook',
     'LearningStage',
     'LearningJourney',
+    'Leaderboard',
+    'Achievements',
+    'PremiumAnalytics',
     'AdminLearners',
     'DailyQuota',
-    'Leaderboard',
+    'Subscription',
+    'PremiumCodes',
+    'PremiumDiscounts',
+    'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
     getProfile: builder.query<UserProfile, void>({
@@ -321,7 +558,18 @@ export const usersApi = createApi({
         method: 'PUT',
         body,
       }),
-      invalidatesTags: ['LearningStage', 'LearningJourney', 'Dashboard', 'User'],
+      invalidatesTags: ['LearningStage', 'LearningJourney', 'Dashboard', 'User', 'Leaderboard'],
+      async onQueryStarted(_body, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          // Stage-specific journey and daily suggestions live in stagesApi,
+          // not this slice. Clearing their caches prevents prior-stage data
+          // from flashing after a successful stage change.
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+        } catch {
+          // A rejected stage update must leave existing progress untouched.
+        }
+      },
     }),
 
     getDailyQuota: builder.query<StageDailyQuota, number>({
@@ -334,6 +582,149 @@ export const usersApi = createApi({
       ],
     }),
 
+    getAdminPremiumCodes: builder.query<PremiumGiftPage, number>({
+      query: (page = 1) => ({
+        url: '/admin/premium-codes',
+        params: { page, pageSize: 20 },
+      }),
+      providesTags: ['PremiumCodes'],
+    }),
+
+    createAdminPremiumCode: builder.mutation<
+      NewlyCreatedPremiumGift,
+      { Label: string; PremiumDays: number; ExpiresInDays: number }
+    >({
+      query: (body) => ({
+        url: '/admin/premium-codes',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PremiumCodes'],
+    }),
+
+    revokeAdminPremiumCode: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/admin/premium-codes/${id}/revoke`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['PremiumCodes'],
+    }),
+
+    redeemPremiumCode: builder.mutation<PremiumGiftRedemption, string>({
+      query: (code) => ({
+        url: '/users/premium-codes/redeem',
+        method: 'POST',
+        body: { Code: code.trim() },
+      }),
+      invalidatesTags: ['Subscription', 'User', 'Dashboard', 'DailyQuota'],
+    }),
+
+    quotePremiumDiscount: builder.mutation<PremiumDiscountQuote, string>({
+      query: (code) => ({
+        url: '/users/premium-discounts/quote',
+        method: 'POST',
+        body: { Code: code.trim() },
+      }),
+    }),
+
+    getAdminPremiumDiscounts: builder.query<AdminPremiumDiscountPage, number>({
+      query: (page = 1) => ({
+        url: '/admin/premium-discounts',
+        params: { page, pageSize: 20 },
+      }),
+      providesTags: ['PremiumDiscounts'],
+    }),
+
+    createAdminPremiumDiscount: builder.mutation<CreatedPremiumDiscount, CreatePremiumDiscountRequest>({
+      query: (body) => ({
+        url: '/admin/premium-discounts',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PremiumDiscounts'],
+    }),
+
+    updateAdminPremiumDiscountSettings: builder.mutation<
+      Partial<AdminPremiumDiscount>,
+      { Id: number; Settings: UpdatePremiumDiscountSettings }
+    >({
+      query: ({ Id, Settings }) => ({
+        url: `/admin/premium-discounts/${Id}/settings`,
+        method: 'PUT',
+        body: Settings,
+      }),
+      invalidatesTags: ['PremiumDiscounts'],
+    }),
+
+    disableAdminPremiumDiscount: builder.mutation<void, number>({
+      query: (id) => ({
+        url: `/admin/premium-discounts/${id}/disable`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['PremiumDiscounts'],
+    }),
+
+    cancelPremiumCheckoutOrder: builder.mutation<{ Id: number; Status: 'Cancelled' }, number>({
+      query: (id) => ({
+        url: `/users/premium-checkout/orders/${id}/cancel`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    getAdminPremiumCheckoutSummary: builder.query<AdminPremiumCheckoutSummary, void>({
+      query: () => '/admin/premium-checkout/summary',
+      providesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    getAdminPremiumCheckoutOrders: builder.query<
+      AdminPremiumCheckoutOrderPage, { Page: number; Status?: string }
+    >({
+      query: ({ Page, Status }) => ({
+        url: '/admin/premium-checkout/orders',
+        params: { page: Page, pageSize: 20, ...(Status ? { status: Status } : {}) },
+      }),
+      providesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    getPremiumCheckoutOrders: builder.query<PremiumCheckoutOrderPage, number>({
+      query: (page = 1) => ({
+        url: '/users/premium-checkout/orders',
+        params: { page, pageSize: 10 },
+      }),
+      providesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    getPremiumCheckoutOrder: builder.query<PremiumCheckoutOrder, number>({
+      query: (id) => `/users/premium-checkout/orders/${id}`,
+      providesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    preparePremiumCheckoutOrder: builder.mutation<
+      PreparedPremiumCheckoutOrder, { DiscountCode?: string }
+    >({
+      query: (body) => ({
+        url: '/users/premium-checkout/orders',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PremiumCheckoutOrders'],
+    }),
+
+    getAchievements: builder.query<StudentAchievements, void>({
+      query: () => '/users/achievements',
+      providesTags: ['Achievements'],
+    }),
+
+    getStageLeaderboard: builder.query<StageLeaderboardReport, StageLeaderboardFilter>({
+      query: ({ stageId, period, page }) => ({
+        url: '/users/leaderboard',
+        params: { stageId, period, page, pageSize: 20 },
+      }),
+      providesTags: ['Leaderboard'],
+    }),
+
+    // Compatibility for the stage leaderboard page merged from main.
     getLeaderboard: builder.query<StageLeaderboard, StageLeaderboardQuery>({
       query: ({ StageId, Period, Page }) => ({
         url: '/users/leaderboard',
@@ -342,6 +733,7 @@ export const usersApi = createApi({
       providesTags: ['Leaderboard'],
     }),
 
+    // Historic stage reports remain separate from Premium analytics XLSX.
     getPremiumProgressReport: builder.query<PremiumProgressReport, number | void>({
       query: (stageId) => ({
         url: '/users/premium-report',
@@ -356,6 +748,49 @@ export const usersApi = createApi({
         params: { stageId },
       }),
       providesTags: ['LearningJourney'],
+    }),
+
+    getStudentEntitlement: builder.query<StudentEntitlement, void>({
+      query: () => '/users/subscription',
+      providesTags: ['Subscription'],
+    }),
+    exportPremiumAnalyticsXlsx: builder.mutation<Blob, 'ar' | 'en'>({
+      query: (lang) => ({
+        url: '/users/premium-analytics/export.xlsx',
+        method: 'GET',
+        params: { lang },
+        // Keep the authenticated baseQuery pipeline (JWT, locale, 401
+        // handling) while receiving real XLSX bytes, not JSON.
+        responseHandler: (response: Response) => response.blob(),
+      }),
+    }),
+
+    getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, void>({
+      query: () => '/users/premium-analytics',
+      providesTags: ['PremiumAnalytics'],
+    }),
+
+    updateAdminLearnerSubscription: builder.mutation<
+      AdminSubscriptionStatus,
+      { LearnerId: number; Change: AdminSubscriptionChange }
+    >({
+      query: ({ LearnerId, Change }) => ({
+        url: `/admin/learners/${LearnerId}/subscription`,
+        method: 'PUT',
+        body: Change,
+      }),
+      invalidatesTags: ['AdminLearners', 'Subscription', 'User'],
+    }),
+
+    getAdminLearnerSubscriptionHistory: builder.query<
+      AdminSubscriptionHistory,
+      { LearnerId: number; Page?: number; PageSize?: number }
+    >({
+      query: ({ LearnerId, Page = 1, PageSize = 20 }) => ({
+        url: `/admin/learners/${LearnerId}/subscription-history`,
+        params: { page: Page, pageSize: PageSize },
+      }),
+      providesTags: ['Subscription'],
     }),
 
     getDashboard: builder.query<DashboardData, string>({
@@ -506,9 +941,31 @@ export const {
   useGetLearningStageQuery,
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,
-  useGetPremiumProgressReportQuery,
+  useGetStageLeaderboardQuery,
   useGetLeaderboardQuery,
+  useGetPremiumProgressReportQuery,
+  useGetAchievementsQuery,
   useGetDailyQuotaQuery,
+  useGetStudentEntitlementQuery,
+  useGetPremiumAnalyticsQuery,
+  useExportPremiumAnalyticsXlsxMutation,
+  useGetAdminPremiumCodesQuery,
+  useQuotePremiumDiscountMutation,
+  useGetPremiumCheckoutOrdersQuery,
+  useGetAdminPremiumCheckoutSummaryQuery,
+  useGetAdminPremiumCheckoutOrdersQuery,
+  useGetPremiumCheckoutOrderQuery,
+  usePreparePremiumCheckoutOrderMutation,
+  useCancelPremiumCheckoutOrderMutation,
+  useGetAdminPremiumDiscountsQuery,
+  useCreateAdminPremiumDiscountMutation,
+  useDisableAdminPremiumDiscountMutation,
+  useUpdateAdminPremiumDiscountSettingsMutation,
+  useCreateAdminPremiumCodeMutation,
+  useRevokeAdminPremiumCodeMutation,
+  useRedeemPremiumCodeMutation,
+  useUpdateAdminLearnerSubscriptionMutation,
+  useGetAdminLearnerSubscriptionHistoryQuery,
   useGetProfileQuery,
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,

@@ -1,0 +1,47 @@
+name: Frontend typecheck and build
+
+on:
+  push:
+    branches:
+      - feature/premium-entitlements-client
+  pull_request:
+    paths:
+      - '**/*.ts'
+      - '**/*.tsx'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/frontend-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Verify QA launch blocks the production API
+        shell: bash
+        run: |
+          printf 'NEXT_PUBLIC_API_BASE_URL=https://mathwordbackend.onrender.com/api\n' > .env.local
+          if node scripts/check-qa-api.mjs; then
+            echo 'QA preflight must refuse the known live API' >&2
+            exit 1
+          fi
+          printf 'NEXT_PUBLIC_API_BASE_URL=https://mathworld-staging.example.org/api\n' > .env.local
+          node scripts/check-qa-api.mjs
+          rm .env.local
+      - name: Production build
+        run: pnpm build

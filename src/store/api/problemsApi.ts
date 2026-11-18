@@ -1,5 +1,9 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
+import type { PremiumSolution } from '@/lib/premium-api';
+import type { GeometryScene } from '@/components/math/GeometryDiagram';
 import { baseQuery } from './baseQuery';
+import { usersApi } from './usersApi';
+import { stagesApi } from './stagesApi';
 import type { PagedProblemsResponse, ProblemPreview } from './types';
 
 export interface OptionForStudent {
@@ -249,6 +253,23 @@ export const problemsApi = createApi({
         { type: 'Problem', id: ProblemId },
         { type: 'AttemptHistory', id: ProblemId },
       ],
+      async onQueryStarted(_body, { dispatch, queryFulfilled }) {
+        try {
+          // These are separate RTK Query APIs; invalidating Problem tags does
+          // not refresh usersApi. Run only after the server commits an attempt.
+          await queryFulfilled;
+          dispatch(usersApi.util.invalidateTags([
+            'Leaderboard', 'Achievements', 'LearningJourney',
+            'Dashboard', 'Solved', 'ErrorNotebook', 'User',
+            'PremiumAnalytics',
+          ]));
+          // The journey/daily-practice pages also use a separate stagesApi.
+          // Refresh their confirmed solved counts on the same successful write.
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+        } catch {
+          // Do not show earned points or a changed rank for failed submissions.
+        }
+      },
     }),
 
     getCategoryProblems: builder.query<
@@ -283,6 +304,32 @@ export const problemsApi = createApi({
         },
       }),
       providesTags: ['Problem'],
+    }),
+
+    getProblemDiagram: builder.query<GeometryScene | null, number>({
+      query: (problemId) => `/problems/${problemId}/diagram`,
+      providesTags: (_result, _error, problemId) => [{ type: 'Problem', id: problemId }],
+    }),
+
+    upsertAdminProblemDiagram: builder.mutation<void, { problemId: number; scene: GeometryScene }>({
+      query: ({ problemId, scene }) => ({
+        url: `/admin/problems/${problemId}/diagram`,
+        method: 'PUT',
+        body: { scene },
+      }),
+      invalidatesTags: (_result, _error, { problemId }) => [{ type: 'Problem', id: problemId }],
+    }),
+
+    deleteAdminProblemDiagram: builder.mutation<void, number>({
+      query: (problemId) => ({
+        url: `/admin/problems/${problemId}/diagram`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, problemId) => [{ type: 'Problem', id: problemId }],
+    }),
+
+    getPremiumSolution: builder.query<PremiumSolution, number>({
+      query: (problemId) => `/problems/${problemId}/premium-solution`,
     }),
 
     createProblem: builder.mutation<{ Id: number }, CreateProblemRequest>({
@@ -320,7 +367,11 @@ export const problemsApi = createApi({
 
 export const {
   useSearchProblemsQuery,
+  useGetProblemDiagramQuery,
+  useUpsertAdminProblemDiagramMutation,
+  useDeleteAdminProblemDiagramMutation,
   useGetProblemQuery,
+  useLazyGetPremiumSolutionQuery,
   useLazyGetSolutionPreviewQuery,
   useGetProblemAttemptsQuery,
   useSubmitAnswerMutation,

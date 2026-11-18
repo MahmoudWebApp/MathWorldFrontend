@@ -101,6 +101,143 @@ export interface AdminStageDetail {
   DailyActivity: AdminActivityDay[];
 }
 
+export interface AdminEngagementDay {
+  DayUtc: string;
+  ActiveSolvers: number;
+  Signups: number;
+}
+
+export interface AdminEngagementStage {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  ActiveSolvers: number;
+  OnlineLearners: number;
+  SuccessfulSolves: number;
+  /** Newly registered students whose current stage is this stage. */
+  Signups: number;
+}
+
+export interface AdminEngagementOverview {
+  GeneratedAtUtc: string;
+  WindowDays: number;
+  TotalStudents: number;
+  NewStudents: number;
+  ActiveSolvers: number;
+  OnlineLearners: number;
+  PresenceWindowMinutes: number;
+  SuccessfulSolves: number;
+  DailyActivity: AdminEngagementDay[];
+  Stages: AdminEngagementStage[];
+}
+
+export interface TopEngagementStudent {
+  Rank: number;
+  UserId: number;
+  FullName: string;
+  Solved: number;
+}
+
+export interface AdminEngagementCategory {
+  CategoryId: number;
+  NameAr: string;
+  NameEn: string;
+  ActiveSolvers: number;
+  AttemptsInWindow: number;
+  TotalSolved: number;
+  TopStudents: TopEngagementStudent[];
+}
+
+export interface AdminEngagementStageDetail {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  WindowDays: number;
+  TopStudents: TopEngagementStudent[];
+  Categories: AdminEngagementCategory[];
+}
+
+export interface AdminEngagementStudent {
+  Id: number;
+  FullName: string;
+  CreatedAt: string;
+  LastLoginAt: string | null;
+  CurrentStageId: number | null;
+  IsActive: boolean;
+  LastPracticeAt: string | null;
+  LastHeartbeatAtUtc: string | null;
+  IsOnline: boolean;
+  Attempts: number;
+}
+export interface AdminEngagementStudentPage {
+  Total: number;
+  Page: number;
+  PageSize: number;
+  Students: AdminEngagementStudent[];
+  Note: string;
+}
+
+export interface AdminPlatformAuditEntry {
+  Id: number;
+  ActorUserId: number;
+  ActorName: string;
+  ActorRole: 'Admin' | 'Student';
+  Action: string;
+  Resource: string;
+  ResourceId: string | null;
+  Origin: string;
+  CreatedAtUtc: string;
+}
+export interface AdminPlatformAuditPage {
+  Page: number;
+  PageSize: number;
+  Total: number;
+  Entries: AdminPlatformAuditEntry[];
+  HasMore: boolean;
+  Notice: string;
+}
+export interface AdminPlatformAuditFilters {
+  page: number;
+  days: 7 | 30 | 90 | 180;
+  role?: 'Admin' | 'Student';
+  userId?: number;
+}
+
+export interface AdminAuditEvent {
+  Id: number;
+  ActorUserId: number;
+  ActorRole: 'Admin' | 'Student';
+  ActorName: string | null;
+  Action: string;
+  Resource: string;
+  ResourceId: string | null;
+  Origin: string;
+  CreatedAtUtc: string;
+}
+export interface AdminAuditPage {
+  Entries: AdminAuditEvent[];
+  Total: number;
+  Page: number;
+  PageSize: number;
+  HasMore: boolean;
+  WindowDays: number;
+  Note: string;
+}
+export interface AdminAuditSummary {
+  WindowDays: number;
+  RecordedEvents: number;
+  UniqueStudents: number;
+  UniqueAdmins: number;
+  ByAction: Array<{ ActorRole: string; Action: string; Count: number }>;
+}
+export interface AdminAuditFilter {
+  page: number;
+  days: number;
+  role?: 'Admin' | 'Student';
+  actorId?: number;
+  action?: string;
+}
+
 export interface AdminContentAuditSummary {
   TotalStages: number;
   TotalCategories: number;
@@ -143,11 +280,51 @@ export const statsApi = createApi({
   baseQuery,
   tagTypes: ['Stats'],
   endpoints: (builder) => ({
-    
+
     // ✅ PUBLIC: Get platform stats (no auth required)
     // Calls: GET /api/stats
     getStats: builder.query<DashboardStats, void>({
       query: () => '/stats',
+      providesTags: ['Stats'],
+    }),
+
+    getAdminPlatformAudit: builder.query<AdminPlatformAuditPage, AdminPlatformAuditFilters>({
+      query: ({page, days, role, userId}) => ({
+        url: '/admin/activity-audit',
+        params: { page, days, ...(role ? {role} : {}), ...(userId ? {userId} : {}) },
+      }),
+    }),
+
+    getAdminAuditEvents: builder.query<AdminAuditPage, AdminAuditFilter>({
+      query: ({ page, days, role, actorId, action }) => ({
+        url: '/admin/activity-audit',
+        params: { page, pageSize: 30, days,
+          ...(role ? { role } : {}),
+          ...(actorId ? { actorId } : {}),
+          ...(action ? { action } : {}),
+        },
+      }),
+    }),
+    getAdminAuditSummary: builder.query<AdminAuditSummary, number>({
+      query: days => ({ url: '/admin/activity-audit/summary', params: { days } }),
+    }),
+
+    getAdminEngagementOverview: builder.query<AdminEngagementOverview, number>({
+      query: days => ({ url: '/admin/engagement/overview', params: { days } }),
+      providesTags: ['Stats'],
+    }),
+    getAdminEngagementStage: builder.query<AdminEngagementStageDetail, { stageId: number; days: number }>({
+      query: ({stageId, days}) => ({url: `/admin/engagement/stages/${stageId}`, params: { days }}),
+      providesTags: ['Stats'],
+    }),
+    getAdminEngagementStudents: builder.query<AdminEngagementStudentPage, {
+      page: number; stageId?: number; search?: string; onlineOnly?: boolean;
+    }>({
+      query: ({page, stageId, search, onlineOnly}) => ({
+        url: '/admin/engagement/students',
+        params: { page, ...(stageId ? {stageId} : {}), ...(search ? {search} : {}),
+          ...(onlineOnly ? { onlineOnly: true } : {}) },
+      }),
       providesTags: ['Stats'],
     }),
 
@@ -188,7 +365,13 @@ export const statsApi = createApi({
 export const {
   useGetStatsQuery,
   useGetAdminStatsQuery,
+  useGetAdminEngagementOverviewQuery,
+  useGetAdminAuditEventsQuery,
+  useGetAdminAuditSummaryQuery,
+  useGetAdminEngagementStageQuery,
+  useGetAdminEngagementStudentsQuery,
+  useGetAdminPlatformAuditQuery,
   useGetAdminAnalyticsOverviewQuery,
   useGetAdminAnalyticsStageQuery,
-  useGetAdminContentAuditQuery, 
+  useGetAdminContentAuditQuery,
 } = statsApi;

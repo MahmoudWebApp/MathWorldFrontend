@@ -1,0 +1,17 @@
+﻿ContentKey,StageId,Order,NameAr,NameEn,SuggestedIconKey,ReviewStatus,NotesAr,NotesEn
+stage1_fractions,1,5,الكسور والأعداد العشرية,Fractions & Decimals,pie-chart,Proposed,أمثلة مقارنة كسور وتحويل بين الكسور والعشري.,"Comparisons, equivalent fractions and decimal conversion."
+stage1_percent,1,6,النسب المئوية الأساسية,Basic Percentages,percent,Proposed,مسائل النسبة المئوية البسيطة في سياقات حياتية.,Introductory percentages in everyday contexts.
+stage1_patterns,1,7,الأنماط والتفكير المنطقي,Patterns & Reasoning,brain,Proposed,متتاليات وأنماط منطقية مناسبة للمرحلة.,Age-appropriate sequences and logic.
+stage1_money,1,8,الوقت والنقود,Time & Money,clock,Proposed,تطبيقات الجمع والطرح ووحدات الزمن.,"Time units, purchasing and change."
+stage2_trig,2,5,مبادئ حساب المثلثات,Trigonometry Foundations,triangle,Proposed,المثلث القائم والجيب وجيب التمام التمهيديان.,Right triangles and introductory sine/cosine.
+stage2_stats,2,6,البيانات والإحصاء,Statistics & Data,chart-column,Proposed,الوسيط والمنوال والمتوسط والرسوم.,"Mean, median, mode and charts."
+stage2_coord,2,7,الهندسة الإحداثية,Coordinate Geometry,grid-2x2,Proposed,الإحداثيات والميل والمسافة البسيطة.,"Coordinates, slopes and basic distances."
+stage2_ineq,2,8,المتباينات,Inequalities,list-filter,Proposed,حل متباينات خطية وتمثيل الحلول.,Linear inequalities and solution sets.
+stage3_analytic,3,5,الهندسة التحليلية,Analytic Geometry,drafting-compass,Proposed,المستقيمات والدوائر والقطوع.,"Lines, circles and conic sections."
+stage3_vectors,3,6,المتجهات,Vectors,move-up-right,Proposed,مركبات المتجهات والعمليات عليها.,Vector components and operations.
+stage3_models,3,7,نماذج الاحتمالات,Probability Models,dices,Proposed,احتمال شرطي وتوافيق أساسية حسب المنهج.,"Conditional probability and counting, curriculum-dependent."
+stage3_transform,3,8,الدوال والتحويلات,Functions & Transformations,chart-no-axes-line,Proposed,إزاحات وانعكاسات وتمددات رسوم الدوال.,"Shifts, reflections and scaling of function graphs."
+stage4_numerical,4,5,الطرق العددية,Numerical Methods,calculator,Proposed,تقريب الجذور وأخطاء الحساب.,Root approximations and numerical error.
+stage4_discrete,4,6,الرياضيات المتقطعة,Discrete Mathematics,network,Proposed,مجموعات وعلاقات ورسوم بيانية.,"Sets, relations and graph theory."
+stage4_optim,4,7,التحسين الرياضي,Mathematical Optimization,chart-no-axes-combined,Proposed,تحسين مقيد وغير مقيد بحسب المنهج.,Constrained and unconstrained optimization.
+stage4_complex,4,8,التحليل العقدي,Complex Analysis,orbit,Proposed,الدوال العقدية والأساسيات المرتبطة بها.,Functions of a complex variable.

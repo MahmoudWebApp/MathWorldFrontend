@@ -142,11 +142,11 @@ export default function AdminAnalyticsPage() {
         </div>
       ) : (
         <>
-          <section aria-label={labels.total} className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <section aria-label={labels.total} className="mb-8 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {cards.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="math-card rounded-2xl border border-border p-4">
+              <div key={label} className="math-card min-w-0 rounded-2xl border border-border p-4">
                 <Icon className="mb-3 h-6 w-6 text-primary" aria-hidden />
-                <p className="text-2xl font-bold tabular-nums">{value}</p>
+                <p className="break-words text-2xl font-bold tabular-nums">{value}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{label}</p>
               </div>
             ))}
@@ -214,8 +214,10 @@ export default function AdminAnalyticsPage() {
             {overview.AttemptsInWindow === 0 ? (
               <p className="py-12 text-center text-muted-foreground">{labels.noActivity}</p>
             ) : (
-              <div className="h-64 w-full" dir="ltr">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-full overflow-x-auto" role="region"
+                aria-label={isArabic ? 'مقارنة مراحل قابلة للتمرير أفقياً' : 'Scrollable stage comparison chart'}>
+                <div className="h-64 min-w-[580px]" dir="ltr">
+                  <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stageComparison} margin={{top: 8,right: 12,bottom: 12,left: -15}}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2}/>
                     <XAxis dataKey="stage" tick={{fontSize: 11}} interval={0} />
@@ -224,7 +226,8 @@ export default function AdminAnalyticsPage() {
                     <Bar dataKey="attempts" name={labels.attempts} fill="var(--color-brand-primary)" radius={[6,6,0,0]} maxBarSize={50}/>
                     <Bar dataKey="correct" name={labels.correct} fill="var(--color-brand-secondary)" radius={[6,6,0,0]} maxBarSize={50}/>
                   </BarChart>
-                </ResponsiveContainer>
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
           </section>

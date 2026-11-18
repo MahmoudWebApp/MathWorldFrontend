@@ -28,7 +28,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
-import { AdminNavDropdown, AdminNavMobile, ADMIN_NAV_ITEMS } from '@/components/admin/AdminNavigation';
+import { NotificationBell } from '@/components/layout/NotificationBell';
+import { NotificationRealtimeSync } from '@/components/layout/NotificationRealtimeSync';
+import { StudentPresenceHeartbeat } from '@/components/layout/StudentPresenceHeartbeat';
+import { notificationsApi } from '@/store/api/notificationsApi';
+import { ADMIN_NAV_ITEMS, AdminNavMobile } from '@/components/admin/AdminNavigation';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
@@ -37,9 +41,8 @@ import { problemsApi } from '@/store/api/problemsApi';
 import { stagesApi } from '@/store/api/stagesApi';
 import { statsApi } from '@/store/api/statsApi';
 import { usersApi } from '@/store/api/usersApi';
-import { notificationsApi } from '@/store/api/notificationsApi';
-import { StudentNotificationsBell } from './StudentNotificationsBell';
 import { clearAuthSession } from '@/lib/authSession';
+import { API_BASE_URL } from '@/store/api/baseQuery';
 import { useSearchParams } from 'next/navigation';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { sortStagesByOrder } from '@/lib/stageVisuals';
@@ -53,7 +56,7 @@ function NavbarContent() {
   const { theme, setTheme } = useTheme();
   const dispatch = useDispatch<AppDispatch>();
 
-  const { user, isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
+  const { user, isAuthenticated, isLoading, token } = useSelector((state: RootState) => state.auth);
   const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
   const orderedStages = sortStagesByOrder(stages ?? []);
 
@@ -90,7 +93,27 @@ function NavbarContent() {
     setShowSearch(false);
   }, [pathname]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Explicit sign-out audit is best-effort. Local session removal must
+    // always work even if offline or if the server endpoint is not deployed.
+    try {
+      if (token) {
+        const controller = new AbortController();
+        const timer = window.setTimeout(() => controller.abort(), 1200);
+        try {
+          await fetch(`${API_BASE_URL}/users/session/sign-out`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            cache: 'no-store',
+            signal: controller.signal,
+          });
+        } finally {
+          window.clearTimeout(timer);
+        }
+      }
+    } catch {
+      // Closing a browser is never described as a verified server logout.
+    }
     dispatch(logout());
     clearAuthSession();
     dispatch(authApi.util.resetApiState());
@@ -143,6 +166,9 @@ function NavbarContent() {
 
   return (
     <>
+      {mounted && isAuthenticated && token && user?.Role === 'Student' &&
+        <StudentPresenceHeartbeat token={token} />}
+      {mounted && isAuthenticated && token && <NotificationRealtimeSync token={token} />}
       {/* Scroll Progress Bar at the absolute top */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-primary via-brand-primary-light to-brand-secondary z-[60] origin-left shadow-[0_0_18px_rgba(92,36,255,0.38)]"
@@ -150,7 +176,7 @@ function NavbarContent() {
       />
 
       <header className="sticky top-0 z-50 w-full border-b border-brand-primary/10 bg-background/85 glass supports-[backdrop-filter]:bg-background/55 dark:border-brand-primary/20">
-        <nav className="container mx-auto px-6 lg:px-12 flex h-16 items-center justify-between gap-4">
+        <nav className="container mx-auto flex h-16 min-w-0 items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6 lg:px-12">
           
           <Link
             href="/"
@@ -241,15 +267,10 @@ function NavbarContent() {
             >
               {t('nav.about')}
             </Link>
-            {mounted && isAuthenticated && user?.Role === 'Admin' && (
-              <div className="hidden xl:block">
-                <AdminNavDropdown />
-              </div>
-            )}
           </div>
 
           {/* Actions & Search */}
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
             <div className="hidden md:flex items-center">
               <AnimatePresence mode="wait">
                 {showSearch ? (
@@ -283,23 +304,21 @@ function NavbarContent() {
               </AnimatePresence>
             </div>
 
-            {mounted && isAuthenticated && user?.Role === 'Student' && (
-              <StudentNotificationsBell />
-            )}
-
-            <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            <Button variant="ghost" size="icon" aria-label={theme === 'dark' ? (locale === 'ar' ? 'الوضع النهاري' : 'Light mode') : (locale === 'ar' ? 'الوضع الليلي' : 'Dark mode')} className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10 hover:text-primary sm:h-10 sm:w-10" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
               {mounted ? (theme === 'dark' ? <Sun1 className="h-5 w-5" /> : <Moon className="h-5 w-5" />) : <div className="h-5 w-5" />}
             </Button>
 
-            <Button variant="ghost" size="sm" className="rounded-full font-bold hover:bg-primary/10 hover:text-primary" onClick={toggleLocale}>
+            <Button variant="ghost" size="sm" aria-label={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'} className="h-9 shrink-0 rounded-full px-2 font-bold hover:bg-primary/10 hover:text-primary sm:px-3" onClick={toggleLocale}>
               {locale === 'ar' ? 'EN' : 'عربي'}
             </Button>
 
+            {mounted && isAuthenticated && <NotificationBell isAuthenticated={isAuthenticated} />}
+
             {/* Auth Section */}
             {!mounted || isLoading ? (
-              <div className="h-9 w-24 rounded-full bg-muted animate-pulse" />
+              <div className="hidden h-9 w-24 animate-pulse rounded-full bg-muted md:block" />
             ) : isAuthenticated && user ? (
-              <div className="relative">
+              <div className="relative hidden md:block">
                 <Button variant="outline" className="flex items-center gap-2 rounded-full border-primary/20 hover:bg-primary/5 hover:border-primary/50" onClick={() => setUserMenuOpen(!userMenuOpen)}>
                   <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20">
                     <User className="h-3.5 w-3.5 text-primary" />
@@ -317,9 +336,59 @@ function NavbarContent() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute end-0 top-full z-20 mt-2 w-56 rounded-2xl border bg-popover/95 backdrop-blur-xl p-2 shadow-xl"
+                        className={cn("absolute end-0 top-full z-20 mt-2 max-h-[min(75vh,680px)] overflow-y-auto overscroll-contain rounded-2xl border bg-popover/95 backdrop-blur-xl p-2 shadow-xl", user.Role === 'Admin' ? "w-[min(90vw,360px)]" : "w-56")}
                       >
                         <div className="px-3 py-2.5 text-xs text-muted-foreground border-b mb-2">{user.Email}</div>
+                        {user.Role === 'Admin' && (
+                          <nav aria-label={locale === 'ar' ? 'تنقل الأدمن' : 'Admin navigation'} className="space-y-1">
+                            <div className="px-3 pb-1 text-xs font-bold text-muted-foreground">
+                              {locale === 'ar' ? 'مراقبة المنصة' : 'Monitor platform'}
+                            </div>
+                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'overview').map(item => (
+                              <Link key={item.href} href={item.href}
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
+                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                                {locale === 'ar' ? item.labelAr : item.labelEn}
+                              </Link>
+                            ))}
+                            <div className="mx-2 my-2 border-t" />
+                            <details className="group rounded-xl">
+                              <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-muted [&::-webkit-details-marker]:hidden">
+                                {locale === 'ar' ? 'إدارة الطلاب والاشتراكات' : 'Learners & access'}
+                                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden />
+                              </summary>
+                              <div className="ps-2">
+                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'management').map(item => (
+                              <Link key={item.href} href={item.href}
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
+                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                                {locale === 'ar' ? item.labelAr : item.labelEn}
+                              </Link>
+                            ))}
+                              </div>
+                            </details>
+                            <div className="mx-2 my-2 border-t" />
+                            <details className="group rounded-xl">
+                              <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-muted [&::-webkit-details-marker]:hidden">
+                                {locale === 'ar' ? 'إدارة المحتوى التعليمي' : 'Learning content'}
+                                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden />
+                              </summary>
+                              <div className="ps-2">
+                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'content').map(item => (
+                              <Link key={item.href} href={item.href}
+                                onClick={() => setUserMenuOpen(false)}
+                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
+                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                                {locale === 'ar' ? item.labelAr : item.labelEn}
+                              </Link>
+                            ))}
+                              </div>
+                            </details>
+                            <div className="mx-2 my-2 border-t" />
+                          </nav>
+                        )}
                         {user.Role !== 'Admin' && (
                           <>
 
@@ -335,6 +404,18 @@ function NavbarContent() {
                         <Link href="/dashboard/error-notebook" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <NotebookTabs className="h-4 w-4" />{t('nav.errorNotebook')}
                         </Link>
+                        <Link href="/daily-challenge" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <CircleCheckBig className="h-4 w-4" />
+                          {locale === 'ar' ? 'تحدي اليوم' : 'Daily challenge'}
+                        </Link>
+                        <Link href="/journey" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <Layers3 className="h-4 w-4" />
+                          {locale === 'ar' ? 'رحلتي في الرياضيات' : 'My learning journey'}
+                        </Link>
+                        <Link href="/premium" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                          <BookMarked className="h-4 w-4" />
+                          {locale === 'ar' ? 'اشتراكي ومميزات Premium' : 'My plan & Premium'}
+                        </Link>
                         <Link href="/learning-stage"
                           className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary"
                           onClick={() => setUserMenuOpen(false)}>
@@ -342,21 +423,6 @@ function NavbarContent() {
                           {locale === 'ar' ? 'تغيير المرحلة التعليمية' : 'Change learning stage'}
                         </Link>
                           </>
-                        )}
-                        {user.Role === 'Admin' && (
-                          <div className="max-h-[min(60vh,440px)] space-y-0.5 overflow-y-auto" aria-label={locale === 'ar' ? 'أقسام إدارة المنصة' : 'Administration sections'}>
-                            <p className="px-3 py-1 text-xs font-semibold text-muted-foreground">{t('nav.admin')}</p>
-                            {ADMIN_NAV_ITEMS.map(item => {
-                              const Icon = item.icon;
-                              return (
-                                <Link key={item.href} href={item.href} onClick={() => setUserMenuOpen(false)}
-                                  className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary">
-                                  <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                                  {locale === 'ar' ? item.labelAr : item.labelEn}
-                                </Link>
-                              );
-                            })}
-                          </div>
                         )}
                         <button onClick={handleLogout} className="flex w-full items-center gap-2 px-3 py-2.5 mt-1 text-sm font-medium rounded-xl hover:bg-destructive/10 text-destructive transition-colors">
                           <Logout className="h-4 w-4" />{t('nav.logout')}
@@ -373,7 +439,7 @@ function NavbarContent() {
               </div>
             )}
 
-            <Button variant="ghost" size="icon" className="md:hidden rounded-full" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <Button variant="ghost" size="icon" aria-label={locale === 'ar' ? (mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة') : (mobileMenuOpen ? 'Close menu' : 'Open menu')} aria-controls="mathworld-mobile-menu" aria-expanded={mobileMenuOpen} className="h-9 w-9 shrink-0 rounded-full md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <CloseCircle className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
@@ -386,7 +452,8 @@ function NavbarContent() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden border-t bg-background/95 backdrop-blur-xl px-4 py-4 space-y-3 overflow-hidden"
+              id="mathworld-mobile-menu"
+              className="max-h-[calc(100dvh-4rem)] space-y-3 overflow-y-auto overscroll-contain border-t bg-background/95 px-4 py-4 backdrop-blur-xl md:hidden"
             >
               {/* Mobile Search */}
               <form onSubmit={handleNavSearch} className="relative mb-4">

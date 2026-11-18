@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/Button";
-import { useGetCategoriesQuery } from "@/store/api/categoriesApi";
+import { useGetCategoriesQuery, useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from "@/store/api/categoriesApi";
+import { useSelector } from "react-redux";
 import { useGetStagesQuery } from "@/store/api/stagesApi";
 import { useSearchProblemsQuery } from "@/store/api/problemsApi";
 import type { ProblemPreview } from "@/store/api/types";
@@ -76,17 +77,37 @@ function ProblemsPageClient() {
   // These come from URL and are fixed
   const stageId = urlStageId;
   const categoryId = urlCategoryId;
+  const role = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
+    state.auth.isAuthenticated ? state.auth.user?.Role : undefined);
+  const authenticated = role === "Student";
+  const isAdmin = role === "Admin";
+  const { currentData: access, isLoading: accessLoading, isError: accessError,
+    refetch: refetchAccess } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
+  const { data: subscription, isLoading: subscriptionLoading, isError: subscriptionError,
+    refetch: refetchSubscription } = useGetStudentSubscriptionQuery(undefined, { skip: !authenticated });
+  const scopedCategory = Boolean(categoryId && stageId);
+  const accessUnavailable = scopedCategory && !accessLoading && !accessError && !access;
+  const subscriptionUnavailable = authenticated && !subscriptionLoading && !subscriptionError && !subscription;
+  const accessPending = scopedCategory && (accessLoading || (authenticated && subscriptionLoading));
+  const accessFailed = accessError || accessUnavailable ||
+    (authenticated && (subscriptionError || subscriptionUnavailable));
+  // A pending Premium lookup is not proof that a category is locked.
+  // Wait for the authoritative entitlement answer before rendering a lock.
+  const categoryLocked = Boolean(categoryId && stageId && access &&
+    !accessPending && !accessFailed &&
+    !isAdmin && subscription?.IsPremium !== true &&
+    !access.FreeCategoryIds.includes(Number(categoryId)));
 
   // ── API queries ─────────────────────────────────────────
   const { data: categories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
   const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
   const {
-    data: searchResults,
+    currentData: searchResults,
     isLoading: searchLoading,
     error: searchError,
     isFetching,
-    refetch: retrySearch,
+    refetch: refetchProblems,
   } = useSearchProblemsQuery(
     {
       Q: debouncedSearch || "",
@@ -96,8 +117,12 @@ function ProblemsPageClient() {
       PageSize: DEFAULT_PAGE_SIZE,
       locale: locale,
     },
-    { skip: false },
+    { skip: categoryLocked || accessPending ||
+      (scopedCategory && accessFailed) },
   );
+
+  const lockedCategoryError = !!searchError && typeof searchError === 'object' &&
+    'status' in searchError && searchError.status === 403;
 
   // ── Derived data ────────────────────────────────────────
   const problems: ProblemPreview[] = searchResults?.Results || [];
@@ -135,14 +160,7 @@ function ProblemsPageClient() {
     setPage(1);
   };
 
-  const isLoading = searchLoading || isFetching;
-  const lockedCategoryError = Boolean(
-    categoryId &&
-    searchError &&
-    typeof searchError === 'object' &&
-    'status' in searchError &&
-    searchError.status === 403
-  );
+  const isLoading = searchLoading || (isFetching && !searchResults);
 
   // Build breadcrumb
   const breadcrumbItems: { href: string; label: string }[] = [
@@ -170,8 +188,39 @@ function ProblemsPageClient() {
       ? t("search.searchInStage", { stage: stageName })
       : t("search.placeholder");
 
+  if (scopedCategory && accessFailed) {
+    return (
+      <section role="alert" className="container mx-auto max-w-2xl px-4 py-20 text-center">
+        <AlertCircle aria-hidden="true" className="mx-auto mb-4 h-10 w-10 text-destructive" />
+        <h1 className="mb-3 text-2xl font-bold">
+          {locale === 'ar' ? 'تعذّر التحقق من صلاحيات هذه الفئة' : 'Could not verify category access'}
+        </h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          {locale === 'ar' ? 'ما رح نعرض المحتوى كأنه مقفل حتى نتحقق من حالة الحساب.' :
+            'We will not label this content as locked until account access is verified.'}
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button type="button" onClick={() => {
+            if (accessError || accessUnavailable) void refetchAccess();
+            if (authenticated && (subscriptionError || subscriptionUnavailable)) void refetchSubscription();
+          }}>
+            {t('common.retry')}
+          </Button>
+          <Link href={`/stages/${stageId}`} className="rounded-xl border px-5 py-3">
+            {locale === 'ar' ? 'العودة إلى المرحلة' : 'Back to stage'}
+          </Link>
+        </div>
+      </section>
+    );
+  }
+  if (categoryLocked) {
+    return <section className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-3xl font-bold">{locale === "ar" ? "هذه الفئة مقفلة" : "This category is locked"}</h1><p className="mb-6">{locale === "ar" ? "الفئتان المجانيتان بلا حد يومي، وباقي الفئات مع Premium." : "Two free categories offer unlimited daily practice. Premium unlocks the rest."}</p><Link href="/premium" className="rounded-xl border px-5 py-3">Premium</Link></section>;
+  }
+
   // ── Early return: full page loader ───────────────────────
-  if (isLoading && !searchResults) {
+  // Never expose a previously cached category result while access or
+  // subscription status for the newly selected topic is unresolved.
+  if (accessPending || isLoading) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-20 flex flex-col justify-center items-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -223,7 +272,8 @@ function ProblemsPageClient() {
           <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/50 z-10" />
 
           <input
-            type="text"
+            type="search"
+            aria-label={searchPlaceholder}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={searchPlaceholder}
@@ -240,7 +290,7 @@ function ProblemsPageClient() {
                 type="button"
                 onClick={clearSearch}
                 className="p-1 rounded-full hover:bg-muted transition-colors"
-                aria-label="Clear search"
+                aria-label={locale === "ar" ? "مسح البحث" : "Clear search"}
               >
                 <X className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -258,10 +308,12 @@ function ProblemsPageClient() {
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium">
             &ldquo;{debouncedSearch}&rdquo;
             <button
+              type="button"
+              aria-label={locale === "ar" ? "مسح البحث" : "Clear search"}
               onClick={clearSearch}
-              className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+              className="hover:bg-primary/20 rounded-full p-1 transition-colors"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           </span>
         </div>
@@ -287,9 +339,8 @@ function ProblemsPageClient() {
         </div>
       )}
 
-      {/* Results count */}
-      {!searchError && (
-      <p className="text-sm font-medium text-muted-foreground mb-6 flex items-center gap-2">
+      {/* Only show an authoritative count for the current query. */}
+      {!searchError && searchResults && <p className="text-sm font-medium text-muted-foreground mb-6 flex items-center gap-2">
         <span className="h-px bg-border flex-1"></span>
         <span>
           {totalResults > 0
@@ -297,8 +348,7 @@ function ProblemsPageClient() {
             : t("search.noResultsFound")}
         </span>
         <span className="h-px bg-border flex-1"></span>
-      </p>
-      )}
+      </p>}
 
       {/* Error state */}
       {searchError ? (
@@ -309,33 +359,13 @@ function ProblemsPageClient() {
               ? locale === 'ar' ? 'هذه الفئة مقفلة لحسابك' : 'This category is locked for your account'
               : t("common.errorLoadingData")}
           </p>
-          <p className="mx-auto max-w-lg text-sm text-muted-foreground">
-            {lockedCategoryError
-              ? locale === 'ar'
-                ? 'أول فئتين من كل مرحلة مفتوحتان مجاناً ويمكنك حل مسائلهما بلا حد يومي.'
-                : 'The first two categories of each stage are free, with unlimited practice.'
-              : locale === 'ar'
-                ? 'تحقق من الاتصال ثم أعد المحاولة. لن تفقد البحث أو الفئة المختارة.'
-                : 'Check your connection and retry without losing your current filters.'}
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-3">
-            {lockedCategoryError ? (
-              <>
-                <Link href="/premium"
-                  className="inline-flex items-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
-                  {locale === 'ar' ? 'معرفة مميزات الحساب' : 'Compare account benefits'}
-                </Link>
-                <Link href={stageId ? `/stages/${stageId}` : '/stages'}
-                  className="inline-flex items-center rounded-xl border border-border px-4 py-2.5 text-sm font-semibold">
-                  {locale === 'ar' ? 'العودة للفئات المفتوحة' : 'Back to open categories'}
-                </Link>
-              </>
-            ) : (
-              <Button onClick={() => void retrySearch()} variant="outline">
-                {t("common.retry")}
-              </Button>
-            )}
-          </div>
+          <Button
+            onClick={() => void refetchProblems()}
+            variant="outline"
+            className="mt-4"
+          >
+            {t("common.retry")}
+          </Button>
         </div>
       ) : (
         <>
@@ -360,7 +390,7 @@ function ProblemsPageClient() {
                     : 'No problems appeared here. Refresh or return to available categories.'}
               </p>
               {!debouncedSearch && (
-                <Button variant="outline" onClick={() => void retrySearch()} className="mt-6 gap-2">
+                <Button variant="outline" onClick={() => void refetchProblems()} className="mt-6 gap-2">
                   <RotateCcw className="h-4 w-4" />
                   {t("common.retry")}
                 </Button>
@@ -396,6 +426,7 @@ function ProblemsPageClient() {
                 size="icon"
                 className="rounded-full"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label={locale === 'ar' ? 'الصفحة السابقة' : 'Previous page'}
                 disabled={currentPage === 1}
               >
                 <DirectionalChevron direction="back" className="h-5 w-5" />
@@ -431,7 +462,10 @@ function ProblemsPageClient() {
                   return pagesToShow.map((pageNum) => (
                     <button
                       key={pageNum}
+                      type="button"
                       onClick={() => setPage(pageNum)}
+                      aria-label={locale === 'ar' ? `الصفحة ${pageNum}` : `Page ${pageNum}`}
+                      aria-current={currentPage === pageNum ? 'page' : undefined}
                       className={`h-10 w-10 flex items-center justify-center rounded-full text-sm font-medium transition-all ${
                         currentPage === pageNum
                           ? "bg-primary text-primary-foreground shadow-md"
@@ -449,6 +483,7 @@ function ProblemsPageClient() {
                 size="icon"
                 className="rounded-full"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label={locale === 'ar' ? 'الصفحة التالية' : 'Next page'}
                 disabled={currentPage === totalPages}
               >
                 <DirectionalChevron direction="forward" className="h-5 w-5" />

@@ -10,6 +10,46 @@ export interface Stage {
   Order: number;
 }
 
+export interface JourneyCategoryProgress {
+  CategoryId: number;
+  NameAr: string;
+  NameEn: string;
+  IsLocked: boolean;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  MasteredProblems: number;
+  CompletionPercent: number;
+}
+
+export interface LearningJourney {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  MasteredProblems: number;
+  TotalPoints: number;
+  CompletionPercent: number;
+  Categories: JourneyCategoryProgress[];
+}
+
+export interface DailyChallenge {
+  DateUtc: string;
+  StageId: number;
+  Total: number;
+  Completed: number;
+  Problems: Array<{
+    Id: number;
+    CategoryId: number;
+    TitleAr: string;
+    TitleEn: string;
+    Points: number;
+    IsSolved: boolean;
+  }>;
+}
+
 export interface CreateStageRequest {
   NameAr: string;
   NameEn: string;
@@ -19,7 +59,7 @@ export interface CreateStageRequest {
 export const stagesApi = createApi({
   reducerPath: 'stagesApi',
   baseQuery,
-  tagTypes: ['Stage'],
+  tagTypes: ['Stage', 'LearningJourney', 'DailyChallenge'],
   endpoints: (builder) => ({
     
     // ✅ PUBLIC: Get all stages (no auth required)
@@ -27,6 +67,21 @@ export const stagesApi = createApi({
     getStages: builder.query<Stage[], string>({
       query: () => '/stages',
       providesTags: ['Stage'],
+    }),
+
+    getDailyChallenge: builder.query<DailyChallenge, number | void>({
+      // Stage-specific cache key prevents showing another stage's suggestions
+      // immediately after switching stages or returning from practice.
+      query: (stageId) => stageId
+        ? `/users/daily-challenge?stageId=${stageId}`
+        : '/users/daily-challenge',
+      providesTags: ['DailyChallenge'],
+    }),
+    getLearningJourney: builder.query<LearningJourney, number | void>({
+      query: (stageId) => stageId
+        ? `/users/journey?stageId=${stageId}`
+        : '/users/journey',
+      providesTags: ['LearningJourney'],
     }),
 
     // Admin: Get all stages (requires auth)
@@ -68,6 +123,8 @@ export const stagesApi = createApi({
 
 export const {
   useGetStagesQuery,
+  useGetLearningJourneyQuery,
+  useGetDailyChallengeQuery,
   useGetAdminStagesQuery,
   useCreateStageMutation,
   useUpdateStageMutation,

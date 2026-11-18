@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, FileSpreadsheet } from "lucide-react";
 // Tooltip components are configured globally.
 import {
   Tooltip,
@@ -39,6 +39,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/Tooltip";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { StageFreeCategoryAccessEditor } from "@/components/admin/StageFreeCategoryAccessEditor";
+import { getApiErrorMessage } from "@/lib/authSession";
 
 export default function AdminCategoriesPage() {
   return (
@@ -52,8 +54,8 @@ function AdminCategoriesPageContent() {
   const t = useTranslations();
   const locale = useLocale();
   const searchParams = useSearchParams();
-  const { data: categories, isLoading, refetch } = useGetAdminCategoriesQuery();
-  const { data: stages } = useGetAdminStagesQuery();
+  const { data: categories, isLoading, isError: categoriesError, refetch } = useGetAdminCategoriesQuery();
+  const { data: stages, isLoading: isLoadingStages, isError: stagesError, refetch: refetchStages } = useGetAdminStagesQuery();
 
   const [createCategory, { isLoading: isCreating }] =
     useCreateCategoryMutation();
@@ -78,6 +80,9 @@ function AdminCategoriesPageContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [iconError, setIconError] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,6 +125,8 @@ function AdminCategoriesPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCreating || isUpdating) return;
+    setSaveError('');
 
     if (!selectedStageId) {
       setStageError(true);
@@ -150,13 +157,14 @@ function AdminCategoriesPageContent() {
       handleCloseModal();
       refetch();
     } catch (error) {
-      console.error("Failed to save category", error);
-      alert(t("common.errorSaving"));
+      setSaveError(getApiErrorMessage(error, t("common.errorSaving")));
     }
   };
 
   const handleCloseModal = () => {
+    if (isCreating || isUpdating) return;
     setIsModalOpen(false);
+    setSaveError('');
     setFormData({
       NameAr: "",
       NameEn: "",
@@ -165,24 +173,27 @@ function AdminCategoriesPageContent() {
       Icon: null,
     });
     setPreviewUrl(null);
+    setIconError('');
     setStageError(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleDelete = async (id: number) => {
+    if (deletingId !== null) return;
+    setDeleteError('');
     setDeletingId(id);
     try {
       await deleteCategory(id).unwrap();
       await refetch();
     } catch (error) {
-      console.error("Failed to delete category", error);
-      alert(t("common.errorDeleting"));
+      setDeleteError(getApiErrorMessage(error, t("common.errorDeleting")));
     } finally {
       setDeletingId(null);
     }
   };
 
   const openEditModal = (category: CategoryDto) => {
+    setSaveError('');
     setFormData({
       Id: category.Id,
       NameAr: category.NameAr,
@@ -193,12 +204,14 @@ function AdminCategoriesPageContent() {
     });
     setSelectedStageId(category.StageId);
     setPreviewUrl(category.Icon || null);
+    setIconError('');
     setIsEditing(true);
     setIsModalOpen(true);
     setStageError(false);
   };
 
   const openCreateModal = () => {
+    setSaveError('');
     setFormData({
       NameAr: "",
       NameEn: "",
@@ -207,6 +220,7 @@ function AdminCategoriesPageContent() {
       Icon: null,
     });
     setPreviewUrl(null);
+    setIconError('');
     setIsEditing(false);
     setIsModalOpen(true);
     setStageError(false);
@@ -214,21 +228,41 @@ function AdminCategoriesPageContent() {
 
   const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (previewUrl && previewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(previewUrl);
-      }
-      setFormData((prev) => ({ ...prev, Icon: file }));
-      setPreviewUrl(URL.createObjectURL(file));
+    setIconError('');
+    setSaveError('');
+    if (!file) return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) ||
+        file.size > 2 * 1024 * 1024) {
+      setIconError(locale === 'ar'
+        ? 'اختر صورة PNG أو JPG أو WebP لا تتجاوز 2MB.'
+        : 'Choose a PNG, JPG or WebP image up to 2MB.');
+      // Do not submit a previously selected upload after an invalid replacement.
+      setFormData(prev => ({ ...prev, Icon: null }));
+      setPreviewUrl(isEditing ? categories?.find(cat => cat.Id === formData.Id)?.Icon ?? null : null);
+      e.target.value = '';
+      return;
     }
+    setFormData((prev) => ({ ...prev, Icon: file }));
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
-  if (isLoading)
+  if (isLoading || isLoadingStages)
     return (
-      <div className="p-8 text-center lg:px-24 md:px-16 px-4">
+      <div role="status" className="p-8 text-center lg:px-24 md:px-16 px-4">
         {t("common.loading")}
       </div>
     );
+
+  if (categoriesError || stagesError) return (
+    <div className="container mx-auto px-4 py-12 text-center" role="alert">
+      <p className="mb-4 font-medium text-destructive">
+        {locale === "ar" ? "تعذر تحميل المراحل أو الفئات. تحقق من الاتصال ثم حاول مجدداً." : "Could not load stages or categories. Check your connection and try again."}
+      </p>
+      <Button type="button" variant="outline" onClick={() => { void refetch(); void refetchStages(); }}>
+        {locale === "ar" ? "إعادة المحاولة" : "Retry"}
+      </Button>
+    </div>
+  );
 
   return (
     <div className="container mx-auto py-8 lg:px-24 md:px-16 px-4">
@@ -244,7 +278,7 @@ function AdminCategoriesPageContent() {
         ]}
         className="mb-6"
       />
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold mb-2">
             {t("admin.categories.title")}
@@ -255,6 +289,14 @@ function AdminCategoriesPageContent() {
               : "Choose a category in this stage to view its questions and add new ones."}
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/categories/import"
+            className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+          >
+            <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+            {locale === "ar" ? "فحص فئات CSV" : "Preview category CSV"}
+          </Link>
         <Button
           onClick={openCreateModal}
           className="gap-2"
@@ -263,11 +305,12 @@ function AdminCategoriesPageContent() {
           <Add className="h-4 w-4" />
           {t("admin.categories.addNew")}
         </Button>
+        </div>
       </div>
 
       <Card className="mb-6">
         <CardContent className="p-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Filter className="h-5 w-5" />
               <span className="font-medium">
@@ -281,7 +324,7 @@ function AdminCategoriesPageContent() {
                 setStageError(false);
               }}
             >
-              <SelectTrigger className="w-[200px] h-11">
+              <SelectTrigger className="h-11 w-full min-w-[180px] sm:w-[220px]">
                 <SelectValue placeholder={t("admin.categories.selectStage")} />
               </SelectTrigger>
               <SelectContent>
@@ -302,10 +345,20 @@ function AdminCategoriesPageContent() {
         </CardContent>
       </Card>
 
+      {selectedStageId && (
+        <StageFreeCategoryAccessEditor stageId={selectedStageId} locale={locale} />
+      )}
+
+      {deleteError && (
+        <div role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          {deleteError}
+        </div>
+      )}
+
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-center">
+            <table className="w-full min-w-[620px] text-center">
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <th className="p-4">{t("admin.categories.icon")}</th>
@@ -316,6 +369,11 @@ function AdminCategoriesPageContent() {
                 </tr>
               </thead>
               <tbody>
+                {filteredCategories?.length === 0 && (
+                  <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
+                    {locale === "ar" ? "لا توجد فئات ضمن هذه المرحلة بعد. يمكنك إضافة فئة جديدة." : "No categories in this stage yet. You can add a new category."}
+                  </td></tr>
+                )}
                 {filteredCategories?.map((category) => (
                   <tr
                     key={category.Id}
@@ -437,19 +495,7 @@ function AdminCategoriesPageContent() {
                   </tr>
                 ))}
 
-                {filteredCategories?.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="p-8 text-center text-muted-foreground bg-muted/10"
-                    >
-                      {selectedStageId
-                        ? t("admin.categories.noCategoriesForStage")
-                        : t("common.noData")}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
+               </tbody>
             </table>
           </div>
         </CardContent>
@@ -462,7 +508,10 @@ function AdminCategoriesPageContent() {
           onClick={handleCloseModal}
         >
           <div
-            className="brand-surface p-6 rounded-2xl w-full max-w-md shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label={isEditing ? t("admin.categories.edit") : t("admin.categories.add")}
+            className="brand-surface max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl p-4 shadow-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4 pb-3 border-b">
@@ -498,6 +547,11 @@ function AdminCategoriesPageContent() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              {saveError && (
+                <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                  {saveError}
+                </p>
+              )}
               {/* Icon Upload / Preview */}
               <div>
                 <label className="block mb-2 text-sm font-semibold">
@@ -535,7 +589,7 @@ function AdminCategoriesPageContent() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       onChange={handleIconChange}
                       className="hidden"
                     />
@@ -548,15 +602,21 @@ function AdminCategoriesPageContent() {
                     >
                       {t("admin.categories.uploadIcon")}
                     </Button>
-                    {previewUrl && (
+                    {formData.Icon && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         className="text-red-500 w-full hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                         onClick={() => {
-                          setPreviewUrl(null);
+                          // Cancelling a new upload must restore the saved icon,
+                          // not suggest that the existing image was deleted.
+                          const existingIcon = isEditing
+                            ? categories?.find((item) => item.Id === formData.Id)?.Icon ?? null
+                            : null;
+                          setPreviewUrl(existingIcon);
                           setFormData((prev) => ({ ...prev, Icon: null }));
+                          setIconError('');
                           if (fileInputRef.current)
                             fileInputRef.current.value = "";
                         }}
@@ -566,6 +626,12 @@ function AdminCategoriesPageContent() {
                     )}
                   </div>
                 </div>
+                {iconError && <p role="alert" className="mt-2 text-sm text-destructive">{iconError}</p>}
+                {isEditing && previewUrl && !formData.Icon && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {locale === 'ar' ? 'الأيقونة الحالية محفوظة؛ لتغييرها ارفع صورة جديدة.' : 'The existing icon is saved. Upload a new image to replace it.'}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -627,6 +693,7 @@ function AdminCategoriesPageContent() {
                   variant="ghost"
                   type="button"
                   onClick={handleCloseModal}
+                  disabled={isCreating || isUpdating}
                 >
                   {t("common.cancel")}
                 </Button>

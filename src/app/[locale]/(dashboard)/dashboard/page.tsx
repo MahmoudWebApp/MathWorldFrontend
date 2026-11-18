@@ -5,18 +5,19 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
 
 import { ProblemCard } from "@/components/problems/ProblemCard";
+import { StudentAchievementsPanel } from "@/components/dashboard/StudentAchievementsPanel";
 import {
   Heart,
   Award,
   Calendar,
   Warning2,
 } from "iconsax-reactjs";
-import { NotebookTabs, Trophy, Target, Crown } from "lucide-react";
+import { NotebookTabs, Trophy, Target } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
-import { DailyQuotaCard } from "@/components/learning/DailyQuotaCard";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
+import { useGetDailyChallengeQuery } from "@/store/api/stagesApi";
 
 // Helper function to calculate relative time from a date string
 function getRelativeTime(
@@ -47,10 +48,15 @@ export default function UserDashboardPage() {
     refetchOnMountOrArgChange: true,
   });
   const stageId = dashboard?.CurrentStageId;
-  const { data: journey, isLoading: loadingJourney } = useGetLearningJourneyQuery(
+  const { data: journey, isLoading: loadingJourney, isError: journeyError, refetch: retryJourney } = useGetLearningJourneyQuery(
     stageId ?? 0,
     { skip: stageId == null || stageId <= 0 },
   );
+  const { data: dailyPractice } = useGetDailyChallengeQuery(stageId ?? 0, {
+    skip: !stageId || stageId <= 0 || dashboard?.Role !== "Student",
+    refetchOnMountOrArgChange: true,
+    refetchOnFocus: true,
+  });
 
   useEffect(() => {
     if (!isLoading && !isError && dashboard?.Role === "Student" &&
@@ -160,6 +166,37 @@ export default function UserDashboardPage() {
         )}
       </div>
 
+      {/* The primary learner action is always above statistics and optional tools. */}
+      <section aria-label={isArabic ? 'خطوتك التالية' : 'Your next step'}
+        className="mb-6 rounded-3xl border border-primary/25 bg-primary/5 p-5 md:p-7">
+        <p className="mb-2 text-sm font-bold text-primary">
+          {isArabic ? 'الخطوة الأولى' : 'Step one'}
+        </p>
+        <h2 className="text-2xl font-extrabold">
+          {stageId
+            ? (isArabic ? 'ابدأ الحل من فئاتك المفتوحة' : 'Start with your unlocked topics')
+            : (isArabic ? 'اختَر مرحلتك لتبدأ الرياضيات' : 'Choose your stage to get started')}
+        </h2>
+        <p className="mb-5 mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
+          {stageId
+            ? (isArabic
+              ? 'رح تشوف الفئتين المفتوحتين لحسابك أولاً، ومع كل فئة زر واضح لبدء حل المسائل بلا حد.'
+              : 'Your two Free topics appear first, each with a clear Start solving button and unlimited practice.')
+            : (isArabic
+              ? 'اختيار المرحلة بيحدد فئاتك ومسائلك، وتقدر تغيّرها لاحقاً بدون خسارة نقاطك.'
+              : 'Your stage determines which topics you can practise; you can change it later without losing progress.')}
+        </p>
+        <Link
+          href={stageId ? `/stages/${stageId}` : '/learning-stage'}
+          className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 py-3 font-extrabold text-primary-foreground hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          {stageId
+            ? (isArabic ? 'افتح فئاتي المفتوحة' : 'Open my unlocked topics')
+            : (isArabic ? 'اختيار المرحلة' : 'Choose learning stage')}
+          <DirectionalArrow direction="forward" size={18} />
+        </Link>
+      </section>
+
       {stageId != null && stageId > 0 && (
         <section className="math-card mb-8 rounded-3xl border border-primary/15 bg-card p-5 md:p-7">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
@@ -179,27 +216,23 @@ export default function UserDashboardPage() {
             </Link>
           </div>
 
-          <Link href={`/stages/${stageId}`}
-            className="mb-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90 sm:w-auto">
-            <Target className="h-5 w-5" aria-hidden="true" />
-            {journeyLabels.practice}
-            <DirectionalArrow direction="forward" className="h-4 w-4" />
-          </Link>
-
-          <Link href="/leaderboard"
-            className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-            <Trophy className="h-4 w-4" aria-hidden="true" />
-            {isArabic ? "شوف ترتيبك بين طلاب مرحلتك" : "See your rank among stage learners"}
-          </Link>
-
-          <div className="mb-5">
-            <DailyQuotaCard stageId={stageId} compact />
-            <Link href="/premium"
-              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-              <Crown className="h-4 w-4" aria-hidden="true" />
-              {isArabic ? "مميزات Free وPremium" : "Free and Premium benefits"}
-            </Link>
-          </div>
+          {journeyError && (
+            <div role="alert" className="mb-5 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+              <p className="mb-3 text-sm text-foreground">
+                {isArabic ? "تعذّر تحميل تقدّم مرحلتك التعليمية. حاول مجدداً." : "We couldn't load your stage progress. Please try again."}
+              </p>
+              <button type="button" onClick={() => retryJourney()}
+                className="rounded-lg border border-primary/30 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                {isArabic ? "إعادة المحاولة" : "Retry"}
+              </button>
+            </div>
+          )}
+          {loadingJourney && !journey && (
+            <div role="status" className="mb-5 space-y-3" aria-label={isArabic ? "جارٍ تحميل التقدم" : "Loading progress"}>
+              <div className="h-3 w-full animate-pulse rounded bg-muted" />
+              <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+            </div>
+          )}
           {journey && (
             <>
               <div className="mb-3 flex items-end justify-between">
@@ -233,9 +266,26 @@ export default function UserDashboardPage() {
                   <div className="text-xs text-muted-foreground">{journeyLabels.points}</div>
                 </div>
               </div>
+              {dailyPractice && dailyPractice.StageId === journey.StageId && (
+                <Link href="/journey"
+                  className="mb-5 flex min-h-12 flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                  <span>{isArabic ? "تحدّي اليوم الاختياري — بدون حد يومي للحل" : "Optional daily practice — no daily solving limit"}</span>
+                  <span className="tabular-nums">
+                    {dailyPractice.Completed}/{dailyPractice.Total}
+                    <DirectionalArrow direction="forward" />
+                  </span>
+                </Link>
+              )}
               <h3 className="mb-3 text-sm font-semibold">{journeyLabels.categories}</h3>
+              {journey.Categories.every(category => category.IsLocked !== false) && (
+                <p className="mb-4 text-sm text-muted-foreground">
+                  {isArabic
+                    ? 'الفئات المفتوحة مو مؤكدة من بيانات التقدّم الحالية. افتح قائمة مرحلتك لتشوف الفئات المسموحة بدل تخمين صلاحياتك.'
+                    : 'Unlocked topics are not verified from this progress response. Open your stage catalogue to see which topics you can use.'}
+                </p>
+              )}
               <div className="mb-5 grid gap-2 sm:grid-cols-2">
-                {journey.Categories.map((category) => (
+                {journey.Categories.filter(category => category.IsLocked === false).slice(0, 4).map((category) => (
                   <div key={category.CategoryId} className="rounded-xl border border-border p-3">
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm">
                       <span>{isArabic ? category.NameAr : category.NameEn}</span>
@@ -248,7 +298,10 @@ export default function UserDashboardPage() {
                   </div>
                 ))}
               </div>
-
+              <Link href={`/stages/${journey.StageId}`}
+                className="inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+                {isArabic ? 'عرض كل فئات مرحلتي' : 'See all topics in my stage'}
+              </Link>
             </>
           )}
         </section>
@@ -260,6 +313,24 @@ export default function UserDashboardPage() {
       >
         {isArabic ? 'ربط Google أو Facebook بحسابي' : 'Connect Google or Facebook'}
       </Link>
+
+      <Link
+        href="/dashboard/analytics"
+        className="mb-8 ms-3 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+      >
+        <NotebookTabs className="h-4 w-4" aria-hidden="true" />
+        {isArabic ? 'تقريري الشخصي' : 'My personal report'}
+      </Link>
+
+      <Link
+        href="/dashboard/leaderboard"
+        className="mb-8 ms-3 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+      >
+        <Trophy className="h-4 w-4" aria-hidden="true" />
+        {isArabic ? 'ترتيب طلاب مرحلتي' : 'My stage leaderboard'}
+      </Link>
+
+      <StudentAchievementsPanel />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

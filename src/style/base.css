@@ -36,6 +36,17 @@
     -webkit-tap-highlight-color: rgb(var(--sr-secondary-rgb) / 0.12);
   }
 
+  /* Consistent keyboard focus on all Arabic and English touch/desktop UI. */
+  :where(a, button, input, textarea, select, [role="button"], [tabindex]):focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+
+  /* Prevent permanently clipped text at enlarged system font sizes. */
+  :where(button, a, input, textarea, select) {
+    min-width: 0;
+  }
+
 
   /* Scrollbar styling */
   ::-webkit-scrollbar {
@@ -73,6 +84,13 @@
     .hero-anim, .hero-anim-down {
       opacity: 1 !important;
       transform: none !important;
+    }
+    /* Include UI transitions, route fades and mathematically decorative CSS. */
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
   }
 }
