@@ -23,6 +23,7 @@ export default function PremiumBenefitsPage() {
   const [error, setError] = useState('');
 
   const premiumFeatures = [
+    { icon: CheckCircle2, ar: 'حل عدد غير محدود من المسائل في جميع الفئات', en: 'Unlimited problems in all categories' },
     { icon: LockOpen, ar: 'جميع الفئات والمراحل', en: 'Every category in every stage' },
     { icon: GraduationCap, ar: 'مشاهدة الحل قبل إرسال الإجابة', en: 'View solutions before answering' },
     { icon: Sparkles, ar: 'تقارير وإحصائيات شخصية مع تصدير PDF وCSV لبرنامج Excel',
@@ -134,16 +135,16 @@ export default function PremiumBenefitsPage() {
         <section className="math-card mt-6 rounded-2xl border border-border p-5 md:p-6">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <Ticket className="h-5 w-5 text-primary" aria-hidden />
-            {ar ? 'تفعيل Premium بكود مجاني' : 'Activate Premium with a free code'}
+            {ar ? 'تفعيل Premium بكود خصم 100%' : 'Activate Premium with a 100% discount code'}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             {ar
-              ? 'رمز تفعيل تصدره الإدارة يمنحك Premium دون أي دفع. صالح للاستخدام مرة واحدة.'
-              : 'An administrator-issued single-use code activates Premium without payment.'}
+              ? 'كود خصم 100% تصدره إدارة MathWorld لتفعيل Premium بالكامل دون دفع. صالح للاستخدام مرة واحدة.'
+              : 'An administrator-issued single-use 100% code activates full Premium without payment.'}
           </p>
           <form onSubmit={redeem} className="mt-4 flex flex-col gap-3 sm:flex-row">
             <label className="sr-only" htmlFor="premium-free-code">
-              {ar ? 'كود التفعيل المجاني' : 'Free activation code'}</label>
+              {ar ? 'كود خصم 100%' : '100% access code'}</label>
             <input id="premium-free-code" type="text" value={code}
               onChange={event => { setCode(event.target.value); setError(''); }}
               maxLength={100} autoCapitalize="characters" autoComplete="off"
