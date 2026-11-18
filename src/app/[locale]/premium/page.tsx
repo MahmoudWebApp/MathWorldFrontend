@@ -1,131 +1,167 @@
 'use client';
 
+import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
-import { useSelector } from 'react-redux';
-import { CheckCircle2, Clock3, Crown, GraduationCap, LockOpen, ShieldCheck, Sparkles } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { CheckCircle2, Crown, GraduationCap, LockOpen, ShieldCheck, Sparkles, Ticket } from 'lucide-react';
 import { Link } from '@/i18n/routing';
-import type { RootState } from '@/store';
+import type { RootState, AppDispatch } from '@/store';
+import type { User } from '@/store/api/types';
+import { setCredentials } from '@/store/slices/authSlice';
+import { API_BASE_URL } from '@/store/api/baseQuery';
+import { categoriesApi } from '@/store/api/categoriesApi';
 
 export default function PremiumBenefitsPage() {
   const ar = useLocale() === 'ar';
-  const plan = useSelector((state: RootState) => state.auth.user?.SubscriptionType);
-  const premium = plan?.toLowerCase() === 'premium';
-  const benefits = [
-    {
-      icon: LockOpen,
-      arTitle: 'جميع الفئات التعليمية',
-      enTitle: 'Every learning category',
-      arText: 'Free يفتح أول فئتين من كل مرحلة. Premium يفتح كل الفئات.',
-      enText: 'Free opens the first two categories per stage; Premium opens all categories.',
-      upcoming: false,
-    },
-    {
-      icon: GraduationCap,
-      arTitle: 'شاهد الحل قبل الإجابة',
-      enTitle: 'Preview before answering',
-      arText: 'راجع الحل عند الحاجة قبل إرسال إجابتك؛ بدون احتساب محاولة.',
-      enText: 'Request the solution before submitting, without using an attempt.',
-      upcoming: false,
-    },
-    {
-      icon: ShieldCheck,
-      arTitle: 'بدون إعلانات',
-      enTitle: 'No ads',
-      arText: 'عند إطلاق الإعلانات مستقبلاً، لن تظهر لمشتركي Premium.',
-      enText: 'When ads launch, Premium accounts will remain ad-free.',
-      upcoming: true,
-    },
-    {
-      icon: Sparkles,
-      arTitle: 'تقارير التقدم وتصدير CSV',
-      enTitle: 'Progress reports and CSV export',
-      arText: 'تقرير مفصل حسب الفئة وتصدير CSV يفتح في Excel. تصدير PDF وXLSX قريباً.',
-      enText: 'Category progress and CSV for Excel. Native PDF and XLSX are coming later.',
-      upcoming: false,
-    },
-    {
-      icon: Clock3,
-      arTitle: 'التواصل مع مدرس رياضيات',
-      enTitle: 'Connect with math tutors',
-      arText: 'ميزة قادمة بعد تجهيز شبكة المدرسين.',
-      enText: 'Coming after the tutor network is ready.',
-      upcoming: true,
-    },
+  const dispatch = useDispatch<AppDispatch>();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const token = useSelector((state: RootState) => state.auth.token);
+  const premium = user?.SubscriptionType?.toLowerCase() === 'premium';
+  const [code, setCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  const premiumFeatures = [
+    { icon: LockOpen, ar: 'جميع الفئات والمراحل', en: 'Every category in every stage' },
+    { icon: GraduationCap, ar: 'مشاهدة الحل قبل إرسال الإجابة', en: 'View solutions before answering' },
+    { icon: Sparkles, ar: 'تقارير وإحصائيات شخصية مع تصدير PDF وCSV لبرنامج Excel',
+      en: 'Personal analytics with PDF and Excel-compatible CSV exports' },
+    { icon: ShieldCheck, ar: 'بدون إعلانات ضمن MathWorld', en: 'Ad-free MathWorld' },
+  ];
+  const freeFeatures = [
+    ar ? 'فئتان مفتوحتان من كل مرحلة' : 'Two unlocked categories per stage',
+    ar ? 'حل عدد غير محدود من المسائل المتاحة' : 'Unlimited problems in your open categories',
+    ar ? 'الاحتفاظ بالنقاط والتقدم في كل مرحلة' : 'Stage points and progress are preserved',
   ];
 
+  async function redeem(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!user || !token || redeeming || !code.trim()) return;
+    setRedeeming(true);
+    setError('');
+    setMessage('');
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/premium-codes/redeem`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Code: code.trim() }),
+      });
+      if (!response.ok) {
+        throw new Error(response.status === 404 || response.status === 503
+          ? (ar ? 'خدمة تفعيل الرموز غير متاحة حالياً.' : 'Code activation service is unavailable.')
+          : (ar ? 'الرمز غير صالح أو سبق استخدامه.' : 'This code is invalid or has already been used.'));
+      }
+      // Refresh the profile from the server; never accept a client-issued entitlement.
+      const profileResponse = await fetch(`${API_BASE_URL}/users/profile`, {
+        cache: 'no-store', headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!profileResponse.ok) {
+        setMessage(ar ? 'تم إرسال رمز التفعيل بنجاح. حدّث صفحتك لتحديث الخطة.'
+          : 'Code accepted. Refresh to update your plan.');
+        return;
+      }
+      const payload = await profileResponse.json() as { Data?: Partial<User> };
+      if (payload.Data?.SubscriptionType?.toLowerCase() === 'premium') {
+        const updated: User = { ...user, ...payload.Data, Token: token };
+        dispatch(setCredentials({ user: updated, token }));
+        dispatch(categoriesApi.util.invalidateTags(['Category']));
+        setCode('');
+        setMessage(ar ? 'تم تفعيل Premium على حسابك.' : 'Premium is now active on your account.');
+      } else {
+        setMessage(ar ? 'تم قبول الرمز. أعد تحميل الصفحة لتحديث الصلاحيات.'
+          : 'Code accepted. Reload to refresh your access.');
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message
+        : (ar ? 'تعذر تفعيل الرمز.' : 'Unable to redeem this code.'));
+    } finally {
+      setRedeeming(false);
+    }
+  }
+
   return (
-    <main className="container mx-auto max-w-4xl px-4 py-8 md:px-8">
-      <div className="mb-6">
-        <Link href="/dashboard" className="text-sm font-semibold text-primary hover:underline">
-          {ar ? 'العودة إلى رحلتي' : 'Back to my journey'}
-        </Link>
-      </div>
-      <header className="math-card rounded-3xl border border-primary/20 bg-primary/5 p-6 md:p-9">
-        <div className="mb-3 inline-flex items-center gap-2 text-primary">
-          <Crown className="h-6 w-6" aria-hidden />
-          <span className="font-bold">MathWorld Premium</span>
-        </div>
-        <h1 className="brand-display-title mb-3 text-2xl font-bold md:text-4xl">
-          {ar ? 'اعرف مميزات حسابك المدفوع' : 'Explore Premium benefits'}
+    <main className="container mx-auto max-w-5xl px-4 py-8 md:px-8">
+      <Link href="/dashboard" className="mb-5 inline-block text-sm font-semibold text-primary hover:underline">
+        {ar ? 'العودة لرحلتي' : 'Back to my journey'}
+      </Link>
+      <header className="mb-6">
+        <h1 className="brand-display-title text-3xl font-black md:text-4xl">
+          {ar ? 'تغيير الخطة' : 'Change plan'}
         </h1>
-        <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
+        <p className="mt-3 text-muted-foreground">
           {ar
-            ? 'التدرب على المسائل بلا حد يومي متاح للجميع، والفرق في الفئات والمزايا الإضافية.'
-            : 'Unlimited daily practice is free for everyone. Premium unlocks more categories and extra tools.'}
-        </p>
-        <p className="mt-4 inline-flex rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold">
-          {premium
-            ? ar ? 'حسابك Premium مفعل' : 'Your Premium plan is active'
-            : ar ? 'حسابك الحالي Free' : 'Your current plan is Free'}
+            ? 'قارن Free وPremium. حل المسائل غير محدود ضمن الفئات المتاحة لخطة حسابك.'
+            : 'Compare Free and Premium. Practice is unlimited within your plan’s accessible categories.'}
         </p>
       </header>
 
-      {premium && (
-        <Link href="/premium/report"
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
-          <Sparkles className="h-5 w-5" aria-hidden="true" />
-          {ar ? 'عرض تقريري التعليمي' : 'View my learning report'}
-        </Link>
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className={`math-card rounded-2xl border p-5 md:p-6 ${!premium ? 'border-primary' : 'border-border'}`}>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-2xl font-extrabold">Free</h2>
+            {!premium && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              {ar ? 'خطتك الحالية' : 'Current plan'}</span>}
+          </div>
+          <ul className="mt-5 space-y-3">
+            {freeFeatures.map(feature => <li key={feature} className="flex items-start gap-2 text-sm">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              {feature}</li>)}
+          </ul>
+        </section>
+
+        <section className={`math-card rounded-2xl border p-5 md:p-6 ${premium ? 'border-primary' : 'border-border'}`}>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="inline-flex items-center gap-2 text-2xl font-extrabold">
+              <Crown className="h-6 w-6 text-primary" aria-hidden /> Premium</h2>
+            {premium && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              {ar ? 'خطتك الحالية' : 'Current plan'}</span>}
+          </div>
+          <ul className="mt-5 space-y-3">
+            {premiumFeatures.map(({icon: Icon, ar: titleAr, en: titleEn}) => <li
+              key={titleEn} className="flex items-start gap-2 text-sm">
+              <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              {ar ? titleAr : titleEn}</li>)}
+          </ul>
+          {premium && <Link href="/premium/report"
+            className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">
+            {ar ? 'عرض تقريري' : 'Open my report'}</Link>}
+        </section>
+      </div>
+
+      {!premium && user?.Role === 'Student' && (
+        <section className="math-card mt-6 rounded-2xl border border-border p-5 md:p-6">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Ticket className="h-5 w-5 text-primary" aria-hidden />
+            {ar ? 'تفعيل Premium بكود مجاني' : 'Activate Premium with a free code'}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {ar
+              ? 'رمز تفعيل تصدره الإدارة يمنحك Premium دون أي دفع. صالح للاستخدام مرة واحدة.'
+              : 'An administrator-issued single-use code activates Premium without payment.'}
+          </p>
+          <form onSubmit={redeem} className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <label className="sr-only" htmlFor="premium-free-code">
+              {ar ? 'كود التفعيل المجاني' : 'Free activation code'}</label>
+            <input id="premium-free-code" type="text" value={code}
+              onChange={event => { setCode(event.target.value); setError(''); }}
+              maxLength={100} autoCapitalize="characters" autoComplete="off"
+              dir="ltr" placeholder="MW-XXXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXX"
+              className="min-w-0 flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm"
+            />
+            <button type="submit" disabled={redeeming || !code.trim()}
+              className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
+              {redeeming ? (ar ? 'جارٍ التفعيل…' : 'Activating…') : (ar ? 'تفعيل الرمز' : 'Activate code')}
+            </button>
+          </form>
+          {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+          {message && <p role="status" className="mt-3 text-sm text-primary">{message}</p>}
+        </section>
       )}
-
-      <section className="my-7">
-        <h2 className="mb-4 text-xl font-bold">
-          {ar ? 'شو بتحصل مع Premium؟' : 'What does Premium include?'}
-        </h2>
-        <div className="grid gap-3 md:grid-cols-2">
-          {benefits.map(({ icon: Icon, arTitle, enTitle, arText, enText, upcoming }) => (
-            <article key={enTitle} className="math-card rounded-2xl border border-border p-5">
-              <div className="mb-3 flex items-center justify-between gap-2">
-                <Icon className="h-6 w-6 text-primary" aria-hidden />
-                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${upcoming
-                  ? 'bg-muted text-muted-foreground' : 'bg-primary/10 text-primary'}`}>
-                  {upcoming ? ar ? 'قريباً' : 'Coming soon' : ar ? 'متاحة الآن' : 'Available now'}
-                </span>
-              </div>
-              <h3 className="font-bold">{ar ? arTitle : enTitle}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{ar ? arText : enText}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="math-card rounded-2xl border border-border p-5 md:p-6">
-        <h2 className="flex items-center gap-2 text-lg font-bold">
-          <CheckCircle2 className="h-5 w-5 text-primary" aria-hidden />
-          {ar ? 'شو متاح مع Free؟' : 'What does Free include?'}
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {ar
-            ? 'أول فئتين من كل مرحلة، وحل أي عدد من المسائل المتاحة لك؛ بدون حد يومي.'
-            : 'The first two categories of every stage, with unlimited problems in available categories.'}
-        </p>
-      </section>
-
-      <p className="mt-5 text-center text-sm text-muted-foreground">
-        {ar
-          ? 'السعر السنوي المخطط 5 دولارات. الدفع الإلكتروني وأكواد الخصم لم يتفعّلا بعد؛ يمكن للإدارة تفعيل Premium حالياً.'
-          : 'Planned annual price: $5. Online payments and discount codes are not yet active; admins can activate Premium manually.'}
-      </p>
+      {!user && <p className="mt-6 text-sm text-muted-foreground">
+        {ar ? 'سجّل الدخول لتفعيل اشتراكك.' : 'Sign in to activate your membership.'}
+      </p>}
     </main>
   );
 }
