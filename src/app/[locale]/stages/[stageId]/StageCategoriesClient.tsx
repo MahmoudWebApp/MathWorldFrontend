@@ -3,7 +3,7 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import { useGetCategoriesQuery, useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery, type CategoryDto } from '@/store/api/categoriesApi';
+import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery, type CategoryDto } from '@/store/api/categoriesApi';
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
 import {
   AlertCircle,
@@ -261,12 +261,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
 
   
   const {
-    data: allCategories,
-    isLoading: categoriesLoading,
-    error: categoriesError,
-    refetch: refetchCategories,
-  } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
-  const {
     data: stages,
     isLoading: stagesLoading,
     error: stagesError,
@@ -284,16 +278,20 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   });
 
   const currentStage = stages?.find(s => s.Id === stageId);
-  const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
-  const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0) || a.Id - b.Id);
+  // The stage-scoped server catalog is authoritative for category details,
+  // published inventory, order and Free access. Do not depend on a second
+  // global /categories request that can fail independently and hide valid data.
+  const sortedCategories: CategoryDto[] = (stageAccess?.Categories ?? [])
+    .map(category => ({
+      ...category,
+      StageId: stageId,
+    }))
+    .sort((a, b) => (a.Order || 0) - (b.Order || 0) || a.Id - b.Id);
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   // The admin may select a different Free pair. Always use the server IDs.
   const freeCategoryIds = new Set(stageAccess?.FreeCategoryIds ?? []);
-  const serverCounts = new Map(
-    (stageAccess?.Categories ?? []).map(item => [item.Id, item.ProblemsCount]),
-  );
-  const isLoading = categoriesLoading || stagesLoading || accessLoading ||
+  const isLoading = stagesLoading || accessLoading ||
     (isStudent && subscriptionLoading);
   const stageNotFound = !isLoading && !!stages && !currentStage;
 
@@ -319,7 +317,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     );
   }
 
-  if (categoriesError || stagesError || accessError ||
+  if (stagesError || accessError ||
       (isStudent && subscriptionError)) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
@@ -336,7 +334,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             <p className="text-xl font-bold">{t('common.errorLoadingData')}</p>
             <button
               onClick={() => {
-                void refetchCategories();
                 void refetchStages();
                 if (stageId > 0) void refetchAccess();
                 if (isStudent) void refetchSubscription();
@@ -441,7 +438,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <button type="button"
-                onClick={() => void refetchCategories()}
+                onClick={() => { if (stageId > 0) void refetchAccess(); }}
                 className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold">
                 {t('common.retry')}
               </button>
@@ -461,7 +458,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
               return (
                 <CategoryPremiumCard
                   key={category.Id}
-                  category={{ ...category, ProblemsCount: serverCounts.get(category.Id) ?? category.ProblemsCount }}
+                  category={category}
                   index={index}
                   math={math}
                   style={style}
@@ -469,7 +466,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   stageId={stageId}
                   iconUrl={iconUrl}
                   locked={!isPremium && !freeCategoryIds.has(category.Id)}
-                  empty={(serverCounts.get(category.Id) ?? category.ProblemsCount) === 0}
+                  empty={category.ProblemsCount === 0}
                 />
               );
             })}
