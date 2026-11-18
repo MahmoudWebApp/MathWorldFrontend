@@ -243,7 +243,7 @@ export const statsApi = createApi({
   baseQuery,
   tagTypes: ['Stats'],
   endpoints: (builder) => ({
-    
+
     // ✅ PUBLIC: Get platform stats (no auth required)
     // Calls: GET /api/stats
     getStats: builder.query<DashboardStats, void>({
@@ -336,5 +336,5 @@ export const {
   useGetAdminPlatformAuditQuery,
   useGetAdminAnalyticsOverviewQuery,
   useGetAdminAnalyticsStageQuery,
-  useGetAdminContentAuditQuery, 
+  useGetAdminContentAuditQuery,
 } = statsApi;
