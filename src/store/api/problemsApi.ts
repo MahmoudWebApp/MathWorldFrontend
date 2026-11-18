@@ -372,6 +372,7 @@ export const {
   useDeleteAdminProblemDiagramMutation,
   useGetProblemQuery,
   useLazyGetPremiumSolutionQuery,
+  useLazyGetSolutionPreviewQuery,
   useGetProblemAttemptsQuery,
   useSubmitAnswerMutation,
   useGetCategoryProblemsQuery,
