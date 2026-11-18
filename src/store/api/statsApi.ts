@@ -238,6 +238,43 @@ export interface AdminAuditFilter {
   action?: string;
 }
 
+export interface AdminContentAuditSummary {
+  TotalStages: number;
+  TotalCategories: number;
+  TotalProblems: number;
+  EmptyCategories: number;
+  ProblemsWithInvalidOptions: number;
+  ProblemsMissingArabicSolution: number;
+  ProblemsMissingEnglishSolution: number;
+  LearnersWithoutStage: number;
+}
+
+export interface AdminContentAuditCategory {
+  Id: number;
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  Order: number;
+  ProblemsCount: number;
+  MissingArabicSolutionCount: number;
+  MissingEnglishSolutionCount: number;
+  InvalidOptionsCount: number;
+}
+
+export interface AdminContentAuditStage {
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  CategoriesCount: number;
+  ProblemsCount: number;
+}
+
+export interface AdminContentAudit {
+  Summary: AdminContentAuditSummary;
+  Stages: AdminContentAuditStage[];
+  Categories: AdminContentAuditCategory[];
+}
+
 export const statsApi = createApi({
   reducerPath: 'statsApi',
   baseQuery,
