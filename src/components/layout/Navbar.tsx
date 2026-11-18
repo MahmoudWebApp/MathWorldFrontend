@@ -41,8 +41,6 @@ import { problemsApi } from '@/store/api/problemsApi';
 import { stagesApi } from '@/store/api/stagesApi';
 import { statsApi } from '@/store/api/statsApi';
 import { usersApi } from '@/store/api/usersApi';
-import { notificationsApi } from '@/store/api/notificationsApi';
-import { StudentNotificationsBell } from './StudentNotificationsBell';
 import { clearAuthSession } from '@/lib/authSession';
 import { API_BASE_URL } from '@/store/api/baseQuery';
 import { useSearchParams } from 'next/navigation';
