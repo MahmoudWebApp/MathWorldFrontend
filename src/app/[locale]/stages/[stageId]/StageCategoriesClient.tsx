@@ -269,6 +269,29 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   const isLoading = categoriesLoading || stagesLoading;
+  const stageNotFound = !isLoading && !!stages && !currentStage;
+
+  if (stageNotFound) {
+    return (
+      <section className="math-section-bg flex min-h-[60vh] items-center justify-center px-4">
+        <div className="math-card max-w-md rounded-3xl border border-border p-8 text-center">
+          <AlertCircle className="mx-auto h-10 w-10 text-primary" aria-hidden="true" />
+          <h1 className="mt-4 text-xl font-bold">
+            {locale === 'ar' ? 'المرحلة التعليمية غير موجودة' : 'Learning stage not found'}
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {locale === 'ar'
+              ? 'قد يكون الرابط قديماً أو تغيّرت المرحلة. اختر مرحلتك من القائمة.'
+              : 'This link might be outdated. Choose an available stage instead.'}
+          </p>
+          <Link href="/stages"
+            className="mt-5 inline-flex rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">
+            {locale === 'ar' ? 'عرض المراحل المتاحة' : 'Browse available stages'}
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   if (categoriesError || stagesError) {
     return (
@@ -387,6 +410,17 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             <p className="text-muted-foreground max-w-md mx-auto">
               {t('categories.noCategoriesDesc')}
             </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button type="button"
+                onClick={() => void refetchCategories()}
+                className="rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold">
+                {t('common.retry')}
+              </button>
+              <Link href="/stages"
+                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+                {locale === 'ar' ? 'العودة للمراحل' : 'Back to stages'}
+              </Link>
+            </div>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-8">
