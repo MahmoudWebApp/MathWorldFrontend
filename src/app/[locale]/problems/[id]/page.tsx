@@ -40,6 +40,7 @@ import {
   useGetProblemDiagramQuery,
   useGetProblemQuery,
   useLazyGetPremiumSolutionQuery,
+  useLazyGetSolutionPreviewQuery,
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
