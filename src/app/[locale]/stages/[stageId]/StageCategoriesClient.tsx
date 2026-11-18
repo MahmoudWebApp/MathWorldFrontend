@@ -317,8 +317,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     );
   }
 
-  if (stagesError || accessError ||
-      (isStudent && subscriptionError)) {
+  if (stagesError || accessError) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
@@ -415,6 +414,23 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                 : 'Two categories are free per stage with unlimited practice; Premium unlocks the rest.'}
           </span>
         </p>
+
+        {isStudent && subscriptionError && (
+          <div role="status" className="mb-6 flex flex-col items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted-foreground">
+              {locale === 'ar'
+                ? 'تعذر التأكد من حالة اشتراكك. نعرض الفئات المجانية بأمان حالياً؛ حاول التحديث لإظهار جميع مزايا حسابك.'
+                : "We couldn't verify your plan. Free topics remain available; retry to restore your account's full access."}
+            </p>
+            <button
+              type="button"
+              onClick={() => void refetchSubscription()}
+              className="shrink-0 rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground"
+            >
+              {t('common.retry')}
+            </button>
+          </div>
+        )}
 
         {/* Main Categories Grid */}
         {isLoading ? (
