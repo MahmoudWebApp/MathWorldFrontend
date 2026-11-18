@@ -62,9 +62,9 @@ function CategoryPremiumCard({
 }: CategoryPremiumCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: index * 0.05, type: "spring" }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.24) }}
       className="h-full"
     >
       <Link
@@ -77,18 +77,18 @@ function CategoryPremiumCard({
             : `${category.NameEn} — locked category, learn why`
           : undefined}
         tabIndex={empty && !locked ? -1 : undefined}
-        className={`brand-surface math-card group relative flex h-[240px] flex-col justify-between overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 hover:-translate-y-2 hover:border-primary/40 hover:shadow-2xl ${style.hoverShadow}`}
+        className={`brand-surface math-card group relative flex min-h-[172px] flex-col justify-between overflow-hidden rounded-2xl p-5 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary hover:border-primary/40 active:bg-primary/5 md:h-[240px] md:rounded-[2.5rem] md:p-8 md:hover:-translate-y-2 md:hover:shadow-2xl ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
         <div
-          className="absolute inset-0 rounded-[2.5rem] opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-[2.5rem] opacity-0 blur-2xl transition-opacity duration-500 motion-safe:group-hover:opacity-100"
           style={{ background: style.spotlight }}
         />
 
         {/* Header: Icon & Name */}
-        <div className="relative z-10 flex flex-col gap-6">
+        <div className="relative z-10 flex flex-col gap-3 md:gap-6">
           <div className="flex items-center justify-between">
-            <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border border-border/50 shadow-inner transition-transform duration-500 group-hover:scale-110 ${style.bg}`}>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-xl border border-border/50 shadow-inner transition-transform duration-200 md:h-16 md:w-16 md:rounded-2xl motion-safe:md:group-hover:scale-110 ${style.bg}`}>
               {iconUrl ? (
                 iconUrl.startsWith('http') || iconUrl.startsWith('/') ? (
                   <Image src={iconUrl} alt="icon" width={32} height={32} className="h-8 w-8 object-contain" />
@@ -100,12 +100,12 @@ function CategoryPremiumCard({
               )}
             </div>
             {/* Minimal Arrow Button */}
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-100 transition-all md:h-10 md:w-10 md:opacity-0 md:group-hover:opacity-100 md:translate-x-4 md:group-hover:translate-x-0">
               <DirectionalArrow direction="forward" size={20} />
             </div>
           </div>
           
-          <h3 className={`mb-4 text-2xl font-bold leading-tight transition-colors ${style.hoverText}`}>
+          <h3 className={`mb-3 line-clamp-3 text-lg font-bold leading-snug transition-colors md:mb-4 md:text-2xl ${style.hoverText}`}>
             {locale === 'ar' ? category.NameAr : category.NameEn}
           </h3>
         </div>
@@ -423,7 +423,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </div>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-8">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4 lg:gap-8">
             {sortedCategories.map((category, index) => {
               const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
               const style = CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length];
