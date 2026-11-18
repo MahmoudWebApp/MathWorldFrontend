@@ -116,7 +116,7 @@ function CategoryPremiumCard({
             <p className="inline-flex items-center gap-2 rounded-md bg-muted/50 px-3 py-1 text-sm text-muted-foreground">
               {locked ? <LockKeyhole className="h-4 w-4" /> : <Info className="h-4 w-4" />}
               {locked
-                ? locale === 'ar' ? 'مقفلة' : 'Locked'
+                ? locale === 'ar' ? 'Premium · مقفلة' : 'Premium · Locked'
                 : locale === 'ar' ? 'لا توجد مسائل بعد' : 'No problems yet'}
             </p>
           ) : (
