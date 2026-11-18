@@ -18,6 +18,7 @@ export function DailyQuotaCard({
   const { data, isLoading } = useGetStudentEntitlementQuery(undefined, {
     skip: stageId == null || stageId <= 0,
   });
+
   if (stageId == null || stageId <= 0) return null;
 
   const premium = data?.IsPremium === true;

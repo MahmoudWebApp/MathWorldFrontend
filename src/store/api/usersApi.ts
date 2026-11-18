@@ -93,6 +93,31 @@ export interface JourneyCategory {
   CompletionPercent: number;
 }
 
+export interface PremiumReportCategory {
+  CategoryId: number;
+  Name: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  FirstTryCorrect: number;
+  MasteredProblems: number;
+  OfficialPoints: number;
+  CompletionPercent: number;
+}
+
+export interface PremiumProgressReport {
+  StageId: number;
+  StageName: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  FirstTryCorrect: number;
+  MasteredProblems: number;
+  OfficialPoints: number;
+  CompletionPercent: number;
+  Categories: PremiumReportCategory[];
+}
+
 export interface LearningJourney {
   StageId: number;
   NameAr: string;
@@ -122,6 +147,16 @@ export interface AdminLearnerSummary {
   SolvedProblems: number;
   AttemptedProblems: number;
   TotalAwardedPoints: number;
+}
+
+export interface AdminLearnerSubscriptionChange {
+  LearnerId: number;
+  SubscriptionType: 'Free' | 'Premium';
+}
+
+export interface AdminLearnerSubscriptionResult {
+  Id: number;
+  SubscriptionType: 'Free' | 'Premium';
 }
 
 export interface AdminLearnerDirectory {
@@ -214,7 +249,7 @@ export interface AdminLearnerAttemptQuery extends AdminLearnerDrilldownQuery {
   Page: number;
 }
 
-/** Server-owned daily allowance; one Free allowance per educational stage. */
+/** Legacy response shape for stage-scoped usage statistics; no daily cap is enforced. */
 export interface StageDailyQuota {
   StageId: number;
   NameAr: string;
@@ -831,6 +866,18 @@ export const usersApi = createApi({
       providesTags: ['AdminLearners'],
     }),
 
+    setAdminLearnerSubscription: builder.mutation<
+      AdminLearnerSubscriptionResult,
+      AdminLearnerSubscriptionChange
+    >({
+      query: ({ LearnerId, SubscriptionType }) => ({
+        url: `/admin/learners/${LearnerId}/subscription`,
+        method: 'PUT',
+        body: { SubscriptionType },
+      }),
+      invalidatesTags: ['AdminLearners', 'User', 'Dashboard'],
+    }),
+
     getAdminLearnerDetail: builder.query<AdminLearnerDetail, AdminLearnerDrilldownQuery>({
       query: ({ LearnerId, StageId }) => ({
         url: `/admin/learners/${LearnerId}`,
@@ -901,6 +948,7 @@ export const {
   useGetAdminUsersQuery,
   useGetAdminLearnersQuery,
   useGetAdminLearnerDetailQuery,
+  useSetAdminLearnerSubscriptionMutation,
   useGetAdminLearnerAttemptsQuery,
   useGetDashboardQuery,
 } = usersApi;

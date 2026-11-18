@@ -12,6 +12,7 @@ export interface RegisterRequest {
   FullName: string;
   Email: string;
   Password: string;
+  StageId: number;
 }
 
 export interface SocialLoginRequest {

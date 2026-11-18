@@ -310,6 +310,12 @@ export const statsApi = createApi({
       providesTags: ['Stats'],
     }),
 
+    // Admin-only, read-only education inventory and quality checks.
+    getAdminContentAudit: builder.query<AdminContentAudit, void>({
+      query: () => '/admin/content-audit',
+      providesTags: ['Stats'],
+    }),
+
     // ✅ ADMIN: Get admin dashboard stats (requires auth)
     // Calls: GET /api/admin/stats
     getAdminStats: builder.query<DashboardStats, void>({
@@ -329,5 +335,6 @@ export const {
   useGetAdminEngagementStudentsQuery,
   useGetAdminPlatformAuditQuery,
   useGetAdminAnalyticsOverviewQuery,
-  useGetAdminAnalyticsStageQuery, 
+  useGetAdminAnalyticsStageQuery,
+  useGetAdminContentAuditQuery, 
 } = statsApi;

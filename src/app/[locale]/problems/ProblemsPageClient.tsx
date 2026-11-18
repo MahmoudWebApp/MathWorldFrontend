@@ -352,7 +352,9 @@ function ProblemsPageClient() {
         <div className="text-center py-16 bg-destructive/5 rounded-3xl border border-destructive/10">
           <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4 opacity-80" />
           <p className="text-lg font-semibold text-destructive mb-2">
-            {t("common.errorLoadingData")}
+            {lockedCategoryError
+              ? locale === 'ar' ? 'هذه الفئة مقفلة لحسابك' : 'This category is locked for your account'
+              : t("common.errorLoadingData")}
           </p>
           <Button
             onClick={() => void refetchProblems()}
@@ -378,8 +380,18 @@ function ProblemsPageClient() {
               </div>
               <p className="text-xl font-bold mb-2">{t("search.noResults")}</p>
               <p className="text-muted-foreground">
-                {t("search.tryDifferent")}
+                {debouncedSearch
+                  ? t("search.tryDifferent")
+                  : locale === 'ar'
+                    ? 'ما ظهرت مسائل بهذه القائمة حالياً. جرّب التحديث أو ارجع للفئات المتاحة.'
+                    : 'No problems appeared here. Refresh or return to available categories.'}
               </p>
+              {!debouncedSearch && (
+                <Button variant="outline" onClick={() => void retrySearch()} className="mt-6 gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  {t("common.retry")}
+                </Button>
+              )}
               {debouncedSearch && (
                 <Button
                   variant="outline"

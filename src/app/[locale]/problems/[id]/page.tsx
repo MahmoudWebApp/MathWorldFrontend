@@ -12,6 +12,7 @@ import {
   ChevronUp,
   Clock3,
   Heart,
+  Eye,
   History,
   Loader2,
   Lock,
@@ -136,7 +137,8 @@ export default function ProblemPage() {
   const t = useTranslations();
   const locale = useLocale();
   const isArabic = locale === "ar";
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const isPremium = user?.SubscriptionType?.toLowerCase() === 'premium';
   const problemId = Number.parseInt(params.id, 10);
   const solutionRef = useRef<HTMLDivElement>(null);
   const questionCardRef = useRef<HTMLDivElement>(null);
@@ -192,6 +194,13 @@ export default function ProblemPage() {
 
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
+  const [requestSolutionPreview, {
+    data: solutionPreviewData,
+    isFetching: previewLoading,
+    error: previewError,
+  }] = useLazyGetSolutionPreviewQuery();
+  const solutionPreview = solutionPreviewData?.ProblemId === problemId
+    ? solutionPreviewData : null;
 
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [localAnswerResult, setLocalAnswerResult] =
@@ -349,6 +358,9 @@ export default function ProblemPage() {
     false;
 
   const solutionText = useMemo(() => {
+    if (solutionPreview?.DetailedSolution?.trim()) {
+      return solutionPreview.DetailedSolution;
+    }
     if (retryMode) {
       return null;
     }
@@ -375,9 +387,14 @@ export default function ProblemPage() {
     locale,
     retryMode,
     isCorrect,
+    solutionPreview,
   ]);
 
   const youtubeUrl = useMemo(() => {
+    if (solutionPreview?.YoutubeSolutionUrl &&
+        getYouTubeVideoId(solutionPreview.YoutubeSolutionUrl)) {
+      return solutionPreview.YoutubeSolutionUrl;
+    }
     if (retryMode || (!adminProblem && !isCorrect)) {
       return null;
     }
@@ -392,10 +409,12 @@ export default function ProblemPage() {
     }
 
     return value;
-  }, [localAnswerResult, studentProblem, adminProblem, retryMode, isCorrect]);
+  }, [localAnswerResult, studentProblem, adminProblem, retryMode, isCorrect, solutionPreview]);
 
-  const showSolutionSection = !!solutionText && (showResult || !!adminProblem);
-  const showVideoTab = !!youtubeUrl && (showResult || !!adminProblem);
+  const showSolutionSection = !!solutionText &&
+    (showResult || !!adminProblem || !!solutionPreview);
+  const showVideoTab = !!youtubeUrl &&
+    (showResult || !!adminProblem || !!solutionPreview);
   const isFavorite =
     favoriteData?.IsFavorite ?? studentProblem?.IsFavorite ?? false;
 
@@ -970,6 +989,30 @@ export default function ProblemPage() {
                     </div>
                   )}
 
+                  {isPremium && canAnswer && !solutionPreview && (
+                    <div className="mb-4 flex justify-end">
+                      <button
+                        type="button"
+                        disabled={previewLoading}
+                        onClick={() => { void requestSolutionPreview(problemId); }}
+                        className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
+                      >
+                        {previewLoading
+                          ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          : <Eye className="h-4 w-4" aria-hidden />}
+                        {previewLoading
+                          ? isArabic ? 'جارٍ تحميل الحل...' : 'Loading solution...'
+                          : isArabic ? 'عرض الحل قبل الإجابة' : 'Preview solution before answering'}
+                      </button>
+                    </div>
+                  )}
+                  {isPremium && previewError && (
+                    <div role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                      {isArabic
+                        ? 'لم نتمكن من عرض الحل. حاول مجدداً أو حدّث اشتراكك.'
+                        : 'Could not preview the solution. Try again or refresh your subscription.'}
+                    </div>
+                  )}
                   {canAnswer && (
                     <div className="flex justify-end">
                       <Button
@@ -1061,6 +1104,18 @@ export default function ProblemPage() {
                           )}
                         </div>
                       )}
+
+                      <Link
+                        href={categoryId != null
+                          ? `/problems?categoryId=${categoryId}&stageId=${stageId}`
+                          : stageId != null
+                            ? `/problems?stageId=${stageId}`
+                            : "/problems"}
+                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
+                      >
+                        <DirectionalArrow direction="back" />
+                        {t("problem.backToProblems")}
+                      </Link>
 
                       {canRetry && (
                         <div className="mt-5 flex flex-wrap items-center gap-3">

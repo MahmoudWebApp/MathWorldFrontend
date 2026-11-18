@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
     allStatus: 'كل الحالات', active: 'نشط', disabled: 'معطّل',
     allTiers: 'كل الاشتراكات', stage: 'المرحلة', status: 'الحالة',
     tier: 'الاشتراك', name: 'الطالب', solved: 'محلولة', points: 'نقاط',
-    recent: 'آخر محاولة', noActivity: 'لا توجد محاولات',
+    recent: 'آخر محاولة', lastLogin: 'آخر دخول', noActivity: 'لا توجد محاولات', noLogin: 'لم يسجّل دخولاً',
     noStage: 'لم يحدد المرحلة', detail: 'ملف الطالب', total: 'طالب',
     empty: 'ما في طلاب مطابقين للبحث الحالي.', error: 'تعذر تحميل الطلاب.',
     retry: 'إعادة المحاولة', loading: 'جاري تحميل الطلاب...',
@@ -54,17 +54,19 @@ export default function AdminUsersPage() {
     allStatus: 'All statuses', active: 'Active', disabled: 'Disabled',
     allTiers: 'All subscriptions', stage: 'Stage', status: 'Status',
     tier: 'Plan', name: 'Learner', solved: 'Solved', points: 'Points',
-    recent: 'Last attempt', noActivity: 'No attempts',
+    recent: 'Last attempt', lastLogin: 'Last login', noActivity: 'No attempts', noLogin: 'Never logged in',
     noStage: 'No stage selected', detail: 'View learner', total: 'students',
     empty: 'No learners match these filters.', error: 'Could not load learners.',
     retry: 'Retry', loading: 'Loading learners...',
     previous: 'Previous', next: 'Next', page: 'Page',
     analytics: 'Stage analytics',
   };
-  const fmt = (value: string | null | undefined) =>
-    value ? new Date(value).toLocaleDateString(ar ? 'ar' : 'en', {
+  // Actual timestamps from server, not guessed log-out or session duration.
+  const fmt = (value: string | null | undefined, absent = label.noActivity) =>
+    value ? new Date(value).toLocaleString(ar ? 'ar' : 'en', {
       year: 'numeric', month: 'short', day: 'numeric',
-    }) : label.noActivity;
+      hour: '2-digit', minute: '2-digit',
+    }) : absent;
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
@@ -180,7 +182,7 @@ export default function AdminUsersPage() {
                 <thead className="bg-muted/40 text-muted-foreground">
                   <tr>
                     {[label.name, label.stage, label.status, label.tier, label.solved,
-                      label.points, label.recent, label.detail].map((heading) =>
+                      label.points, label.lastLogin, label.recent, label.detail].map((heading) =>
                       <th className="px-4 py-3 text-start font-semibold" key={heading}>{heading}</th>)}
                   </tr>
                 </thead>
@@ -198,6 +200,7 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-3">{u.SubscriptionType}</td>
                       <td className="px-4 py-3 tabular-nums">{u.SolvedProblems}</td>
                       <td className="px-4 py-3 tabular-nums">{u.TotalAwardedPoints}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{fmt(u.LastLoginAt, label.noLogin)}</td>
                       <td className="px-4 py-3 text-muted-foreground">{fmt(u.LastAttemptAt)}</td>
                       <td className="px-4 py-3"><Link href={`/admin/users/${u.Id}`} className="font-semibold text-primary hover:underline">{label.detail}</Link></td>
                     </tr>
