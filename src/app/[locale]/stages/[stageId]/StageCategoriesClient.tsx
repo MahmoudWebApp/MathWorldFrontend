@@ -291,8 +291,9 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
   // The admin may select a different Free pair. Always use the server IDs.
   const freeCategoryIds = new Set(stageAccess?.FreeCategoryIds ?? []);
-  const isLoading = stagesLoading || accessLoading ||
-    (isStudent && subscriptionLoading);
+  // Stage data is usable while a separate entitlement request is pending.
+  // Until verified, only the server-designated Free categories open.
+  const isLoading = stagesLoading || accessLoading;
   const stageNotFound = !isLoading && !!stages && !currentStage;
 
   if (stageNotFound) {
@@ -415,6 +416,13 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
           </span>
         </p>
 
+        {isStudent && subscriptionLoading && (
+          <p role="status" className="mb-6 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+            {locale === 'ar'
+              ? 'عم نتحقق من عضويتك؛ فيك تتصفح فئاتك المجانية أثناء التحقق.'
+              : 'Checking your membership. Free topics are available while we verify your plan.'}
+          </p>
+        )}
         {isStudent && subscriptionError && (
           <div role="status" className="mb-6 flex flex-col items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
             <p className="text-muted-foreground">
