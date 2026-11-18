@@ -121,6 +121,9 @@ function ProblemsPageClient() {
       (scopedCategory && accessFailed) },
   );
 
+  const lockedCategoryError = !!searchError && typeof searchError === 'object' &&
+    'status' in searchError && searchError.status === 403;
+
   // ── Derived data ────────────────────────────────────────
   const problems: ProblemPreview[] = searchResults?.Results || [];
   const totalResults = searchResults?.Total || 0;
@@ -387,7 +390,7 @@ function ProblemsPageClient() {
                     : 'No problems appeared here. Refresh or return to available categories.'}
               </p>
               {!debouncedSearch && (
-                <Button variant="outline" onClick={() => void retrySearch()} className="mt-6 gap-2">
+                <Button variant="outline" onClick={() => void refetchProblems()} className="mt-6 gap-2">
                   <RotateCcw className="h-4 w-4" />
                   {t("common.retry")}
                 </Button>
