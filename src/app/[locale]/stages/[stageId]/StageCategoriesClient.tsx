@@ -3,7 +3,7 @@
 import { useTranslations, useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import { useGetCategoriesQuery, type CategoryDto } from '@/store/api/categoriesApi';
+import { useGetCategoriesQuery, useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery, type CategoryDto } from '@/store/api/categoriesApi';
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
 import {
   AlertCircle,
@@ -244,10 +244,20 @@ interface StageCategoriesClientProps {
 export default function StageCategoriesClient({ stageId }: StageCategoriesClientProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const isPremium = useSelector((state: RootState) =>
-    state.auth.user?.Role === 'Admin' ||
-    state.auth.user?.SubscriptionType?.toLowerCase() === 'premium'
-  );
+  const role = useSelector((state: RootState) => state.auth.user?.Role);
+  const isAdmin = role === 'Admin';
+  const isStudent = role === 'Student';
+  // The JWT profile can lag behind an admin grant or a 100% code redemption.
+  const {
+    data: subscription,
+    isLoading: subscriptionLoading,
+    isError: subscriptionError,
+    refetch: refetchSubscription,
+  } = useGetStudentSubscriptionQuery(undefined, {
+    skip: !isStudent,
+    refetchOnMountOrArgChange: true,
+  });
+  const isPremium = isAdmin || (isStudent && subscription?.IsPremium === true);
 
   
   const {
@@ -263,12 +273,28 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     refetch: refetchStages,
   } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
 
+  const {
+    data: stageAccess,
+    isLoading: accessLoading,
+    isError: accessError,
+    refetch: refetchAccess,
+  } = useGetStageCategoryAccessQuery(stageId, {
+    skip: stageId <= 0,
+    refetchOnMountOrArgChange: true,
+  });
+
   const currentStage = stages?.find(s => s.Id === stageId);
   const stageCategories = allCategories?.filter(cat => cat.StageId === stageId) || [];
   const sortedCategories = [...stageCategories].sort((a, b) => (a.Order || 0) - (b.Order || 0) || a.Id - b.Id);
   
   const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
-  const isLoading = categoriesLoading || stagesLoading;
+  // The admin may select a different Free pair. Always use the server IDs.
+  const freeCategoryIds = new Set(stageAccess?.FreeCategoryIds ?? []);
+  const serverCounts = new Map(
+    (stageAccess?.Categories ?? []).map(item => [item.Id, item.ProblemsCount]),
+  );
+  const isLoading = categoriesLoading || stagesLoading || accessLoading ||
+    (isStudent && subscriptionLoading);
   const stageNotFound = !isLoading && !!stages && !currentStage;
 
   if (stageNotFound) {
@@ -293,7 +319,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     );
   }
 
-  if (categoriesError || stagesError) {
+  if (categoriesError || stagesError || accessError ||
+      (isStudent && subscriptionError)) {
     return (
       <section className="min-h-[60vh] flex items-center justify-center relative overflow-hidden math-section-bg">
         <div className="absolute inset-0 math-grid-bg opacity-30" />
@@ -311,6 +338,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
               onClick={() => {
                 void refetchCategories();
                 void refetchStages();
+                if (stageId > 0) void refetchAccess();
+                if (isStudent) void refetchSubscription();
               }}
               className="px-6 py-3 mt-4 bg-primary text-primary-foreground font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/25 active:scale-95 transition-all"
             >
@@ -385,8 +414,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                 ? 'كل فئات هذه المرحلة متاحة لحسابك.'
                 : 'All categories in this stage are available to your account.'
               : locale === 'ar'
-                ? 'أول فئتين مفتوحتان مجاناً في كل مرحلة، وباقي الفئات ضمن Premium.'
-                : 'The first two categories per stage are free; the others require Premium.'}
+                ? 'فئتان مفتوحتان مجاناً في كل مرحلة، وباقي الفئات ضمن Premium. حل المسائل المفتوحة غير محدود.'
+                : 'Two categories are free per stage with unlimited practice; Premium unlocks the rest.'}
           </span>
         </p>
 
@@ -432,15 +461,15 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
               return (
                 <CategoryPremiumCard
                   key={category.Id}
-                  category={category}
+                  category={{ ...category, ProblemsCount: serverCounts.get(category.Id) ?? category.ProblemsCount }}
                   index={index}
                   math={math}
                   style={style}
                   locale={locale}
                   stageId={stageId}
                   iconUrl={iconUrl}
-                  locked={!isPremium && index >= 2}
-                  empty={category.ProblemsCount === 0}
+                  locked={!isPremium && !freeCategoryIds.has(category.Id)}
+                  empty={(serverCounts.get(category.Id) ?? category.ProblemsCount) === 0}
                 />
               );
             })}
