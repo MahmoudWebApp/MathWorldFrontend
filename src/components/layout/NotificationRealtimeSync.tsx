@@ -36,7 +36,7 @@ export function NotificationRealtimeSync({ token }: { token: string }) {
       controller = new AbortController();
       let stableConnection = false;
       try {
-        const response = await fetch(`${API_BASE_URL}/notifications/stream`, {
+        const response = await fetch(`${API_BASE_URL}/notifications/v2/stream`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
