@@ -17,7 +17,7 @@ export default function NotificationsPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   const [page, setPage] = useState(1);
   const { data, isLoading, isFetching, isError, refetch } = useListNotificationsQuery(
-    { page, pageSize: 20 },
+    { page, pageSize: 20, locale: ar ? 'ar' : 'en' },
     { skip: user?.Role !== 'Student', refetchOnMountOrArgChange: true },
   );
   const [markRead] = useMarkNotificationReadMutation();
