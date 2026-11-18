@@ -22,6 +22,25 @@ export interface InboxSnapshot {
   Take: number;
 }
 
+export interface StudentNotification {
+  Id: number;
+  Type: string;
+  Title: string;
+  Body: string;
+  ActionPath?: string | null;
+  CreatedAt: string;
+  IsRead: boolean;
+}
+
+export interface StudentNotificationsPage {
+  Notifications: StudentNotification[];
+  Page: number;
+  PageSize: number;
+  Total: number;
+  UnreadCount: number;
+  HasMore: boolean;
+}
+
 // Backend filters by JWT identity and the last 30 days. No mock notifications.
 export interface SendAdminNotificationRequest {
   learnerId: number;
@@ -45,6 +64,44 @@ export const notificationsApi = createApi({
       query: ({ skip, take = 30 }) => ({
         url: '/notifications',
         params: { take, skip },
+      }),
+      providesTags: ['Inbox'],
+    }),
+    // Adapt the newer unified inbox response to the paginated student UI.
+    listNotifications: builder.query<StudentNotificationsPage, {
+      page?: number;
+      pageSize?: number;
+      locale?: string;
+    }>({
+      query: ({ page = 1, pageSize = 20 }) => ({
+        url: '/notifications',
+        params: { take: pageSize, skip: (page - 1) * pageSize },
+      }),
+      transformResponse: (data: InboxSnapshot, _meta, args) => {
+        const { page = 1, pageSize = 20, locale = 'ar' } = args;
+        return {
+          Notifications: data.Items.map(item => ({
+            Id: item.Id,
+            Type: item.Type,
+            Title: locale === 'en' ? item.TitleEn : item.TitleAr,
+            Body: locale === 'en' ? item.BodyEn : item.BodyAr,
+            ActionPath: item.TargetPath,
+            CreatedAt: item.CreatedAtUtc,
+            IsRead: item.ReadAtUtc != null,
+          })),
+          Page: page,
+          PageSize: pageSize,
+          Total: data.TotalCount,
+          UnreadCount: data.UnreadCount,
+          HasMore: data.HasMore,
+        };
+      },
+      providesTags: ['Inbox'],
+    }),
+    notificationUnreadCount: builder.query<{ UnreadCount: number }, void>({
+      query: () => ({ url: '/notifications', params: { take: 1 } }),
+      transformResponse: (data: InboxSnapshot) => ({
+        UnreadCount: data.UnreadCount,
       }),
       providesTags: ['Inbox'],
     }),
@@ -72,6 +129,8 @@ export const notificationsApi = createApi({
 export const {
   useGetInboxQuery,
   useGetInboxPageQuery,
+  useListNotificationsQuery,
+  useNotificationUnreadCountQuery,
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
   useSendAdminNotificationMutation,
