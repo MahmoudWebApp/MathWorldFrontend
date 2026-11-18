@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckCircle2, Crown, GraduationCap, LockOpen, ShieldCheck, Sparkles, Ticket } from 'lucide-react';
 import { Link } from '@/i18n/routing';
-import type { RootState } from '@/store';
+import type { RootState, AppDispatch } from '@/store';
 import type { User } from '@/store/api/types';
 import { setCredentials } from '@/store/slices/authSlice';
 import { API_BASE_URL } from '@/store/api/baseQuery';
@@ -13,7 +13,7 @@ import { categoriesApi } from '@/store/api/categoriesApi';
 
 export default function PremiumBenefitsPage() {
   const ar = useLocale() === 'ar';
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.auth.user);
   const token = useSelector((state: RootState) => state.auth.token);
   const premium = user?.SubscriptionType?.toLowerCase() === 'premium';
