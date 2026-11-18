@@ -7,15 +7,12 @@ import {
   type CategoryDto,
 } from '@/store/api/categoriesApi';
 import { useSelector } from 'react-redux';
-import { LockKeyhole } from 'lucide-react';
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
 import {
   AlertCircle,
   Filter,
   Loader2,
   LockKeyhole,
-  LockOpen,
-  Info,
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
