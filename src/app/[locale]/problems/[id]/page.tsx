@@ -1046,6 +1046,18 @@ export default function ProblemPage() {
                         </div>
                       )}
 
+                      <Link
+                        href={categoryId != null
+                          ? `/problems?categoryId=${categoryId}&stageId=${stageId}`
+                          : stageId != null
+                            ? `/problems?stageId=${stageId}`
+                            : "/problems"}
+                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
+                      >
+                        <DirectionalArrow direction="back" />
+                        {t("problem.backToProblems")}
+                      </Link>
+
                       {canRetry && (
                         <div className="mt-5 flex flex-wrap items-center gap-3">
                           <Button
