@@ -27,7 +27,7 @@ export default function RedeemPremiumGiftPage() {
     setRedemption(null);
     const text = code.trim();
     if (!text || text.length > 100) {
-      setError(ar ? 'أدخل كود هدية صحيح.' : 'Enter a valid gift code.');
+      setError(ar ? 'أدخل كود خصم 100% صحيحاً.' : 'Enter a valid 100% Premium code.');
       return;
     }
     try {
@@ -54,11 +54,11 @@ export default function RedeemPremiumGiftPage() {
           <Gift className="h-9 w-9" aria-hidden="true" />
         </span>
         <h1 className="text-3xl font-extrabold sm:text-4xl">
-          {ar ? 'تفعيل هدية Premium' : 'Redeem your Premium gift'}
+          {ar ? 'تفعيل كود خصم Premium بنسبة 100%' : 'Redeem your 100% Premium code'}
         </h1>
         <p className="text-muted-foreground">
-          {ar ? 'عندك كود هدية من إدارة MathWorld؟ فعّله حتى تُفتح لك مزايا Premium.'
-            : 'Have a gift code from MathWorld? Activate it to unlock Premium learning.'}
+          {ar ? 'عندك كود خصم 100% من إدارة MathWorld؟ فعّله لتفتح كل مزايا Premium دون دفع.'
+            : 'Have a 100% Premium code from MathWorld? Redeem it for full access without payment.'}
         </p>
       </header>
       {!student ? (
@@ -70,7 +70,7 @@ export default function RedeemPremiumGiftPage() {
         <section className="space-y-5 rounded-2xl border bg-card p-5 sm:p-7">
           <form onSubmit={(event) => void submit(event)} className="space-y-4">
             <label className="block space-y-2">
-              <span className="text-sm font-semibold">{ar ? 'كود الهدية' : 'Gift code'}</span>
+              <span className="text-sm font-semibold">{ar ? 'كود خصم 100%' : '100% access code'}</span>
               <input value={code} onChange={e => setCode(e.target.value)}
                 autoComplete="off" spellCheck={false} maxLength={100} required
                 dir="ltr" placeholder="MW-XXXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXX"
@@ -78,7 +78,7 @@ export default function RedeemPremiumGiftPage() {
             </label>
             <button type="submit" disabled={isLoading}
               className="w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground disabled:opacity-50">
-              {isLoading ? (ar ? 'جارٍ التفعيل…' : 'Activating…') : (ar ? 'تفعيل كود Premium' : 'Activate Premium gift')}
+              {isLoading ? (ar ? 'جارٍ التفعيل…' : 'Activating…') : (ar ? 'تفعيل كود خصم 100%' : 'Activate 100% Premium')}
             </button>
           </form>
           {error && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
@@ -87,7 +87,7 @@ export default function RedeemPremiumGiftPage() {
               <CheckCircle2 className="h-5 w-5" />{ar ? 'تم تفعيل Premium بنجاح!' : 'Premium activated!'}
             </h2>
             <p className="text-sm">
-              {ar ? 'مدة الهدية:' : 'Gift duration:'} {redemption.GrantedDays}
+              {ar ? 'مدة الاشتراك المجاني:' : 'Free membership duration:'} {redemption.GrantedDays}
               {' '}{ar ? 'يوماً' : 'days'}
             </p>
             <p className="text-sm">
@@ -100,8 +100,8 @@ export default function RedeemPremiumGiftPage() {
           </div>}
           <p className="flex items-start gap-2 text-xs text-muted-foreground">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true"/>
-            {ar ? 'كود الهدية للاستخدام مرة واحدة فقط. لا توجد عملية دفع أو بطاقة مصرفية.'
-              : 'Gift codes are single-use. No payment card or checkout is involved.'}
+            {ar ? 'كود خصم 100% صالح للاستخدام مرة واحدة فقط، دون عملية دفع أو بطاقة مصرفية.'
+              : '100% access codes are single-use. No payment card or checkout is involved.'}
           </p>
         </section>
       )}
