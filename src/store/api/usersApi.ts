@@ -354,6 +354,14 @@ export interface StageLeaderboardFilter {
   page: number;
 }
 
+export type LeaderboardPeriod = 'all' | 'weekly' | 'monthly';
+export type StageLeaderboard = StageLeaderboardReport;
+export interface StageLeaderboardQuery {
+  StageId: number;
+  Period: LeaderboardPeriod;
+  Page: number;
+}
+
 export interface MathBadge {
   Key: string;
   TitleAr: string;
@@ -716,6 +724,24 @@ export const usersApi = createApi({
       providesTags: ['Leaderboard'],
     }),
 
+    // Compatibility for the stage leaderboard page merged from main.
+    getLeaderboard: builder.query<StageLeaderboard, StageLeaderboardQuery>({
+      query: ({ StageId, Period, Page }) => ({
+        url: '/users/leaderboard',
+        params: { stageId: StageId, period: Period, page: Page, pageSize: 20 },
+      }),
+      providesTags: ['Leaderboard'],
+    }),
+
+    // Historic stage reports remain separate from Premium analytics XLSX.
+    getPremiumProgressReport: builder.query<PremiumProgressReport, number | void>({
+      query: (stageId) => ({
+        url: '/users/premium-report',
+        params: stageId ? { stageId } : {},
+      }),
+      providesTags: ['User'],
+    }),
+
     getLearningJourney: builder.query<LearningJourney, number>({
       query: (stageId) => ({
         url: '/users/journey',
@@ -916,6 +942,8 @@ export const {
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,
   useGetStageLeaderboardQuery,
+  useGetLeaderboardQuery,
+  useGetPremiumProgressReportQuery,
   useGetAchievementsQuery,
   useGetDailyQuotaQuery,
   useGetStudentEntitlementQuery,
