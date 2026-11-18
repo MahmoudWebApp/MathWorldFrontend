@@ -68,15 +68,19 @@ function CategoryPremiumCard({
       className="h-full"
     >
       <Link
-        href={locked ? '/premium' : empty ? '#' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
-        onClick={(event) => { if (empty && !locked) event.preventDefault(); }}
-        aria-disabled={empty && !locked}
-        aria-label={locked
+        href={empty ? '#' : locked ? '/premium' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
+        onClick={(event) => { if (empty) event.preventDefault(); }}
+        aria-disabled={empty}
+        aria-label={empty
+          ? locale === 'ar'
+            ? `${category.NameAr} — لا توجد مسائل منشورة بعد`
+            : `${category.NameEn} — no published questions yet`
+          : locked
           ? locale === 'ar'
             ? `${category.NameAr} — فئة مقفلة، اضغط لمعرفة السبب`
             : `${category.NameEn} — locked category, learn why`
           : undefined}
-        tabIndex={empty && !locked ? -1 : undefined}
+        tabIndex={empty ? -1 : undefined}
         className={`brand-surface math-card group relative flex min-h-[172px] flex-col justify-between overflow-hidden rounded-2xl p-5 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary hover:border-primary/40 active:bg-primary/5 md:h-[240px] md:rounded-[2.5rem] md:p-8 md:hover:-translate-y-2 md:hover:shadow-2xl ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
@@ -114,10 +118,10 @@ function CategoryPremiumCard({
         <div className="relative z-10 mt-auto">
           {locked || empty ? (
             <p className="inline-flex items-center gap-2 rounded-md bg-muted/50 px-3 py-1 text-sm text-muted-foreground">
-              {locked ? <LockKeyhole className="h-4 w-4" /> : <Info className="h-4 w-4" />}
-              {locked
-                ? locale === 'ar' ? 'Premium · مقفلة' : 'Premium · Locked'
-                : locale === 'ar' ? 'لا توجد مسائل بعد' : 'No problems yet'}
+              {empty ? <Info className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+              {empty
+                ? locale === 'ar' ? 'لا توجد مسائل بعد' : 'No problems yet'
+                : locale === 'ar' ? 'Premium · مقفلة' : 'Premium · Locked'}
             </p>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2">
