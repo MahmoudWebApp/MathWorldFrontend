@@ -28,5 +28,8 @@ jobs:
           test -f 'src/app/[locale]/premium/report/page.tsx'
           test -f 'src/app/[locale]/notifications/page.tsx'
           test -f 'src/components/layout/StudentNotificationsBell.tsx'
+          sed -i 's/[[:blank:]]\\+$//' src/store/api/statsApi.ts
+          git add src/store/api/statsApi.ts
+          git diff --cached --quiet || git commit -m "chore: remove merged trailing whitespace"
           git diff --check HEAD^1 HEAD
           git push origin HEAD:refs/heads/integration/premium-web-reconcile-20261118
