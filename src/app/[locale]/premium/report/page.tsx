@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
-import { BarChart3, Download, RefreshCw } from 'lucide-react';
+import { BarChart3, Download, Printer, RefreshCw } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
 import { useGetPremiumProgressReportQuery } from '@/store/api/usersApi';
+import { useGetStagesQuery } from '@/store/api/stagesApi';
 
 const formatCell = (value: string | number) => {
   const text = String(value);
@@ -19,9 +20,14 @@ export default function PremiumProgressReportPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   const premium = user?.SubscriptionType?.toLowerCase() === 'premium';
   const stageId = user?.CurrentStageId ?? null;
+  const [chosenStage, setChosenStage] = useState<number | null>(null);
+  const { data: stages } = useGetStagesQuery(ar ? 'ar' : 'en', {
+    skip: !premium,
+  });
+  const activeStage = chosenStage ?? stageId ?? undefined;
   const { data, isLoading, isFetching, error, refetch } =
-    useGetPremiumProgressReportQuery(stageId ?? undefined, {
-      skip: !premium,
+    useGetPremiumProgressReportQuery(activeStage, {
+      skip: !premium || !activeStage,
       refetchOnMountOrArgChange: true,
     });
   const isForbidden = !!error && typeof error === 'object' &&
@@ -52,8 +58,8 @@ export default function PremiumProgressReportPage() {
   };
 
   return (
-    <main className="container mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-8">
-      <Link href="/premium" className="text-sm font-semibold text-primary hover:underline">
+    <main className="container mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-8 print:max-w-none print:px-0 print:py-0 print:text-black">
+      <Link href="/premium" className="text-sm font-semibold text-primary hover:underline print:hidden">
         {ar ? 'العودة لمميزات الحساب' : 'Back to account benefits'}
       </Link>
       <header>
@@ -102,8 +108,32 @@ export default function PremiumProgressReportPage() {
           {data && !error && (
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-lg font-bold">{data.StageName}</h2>
-                <div className="flex flex-wrap gap-2">
+                <div>
+                  <h2 className="text-lg font-bold">{data.StageName}</h2>
+                  {stages && stages.length > 1 && (
+                    <label className="mt-2 flex items-center gap-2 text-sm">
+                      <span>{ar ? 'المرحلة' : 'Stage'}</span>
+                      <select
+                        aria-label={ar ? 'مرحلة التقرير' : 'Report stage'}
+                        value={activeStage ?? ''}
+                        onChange={event => setChosenStage(Number(event.target.value))}
+                        className="rounded-xl border border-border bg-card px-3 py-2 print:hidden"
+                      >
+                        {stages.map(stage => (
+                          <option key={stage.Id} value={stage.Id}>
+                            {ar ? stage.NameAr : stage.NameEn}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 print:hidden">
+                  <button type="button" onClick={() => window.print()}
+                    className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold">
+                    <Printer className="h-4 w-4" aria-hidden />
+                    {ar ? 'طباعة أو حفظ PDF' : 'Print / Save as PDF'}
+                  </button>
                   <button type="button" disabled={isFetching}
                     onClick={() => void refetch()}
                     className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold disabled:opacity-50">
@@ -163,7 +193,7 @@ export default function PremiumProgressReportPage() {
                   ))}
                 </div>
               </section>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground print:hidden">
                 {ar ? 'التصدير الحالي CSV متوافق مع Excel. ملفات XLSX وPDF الأصلية ضمن المرحلة التالية.'
                   : 'Current export is Excel-compatible CSV. Native XLSX and PDF are planned separately.'}
               </p>
