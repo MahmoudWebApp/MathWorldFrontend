@@ -12,7 +12,7 @@ import {
   Calendar,
   Warning2,
 } from "iconsax-reactjs";
-import { NotebookTabs, Trophy, Target, Crown } from "lucide-react";
+import { NotebookTabs, Trophy, Target } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
