@@ -43,7 +43,7 @@ export default function UserDashboardPage() {
   const isArabic = locale === "ar";
   const router = useRouter();
   // Single API call for all dashboard data instead of 3 separate calls
-  const { data: dashboard, isLoading, isError } = useGetDashboardQuery(locale, {
+  const { data: dashboard, isLoading, isError, refetch: retryDashboard } = useGetDashboardQuery(locale, {
     refetchOnMountOrArgChange: true,
   });
   const stageId = dashboard?.CurrentStageId;
@@ -109,6 +109,39 @@ export default function UserDashboardPage() {
       color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20", isLucide: false,
     },
   ];
+
+  // Statistics and enrollment can fail independently. Don't show a blank
+  // dashboard that strands learners when the API is temporarily unavailable.
+  if (isError && !dashboard) {
+    return (
+      <main className="container mx-auto max-w-2xl px-4 py-10">
+        <section className="math-card rounded-2xl border border-border p-6">
+          <h1 className="text-xl font-bold">
+            {isArabic ? "ما قدرنا نحمّل إحصائياتك حالياً" : "Your dashboard stats are unavailable"}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {isArabic
+              ? "ما في داعي توقف تعلمك. فيك تتابع المسائل أو تختار مرحلتك بينما نحاول إعادة جلب الإحصائيات."
+              : "You can continue learning or choose a stage while your stats reconnect."}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/stages"
+              className="inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+              {isArabic ? "تابع حل المسائل" : "Continue solving"}
+            </Link>
+            <Link href="/learning-stage"
+              className="inline-flex rounded-xl border border-border px-4 py-2.5 text-sm font-semibold">
+              {journeyLabels.change}
+            </Link>
+            <button type="button" onClick={() => void retryDashboard()}
+              className="inline-flex rounded-xl border border-border px-4 py-2.5 text-sm font-semibold">
+              {t("common.retry")}
+            </button>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <div className="container relative mx-auto px-4 py-8 md:px-16 lg:px-24">
