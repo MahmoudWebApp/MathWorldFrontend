@@ -93,6 +93,35 @@ const stageCounts = new Map();
 const normalized = value => String(value ?? '').trim().toLowerCase()
   .replace(/\s+/gu, ' ');
 
+// Reject options that look different but have the same numeric meaning.
+// Only unambiguous numeric literals are compared. This is a safety net,
+// not an answer-key validator or a substitute for educator review.
+function numericOptionValue(value) {
+  let text = String(value ?? '').trim()
+    .replace(/[−–]/gu, '-')
+    .replace(/\s+/gu, '')
+    .replace(/\\frac\{([-+]?\d+(?:\.\d+)?)\}\{(\d+(?:\.\d+)?)\}/gu, '$1/$2');
+
+  if (/^[-+]?\d+(?:\.\d+)?%$/u.test(text)) {
+    return Number(text.slice(0, -1)) / 100;
+  }
+  if (/^[-+]?\d+(?:\.\d+)?$/u.test(text)) {
+    return Number(text);
+  }
+  if (/^[-+]?\d+(?:\.\d+)?\/[-+]?\d+(?:\.\d+)?$/u.test(text)) {
+    const [numerator, denominator] = text.split('/').map(Number);
+    return denominator === 0 ? null : numerator / denominator;
+  }
+  const root = /^([-+]?)√(\d+)(?:\/(\d+))?$/u.exec(text);
+  if (root) {
+    const denominator = root[3] ? Number(root[3]) : 1;
+    return denominator === 0 ? null
+      : (root[1] === '-' ? -1 : 1) * Math.sqrt(Number(root[2])) / denominator;
+  }
+  return null;
+}
+
+
 for (const q of problems) {
   const key = q.ContentKey || '(missing key)';
   for (const name of problemsFields) {
@@ -118,6 +147,22 @@ for (const q of problems) {
   }
   if (!/^[1-4]$/.test(q.CorrectOption)) {
     mistakes.push(key + ': correct answer must be a 1-based option index');
+  }
+  const numericChoices = answers.map(numericOptionValue);
+  for (let first = 0; first < numericChoices.length; first++) {
+    if (numericChoices[first] === null) continue;
+    for (let second = first + 1; second < numericChoices.length; second++) {
+      if (numericChoices[second] === null) continue;
+      const left = numericChoices[first];
+      const right = numericChoices[second];
+      // Floating-point tolerance is used only after both literal values
+      // were parsed; symbolic/algebraic expressions are intentionally skipped.
+      if (Math.abs(left - right) <= 1e-10 * Math.max(1, Math.abs(left), Math.abs(right))) {
+        mistakes.push(key + ': numerically equivalent choices ' +
+          (first + 1) + ' and ' + (second + 1) +
+          ' (' + answers[first] + ' = ' + answers[second] + ')');
+      }
+    }
   }
   if (!/^[1-4]$/.test(q.StageId)) {
     mistakes.push(key + ': invalid stage ID');

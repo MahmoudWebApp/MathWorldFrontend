@@ -24,6 +24,7 @@ Category proposals are defined in `mathworld-proposed-16-new-categories.csv`. Al
 - Parse all seven CSVs with quoted-field, escaped-quote, BOM and CRLF support, and reject unclosed quotes and wrong column counts.
 - Check 320 unique content keys and **no identical Arabic or English question text**, even across CSV batches.
 - Check nonempty bilingual question/solution text, all four nonempty distinct answer options, a single 1-based correct-option index, and a positive integer point value.
+- Reject mathematically equivalent **numeric** answer choices even if they have different strings, such as `1/2` and `2/4` or `50%` and `0.5`. This covers unambiguous numeric literals, simple fractions, percentages, and simple square roots. It does **not** prove the chosen answer is correct or detect equivalent symbolic expressions.
 - Check all 16 existing category IDs belong to the expected stage, and each proposed-key category matches `mathworld-proposed-16-new-categories.csv`.
 - Fail if any of the **32 categories** has fewer than **ten draft questions**, or if any stage falls below 80.
 - Check `ReviewStatus=Proposed` for proposals; the validation **never imports or publishes**.

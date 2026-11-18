@@ -14,4 +14,4 @@ stage3_transform,3,8,الدوال والتحويلات,Functions & Transformatio
 stage4_numerical,4,5,الطرق العددية,Numerical Methods,calculator,Proposed,تقريب الجذور وأخطاء الحساب.,Root approximations and numerical error.
 stage4_discrete,4,6,الرياضيات المتقطعة,Discrete Mathematics,network,Proposed,مجموعات وعلاقات ورسوم بيانية.,"Sets, relations and graph theory."
 stage4_optim,4,7,التحسين الرياضي,Mathematical Optimization,chart-no-axes-combined,Proposed,تحسين مقيد وغير مقيد بحسب المنهج.,Constrained and unconstrained optimization.
-stage4_complex,4,8,التحليل العقدي,Complex Analysis,orbit,Proposed,الدوال العقدية والأساسيات المرتبطة بها.,Functions of a complex variable.
+stage4_complex,4,8,الأعداد المركبة,Complex Numbers,orbit,Proposed,عمليات الأعداد المركبة وقوى الوحدة التخيلية ومعيار العدد المركب.,"Complex-number arithmetic, powers of i, and modulus."
