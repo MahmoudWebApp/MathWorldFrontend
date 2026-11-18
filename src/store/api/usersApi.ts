@@ -89,6 +89,31 @@ export interface JourneyCategory {
   CompletionPercent: number;
 }
 
+export interface PremiumReportCategory {
+  CategoryId: number;
+  Name: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  FirstTryCorrect: number;
+  MasteredProblems: number;
+  OfficialPoints: number;
+  CompletionPercent: number;
+}
+
+export interface PremiumProgressReport {
+  StageId: number;
+  StageName: string;
+  TotalProblems: number;
+  AttemptedProblems: number;
+  SolvedProblems: number;
+  FirstTryCorrect: number;
+  MasteredProblems: number;
+  OfficialPoints: number;
+  CompletionPercent: number;
+  Categories: PremiumReportCategory[];
+}
+
 export interface LearningJourney {
   StageId: number;
   NameAr: string;
@@ -317,6 +342,14 @@ export const usersApi = createApi({
       providesTags: ['Leaderboard'],
     }),
 
+    getPremiumProgressReport: builder.query<PremiumProgressReport, number | void>({
+      query: (stageId) => ({
+        url: '/users/premium-report',
+        params: stageId ? { stageId } : {},
+      }),
+      providesTags: ['User'],
+    }),
+
     getLearningJourney: builder.query<LearningJourney, number>({
       query: (stageId) => ({
         url: '/users/journey',
@@ -473,6 +506,7 @@ export const {
   useGetLearningStageQuery,
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,
+  useGetPremiumProgressReportQuery,
   useGetLeaderboardQuery,
   useGetDailyQuotaQuery,
   useGetProfileQuery,

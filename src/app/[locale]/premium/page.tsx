@@ -37,11 +37,11 @@ export default function PremiumBenefitsPage() {
     },
     {
       icon: Sparkles,
-      arTitle: 'إحصائيات وتصدير PDF وExcel',
-      enTitle: 'Advanced reports and PDF/Excel',
-      arText: 'تقارير تقدم متقدمة قابلة للتصدير، ضمن خطة التطوير.',
-      enText: 'Exportable advanced progress reports are planned.',
-      upcoming: true,
+      arTitle: 'تقارير التقدم وتصدير CSV',
+      enTitle: 'Progress reports and CSV export',
+      arText: 'تقرير مفصل حسب الفئة وتصدير CSV يفتح في Excel. تصدير PDF وXLSX قريباً.',
+      enText: 'Category progress and CSV for Excel. Native PDF and XLSX are coming later.',
+      upcoming: false,
     },
     {
       icon: Clock3,
@@ -79,6 +79,14 @@ export default function PremiumBenefitsPage() {
             : ar ? 'حسابك الحالي Free' : 'Your current plan is Free'}
         </p>
       </header>
+
+      {premium && (
+        <Link href="/premium/report"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+          <Sparkles className="h-5 w-5" aria-hidden="true" />
+          {ar ? 'عرض تقريري التعليمي' : 'View my learning report'}
+        </Link>
+      )}
 
       <section className="my-7">
         <h2 className="mb-4 text-xl font-bold">
