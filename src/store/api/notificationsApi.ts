@@ -57,12 +57,12 @@ export const notificationsApi = createApi({
   tagTypes: ['Inbox'],
   endpoints: (builder) => ({
     getInbox: builder.query<InboxSnapshot, void>({
-      query: () => ({ url: '/notifications', params: { take: 30 } }),
+      query: () => ({ url: '/notifications/v2', params: { take: 30 } }),
       providesTags: ['Inbox'],
     }),
     getInboxPage: builder.query<InboxSnapshot, { skip: number; take?: number }>({
       query: ({ skip, take = 30 }) => ({
-        url: '/notifications',
+        url: '/notifications/v2',
         params: { take, skip },
       }),
       providesTags: ['Inbox'],
@@ -106,11 +106,11 @@ export const notificationsApi = createApi({
       providesTags: ['Inbox'],
     }),
     markNotificationRead: builder.mutation<void, number>({
-      query: (id) => ({ url: `/notifications/${id}/read`, method: 'PUT' }),
+      query: (id) => ({ url: `/notifications/v2/${id}/read`, method: 'PUT' }),
       invalidatesTags: ['Inbox'],
     }),
     markAllNotificationsRead: builder.mutation<void, void>({
-      query: () => ({ url: '/notifications/read-all', method: 'PUT' }),
+      query: () => ({ url: '/notifications/v2/read-all', method: 'PUT' }),
       invalidatesTags: ['Inbox'],
     }),
     sendAdminNotification: builder.mutation<
