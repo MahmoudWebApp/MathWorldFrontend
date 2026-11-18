@@ -84,6 +84,20 @@ export default function PremiumProgressReportPage() {
             {ar ? 'عرض مميزات الحساب' : 'Compare account benefits'}
           </Link>
         </section>
+      ) : !activeStage ? (
+        <section className="math-card rounded-2xl border border-border p-6">
+          <h2 className="font-bold">
+            {ar ? 'اختر مرحلتك التعليمية لعرض التقرير' : 'Choose a learning stage to view your report'}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {ar ? 'تقدمك السابق محفوظ، بس لازم تختار المرحلة اللي بدك تشوف تقريرها.'
+              : 'Your past work is preserved. Select a stage to see its report.'}
+          </p>
+          <Link href="/learning-stage"
+            className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+            {ar ? 'اختيار المرحلة' : 'Choose stage'}
+          </Link>
+        </section>
       ) : (
         <>
           {isForbidden && (
