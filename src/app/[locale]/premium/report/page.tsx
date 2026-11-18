@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { BarChart3, Download, RefreshCw } from 'lucide-react';
@@ -19,9 +19,8 @@ export default function PremiumProgressReportPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   const premium = user?.SubscriptionType?.toLowerCase() === 'premium';
   const stageId = user?.CurrentStageId ?? null;
-  const [selectedStage, setSelectedStage] = useState<number | null>(null);
   const { data, isLoading, isFetching, error, refetch } =
-    useGetPremiumProgressReportQuery(selectedStage ?? stageId ?? undefined, {
+    useGetPremiumProgressReportQuery(stageId ?? undefined, {
       skip: !premium,
       refetchOnMountOrArgChange: true,
     });
