@@ -1,357 +1,168 @@
 'use client';
 
+import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
-import { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { CheckCircle2, Crown, Infinity, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { CheckCircle2, Crown, GraduationCap, LockOpen, ShieldCheck, Sparkles, Ticket } from 'lucide-react';
 import { Link } from '@/i18n/routing';
-import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
-import {
-  useQuotePremiumDiscountMutation,
-  useGetPremiumCheckoutOrdersQuery,
-  useCancelPremiumCheckoutOrderMutation,
-  type PremiumDiscountQuote,
-} from '@/store/api/usersApi';
+import type { RootState, AppDispatch } from '@/store';
+import type { User } from '@/store/api/types';
+import { setCredentials } from '@/store/slices/authSlice';
+import { API_BASE_URL } from '@/store/api/baseQuery';
+import { categoriesApi } from '@/store/api/categoriesApi';
 
-const freeAr = [
-  'فئتان مفتوحتان بكل مرحلة تعليمية',
-  'حل غير محدود ضمن الفئات المفتوحة',
-  'نتائج أساسية وتقدم الطالب',
-  'تظهر الحلول بعد المحاولة وفق قواعد المسألة',
-];
-const freeEn = [
-  'Two unlocked categories per educational stage',
-  'Unlimited practice within unlocked categories',
-  'Basic results and student progress',
-  'Solutions after attempting, according to question rules',
-];
-const premiumAr = [
-  'فتح جميع الفئات في كل مرحلة',
-  'حل غير محدود دون حصة يومية',
-  'معاينة الحل قبل الإجابة',
-  'بدون إعلانات عند تشغيل نظام الإعلانات',
-];
-const premiumEn = [
-  'Unlock every category in every stage',
-  'Unlimited practice with no daily allowance',
-  'Preview solutions before answering',
-  'Ad-free once advertising is enabled',
-];
+export default function PremiumBenefitsPage() {
+  const ar = useLocale() === 'ar';
+  const dispatch = useDispatch<AppDispatch>();
+  const user = useSelector((state: RootState) => state.auth.user);
+  const token = useSelector((state: RootState) => state.auth.token);
+  const premium = user?.SubscriptionType?.toLowerCase() === 'premium';
+  const [code, setCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-export default function PremiumInformationPage() {
-  const locale = useLocale();
-  const ar = locale === 'ar';
-  const authenticated = useSelector(
-    (state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
-      state.auth.isAuthenticated && state.auth.user?.Role === 'Student',
-  );
-  const { data: entitlement, isLoading, isError, refetch } = useGetStudentSubscriptionQuery(undefined, {
-    skip: !authenticated,
-    refetchOnMountOrArgChange: true,
-  });
+  const premiumFeatures = [
+    { icon: CheckCircle2, ar: 'حل عدد غير محدود من المسائل في جميع الفئات', en: 'Unlimited problems in all categories' },
+    { icon: LockOpen, ar: 'جميع الفئات والمراحل', en: 'Every category in every stage' },
+    { icon: GraduationCap, ar: 'مشاهدة الحل قبل إرسال الإجابة', en: 'View solutions before answering' },
+    { icon: Sparkles, ar: 'تقارير وإحصائيات شخصية مع تصدير PDF وCSV لبرنامج Excel',
+      en: 'Personal analytics with PDF and Excel-compatible CSV exports' },
+    { icon: ShieldCheck, ar: 'بدون إعلانات ضمن MathWorld', en: 'Ad-free MathWorld' },
+  ];
+  const freeFeatures = [
+    ar ? 'فئتان مفتوحتان من كل مرحلة' : 'Two unlocked categories per stage',
+    ar ? 'حل عدد غير محدود من المسائل المتاحة' : 'Unlimited problems in your open categories',
+    ar ? 'الاحتفاظ بالنقاط والتقدم في كل مرحلة' : 'Stage points and progress are preserved',
+  ];
 
-  const [discountCode, setDiscountCode] = useState('');
-  const [discountQuote, setDiscountQuote] = useState<PremiumDiscountQuote | null>(null);
-  const [discountError, setDiscountError] = useState(false);
-  const [quoteDiscount, { isLoading: isQuoting }] = useQuotePremiumDiscountMutation();
-  const [ordersPage, setOrdersPage] = useState(1);
-  const [cancelOrderId, setCancelOrderId] = useState<number | null>(null);
-  const [cancelError, setCancelError] = useState(false);
-  const [cancelOrder, { isLoading: cancelling }] = useCancelPremiumCheckoutOrderMutation();
-  const confirmCancel = async () => {
-    if (cancelOrderId === null) return;
-    setCancelError(false);
+  async function redeem(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!user || !token || redeeming || !code.trim()) return;
+    setRedeeming(true);
+    setError('');
+    setMessage('');
     try {
-      await cancelOrder(cancelOrderId).unwrap();
-      setCancelOrderId(null);
-    } catch {
-      setCancelError(true);
+      const response = await fetch(`${API_BASE_URL}/users/premium-codes/redeem`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Code: code.trim() }),
+      });
+      if (!response.ok) {
+        throw new Error(response.status === 404 || response.status === 503
+          ? (ar ? 'خدمة تفعيل الرموز غير متاحة حالياً.' : 'Code activation service is unavailable.')
+          : (ar ? 'الرمز غير صالح أو سبق استخدامه.' : 'This code is invalid or has already been used.'));
+      }
+      // Refresh the profile from the server; never accept a client-issued entitlement.
+      const profileResponse = await fetch(`${API_BASE_URL}/users/profile`, {
+        cache: 'no-store', headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!profileResponse.ok) {
+        setMessage(ar ? 'تم إرسال رمز التفعيل بنجاح. حدّث صفحتك لتحديث الخطة.'
+          : 'Code accepted. Refresh to update your plan.');
+        return;
+      }
+      const payload = await profileResponse.json() as { Data?: Partial<User> };
+      if (payload.Data?.SubscriptionType?.toLowerCase() === 'premium') {
+        const updated: User = { ...user, ...payload.Data, Token: token };
+        dispatch(setCredentials({ user: updated, token }));
+        dispatch(categoriesApi.util.invalidateTags(['Category']));
+        setCode('');
+        setMessage(ar ? 'تم تفعيل Premium على حسابك.' : 'Premium is now active on your account.');
+      } else {
+        setMessage(ar ? 'تم قبول الرمز. أعد تحميل الصفحة لتحديث الصلاحيات.'
+          : 'Code accepted. Reload to refresh your access.');
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message
+        : (ar ? 'تعذر تفعيل الرمز.' : 'Unable to redeem this code.'));
+    } finally {
+      setRedeeming(false);
     }
-  };
-  const {
-    data: orders, isLoading: ordersLoading, isError: ordersError,
-    refetch: refetchOrders,
-  } = useGetPremiumCheckoutOrdersQuery(ordersPage, { skip: !authenticated });
-  const hasPremium = entitlement?.IsPremium === true;
-
-  const applyDiscount = async () => {
-    setDiscountError(false);
-    setDiscountQuote(null);
-    if (!discountCode.trim()) return;
-    try {
-      const quote = await quoteDiscount(discountCode.trim()).unwrap();
-      setDiscountQuote(quote);
-    } catch {
-      setDiscountError(true);
-    }
-  };
-  const endsAt = entitlement?.PremiumExpiresAtUtc
-    ? new Date(entitlement.PremiumExpiresAtUtc) : null;
-  const expires = endsAt && Number.isFinite(endsAt.getTime())
-    ? new Intl.DateTimeFormat(ar ? 'ar' : 'en', { dateStyle: 'long' }).format(endsAt)
-    : null;
+  }
 
   return (
-    <main className="container mx-auto max-w-6xl space-y-8 px-4 py-12 lg:py-20" dir={ar ? 'rtl' : 'ltr'}>
-      <header className="mx-auto max-w-3xl space-y-4 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-bold text-primary">
-          <Sparkles className="h-4 w-4" /> MathWorld
-        </span>
-        <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
-          {ar ? 'تعلّم بالطريقة اللي تناسبك' : 'Learn at your own pace'}
+    <main className="container mx-auto max-w-5xl px-4 py-8 md:px-8">
+      <Link href="/dashboard" className="mb-5 inline-block text-sm font-semibold text-primary hover:underline">
+        {ar ? 'العودة لرحلتي' : 'Back to my journey'}
+      </Link>
+      <header className="mb-6">
+        <h1 className="brand-display-title text-3xl font-black md:text-4xl">
+          {ar ? 'تغيير الخطة' : 'Change plan'}
         </h1>
-        <p className="text-base leading-8 text-muted-foreground sm:text-lg">
-          {ar ? 'المجاني يتيح حل عدد غير محدود من المسائل ضمن فئتين بكل مرحلة. Premium يفتح بقية الفئات ومزايا التعلم الإضافية.'
-            : 'Free lets you practice unlimited questions in two categories per stage. Premium unlocks the rest and adds learning tools.'}
+        <p className="mt-3 text-muted-foreground">
+          {ar
+            ? 'قارن Free وPremium. حل المسائل غير محدود ضمن الفئات المتاحة لخطة حسابك.'
+            : 'Compare Free and Premium. Practice is unlimited within your plan’s accessible categories.'}
         </p>
       </header>
 
-      {authenticated && (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-center text-sm">
-          {isLoading ? (ar ? 'جارٍ التحقق من اشتراكك…' : 'Checking your subscription…') :
-            isError ? (
-              <>
-                {ar ? 'تعذّر التحقق من الاشتراك حالياً.' : 'Unable to verify your subscription.'}{' '}
-                <button type="button" className="font-semibold text-primary underline" onClick={() => void refetch()}>
-                  {ar ? 'إعادة المحاولة' : 'Retry'}
-                </button>
-              </>
-            ) : hasPremium ? (
-              <span className="inline-flex items-center gap-2 font-bold text-primary">
-                <CheckCircle2 className="h-5 w-5" aria-hidden />
-                {ar ? 'اشتراك Premium مفعّل' : 'Premium active'}
-                {expires ? ` · ${ar ? 'ينتهي' : 'Expires'} ${expires}` : ''}
-              </span>
-            ) : (ar ? 'حسابك الحالي مجاني — بإمكانك متابعة الحل ضمن الفئتين المفتوحتين.'
-              : 'Your account is Free — continue solving in your unlocked categories.')}
-        </div>
-      )}
-
-      <div className="grid gap-5 md:grid-cols-2">
-        <section className="flex h-full flex-col rounded-3xl border bg-card p-6 shadow-sm sm:p-8">
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className={`math-card rounded-2xl border p-5 md:p-6 ${!premium ? 'border-primary' : 'border-border'}`}>
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="rounded-2xl bg-muted p-3 text-muted-foreground">
-                <Infinity className="h-6 w-6" />
-              </span>
-              <div>
-                <h2 className="text-2xl font-extrabold">{ar ? 'مجاني' : 'Free'}</h2>
-                <p className="text-sm text-muted-foreground">{ar ? 'ابدأ التعلم الآن' : 'Start learning today'}</p>
-              </div>
-            </div>
-            <span className="text-2xl font-black">$0</span>
+            <h2 className="text-2xl font-extrabold">Free</h2>
+            {!premium && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              {ar ? 'خطتك الحالية' : 'Current plan'}</span>}
           </div>
-          <div className="my-6 border-t" />
-          <ul className="flex-1 space-y-4">
-            {(ar ? freeAr : freeEn).map(text => (
-              <li className="flex items-start gap-3 text-sm leading-7" key={text}>
-                <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
-                <span>{text}</span>
-              </li>
-            ))}
+          <ul className="mt-5 space-y-3">
+            {freeFeatures.map(feature => <li key={feature} className="flex items-start gap-2 text-sm">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              {feature}</li>)}
           </ul>
-          <Link href="/stages"
-            className="mt-8 inline-flex justify-center rounded-xl border border-primary/30 px-5 py-3 font-bold text-primary hover:bg-primary/5">
-            {ar ? 'تصفح المراحل' : 'Browse stages'}
-          </Link>
         </section>
 
-        <section className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-pink-500/10 p-6 shadow-lg sm:p-8">
-          <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-700 via-purple-500 to-pink-500" />
+        <section className={`math-card rounded-2xl border p-5 md:p-6 ${premium ? 'border-primary' : 'border-border'}`}>
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="rounded-2xl bg-primary/10 p-3 text-primary">
-                <Crown className="h-6 w-6" />
-              </span>
-              <div>
-                <h2 className="text-2xl font-extrabold">Premium</h2>
-                <p className="text-sm text-muted-foreground">{ar ? 'الخطة الكاملة' : 'Full learning access'}</p>
-              </div>
-            </div>
-            <div className="text-end">
-              <p className="text-2xl font-black text-primary">$5</p>
-              <p className="text-xs text-muted-foreground">{ar ? 'سنوياً — السعر المستهدف' : 'per year — planned price'}</p>
-            </div>
+            <h2 className="inline-flex items-center gap-2 text-2xl font-extrabold">
+              <Crown className="h-6 w-6 text-primary" aria-hidden /> Premium</h2>
+            {premium && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              {ar ? 'خطتك الحالية' : 'Current plan'}</span>}
           </div>
-          <div className="my-6 border-t border-primary/20" />
-          <ul className="flex-1 space-y-4">
-            {(ar ? premiumAr : premiumEn).map(text => (
-              <li className="flex items-start gap-3 text-sm leading-7" key={text}>
-                <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-primary" aria-hidden />
-                <span>{text}</span>
-              </li>
-            ))}
-            <li className="flex items-start gap-3 text-sm leading-7 text-muted-foreground">
-              <LockKeyhole className="mt-1 h-5 w-5 shrink-0" aria-hidden />
-              <span>{ar ? 'تقرير شخصي وتصدير CSV لـ Excel، والحفظ PDF عبر الطباعة. التواصل مع المدرسين لاحقاً.'
-                : 'Personal report, Excel-ready CSV and print-to-PDF. Teacher connections are planned.'}</span>
-            </li>
+          <ul className="mt-5 space-y-3">
+            {premiumFeatures.map(({icon: Icon, ar: titleAr, en: titleEn}) => <li
+              key={titleEn} className="flex items-start gap-2 text-sm">
+              <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              {ar ? titleAr : titleEn}</li>)}
           </ul>
-          {authenticated && !hasPremium && !isLoading && !isError && (
-            <div className="mt-7 space-y-3 rounded-2xl border border-primary/20 bg-background/80 p-4">
-              <h3 className="font-bold">{ar ? 'عندك كود خصم؟' : 'Have a discount code?'}</h3>
-              <p className="text-xs leading-6 text-muted-foreground">
-                {ar ? 'أدخل كود الخصم لمعرفة السعر خلال فترة صلاحيته. هذه معاينة وليست عملية شراء.'
-                  : 'Check your price while the code is valid. This is a preview, not a purchase.'}
-              </p>
-              <form className="flex flex-wrap gap-2" onSubmit={event => { event.preventDefault(); void applyDiscount(); }}>
-                <input
-                  dir="ltr"
-                  aria-label={ar ? 'كود الخصم' : 'Discount code'}
-                  autoComplete="off"
-                  value={discountCode}
-                  maxLength={60}
-                  onChange={event => {
-                    setDiscountCode(event.target.value);
-                    setDiscountQuote(null);
-                    setDiscountError(false);
-                  }}
-                  placeholder="MD-..."
-                  className="min-w-0 flex-1 rounded-xl border bg-background px-3 py-2 text-sm uppercase"
-                />
-                <button type="submit" disabled={isQuoting || !discountCode.trim()}
-                  className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50">
-                  {isQuoting ? (ar ? 'جارٍ التحقق…' : 'Checking…') : (ar ? 'تطبيق' : 'Apply')}
-                </button>
-              </form>
-              {discountError && <p role="alert" className="text-sm text-destructive">
-                {ar ? 'الكود غير صالح أو غير متاح حالياً أو انتهت صلاحيته.' : 'This code is invalid, unavailable or expired.'}
-              </p>}
-              {discountQuote && (
-                <div role="status" className="space-y-2 rounded-xl border border-primary/20 p-3 text-sm">
-                  <div className="flex justify-between gap-2">
-                    <span>{ar ? 'السعر الأساسي' : 'Original price'}</span>
-                    <span className="tabular-nums">${discountQuote.SubtotalUsd.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between gap-2 text-primary">
-                    <span>{ar ? 'الخصم' : 'Discount'}</span>
-                    <span className="tabular-nums">−${discountQuote.DiscountUsd.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between gap-2 border-t pt-2 font-extrabold">
-                    <span>{ar ? 'السعر بعد الخصم' : 'Discounted price'}</span>
-                    <span className="tabular-nums">${discountQuote.TotalUsd.toFixed(2)}</span>
-                  </div>
-                  <p className="text-xs leading-6 text-muted-foreground">
-                    {ar ? 'السعر غير محجوز. ستُراجع صلاحية الكود مجدداً عند تفعيل الدفع.'
-                      : 'Price is not reserved. The code must be checked again at checkout.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-          <Link href="/dashboard/redeem" className="mt-8 inline-flex items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
-            {ar ? 'عندي كود هدية Premium' : 'Redeem a Premium gift'}
-          </Link>
-          <Link href="/dashboard/analytics" className="mt-3 inline-flex items-center justify-center rounded-xl border border-primary/30 bg-background px-5 py-3 text-sm font-bold text-primary hover:bg-primary/5">
-            {ar ? 'عرض تقريري الشخصي' : 'View my progress report'}
-          </Link>
-          <p className="mt-8 rounded-xl border border-primary/20 bg-background/70 px-4 py-3 text-center text-sm font-medium">
-            <ShieldCheck className="me-2 inline h-4 w-4 text-primary" aria-hidden />
-            {ar ? 'الدفع الإلكتروني غير مفعّل حالياً. يمكن للأدمن تفعيل الاشتراك مؤقتاً.'
-              : 'Online checkout is not enabled. An administrator can grant temporary access.'}
-          </p>
+          {premium && <Link href="/premium/report"
+            className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">
+            {ar ? 'عرض تقريري' : 'Open my report'}</Link>}
         </section>
       </div>
-      {authenticated && (
-        <section className="space-y-4 rounded-3xl border bg-card p-5 sm:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-extrabold">{ar ? 'سجل طلبات Premium' : 'Premium order history'}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {ar ? 'الطلبات المبدئية ليست مدفوعة ولا تفعّل الاشتراك.' :
-                  'Pending orders are not payments and do not activate a subscription.'}
-              </p>
-            </div>
-            <button type="button" onClick={() => void refetchOrders()}
-              className="rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
-              {ar ? 'تحديث' : 'Refresh'}
+
+      {!premium && user?.Role === 'Student' && (
+        <section className="math-card mt-6 rounded-2xl border border-border p-5 md:p-6">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Ticket className="h-5 w-5 text-primary" aria-hidden />
+            {ar ? 'تفعيل Premium بكود خصم 100%' : 'Activate Premium with a 100% discount code'}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {ar
+              ? 'كود خصم 100% تصدره إدارة MathWorld لتفعيل Premium بالكامل دون دفع. صالح للاستخدام مرة واحدة.'
+              : 'An administrator-issued single-use 100% code activates full Premium without payment.'}
+          </p>
+          <form onSubmit={redeem} className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <label className="sr-only" htmlFor="premium-free-code">
+              {ar ? 'كود خصم 100%' : '100% access code'}</label>
+            <input id="premium-free-code" type="text" value={code}
+              onChange={event => { setCode(event.target.value); setError(''); }}
+              maxLength={100} autoCapitalize="characters" autoComplete="off"
+              dir="ltr" placeholder="MW-XXXXXXXXXXXX-XXXXXXXXXXXX-XXXXXXXXXXXX"
+              className="min-w-0 flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm"
+            />
+            <button type="submit" disabled={redeeming || !code.trim()}
+              className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">
+              {redeeming ? (ar ? 'جارٍ التفعيل…' : 'Activating…') : (ar ? 'تفعيل الرمز' : 'Activate code')}
             </button>
-          </div>
-          {ordersLoading ? <p role="status">{ar ? 'جارٍ تحميل الطلبات…' : 'Loading orders…'}</p> :
-            ordersError ? <p role="alert" className="text-sm text-destructive">
-              {ar ? 'تعذّر تحميل سجل الطلبات.' : 'Could not load order history.'}
-            </p> : !orders?.Orders.length ? <p className="text-sm text-muted-foreground">
-              {ar ? 'ما عندك طلبات اشتراك حتى الآن.' : 'You have no checkout orders yet.'}
-            </p> : (
-              <div className="space-y-3">
-                {orders.Orders.map(order => (
-                  <article key={order.Id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
-                    <div className="min-w-0 space-y-1">
-                      <p dir="ltr" className="break-all text-sm font-bold">{order.OrderReference}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Intl.DateTimeFormat(ar ? 'ar' : 'en', {
-                          dateStyle: 'medium', timeStyle: 'short',
-                        }).format(new Date(order.CreatedAtUtc))}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {ar ? 'الخصم' : 'Discount'}: ${order.DiscountUsd.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="text-end">
-                      <p className="font-extrabold tabular-nums">${order.TotalUsd.toFixed(2)} USD</p>
-                      <p className="text-sm text-muted-foreground">
-                        {({
-                          Pending: ar ? 'بانتظار الدفع' : 'Pending payment',
-                          Paid: ar ? 'مدفوع' : 'Paid',
-                          Failed: ar ? 'فشل' : 'Failed',
-                          Cancelled: ar ? 'ملغى' : 'Cancelled',
-                          Refunded: ar ? 'مسترد' : 'Refunded',
-                        } as Record<string, string>)[order.Status] ?? order.Status}
-                      </p>
-                      {order.Status === 'Pending' && (
-                        <button type="button" onClick={() => { setCancelError(false); setCancelOrderId(order.Id); }}
-                          className="mt-2 rounded-lg border border-destructive/30 px-3 py-1.5 text-xs font-semibold text-destructive">
-                          {ar ? 'إلغاء الطلب' : 'Cancel order'}
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          <div className="flex items-center justify-between border-t pt-3 text-sm">
-            <button type="button" disabled={ordersPage <= 1 || ordersLoading}
-              onClick={() => setOrdersPage(p => Math.max(1, p - 1))}
-              className="font-semibold text-primary disabled:opacity-40">
-              {ar ? 'السابق' : 'Previous'}
-            </button>
-            <span>{ordersPage} / {Math.max(1, Math.ceil((orders?.Total ?? 0) / 10))}</span>
-            <button type="button" disabled={!orders || ordersLoading || ordersPage * 10 >= orders.Total}
-              onClick={() => setOrdersPage(p => p + 1)}
-              className="font-semibold text-primary disabled:opacity-40">
-              {ar ? 'التالي' : 'Next'}
-            </button>
-          </div>
+          </form>
+          {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+          {message && <p role="status" className="mt-3 text-sm text-primary">{message}</p>}
         </section>
       )}
-      {cancelOrderId !== null && (
-        <div role="dialog" aria-modal="true" aria-labelledby="cancel-order-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm space-y-4 rounded-2xl bg-card p-6 shadow-xl">
-            <h2 id="cancel-order-title" className="text-lg font-extrabold">
-              {ar ? 'إلغاء طلب الاشتراك؟' : 'Cancel this checkout order?'}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {ar ? 'يمكن إلغاء الطلبات المبدئية فقط، قبل إرسالها إلى مزوّد الدفع.' :
-                'Only unpaid local drafts can be cancelled, before payment processing starts.'}
-            </p>
-            {cancelError && <p role="alert" className="text-sm text-destructive">
-              {ar ? 'تعذّر إلغاء الطلب. ربما تغيرت حالته؛ حدّث السجل.' :
-                'Could not cancel this order. Its status may have changed; refresh the list.'}
-            </p>}
-            <div className="flex justify-end gap-2">
-              <button type="button" disabled={cancelling} onClick={() => setCancelOrderId(null)}
-                className="rounded-lg border px-3 py-2 text-sm font-semibold">
-                {ar ? 'رجوع' : 'Back'}
-              </button>
-              <button type="button" disabled={cancelling} onClick={() => void confirmCancel()}
-                className="rounded-lg bg-destructive px-3 py-2 text-sm font-semibold text-destructive-foreground disabled:opacity-50">
-                {cancelling ? (ar ? 'جارٍ الإلغاء…' : 'Cancelling…') : (ar ? 'تأكيد الإلغاء' : 'Confirm cancellation')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {!user && <p className="mt-6 text-sm text-muted-foreground">
+        {ar ? 'سجّل الدخول لتفعيل اشتراكك.' : 'Sign in to activate your membership.'}
+      </p>}
     </main>
   );
 }
