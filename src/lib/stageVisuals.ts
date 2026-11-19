@@ -65,6 +65,14 @@ export function getStageVisualIndex(stage: StageVisualIdentity): number {
   return (stableId - 1) % STAGE_ICONS.length;
 }
 
+// Same semantic stage colors as Flutter's AppColors.stage* palette.
+// Use the stage name/order when available; do not assume a category ID is a stage.
+export const STAGE_ACCENT_COLORS = ['#087E99', '#C05B18', '#21785F', '#7937C3'] as const;
+
+export function getStageAccent(stage: StageVisualIdentity): string {
+  return STAGE_ACCENT_COLORS[getStageVisualIndex(stage) % STAGE_ACCENT_COLORS.length];
+}
+
 export function getStageVisual(stage: StageVisualIdentity): StageVisual {
   const index = getStageVisualIndex(stage);
 
