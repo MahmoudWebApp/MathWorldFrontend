@@ -21,12 +21,12 @@ export function ProblemCard({ problem }: ProblemCardProps) {
   const t = useTranslations();
   const locale = useLocale();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  const requiresLogin = problem.RequiresLogin && !isAuthenticated;
+  const requiresLogin = !isAuthenticated;
   const stageIdentity = { Id: problem.StageId, Name: problem.StageName };
 
   return (
     <Link
-      href={`/problems/${problem.Id}`}
+      href={requiresLogin ? '/login' : `/problems/${problem.Id}`}
       className="group block rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <article className="brand-surface rounded-3xl p-5 transition-[border-color,box-shadow] hover:border-brand-primary/30 hover:shadow-md sm:p-6">
@@ -61,7 +61,9 @@ export function ProblemCard({ problem }: ProblemCardProps) {
                 )}
               </div>
               <span className="inline-flex items-center gap-2 text-sm font-bold text-brand-primary-strong dark:text-brand-primary-light">
-                {t("common.solveNow")}
+                {requiresLogin
+                  ? locale === 'ar' ? 'سجّل الدخول للحل' : 'Sign in to solve'
+                  : t("common.solveNow")}
                 <DirectionalArrow direction="forward" />
               </span>
             </div>
