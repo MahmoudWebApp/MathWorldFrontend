@@ -6,6 +6,8 @@ import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { useGetCategoriesQuery, useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from "@/store/api/categoriesApi";
 import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import { StudentStageAccessNotice } from "@/components/stages/StudentStageAccessNotice";
 import { useGetStagesQuery } from "@/store/api/stagesApi";
 import { useSearchProblemsQuery } from "@/store/api/problemsApi";
 import type { ProblemPreview } from "@/store/api/types";
@@ -75,11 +77,15 @@ function ProblemsPageClient() {
   }, [urlSearch]);
 
   // These come from URL and are fixed
-  const stageId = urlStageId;
+  const auth = useSelector((state: RootState) => state.auth);
+  const loggedIn = auth.isAuthenticated;
+  const role = loggedIn ? auth.user?.Role : undefined;
+  const selectedStageId = loggedIn && role === "Student" ? auth.user?.CurrentStageId : undefined;
+  const stageId = loggedIn && role === "Student" && selectedStageId != null
+    ? String(selectedStageId) : urlStageId;
   const categoryId = urlCategoryId;
-  const loggedIn = useSelector((state: { auth: { isAuthenticated: boolean } }) => state.auth.isAuthenticated);
-  const role = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
-    state.auth.isAuthenticated ? state.auth.user?.Role : undefined);
+  const wrongStudentStage = loggedIn && role === "Student" &&
+    (selectedStageId == null || (urlStageId !== "" && Number(urlStageId) !== selectedStageId));
   const authenticated = loggedIn && role === "Student";
   const isAdmin = role === "Admin";
   const { currentData: access, isLoading: accessLoading, isError: accessError,
@@ -118,7 +124,7 @@ function ProblemsPageClient() {
       PageSize: DEFAULT_PAGE_SIZE,
       locale: locale,
     },
-    { skip: categoryLocked || accessPending ||
+    { skip: wrongStudentStage || categoryLocked || accessPending ||
       (scopedCategory && accessFailed) },
   );
 
@@ -190,6 +196,9 @@ function ProblemsPageClient() {
       ? t("search.searchInStage", { stage: stageName })
       : t("search.placeholder");
 
+  if (wrongStudentStage) {
+    return <StudentStageAccessNotice selectedStageId={selectedStageId} requestedStageId={urlStageId ? Number(urlStageId) : undefined} />;
+  }
   if (scopedCategory && accessFailed) {
     return (
       <section role="alert" className="container mx-auto max-w-2xl px-4 py-20 text-center">
