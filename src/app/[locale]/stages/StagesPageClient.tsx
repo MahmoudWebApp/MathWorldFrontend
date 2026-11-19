@@ -7,6 +7,9 @@ import {
   Loader2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
+import { Link } from '@/i18n/routing';
 
 import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { sortStagesByOrder } from '@/lib/stageVisuals';
@@ -16,6 +19,9 @@ import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 export default function StagesPageClient() {
   const t = useTranslations();
   const locale = useLocale();
+  const { user, isAuthenticated, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
+  const student = isAuthenticated && user?.Role === 'Student';
+  const chosenStageId = student ? user.CurrentStageId : null;
   const { data: stages, isLoading, error, refetch } = useGetStagesQuery(locale, {
     refetchOnMountOrArgChange: true,
   });
@@ -75,7 +81,7 @@ export default function StagesPageClient() {
           </p>
         </motion.div>
 
-        {isLoading ? (
+        {isLoading || authLoading ? (
           <div className="flex min-h-[30vh] items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
           </div>
@@ -94,7 +100,12 @@ export default function StagesPageClient() {
             </button>
           </div>
         ) : (
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 pb-20 sm:gap-5 md:grid-cols-2 lg:gap-8 xl:grid-cols-4">
+          <div>
+            {student && <div className="mb-6 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-border bg-card/80 px-4 py-3">
+              <span className="text-sm font-semibold">{locale === "ar" ? "فقط مرحلتك الحالية مفتوحة" : "Only your selected stage is unlocked"}</span>
+              <Link href="/learning-stage" className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-bold">{locale === "ar" ? "تغيير المرحلة" : "Change stage"}</Link>
+            </div>}
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 pb-20 sm:grid-cols-2 sm:gap-5 lg:gap-8 xl:grid-cols-4">
             {sortStagesByOrder(stages ?? []).map((stage, index) => {
               return (
                 <StagePremiumCard
@@ -102,9 +113,11 @@ export default function StagesPageClient() {
                   stage={stage}
                   index={index}
                   locale={locale}
+                  locked={student && stage.Id !== chosenStageId}
                 />
               );
             })}
+          </div>
           </div>
         )}
       </div>
