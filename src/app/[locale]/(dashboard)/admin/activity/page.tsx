@@ -36,7 +36,7 @@ export default function AdminLearnerActivityPage() {
   return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-7 px-4 py-8 sm:px-6">
     <header className="space-y-2">
       <Link href="/admin" className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
-        <ArrowLeft className="h-4 w-4" />{ar ? 'لوحة المراقبة' : 'Monitoring home'}
+        <ArrowLeft className="h-4 w-4" />{ar ? 'لوحة الإدارة' : 'Admin dashboard'}
       </Link>
       <h1 className="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl"><UserRoundSearch className="h-6 w-6 shrink-0 text-primary sm:h-7 sm:w-7" />
         {ar ? 'نشاط الطلاب' : 'Learner activity'}
