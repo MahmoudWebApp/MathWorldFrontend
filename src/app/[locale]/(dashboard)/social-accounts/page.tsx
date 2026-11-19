@@ -5,6 +5,7 @@ import { Link } from '@/i18n/routing';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
+import { useGetSocialLinkStatusQuery } from '@/store/api/authApi';
 
 const localized = {
   ar: {
@@ -29,6 +30,11 @@ export default function SocialAccountsPage() {
   const locale = useLocale();
   const copy = locale === 'en' ? localized.en : localized.ar;
   const enabled = process.env.NEXT_PUBLIC_SOCIAL_LOGIN_ENABLED === 'true';
+  const { data: linkStatus, isLoading: checkingLink } = useGetSocialLinkStatusQuery(undefined, {
+    skip: !enabled,
+    refetchOnMountOrArgChange: true,
+  });
+  const alreadyLinked = linkStatus?.GoogleLinked === true;
 
   return (
     <main className="container mx-auto min-h-[70vh] max-w-3xl px-4 py-12">
@@ -47,10 +53,16 @@ export default function SocialAccountsPage() {
           </div>
         </div>
         {enabled ? (
-          <div className="mt-6">
-            <h2 className="text-gradient-math text-lg font-bold">{locale === 'ar' ? 'ربط حساب Google' : 'Connect your Google account'}</h2>
-            <SocialAuthButtons mode="link" />
-          </div>
+          alreadyLinked ? (
+            <p role="status" className="mt-6 text-sm text-muted-foreground">
+              {locale === 'ar' ? 'حسابك مرتبط بـ Google.' : 'Your Google account is connected.'}
+            </p>
+          ) : (
+            <div className="mt-6">
+              {!checkingLink && <h2 className="text-gradient-math text-lg font-bold">{locale === 'ar' ? 'ربط حساب Google' : 'Connect your Google account'}</h2>}
+              <SocialAuthButtons mode="link" />
+            </div>
+          )
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">{copy.inactive}</p>
         )}
