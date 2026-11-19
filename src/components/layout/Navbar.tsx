@@ -9,6 +9,7 @@ import type { AppDispatch, RootState } from '@/store';
 import { logout } from '@/store/slices/authSlice';
 import { setLocale } from '@/store/slices/localeSlice';
 import { useGetStagesQuery } from '@/store/api/stagesApi';
+import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'; 
 import { 
   SearchNormal1, Sun1, Moon, CloseCircle, User, Logout, ArrowDown2, Element3,
@@ -24,6 +25,7 @@ import {
   Menu,
   NotebookTabs,
   Search,
+  Settings2,
   UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -59,6 +61,11 @@ function NavbarContent() {
   const { user, isAuthenticated, isLoading, token } = useSelector((state: RootState) => state.auth);
   const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
   const orderedStages = sortStagesByOrder(stages ?? []);
+  const { data: subscription } = useGetStudentSubscriptionQuery(undefined, {
+    skip: !isAuthenticated || user?.Role !== 'Student',
+    refetchOnMountOrArgChange: true,
+  });
+  const hasUpgraded = subscription?.IsPremium === true;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -404,17 +411,21 @@ function NavbarContent() {
                         <Link href="/dashboard/error-notebook" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <NotebookTabs className="h-4 w-4" />{t('nav.errorNotebook')}
                         </Link>
-                        <Link href="/daily-challenge" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                        {hasUpgraded && <Link href="/daily-challenge" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <CircleCheckBig className="h-4 w-4" />
                           {locale === 'ar' ? 'تحدي اليوم' : 'Daily challenge'}
-                        </Link>
+                        </Link>}
                         <Link href="/journey" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <Layers3 className="h-4 w-4" />
                           {locale === 'ar' ? 'رحلتي في الرياضيات' : 'My learning journey'}
                         </Link>
                         <Link href="/premium" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <BookMarked className="h-4 w-4" />
-                          {locale === 'ar' ? 'اشتراكي ومميزات Premium' : 'My plan & Premium'}
+                          {locale === 'ar' ? 'ترقية الحساب ومميزاته' : 'Account benefits & upgrade'}
+                        </Link>
+                        <Link href="/dashboard/settings" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary" onClick={() => setUserMenuOpen(false)}>
+                          <Settings2 className="h-4 w-4" />
+                          {locale === 'ar' ? 'إعدادات الحساب' : 'Account settings'}
                         </Link>
                         <Link href="/learning-stage"
                           className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary"
@@ -537,6 +548,10 @@ function NavbarContent() {
                   <Link href="/dashboard/error-notebook" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
                     <NotebookTabs className="h-5 w-5" />
                     {t('nav.errorNotebook')}
+                  </Link>
+                  <Link href="/dashboard/settings" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
+                    <Settings2 className="h-5 w-5" />
+                    {locale === 'ar' ? 'إعدادات الحساب' : 'Account settings'}
                   </Link>
                   <Link href="/learning-stage"
                     className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
