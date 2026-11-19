@@ -50,6 +50,7 @@ import {
 } from "@/store/api/usersApi";
 import { Badge } from "@/components/ui/Badge";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { StudentStageAccessNotice } from "@/components/stages/StudentStageAccessNotice";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
@@ -641,6 +642,10 @@ export default function ProblemPage() {
     points,
   } = problemData;
   const stageAccent = getStageAccent({ Id: stageId, Name: stageName });
+  if (isAuthenticated && user?.Role === "Student" &&
+      (user.CurrentStageId == null || stageId !== user.CurrentStageId)) {
+    return <StudentStageAccessNotice selectedStageId={user.CurrentStageId} requestedStageId={stageId} />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-16 lg:px-24">
