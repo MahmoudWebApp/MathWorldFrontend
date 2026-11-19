@@ -26,7 +26,7 @@ export function StudentAchievementsPanel() {
           </div>
         </div>
         {data && <span className="rounded-full border border-primary/20 bg-background px-3 py-2 text-sm font-bold text-primary">
-          {data.EarnedCount} / {data.TotalBadges}
+          <span dir="ltr" className="inline-block tabular-nums">{data.EarnedCount} / {data.TotalBadges}</span>
         </span>}
       </header>
       {isLoading ? (
@@ -66,7 +66,7 @@ export function StudentAchievementsPanel() {
                       : (ar ? 'تُفتح بعد ترقية الحساب' : 'Unlocks after upgrading your account')} />}
                 </span>
                 <strong className="block text-sm">{ar ? badge.TitleAr : badge.TitleEn}</strong>
-                <span className="mt-1 block text-xs text-muted-foreground">
+                <span dir="ltr" className="mt-1 block text-xs text-muted-foreground tabular-nums">
                   {badge.CurrentProgress} / {badge.RequiredSolved}
                 </span>
                 {!badge.IsAvailable && <span className="mt-1 block text-[11px] text-primary">
