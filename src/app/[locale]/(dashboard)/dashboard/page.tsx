@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
 import { useGetDailyChallengeQuery } from "@/store/api/stagesApi";
+import { useGetStudentSubscriptionQuery } from "@/store/api/categoriesApi";
 
 // Helper function to calculate relative time from a date string
 function getRelativeTime(
@@ -52,8 +53,13 @@ export default function UserDashboardPage() {
     stageId ?? 0,
     { skip: stageId == null || stageId <= 0 },
   );
+  const { data: membership } = useGetStudentSubscriptionQuery(undefined, {
+    skip: dashboard?.Role !== "Student",
+    refetchOnMountOrArgChange: true,
+  });
+  const upgraded = membership?.IsPremium === true;
   const { data: dailyPractice } = useGetDailyChallengeQuery(stageId ?? 0, {
-    skip: !stageId || stageId <= 0 || dashboard?.Role !== "Student",
+    skip: !stageId || stageId <= 0 || dashboard?.Role !== "Student" || !upgraded,
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
   });
@@ -248,7 +254,7 @@ export default function UserDashboardPage() {
                 className="mb-6 h-3 overflow-hidden rounded-full bg-primary/10"
               >
                 <div
-                  className="h-full rounded-full bg-primary"
+                  className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500"
                   style={{ width: `${journey.CompletionPercent}%` }}
                 />
               </div>
@@ -266,8 +272,8 @@ export default function UserDashboardPage() {
                   <div className="text-xs text-muted-foreground">{journeyLabels.points}</div>
                 </div>
               </div>
-              {dailyPractice && dailyPractice.StageId === journey.StageId && (
-                <Link href="/journey"
+              {upgraded && dailyPractice && dailyPractice.StageId === journey.StageId && (
+                <Link href="/daily-challenge"
                   className="mb-5 flex min-h-12 flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
                   <span>{isArabic ? "تحدّي اليوم الاختياري — بدون حد يومي للحل" : "Optional daily practice — no daily solving limit"}</span>
                   <span className="tabular-nums">
@@ -292,7 +298,7 @@ export default function UserDashboardPage() {
                       <span className="font-medium text-primary">{category.SolvedProblems}/{category.TotalProblems}</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-full bg-primary/10">
-                      <div className="h-full rounded-full bg-primary"
+                      <div className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500"
                         style={{ width: `${category.CompletionPercent}%` }} />
                     </div>
                   </div>
@@ -306,13 +312,6 @@ export default function UserDashboardPage() {
           )}
         </section>
       )}
-
-      <Link
-        href="/social-accounts"
-        className="mb-8 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-      >
-        {isArabic ? 'ربط Google أو Facebook بحسابي' : 'Connect Google or Facebook'}
-      </Link>
 
       <Link
         href="/dashboard/analytics"
