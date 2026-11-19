@@ -68,14 +68,14 @@
 }
 
 .text-gradient-math {
-  background: linear-gradient(115deg, #6D28D9 0%, #6D28D9 42%, #EC4899 100%);
+  background: linear-gradient(115deg, #6D28D9 0%, #A21CAF 54%, #EC4899 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .dark .text-gradient-math {
-  background: linear-gradient(115deg, #A78BFA 0%, #6D28D9 44%, #F9A8D4 100%);
+  background: linear-gradient(115deg, #C4B5FD 0%, #E879F9 54%, #F9A8D4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -575,7 +575,7 @@
   background:
     radial-gradient(circle at 8% 4%, rgba(255, 255, 255, 0.17), transparent 28%),
     radial-gradient(circle at 92% 88%, rgba(236, 72, 153, 0.46), transparent 34%),
-    linear-gradient(128deg, #4d18ef 0%, #6725ff 34%, #8b25e5 62%, #ec4899 116%);
+    linear-gradient(128deg, #6d28d9 0%, #8126c3 32%, #a21caf 65%, #ec4899 100%);
   box-shadow:
     0 32px 90px rgb(var(--sr-primary-rgb) / 0.24),
     0 20px 58px rgb(var(--sr-secondary-rgb) / 0.13),
@@ -586,7 +586,7 @@
   background:
     radial-gradient(circle at 8% 4%, rgba(255, 255, 255, 0.10), transparent 28%),
     radial-gradient(circle at 92% 88%, rgba(236, 72, 153, 0.38), transparent 34%),
-    linear-gradient(128deg, #2f0c92 0%, #4b17c4 38%, #701b9f 68%, #a60d69 120%);
+    linear-gradient(128deg, #301251 0%, #5b1c90 38%, #8a1d87 70%, #b51d72 100%);
   box-shadow:
     0 36px 100px rgba(0, 0, 0, 0.46),
     0 18px 56px rgb(var(--sr-primary-rgb) / 0.16),
