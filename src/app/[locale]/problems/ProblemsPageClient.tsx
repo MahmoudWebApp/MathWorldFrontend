@@ -18,8 +18,8 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { ProblemCard } from "@/components/problems/ProblemCard";
-import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
+import { getStageAccent } from '@/lib/stageVisuals';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -142,6 +142,7 @@ function ProblemsPageClient() {
       ? selectedStage.NameAr
       : selectedStage.NameEn
     : "";
+  const stageAccent = selectedStage ? getStageAccent(selectedStage) : undefined;
 
   const categoryName =
     categoryId && categories
@@ -215,7 +216,16 @@ function ProblemsPageClient() {
     );
   }
   if (categoryLocked) {
-    return <section className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-3xl font-bold">{locale === "ar" ? "هذه الفئة مقفلة" : "This category is locked"}</h1><p className="mb-6">{locale === "ar" ? "الفئتان المجانيتان بلا حد يومي، وباقي الفئات بتنفتح بعد ترقية الحساب." : "Two free categories offer unlimited practice. Upgrade your account to unlock the rest."}</p><Link href="/premium" className="rounded-xl border px-5 py-3">{locale === "ar" ? "ترقية الحساب" : "Upgrade account"}</Link></section>;
+    return (
+      <section className="container mx-auto max-w-xl px-4 py-20 text-center">
+        <h1 className="mb-6 text-xl font-bold">
+          {locale === 'ar' ? 'هذه الفئة غير متاحة لحسابك' : 'This topic is not available to your account'}
+        </h1>
+        <Link href={`/stages/${stageId}`} className="inline-flex rounded-xl border border-border px-5 py-3 font-semibold">
+          {locale === 'ar' ? 'العودة لفئات مرحلتي' : 'Back to stage topics'}
+        </Link>
+      </section>
+    );
   }
 
   // ── Early return: full page loader ───────────────────────
@@ -259,21 +269,13 @@ function ProblemsPageClient() {
 
       {/* Page header */}
       <div className="mb-10 text-center md:text-start">
-        <h1 className="brand-display-title text-4xl md:text-5xl font-extrabold mb-4 text-foreground">
-          <AccentHeadingText text={pageTitle} />
+        <h1 className="brand-display-title text-4xl md:text-5xl font-extrabold mb-4" style={stageAccent ? { color: stageAccent } : undefined}>
+          {pageTitle}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
           {pageSubtitle}
         </p>
       </div>
-
-      {!loggedIn && (
-        <p className="mb-6 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-          {locale === 'ar'
-            ? 'هاي قائمة معاينة للمسائل. تقدر تتصفح العناوين، ولما تختار مسألة رح نطلب منك تسجيل الدخول للحل.'
-            : 'This is a preview of the problems. Browse the titles and sign in when you choose a problem to solve.'}
-        </p>
-      )}
 
       {/* Search bar */}
       <div className="mb-8">
@@ -335,7 +337,7 @@ function ProblemsPageClient() {
             {t("problems.showing")}:
           </span>
           {stageName && selectedStage && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-primary/20 bg-primary/10 px-2.5 py-1 text-sm font-medium text-primary">
+            <span className="inline-flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-sm font-medium" style={stageAccent ? { color: stageAccent, borderColor: `${stageAccent}35` } : undefined}>
               <StageIconBadge stage={selectedStage} size="xs" className="border-0 bg-background/30 shadow-none" />
               {stageName}
             </span>
