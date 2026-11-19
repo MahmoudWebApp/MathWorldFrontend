@@ -679,6 +679,7 @@ export default function ProblemPage() {
             className={`brand-display-title mb-3 text-3xl font-bold sm:text-4xl ${
               isArabic ? "text-right" : "text-left"
             }`}
+            style={{ color: stageAccent }}
           >
             <RichText
               text={title}
@@ -907,7 +908,7 @@ export default function ProblemPage() {
                     {t("problem.loginToSolve")}
                   </p>
                   <Button asChild>
-                    <Link href="/login">{t("nav.login")}</Link>
+                    <Link href={`/login?returnTo=${encodeURIComponent(`/problems/${problemId}`)}`}>{t("nav.login")}</Link>
                   </Button>
                 </div>
               )}
