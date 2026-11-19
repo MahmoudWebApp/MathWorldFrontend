@@ -370,7 +370,7 @@ function NavbarContent() {
                         {user.Role === 'Admin' && (
                           <nav aria-label={locale === 'ar' ? 'تنقل الأدمن' : 'Admin navigation'} className="space-y-1">
                             <div className="px-3 pb-1 text-xs font-bold text-muted-foreground">
-                              {locale === 'ar' ? 'مراقبة المنصة' : 'Monitor platform'}
+                              {locale === 'ar' ? 'لوحة الإدارة' : 'Admin dashboard'}
                             </div>
                             {ADMIN_NAV_ITEMS.filter(item => item.group === 'overview').map(item => (
                               <Link key={item.href} href={item.href}
