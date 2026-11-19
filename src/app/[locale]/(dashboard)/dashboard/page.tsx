@@ -182,12 +182,12 @@ export default function UserDashboardPage() {
       <section aria-label={isArabic ? 'خطوتك التالية' : 'Your next step'}
         className="mb-6 rounded-3xl border border-primary/25 bg-primary/5 p-5 md:p-7">
         <p className="mb-2 text-sm font-bold text-primary">
-          {isArabic ? 'الخطوة الأولى' : 'Step one'}
+          {isArabic ? 'فئات مرحلتي' : 'My stage topics'}
         </p>
-        <h2 className="text-2xl font-extrabold">
+        <h2 className="text-xl font-extrabold sm:text-2xl">
           {stageId
-            ? (isArabic ? 'ابدأ الحل من فئاتك المفتوحة' : 'Start with your unlocked topics')
-            : (isArabic ? 'اختَر مرحلتك لتبدأ الرياضيات' : 'Choose your stage to get started')}
+            ? (isArabic ? 'متابعة حل المسائل' : 'Continue practicing')
+            : (isArabic ? 'اختيار المرحلة التعليمية' : 'Select learning stage')}
         </h2>
         <p className="mb-5 mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
           {stageId
@@ -199,7 +199,7 @@ export default function UserDashboardPage() {
           className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-primary px-5 py-3 font-extrabold text-primary-foreground hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {stageId
-            ? (isArabic ? 'افتح فئاتي المفتوحة' : 'Open my unlocked topics')
+            ? (isArabic ? 'عرض الفئات' : 'View topics')
             : (isArabic ? 'اختيار المرحلة' : 'Choose learning stage')}
           <DirectionalArrow direction="forward" size={18} />
         </Link>
