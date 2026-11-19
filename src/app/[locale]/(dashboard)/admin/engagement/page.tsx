@@ -72,10 +72,10 @@ export default function AdminEngagementPage() {
       <Link href="/admin" className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
         <DirectionalArrow direction="back" className="h-4 w-4" /> {ar ? 'لوحة الإدارة' : 'Admin overview'}
       </Link>
-      <h1 className="text-3xl font-extrabold">{ar ? 'نشاط المستويات والفئات' : 'Stage & category engagement'}</h1>
+      <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{ar ? 'نشاط المستويات والفئات' : 'Stage & category engagement'}</h1>
       <p className="text-sm text-muted-foreground">
-        {ar ? 'مين عم يحل أكثر؟ وأي فئة أكثر استخداماً؟ ترتيب الحلول يعتمد على عدد المسائل المختلفة المحلولة، مو نسب الصح والخطأ.'
-          : 'Who practices most, and where? Rankings use distinct solved problems, not right/wrong percentages.'}
+        {ar ? 'مقارنة نشاط الطلاب والفئات ضمن كل مرحلة خلال الفترة المحددة.'
+          : 'Compare learner and category activity in each stage for the selected period.'}
       </p>
     </header>
 
