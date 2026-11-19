@@ -118,7 +118,7 @@ export default function UserDashboardPage() {
       icon: Award,
       label: journeyLabels.progress,
       value: journey ? `${journey.CompletionPercent}%` : "—",
-      color: "text-violet-600 dark:text-violet-300", bg: "bg-violet-500/10", isLucide: false,
+      color: "text-emerald-600 dark:text-emerald-300", bg: "bg-emerald-500/10", isLucide: false,
     },
   ];
 
@@ -361,7 +361,7 @@ export default function UserDashboardPage() {
                       />
                     )}
                   </div>
-                  <div className="text-gradient-math text-2xl font-extrabold mb-1">{stat.value}</div>
+                  <div className={`${stat.label === journeyLabels.progress ? "text-emerald-600 dark:text-emerald-300" : "text-gradient-math"} text-2xl font-extrabold mb-1`}>{stat.value}</div>
                   <div className="text-sm text-muted-foreground">
                     {stat.label}
                   </div>
