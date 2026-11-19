@@ -25,7 +25,7 @@ export type AuthProfile = Omit<User, 'Token'>;
 export const authApi = createApi({
   reducerPath: 'authApi',
   baseQuery,
-  tagTypes: ['User'],
+  tagTypes: ['User', 'SocialLinkStatus'],
   endpoints: (builder) => ({
     login: builder.mutation<User, LoginRequest>({
       query: (credentials) => ({
@@ -65,6 +65,7 @@ export const authApi = createApi({
         method: 'POST',
         body: { Provider: 'Google', ...data },
       }),
+      invalidatesTags: ['SocialLinkStatus'],
     }),
 
     linkFacebook: builder.mutation<{ Linked: boolean; Provider: string }, SocialLoginRequest>({
@@ -73,6 +74,11 @@ export const authApi = createApi({
         method: 'POST',
         body: { Provider: 'Facebook', ...data },
       }),
+    }),
+
+    getSocialLinkStatus: builder.query<{ GoogleLinked: boolean }, void>({
+      query: () => '/auth/social/link-status',
+      providesTags: ['SocialLinkStatus'],
     }),
 
     getMe: builder.query<AuthProfile, void>({
@@ -89,5 +95,6 @@ export const {
   useFacebookLoginMutation,
   useLinkGoogleMutation,
   useLinkFacebookMutation,
+  useGetSocialLinkStatusQuery,
   useGetMeQuery,
 } = authApi;

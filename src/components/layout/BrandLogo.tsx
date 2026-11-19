@@ -12,7 +12,7 @@ export function BrandLogo({ compact = false, className }: BrandLogoProps) {
       <span className={cn('brand-mark-shell', !compact && 'brand-mark-shell-large')}>
         <BrandMark className={compact ? 'h-11 w-11' : 'h-16 w-16'} />
       </span>
-      <span className={cn('brand-wordmark sr-title-accent font-extrabold tracking-tight', compact ? 'hidden text-[1.08rem] min-[430px]:inline' : 'text-2xl')} dir="ltr">
+      <span className={cn('brand-wordmark text-gradient-math font-extrabold tracking-tight', compact ? 'hidden text-[1.08rem] min-[430px]:inline' : 'text-2xl')} dir="ltr">
         MathWorld
       </span>
     </div>

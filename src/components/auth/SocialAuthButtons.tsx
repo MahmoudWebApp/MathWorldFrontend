@@ -4,259 +4,136 @@ import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useDispatch } from 'react-redux';
-import { Users, Loader2, ShieldCheck } from 'lucide-react';
-
+import { Loader2, ShieldCheck } from 'lucide-react';
 import type { AppDispatch } from '@/store';
 import {
-  useFacebookLoginMutation,
-  useGoogleLoginMutation,
-  useLinkFacebookMutation,
-  useLinkGoogleMutation,
+  useGetSocialLinkStatusQuery, useGoogleLoginMutation, useLinkGoogleMutation,
 } from '@/store/api/authApi';
 import { setCredentials } from '@/store/slices/authSlice';
 import { getApiErrorMessage, persistAuthSession } from '@/lib/authSession';
-import type { User } from '@/store/api/types';
 
-interface GoogleCredentialResponse {
-  credential: string;
-}
+interface GoogleCredentialResponse { credential: string }
 interface GoogleIdentityApi {
   initialize(options: {
     client_id: string;
     callback: (response: GoogleCredentialResponse) => void;
     auto_select?: boolean;
   }): void;
-  renderButton(
-    element: HTMLElement,
-    options: {
-      theme: string;
-      size: string;
-      width: number;
-      text: string;
-      shape: string;
-    },
-  ): void;
-}
-interface FacebookLoginResult {
-  authResponse?: { accessToken?: string } | null;
-  status?: string;
-}
-interface FacebookSdk {
-  init(options: {
-    appId: string;
-    cookie: boolean;
-    xfbml: boolean;
-    version: string;
+  renderButton(element: HTMLElement, options: {
+    theme: string; size: string; width: number; text: string; shape: string;
   }): void;
-  login(
-    callback: (result: FacebookLoginResult) => void,
-    options: { scope: string; return_scopes: boolean },
-  ): void;
 }
 declare global {
-  interface Window {
-    google?: { accounts: { id: GoogleIdentityApi } };
-    FB?: FacebookSdk;
-  }
+  interface Window { google?: { accounts: { id: GoogleIdentityApi } } }
 }
 
-type Provider = 'Google' | 'Facebook';
 type Mode = 'login' | 'link';
-
-const translations = {
-  ar: {
-    divider: 'أو تابع باستخدام',
-    facebook: 'المتابعة باستخدام فيسبوك',
-    linkFacebook: 'ربط حساب فيسبوك',
-    linkGoogle: 'ربط حساب Google',
-    connected: 'تم ربط الحساب بنجاح',
-    cancelled: 'لم تكتمل عملية تسجيل الدخول. حاول مجددًا.',
-    error: 'تعذر إكمال تسجيل الدخول الاجتماعي.',
-    safety: 'لا نشارك كلمة مرورك مع MathWorld.',
-  },
-  en: {
-    divider: 'or continue with',
-    facebook: 'Continue with Facebook',
-    linkFacebook: 'Link Facebook account',
-    linkGoogle: 'Link Google account',
-    connected: 'Social account linked successfully',
-    cancelled: 'The sign-in was not completed. Try again.',
-    error: 'Social sign-in could not be completed.',
-    safety: 'Your provider password is never shared with MathWorld.',
-  },
-};
-
-const isEnabled = process.env.NEXT_PUBLIC_SOCIAL_LOGIN_ENABLED === 'true';
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim();
-const googleConfigured = /^\d+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/i.test(
+const configured = /^\d+-[a-z0-9_-]+\.apps\.googleusercontent\.com$/i.test(
   googleClientId ?? '',
 );
-const facebookAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim();
+const enabled = process.env.NEXT_PUBLIC_SOCIAL_LOGIN_ENABLED === 'true';
 
 export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
   const locale = useLocale();
-  const copy = locale === 'ar' ? translations.ar : translations.en;
+  const ar = locale === 'ar';
   const dispatch = useDispatch<AppDispatch>();
   const googleButton = useRef<HTMLDivElement>(null);
-  // The SDK can callback twice before React commits a busy-state render.
-  const exchangeLock = useRef(false);
-  const renderedGoogle = useRef<{ node: HTMLDivElement; mode: Mode } | null>(null);
-  const [facebookReady, setFacebookReady] = useState(false);
-  const [busy, setBusy] = useState<Provider | null>(null);
-  const [linked, setLinked] = useState<Provider | null>(null);
+  const sdkRendered = useRef<{ node: HTMLElement; mode: Mode } | null>(null);
+  const pending = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [linkedNow, setLinkedNow] = useState(false);
   const [error, setError] = useState('');
   const [googleLogin] = useGoogleLoginMutation();
-  const [facebookLogin] = useFacebookLoginMutation();
   const [linkGoogle] = useLinkGoogleMutation();
-  const [linkFacebook] = useLinkFacebookMutation();
+  const { data: linkStatus, isLoading: checking, isError: checkError,
+    refetch: recheck } = useGetSocialLinkStatusQuery(undefined, {
+    skip: mode !== 'link' || !enabled || !configured,
+    refetchOnMountOrArgChange: true,
+  });
+  const linked = mode === 'link' && (linkedNow || linkStatus?.GoogleLinked === true);
 
-  const exchange = useCallback(async (provider: Provider, token: string) => {
-    if (!token || exchangeLock.current) return;
-    exchangeLock.current = true;
-    setBusy(provider);
+  const exchange = useCallback(async (token: string) => {
+    if (!token || pending.current) return;
+    pending.current = true;
+    setBusy(true);
     setError('');
-    setLinked(null);
     try {
       if (mode === 'link') {
-        if (provider === 'Google') {
-          await linkGoogle({ AccessToken: token }).unwrap();
-        } else {
-          await linkFacebook({ AccessToken: token }).unwrap();
-        }
-        setLinked(provider);
-        return;
-      }
-
-      const user: User =
-        provider === 'Google'
-          ? await googleLogin({ AccessToken: token }).unwrap()
-          : await facebookLogin({ AccessToken: token }).unwrap();
-
-      if (!user.Token) throw new Error(copy.error);
-      dispatch(setCredentials({ user, token: user.Token }));
-      persistAuthSession(user);
-
-      const destination =
-        user.Role === 'Admin' ? 'admin'
+        await linkGoogle({ AccessToken: token }).unwrap();
+        setLinkedNow(true);
+      } else {
+        const user = await googleLogin({ AccessToken: token }).unwrap();
+        if (!user.Token) throw new Error('Missing MathWorld session');
+        dispatch(setCredentials({ user, token: user.Token }));
+        persistAuthSession(user);
+        const target = user.Role === 'Admin' ? 'admin'
           : user.CurrentStageId == null ? 'learning-stage' : 'dashboard';
-      window.location.assign(`/${locale}/${destination}`);
+        window.location.assign(`/${locale}/${target}`);
+      }
     } catch (reason) {
-      setError(getApiErrorMessage(reason, copy.error));
+      setError(getApiErrorMessage(reason, ar
+        ? 'تعذّر إكمال العملية عبر Google.'
+        : 'Could not complete the Google sign-in.'));
     } finally {
-      exchangeLock.current = false;
-      setBusy(null);
+      pending.current = false;
+      setBusy(false);
     }
-  }, [
-    mode, linkGoogle, linkFacebook, googleLogin, facebookLogin,
-    copy.error, dispatch, locale,
-  ]);
+  }, [ar, mode, linkGoogle, googleLogin, dispatch, locale]);
 
-  const initializeGoogle = useCallback(() => {
-    if (!isEnabled || !googleConfigured || !googleClientId ||
+  const renderGoogle = useCallback(() => {
+    if (!enabled || !configured || !googleClientId ||
+        (mode === 'link' && (checking || checkError || linked)) ||
         !window.google?.accounts.id || !googleButton.current) return;
-
     const node = googleButton.current;
-    if (renderedGoogle.current?.node === node &&
-        renderedGoogle.current.mode === mode) return;
-
+    if (sdkRendered.current?.node === node && sdkRendered.current.mode === mode) return;
     const sdk = window.google.accounts.id;
     sdk.initialize({
       client_id: googleClientId,
       auto_select: false,
-      callback: (response) => void exchange('Google', response.credential),
+      callback: (response) => void exchange(response.credential),
     });
     node.replaceChildren();
     sdk.renderButton(node, {
-      theme: 'outline',
-      size: 'large',
-      width: 280,
-      text: 'continue_with',
-      shape: 'pill',
+      theme: 'outline', size: 'large', width: 280, text: 'continue_with', shape: 'pill',
     });
-    renderedGoogle.current = { node, mode };
-  }, [exchange, mode]);
+    sdkRendered.current = { node, mode };
+  }, [checking, checkError, linked, mode, exchange]);
 
-  const initializeFacebook = useCallback(() => {
-    if (!isEnabled || !facebookAppId || !window.FB) return;
-    window.FB.init({
-      appId: facebookAppId,
-      cookie: false,
-      xfbml: false,
-      version: 'v22.0',
-    });
-    setFacebookReady(true);
-  }, []);
+  useEffect(() => { renderGoogle(); }, [renderGoogle]);
 
-  useEffect(() => {
-    initializeGoogle();
-    initializeFacebook();
-  }, [initializeGoogle, initializeFacebook]);
-
-  if (!isEnabled || (!googleConfigured && !facebookAppId)) {
-    return null;
+  if (!enabled || !configured) return null;
+  if (linked) {
+    return <p role="status" className="mt-5 flex items-center gap-2 text-sm font-semibold text-emerald-600">
+      <ShieldCheck size={18} />
+      {ar ? 'حساب Google مربوط مسبقاً؛ ما في حاجة تعيد الربط.' : 'Google is already connected to your account.'}
+    </p>;
   }
+  if (mode === 'link' && checking) return <p role="status" className="mt-5 text-sm text-muted-foreground">
+    {ar ? 'عم نتحقق من ربط حسابك…' : 'Checking your connected account…'}
+  </p>;
+  if (mode === 'link' && checkError) return <div role="alert" className="mt-5 space-y-2 text-sm">
+    <p>{ar ? 'تعذّر التحقق من حالة ربط الحساب.' : 'Could not verify the connection.'}</p>
+    <button type="button" onClick={() => void recheck()} className="font-semibold text-primary underline">
+      {ar ? 'إعادة المحاولة' : 'Retry'}
+    </button>
+  </div>;
 
-  const handleFacebook = () => {
-    if (!facebookReady || !window.FB || busy || exchangeLock.current) return;
-    window.FB.login(
-      (result) => {
-        const token = result.authResponse?.accessToken;
-        if (token) {
-          void exchange('Facebook', token);
-        } else {
-          setError(copy.cancelled);
-        }
-      },
-      { scope: 'public_profile,email', return_scopes: true },
-    );
-  };
-
-  return (
-    <div className="mt-6 space-y-4">
-      {googleConfigured && (
-        <>
-          <Script
-            src="https://accounts.google.com/gsi/client"
-            strategy="afterInteractive"
-            onLoad={initializeGoogle}
-          />
-          <div className="flex justify-center">
-            <div
-              ref={googleButton}
-              aria-label={mode === 'link' ? copy.linkGoogle : 'Google'}
-              className={busy ? 'pointer-events-none opacity-60' : ''}
-            />
-          </div>
-        </>
-      )}
-
-      {facebookAppId && (
-        <>
-          <Script
-            src="https://connect.facebook.net/en_US/sdk.js"
-            strategy="afterInteractive"
-            onLoad={initializeFacebook}
-          />
-          <button
-            type="button"
-            disabled={!facebookReady || !!busy}
-            onClick={handleFacebook}
-            className="mx-auto flex min-h-11 w-full max-w-[280px] items-center justify-center gap-2 rounded-full border border-primary/20 bg-card px-4 text-sm font-semibold hover:bg-primary/5 disabled:opacity-60"
-          >
-            {busy === 'Facebook' ? <Loader2 className="h-4 w-4 animate-spin" /> :
-              <Users className="h-4 w-4" />}
-            {mode === 'link' ? copy.linkFacebook : copy.facebook}
-          </button>
-        </>
-      )}
-
-      {error && <p role="alert" className="text-center text-sm text-destructive">{error}</p>}
-      {linked && (
-        <p role="status" className="flex items-center justify-center gap-2 text-sm text-emerald-600">
-          <ShieldCheck size={16} />{copy.connected}: {linked}
-        </p>
-      )}
-      <p className="text-center text-xs text-muted-foreground">{copy.safety}</p>
+  return <div className="mt-6 space-y-4">
+    <Script src="https://accounts.google.com/gsi/client"
+      strategy="afterInteractive" onLoad={renderGoogle} />
+    <div className="flex justify-center">
+      <div ref={googleButton}
+        aria-label={mode === 'link' ? (ar ? 'ربط Google' : 'Connect Google') : 'Google'}
+        className={busy ? 'pointer-events-none opacity-60' : ''} />
     </div>
-  );
+    {busy && <p role="status" className="text-center text-sm text-muted-foreground">
+      <Loader2 className="me-2 inline h-4 w-4 animate-spin" />
+      {ar ? 'جارٍ التحقق…' : 'Verifying…'}
+    </p>}
+    {error && <p role="alert" className="text-center text-sm text-destructive">{error}</p>}
+    <p className="text-center text-xs text-muted-foreground">
+      {ar ? 'كلمة مرور Google لا تُخزّن في MathWorld.' : 'MathWorld never stores your Google password.'}
+    </p>
+  </div>;
 }
