@@ -112,6 +112,32 @@ export const CATEGORY_BRAND_STYLES: CategoryBrandStyle[] = [
   },
 ];
 
+// Match the four educational stage identities already used by StagePremiumCard
+// and Flutter's AppColors.stageCyan/Orange/Green/Violet. Unlike category-id
+// cycling, this keeps every topic in one stage visually related.
+export const STAGE_CATEGORY_BRAND_STYLES: readonly CategoryBrandStyle[] = [
+  {
+    from: 'from-cyan-600', to: 'to-cyan-500', bg: 'bg-cyan-500/10',
+    hoverText: 'group-hover:text-cyan-700 dark:group-hover:text-cyan-300',
+    hoverShadow: 'hover:shadow-cyan-500/20', spotlight: 'rgba(8, 126, 153, 0.16)',
+  },
+  {
+    from: 'from-orange-600', to: 'to-orange-500', bg: 'bg-orange-500/10',
+    hoverText: 'group-hover:text-orange-700 dark:group-hover:text-orange-300',
+    hoverShadow: 'hover:shadow-orange-500/20', spotlight: 'rgba(192, 91, 24, 0.16)',
+  },
+  {
+    from: 'from-emerald-600', to: 'to-emerald-500', bg: 'bg-emerald-500/10',
+    hoverText: 'group-hover:text-emerald-700 dark:group-hover:text-emerald-300',
+    hoverShadow: 'hover:shadow-emerald-500/20', spotlight: 'rgba(33, 120, 95, 0.16)',
+  },
+  {
+    from: 'from-violet-600', to: 'to-violet-500', bg: 'bg-violet-500/10',
+    hoverText: 'group-hover:text-violet-700 dark:group-hover:text-violet-300',
+    hoverShadow: 'hover:shadow-violet-500/20', spotlight: 'rgba(121, 55, 195, 0.16)',
+  },
+];
+
 export const MATH_CARD_SYMBOLS = [
   { symbol: 'x²', equation: 'ax² + bx + c = 0' },
   { symbol: 'πr²', equation: 'A = πr²' },

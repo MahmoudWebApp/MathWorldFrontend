@@ -66,6 +66,7 @@ function readCsv(file) {
 
 const problems = files.flatMap(readCsv);
 const proposed = readCsv(categoryFile);
+const editorialLedger = readCsv('mathworld-320-editorial-review-ledger.csv');
 const proposedStages = new Map();
 const mistakes = [];
 
@@ -206,6 +207,52 @@ for (const stage of ['1', '2', '3', '4']) {
   if ((stageCounts.get(stage) ?? 0) < 80) {
     mistakes.push('Stage ' + stage + ': fewer than 80 draft questions');
   }
+}
+
+// The editorial ledger covers every unpublished question exactly once.
+// Review marks are human attestations, not assertions made by this script.
+const reviewFields = [
+  'MathReview', 'ArabicReview', 'EnglishReview',
+  'AgeFitReview', 'LiveDuplicateReview',
+];
+const allowedReviewStates = new Set(['Pending', 'Approved', 'NeedsCorrection']);
+const reviewByKey = new Map();
+const questionByKey = new Map(problems.map(problem => [problem.ContentKey, problem]));
+
+for (const record of editorialLedger) {
+  const key = record.ContentKey?.trim();
+  if (!key || reviewByKey.has(key)) {
+    mistakes.push('Editorial ledger duplicate/empty key: ' + key);
+    continue;
+  }
+  reviewByKey.set(key, record);
+  const question = questionByKey.get(key);
+  if (!question) {
+    mistakes.push('Editorial ledger references unknown draft: ' + key);
+    continue;
+  }
+  const expectedCategory = question.ProposedCategoryKey
+    ? 'proposed:' + question.ProposedCategoryKey
+    : 'existing:' + question.CategoryId;
+  if (record.StageId !== question.StageId ||
+      record.CategoryReference !== expectedCategory) {
+    mistakes.push(key + ': ledger stage/category drift');
+  }
+  for (const field of reviewFields) {
+    if (!allowedReviewStates.has(record[field])) {
+      mistakes.push(key + ': invalid ' + field + ' in editorial ledger');
+    }
+  }
+  if (reviewFields.some(field => record[field] !== 'Pending') &&
+      !record.ReviewedBy?.trim()) {
+    mistakes.push(key + ': non-pending editorial reviews require a reviewer');
+  }
+}
+if (reviewByKey.size !== problems.length) {
+  mistakes.push('Editorial ledger must cover all ' + problems.length + ' draft questions');
+}
+for (const key of questionByKey.keys()) {
+  if (!reviewByKey.has(key)) mistakes.push('Missing editorial review record: ' + key);
 }
 
 if (mistakes.length) {

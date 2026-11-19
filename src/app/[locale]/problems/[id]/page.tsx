@@ -55,6 +55,7 @@ import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
+import { getStageAccent } from "@/lib/stageVisuals";
 import { GeometryDiagram, isGeometryScene } from "@/components/math/GeometryDiagram";
 import { AdminGeometryEditor } from "@/components/admin/AdminGeometryEditor";
 
@@ -639,6 +640,7 @@ export default function ProblemPage() {
     stageName,
     points,
   } = problemData;
+  const stageAccent = getStageAccent({ Id: stageId, Name: stageName });
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-16 lg:px-24">
@@ -701,7 +703,7 @@ export default function ProblemPage() {
             )}
 
             {stageName && (
-              <Badge className="gap-1.5 border border-brand-primary/20 bg-primary/10 text-primary">
+              <Badge className="gap-1.5 border bg-background/80" style={{ borderColor: `${stageAccent}34`, color: stageAccent }}>
                 <StageIconBadge
                   stage={{ Id: stageId, Name: stageName }}
                   size="xs"
@@ -711,7 +713,7 @@ export default function ProblemPage() {
               </Badge>
             )}
 
-            {categoryName && <Badge variant="secondary">{categoryName}</Badge>}
+            {categoryName && <Badge variant="secondary" style={{ borderColor: `${stageAccent}34`, backgroundColor: `${stageAccent}0E`, color: stageAccent }}>{categoryName}</Badge>}
 
             {studentProblem?.HasAttempted && (
               <Badge variant="outline" className="gap-1">

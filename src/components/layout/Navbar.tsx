@@ -25,6 +25,7 @@ import {
   Menu,
   NotebookTabs,
   Search,
+  Monitor,
   Settings2,
   UserPlus,
 } from 'lucide-react';
@@ -55,7 +56,7 @@ function NavbarContent() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams(); 
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const dispatch = useDispatch<AppDispatch>();
 
   const { user, isAuthenticated, isLoading, token } = useSelector((state: RootState) => state.auth);
@@ -167,6 +168,17 @@ function NavbarContent() {
       setShowSearch(false);
     }
   };
+
+  // Keep the site's appearance following the browser/OS unless a visitor
+  // explicitly chooses the opposite. A second click returns to automatic
+  // mode so future browser appearance changes are reflected immediately.
+  const followsBrowser = theme !== 'light' && theme !== 'dark';
+  const effectiveTheme = resolvedTheme === 'dark' ? 'dark' : 'light';
+  const themeActionLabel = followsBrowser
+    ? (effectiveTheme === 'dark'
+      ? (locale === 'ar' ? 'التبديل للوضع الفاتح' : 'Use light appearance')
+      : (locale === 'ar' ? 'التبديل للوضع الداكن' : 'Use dark appearance'))
+    : (locale === 'ar' ? 'اتّباع مظهر المتصفح تلقائياً' : 'Follow browser appearance');
 
   const isStagesActive = pathname.startsWith('/stages');
   const isAboutActive = pathname.startsWith('/about');
@@ -311,8 +323,24 @@ function NavbarContent() {
               </AnimatePresence>
             </div>
 
-            <Button variant="ghost" size="icon" aria-label={theme === 'dark' ? (locale === 'ar' ? 'الوضع النهاري' : 'Light mode') : (locale === 'ar' ? 'الوضع الليلي' : 'Dark mode')} className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10 hover:text-primary sm:h-10 sm:w-10" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-              {mounted ? (theme === 'dark' ? <Sun1 className="h-5 w-5" /> : <Moon className="h-5 w-5" />) : <div className="h-5 w-5" />}
+            <Button
+              variant="ghost"
+              size="icon"
+              disabled={!mounted}
+              aria-label={themeActionLabel}
+              title={themeActionLabel}
+              className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10 hover:text-primary sm:h-10 sm:w-10"
+              onClick={() => setTheme(followsBrowser
+                ? (effectiveTheme === 'dark' ? 'light' : 'dark')
+                : 'system')}
+            >
+              {mounted
+                ? followsBrowser
+                  ? effectiveTheme === 'dark'
+                    ? <Sun1 className="h-5 w-5" />
+                    : <Moon className="h-5 w-5" />
+                  : <Monitor className="h-5 w-5" />
+                : <div className="h-5 w-5" />}
             </Button>
 
             <Button variant="ghost" size="sm" aria-label={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'} className="h-9 shrink-0 rounded-full px-2 font-bold hover:bg-primary/10 hover:text-primary sm:px-3" onClick={toggleLocale}>
