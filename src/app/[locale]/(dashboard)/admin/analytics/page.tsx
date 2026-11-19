@@ -29,8 +29,8 @@ export default function AdminAnalyticsPage() {
     });
   const n = (value: number) => new Intl.NumberFormat(isArabic ? 'ar' : 'en').format(value);
   const labels = isArabic ? {
-    title: 'مركز إحصائيات MathWorld',
-    subtitle: 'مراقبة الطلاب وجودة المحتوى والأداء الحقيقي حسب المرحلة التعليمية',
+    title: 'الإحصائيات',
+    subtitle: 'إحصائيات المسائل والمحاولات ونشاط الطلاب حسب المرحلة',
     admin: 'وضع الإدارة — لا تُحتسب لك نقاط أو حلول',
     back: 'العودة للإدارة',
     days: 'آخر {days} يوم',
@@ -45,8 +45,8 @@ export default function AdminAnalyticsPage() {
     retry: 'إعادة المحاولة', loading: 'جاري تحميل الإحصائيات...',
     empty: 'لا توجد بيانات لهذه المرحلة بعد.',
   } : {
-    title: 'MathWorld Analytics Center',
-    subtitle: 'Monitor student engagement and content quality at every educational stage',
+    title: 'Analytics',
+    subtitle: 'Problems, attempts and learner activity by stage',
     admin: 'Admin mode — your account does not earn solutions or points',
     back: 'Back to admin',
     days: 'Last {days} days',
@@ -94,7 +94,7 @@ export default function AdminAnalyticsPage() {
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="brand-display-title text-gradient-math text-3xl font-bold">
+          <h1 className="brand-display-title text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
             {labels.title}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">{labels.subtitle}</p>
