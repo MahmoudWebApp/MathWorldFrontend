@@ -10,6 +10,10 @@ export function StudentAchievementsPanel() {
   const { data, isLoading, isError, refetch } = useGetAchievementsQuery(undefined, {
     refetchOnMountOrArgChange: true,
   });
+  // Free students can earn the first two badges. Do not count locked
+  // future achievements as available badges or show misleading progress bars.
+  const availableBadges = data?.Badges.filter(badge => badge.IsAvailable) ?? [];
+  const hasUpgradeBadges = data?.Badges.some(badge => !badge.IsAvailable) ?? false;
 
   return (
     <section className="mb-8 space-y-4 rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-pink-500/5 p-5 sm:p-7">
@@ -26,7 +30,7 @@ export function StudentAchievementsPanel() {
           </div>
         </div>
         {data && <span className="rounded-full border border-primary/20 bg-background px-3 py-2 text-sm font-bold text-primary">
-          <span dir="ltr" className="inline-block tabular-nums">{data.EarnedCount} / {data.TotalBadges}</span>
+          <span dir="ltr" className="inline-block tabular-nums">{data.EarnedCount} / {availableBadges.length}</span>
         </span>}
       </header>
       {isLoading ? (
@@ -47,7 +51,7 @@ export function StudentAchievementsPanel() {
             {ar ? `حللت ${data.UniqueSolved} مسألة. الشارة القادمة عند ${data.NextMilestone}.`
               : `You have solved ${data.UniqueSolved} unique problems. Next badge at ${data.NextMilestone}.`}
           </p>}
-          {data.Badges.some(badge => !badge.IsAvailable) && (
+          {hasUpgradeBadges && (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/5 px-4 py-3 text-sm">
               <span>{ar ? 'شارات إضافية بتنفتح لما ترقّي حسابك، وتقدّمك محفوظ.' : 'More badges unlock when you upgrade. Your progress is saved.'}</span>
               <Link href="/premium" className="font-bold text-primary underline">
@@ -56,22 +60,18 @@ export function StudentAchievementsPanel() {
             </div>
           )}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {data.Badges.map(badge => (
+            {availableBadges.map(badge => (
               <article key={badge.Key}
-                className={`rounded-2xl border p-3 text-center transition-colors ${badge.Earned ? 'border-primary/25 bg-primary/10' : 'border-border bg-muted/20'}`}>
+                className={`rounded-2xl border p-3 text-center transition-colors ${badge.Earned ? 'border-fuchsia-400/30 bg-gradient-to-br from-violet-500/10 to-pink-500/10' : 'border-border bg-muted/20'}`}>
                 <span className={`mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-full ${badge.Earned ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                   {badge.Earned ? <CheckCircle2 className="h-6 w-6" aria-label={ar ? 'مكتسبة' : 'Earned'} />
-                    : <LockKeyhole className="h-5 w-5" aria-label={badge.IsAvailable
-                      ? (ar ? 'لم تُكتسب بعد' : 'Not earned yet')
-                      : (ar ? 'تُفتح بعد ترقية الحساب' : 'Unlocks after upgrading your account')} />}
+                    : <LockKeyhole className="h-5 w-5" aria-label={ar ? 'لم تُكتسب بعد' : 'Not earned yet'} />}
                 </span>
                 <strong className="block text-sm">{ar ? badge.TitleAr : badge.TitleEn}</strong>
                 <span dir="ltr" className="mt-1 block text-xs text-muted-foreground tabular-nums">
                   {badge.CurrentProgress} / {badge.RequiredSolved}
                 </span>
-                {!badge.IsAvailable && <span className="mt-1 block text-[11px] text-primary">
-                  {ar ? 'تُفتح بعد الترقية' : 'Unlocks after upgrade'}
-                </span>}
+                
                 <div role="progressbar" aria-label={ar ? badge.TitleAr : badge.TitleEn}
                   aria-valuemin={0} aria-valuemax={badge.RequiredSolved}
                   aria-valuenow={badge.CurrentProgress}
