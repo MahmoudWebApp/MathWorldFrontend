@@ -51,14 +51,6 @@ export const authApi = createApi({
       }),
     }),
 
-    facebookLogin: builder.mutation<User, SocialLoginRequest>({
-      query: (data) => ({
-        url: '/auth/social/facebook',
-        method: 'POST',
-        body: { Provider: 'Facebook', ...data },
-      }),
-    }),
-
     linkGoogle: builder.mutation<{ Linked: boolean; Provider: string }, SocialLoginRequest>({
       query: (data) => ({
         url: '/auth/social/link/google',
@@ -66,14 +58,6 @@ export const authApi = createApi({
         body: { Provider: 'Google', ...data },
       }),
       invalidatesTags: ['SocialLinkStatus'],
-    }),
-
-    linkFacebook: builder.mutation<{ Linked: boolean; Provider: string }, SocialLoginRequest>({
-      query: (data) => ({
-        url: '/auth/social/link/facebook',
-        method: 'POST',
-        body: { Provider: 'Facebook', ...data },
-      }),
     }),
 
     getSocialLinkStatus: builder.query<{ GoogleLinked: boolean }, void>({
@@ -92,9 +76,7 @@ export const {
   useLoginMutation,
   useRegisterMutation,
   useGoogleLoginMutation,
-  useFacebookLoginMutation,
   useLinkGoogleMutation,
-  useLinkFacebookMutation,
   useGetSocialLinkStatusQuery,
   useGetMeQuery,
 } = authApi;
