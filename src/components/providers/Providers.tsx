@@ -33,7 +33,14 @@ export function Providers({ children, locale, messages, timeZone }: ProvidersPro
     <ReduxProvider store={store}>
       <AuthProvider>
         <NextIntlClientProvider locale={locale} messages={messages} timeZone={timeZone}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            enableColorScheme
+            storageKey="mathworld-theme-v2"
+            disableTransitionOnChange
+          >
             <TooltipProvider delayDuration={200} skipDelayDuration={0}>
               <LocaleSync>
                 <div className="w-full">
