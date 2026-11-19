@@ -215,7 +215,7 @@ function ProblemsPageClient() {
     );
   }
   if (categoryLocked) {
-    return <section className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-3xl font-bold">{locale === "ar" ? "هذه الفئة مقفلة" : "This category is locked"}</h1><p className="mb-6">{locale === "ar" ? "الفئتان المجانيتان بلا حد يومي، وباقي الفئات مع Premium." : "Two free categories offer unlimited daily practice. Premium unlocks the rest."}</p><Link href="/premium" className="rounded-xl border px-5 py-3">Premium</Link></section>;
+    return <section className="container mx-auto max-w-2xl px-4 py-20 text-center"><h1 className="mb-4 text-3xl font-bold">{locale === "ar" ? "هذه الفئة مقفلة" : "This category is locked"}</h1><p className="mb-6">{locale === "ar" ? "الفئتان المجانيتان بلا حد يومي، وباقي الفئات بتنفتح بعد ترقية الحساب." : "Two free categories offer unlimited practice. Upgrade your account to unlock the rest."}</p><Link href="/premium" className="rounded-xl border px-5 py-3">{locale === "ar" ? "ترقية الحساب" : "Upgrade account"}</Link></section>;
   }
 
   // ── Early return: full page loader ───────────────────────

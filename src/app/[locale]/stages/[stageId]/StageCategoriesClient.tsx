@@ -123,7 +123,7 @@ function CategoryPremiumCard({
               {empty ? <Info className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
               {empty
                 ? locale === 'ar' ? 'لا توجد مسائل بعد' : 'No problems yet'
-                : locale === 'ar' ? 'Premium · مقفلة' : 'Premium · Locked'}
+                : locale === 'ar' ? 'بعد ترقية الحساب' : 'Unlock with upgrade'}
             </p>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -428,8 +428,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                 ? 'كل فئات هذه المرحلة متاحة لحسابك.'
                 : 'All categories in this stage are available to your account.'
               : locale === 'ar'
-                ? 'فئتان مفتوحتان مجاناً في كل مرحلة، وباقي الفئات ضمن Premium. حل المسائل المفتوحة غير محدود.'
-                : 'Two categories are free per stage with unlimited practice; Premium unlocks the rest.'}
+                ? 'فئتان مفتوحتان مجاناً بكل مرحلة، وحل المسائل فيهما غير محدود. باقي الفئات بتنفتح بعد ترقية الحساب.'
+                : 'Two topics are free per stage with unlimited practice. Upgrade your account to unlock the rest.'}
           </span>
         </p>
 
