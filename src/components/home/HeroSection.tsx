@@ -36,7 +36,7 @@ export function HeroSection() {
           {t("hero.tagline")}
         </div>
 
-        <h1 className="brand-display-title mb-5 max-w-4xl text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+        <h1 className="brand-display-title mb-4 max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:mb-5 sm:text-5xl lg:text-6xl">
           {titleWords.map((word, index) => (
             <span key={`${index}-${word}`} className={index === titleWords.length - 1 ? "sr-title-accent" : ""}>
               {index > 0 ? " " : ""}{word}

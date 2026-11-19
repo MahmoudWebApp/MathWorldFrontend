@@ -41,12 +41,12 @@ export default function AdminDashboardPage() {
   return (
     <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8" dir={ar ? 'rtl' : 'ltr'}>
       <header className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <p className="text-xs font-bold tracking-wide text-primary">{ar ? 'مراقبة MathWorld' : 'MathWorld operations'}</p>
-          <h1 className="text-3xl font-extrabold">{ar ? 'كيف عم تتحرك المنصة؟' : 'How is MathWorld doing?'}</h1>
+        <div className="min-w-0 space-y-1.5">
+          <p className="text-xs font-bold tracking-wide text-primary">{ar ? 'لوحة الإدارة' : 'Admin dashboard'}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{ar ? 'نظرة عامة' : 'Overview'}</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">
-            {ar ? 'طلاب جدد، نشاط حقيقي، والمستويات اللي عم يشتغلوا عليها. بقية الإدارة موجودة بقائمة الأدمن بالأعلى.'
-              : 'New students, actual practice, and the stages they use. All management actions remain in the Admin dropdown.'}
+            {ar ? 'ملخص أعداد الطلاب ونشاطهم حسب المرحلة التعليمية خلال الفترة المحددة.'
+              : 'Student counts and learning activity by stage for the selected period.'}
           </p>
         </div>
         <div role="group" aria-label={ar ? 'فترة الإحصائيات' : 'Reporting period'} className="flex gap-1 rounded-xl border bg-card p-1">
@@ -71,11 +71,11 @@ export default function AdminDashboardPage() {
           {metrics.map((metric, index) => {
             const Icon = metric.icon;
             const palette = palettes[index];
-            return <section key={metric.text} className={`relative overflow-hidden rounded-2xl border bg-gradient-to-br p-4 sm:p-5 ${palette.border} ${palette.bg}`}>
+            return <section key={metric.text} className={`relative min-w-0 overflow-hidden rounded-2xl border bg-gradient-to-br p-3 sm:p-5 ${palette.border} ${palette.bg}`}>
               <StageGeometry variant={index} className="pointer-events-none absolute -end-8 -top-9 h-28 w-28 opacity-20" />
-              <Icon className={`mb-4 h-5 w-5 ${palette.text}`} aria-hidden />
-              <strong className="block text-3xl font-black tabular-nums">{n(metric.value)}</strong>
-              <span className="mt-1 block text-sm font-semibold">{metric.text}</span>
+              <Icon className={`mb-2 h-5 w-5 sm:mb-4 ${palette.text}`} aria-hidden />
+              <strong className="block text-2xl font-black tabular-nums sm:text-3xl">{n(metric.value)}</strong>
+              <span className="mt-1 block text-xs font-semibold leading-5 sm:text-sm">{metric.text}</span>
             </section>;
           })}
         </div>
