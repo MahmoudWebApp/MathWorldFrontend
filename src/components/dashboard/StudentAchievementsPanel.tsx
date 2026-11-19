@@ -71,7 +71,7 @@ export function StudentAchievementsPanel() {
                 </span>
                 {!badge.IsAvailable && <span className="mt-1 block text-[11px] text-primary">
                   {ar ? 'تُفتح بعد الترقية' : 'Unlocks after upgrade'}
-                </span>
+                </span>}
                 <div role="progressbar" aria-label={ar ? badge.TitleAr : badge.TitleEn}
                   aria-valuemin={0} aria-valuemax={badge.RequiredSolved}
                   aria-valuenow={badge.CurrentProgress}
