@@ -77,9 +77,10 @@ function ProblemsPageClient() {
   // These come from URL and are fixed
   const stageId = urlStageId;
   const categoryId = urlCategoryId;
+  const loggedIn = useSelector((state: { auth: { isAuthenticated: boolean } }) => state.auth.isAuthenticated);
   const role = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
     state.auth.isAuthenticated ? state.auth.user?.Role : undefined);
-  const authenticated = role === "Student";
+  const authenticated = loggedIn && role === "Student";
   const isAdmin = role === "Admin";
   const { currentData: access, isLoading: accessLoading, isError: accessError,
     refetch: refetchAccess } = useGetStageCategoryAccessQuery(Number(stageId), { skip: !stageId });
@@ -95,7 +96,7 @@ function ProblemsPageClient() {
   // Wait for the authoritative entitlement answer before rendering a lock.
   const categoryLocked = Boolean(categoryId && stageId && access &&
     !accessPending && !accessFailed &&
-    !isAdmin && subscription?.IsPremium !== true &&
+    authenticated && !isAdmin && subscription?.IsPremium !== true &&
     !access.FreeCategoryIds.includes(Number(categoryId)));
 
   // ── API queries ─────────────────────────────────────────
@@ -265,6 +266,14 @@ function ProblemsPageClient() {
           {pageSubtitle}
         </p>
       </div>
+
+      {!loggedIn && (
+        <p className="mb-6 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          {locale === 'ar'
+            ? 'هاي قائمة معاينة للمسائل. تقدر تتصفح العناوين، ولما تختار مسألة رح نطلب منك تسجيل الدخول للحل.'
+            : 'This is a preview of the problems. Browse the titles and sign in when you choose a problem to solve.'}
+        </p>
+      )}
 
       {/* Search bar */}
       <div className="mb-8">

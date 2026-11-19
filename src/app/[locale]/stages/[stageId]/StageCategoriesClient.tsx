@@ -37,6 +37,7 @@ interface CategoryPremiumCardProps {
   stageId: number;
   iconUrl?: string | null;
   locked: boolean;
+  previewOnly: boolean;
   empty: boolean;
 }
 
@@ -58,6 +59,7 @@ function CategoryPremiumCard({
   stageId,
   iconUrl,
   locked,
+  previewOnly,
   empty,
 }: CategoryPremiumCardProps) {
   return (
@@ -126,8 +128,12 @@ function CategoryPremiumCard({
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1 text-sm font-bold text-primary">
-                <LockOpen className="h-4 w-4" aria-hidden="true" />
-                {locale === 'ar' ? 'مفتوحة' : 'Open'}
+                {previewOnly
+                  ? <Info className="h-4 w-4" aria-hidden="true" />
+                  : <LockOpen className="h-4 w-4" aria-hidden="true" />}
+                {previewOnly
+                  ? locale === 'ar' ? 'تصفح المسائل' : 'Browse problems'
+                  : locale === 'ar' ? 'مفتوحة' : 'Open'}
               </span>
               <span className="math-equation-chip inline-block rounded-md px-3 py-1 font-mono text-sm text-muted-foreground">
                 {category.ProblemsCount != null
@@ -248,7 +254,10 @@ interface StageCategoriesClientProps {
 export default function StageCategoriesClient({ stageId }: StageCategoriesClientProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const role = useSelector((state: RootState) => state.auth.user?.Role);
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const role = useSelector((state: RootState) =>
+    state.auth.isAuthenticated ? state.auth.user?.Role : undefined);
+  const isGuest = !isAuthenticated;
   const isAdmin = role === 'Admin';
   const isStudent = role === 'Student';
   // The JWT profile can lag behind an admin grant or a 100% code redemption.
@@ -410,7 +419,11 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
           {isPremium ? <LockOpen className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
             : <Info className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />}
           <span>
-            {isPremium
+            {isGuest
+              ? locale === 'ar'
+                ? 'تقدر تتصفح كل الفئات وتشوف عناوين المسائل. سجل دخولك وقت تحب تبدأ الحل.'
+                : 'Explore every category and preview problem titles. Sign in when you are ready to solve.'
+              : isPremium
               ? locale === 'ar'
                 ? 'كل فئات هذه المرحلة متاحة لحسابك.'
                 : 'All categories in this stage are available to your account.'
@@ -493,7 +506,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   locale={locale}
                   stageId={stageId}
                   iconUrl={iconUrl}
-                  locked={!isPremium && !freeCategoryIds.has(category.Id)}
+                  locked={isAuthenticated && !isPremium && !freeCategoryIds.has(category.Id)}
+                  previewOnly={isGuest}
                   empty={category.ProblemsCount === 0}
                 />
               );

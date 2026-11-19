@@ -52,7 +52,17 @@ export default function LoginPage() {
           : user.CurrentStageId == null
             ? 'learning-stage'
             : 'dashboard';
-      window.location.assign(`/${locale}/${destination}`);
+      // Restore only a validated internal stage path from the public catalog.
+      // Admins and new students still follow their mandatory destination.
+      const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+      const safeStagePath = returnTo && /^\/stages\/[1-9]\d*$/.test(returnTo)
+        ? returnTo
+        : null;
+      window.location.assign(
+        `/${locale}${destination === 'dashboard' && safeStagePath
+          ? safeStagePath
+          : `/${destination}`}`,
+      );
     } catch (loginError) {
       setError(getApiErrorMessage(loginError, t('common.error')));
     }
