@@ -38,12 +38,12 @@ export default function AdminLearnerActivityPage() {
       <Link href="/admin" className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
         <ArrowLeft className="h-4 w-4" />{ar ? 'لوحة المراقبة' : 'Monitoring home'}
       </Link>
-      <h1 className="flex items-center gap-3 text-3xl font-extrabold"><UserRoundSearch className="h-8 w-8 text-primary" />
-        {ar ? 'مين عم يستخدم MathWorld؟' : 'Who uses MathWorld?'}
+      <h1 className="flex items-center gap-3 text-2xl font-extrabold tracking-tight sm:text-3xl"><UserRoundSearch className="h-6 w-6 shrink-0 text-primary sm:h-7 sm:w-7" />
+        {ar ? 'نشاط الطلاب' : 'Learner activity'}
       </h1>
       <p className="text-sm leading-7 text-muted-foreground">
-        {ar ? 'شوف آخر تسجيل دخول وآخر مرة حلّ فيها الطالب، وتاريخ تسجيله ومستواه الحالي. هالأوقات أحداث مسجّلة، مو حالة اتصال مباشر.'
-          : 'Review sign-up, last verified sign-in and last practice, plus the selected stage. These timestamps are recorded events, not online presence.'}
+        {ar ? 'تاريخ التسجيل وآخر دخول وحل للمسائل والمرحلة الحالية لكل طالب.'
+          : 'Registration, latest sign-in, practice and learning stage for each student.'}
       </p>
     </header>
 
