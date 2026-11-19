@@ -18,6 +18,7 @@ import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } fr
 import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
 import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
+import { StudentStageAccessNotice } from '@/components/stages/StudentStageAccessNotice';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
 
@@ -233,6 +234,8 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const isGuest = !isAuthenticated;
   const isAdmin = role === 'Admin';
   const isStudent = role === 'Student';
+  const chosenStageId = useSelector((state: RootState) => state.auth.user?.CurrentStageId);
+  const wrongStudentStage = isStudent && (chosenStageId == null || stageId !== chosenStageId);
   // The JWT profile can lag behind an admin grant or a 100% code redemption.
   const {
     data: subscription,
@@ -258,7 +261,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     isError: accessError,
     refetch: refetchAccess,
   } = useGetStageCategoryAccessQuery(stageId, {
-    skip: stageId <= 0,
+    skip: stageId <= 0 || wrongStudentStage,
     refetchOnMountOrArgChange: true,
   });
 
@@ -283,6 +286,10 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   // Until verified, only the server-designated Free categories open.
   const isLoading = stagesLoading || accessLoading;
   const stageNotFound = !isLoading && !!stages && !currentStage;
+
+  if (wrongStudentStage) {
+    return <StudentStageAccessNotice selectedStageId={chosenStageId} requestedStageId={stageId} />;
+  }
 
   if (stageNotFound) {
     return (
