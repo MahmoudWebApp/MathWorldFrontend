@@ -1,7 +1,6 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
 import { CheckCircle2, LockKeyhole, Medal, RefreshCw, Sparkles } from 'lucide-react';
 import { useGetAchievementsQuery } from '@/store/api/usersApi';
 
@@ -13,7 +12,6 @@ export function StudentAchievementsPanel() {
   // Free students can earn the first two badges. Do not count locked
   // future achievements as available badges or show misleading progress bars.
   const availableBadges = data?.Badges.filter(badge => badge.IsAvailable) ?? [];
-  const hasUpgradeBadges = data?.Badges.some(badge => !badge.IsAvailable) ?? false;
 
   return (
     <section className="mb-8 space-y-4 rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-pink-500/5 p-5 sm:p-7">
@@ -51,14 +49,6 @@ export function StudentAchievementsPanel() {
             {ar ? `حللت ${data.UniqueSolved} مسألة. الشارة القادمة عند ${data.NextMilestone}.`
               : `You have solved ${data.UniqueSolved} unique problems. Next badge at ${data.NextMilestone}.`}
           </p>}
-          {hasUpgradeBadges && (
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/5 px-4 py-3 text-sm">
-              <span>{ar ? 'شارات إضافية بتنفتح لما ترقّي حسابك، وتقدّمك محفوظ.' : 'More badges unlock when you upgrade. Your progress is saved.'}</span>
-              <Link href="/premium" className="font-bold text-primary underline">
-                {ar ? 'ترقية الحساب' : 'Upgrade account'}
-              </Link>
-            </div>
-          )}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {availableBadges.map(badge => (
               <article key={badge.Key}
@@ -75,8 +65,8 @@ export function StudentAchievementsPanel() {
                 <div role="progressbar" aria-label={ar ? badge.TitleAr : badge.TitleEn}
                   aria-valuemin={0} aria-valuemax={badge.RequiredSolved}
                   aria-valuenow={badge.CurrentProgress}
-                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-primary/10">
-                  <div className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500"
+                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-emerald-600"
                     style={{ width: `${100 * badge.CurrentProgress / badge.RequiredSolved}%` }} />
                 </div>
               </article>

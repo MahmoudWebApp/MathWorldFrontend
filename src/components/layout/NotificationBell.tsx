@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Bell, CheckCheck, ExternalLink, LoaderCircle } from 'lucide-react';
+import { Bell, CheckCheck, ExternalLink, LoaderCircle, X } from 'lucide-react';
 import {
   useGetInboxQuery,
   useMarkNotificationReadMutation,
@@ -14,7 +15,8 @@ import {
 export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean }) {
   const locale = useLocale();
   const ar = locale === 'ar';
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [portalReady, setPortalReady] = useState(false);
+  useEffect(() => setPortalReady(true), []);
   const [open, setOpen] = useState(false);
   const [actionError, setActionError] = useState('');
   const [readingId, setReadingId] = useState<number | null>(null);
@@ -30,16 +32,14 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
 
   useEffect(() => {
     if (!open) return;
-    const onOutside = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
-    };
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
     };
-    document.addEventListener('mousedown', onOutside);
+    const priorOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', onEscape);
     return () => {
-      document.removeEventListener('mousedown', onOutside);
+      document.body.style.overflow = priorOverflow;
       document.removeEventListener('keydown', onEscape);
     };
   }, [open]);
@@ -82,7 +82,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
   };
 
   return (
-    <div ref={containerRef} className="relative shrink-0">
+    <div className="relative shrink-0">
       <button
         type="button"
         onClick={() => { setOpen(!open); setActionError(''); if (!open) void refetch(); }}
@@ -96,18 +96,29 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
           <span className="absolute end-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-rose-500" aria-hidden="true" />
         )}
       </button>
-      {open && (
-        <section
-          role="dialog"
-          aria-label={ar ? 'مركز الإشعارات' : 'Notification inbox'}
-          className="absolute end-0 top-full z-[80] mt-3 w-[min(24rem,calc(100vw-1rem))] overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-2xl"
-          dir={ar ? 'rtl' : 'ltr'}
-        >
-          <div className="flex items-center justify-between gap-3 border-b border-border p-4">
-            <div>
+      {open && portalReady && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-4"
+          dir={ar ? 'rtl' : 'ltr'}>
+          <button type="button" className="absolute inset-0 cursor-default bg-black/55"
+            aria-label={ar ? 'إغلاق الإشعارات' : 'Close notifications'}
+            onClick={() => setOpen(false)} />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label={ar ? 'مركز الإشعارات' : 'Notification inbox'}
+            className="relative z-10 flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-border bg-popover text-popover-foreground shadow-2xl sm:rounded-2xl"
+          >
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border p-4">
+            <div className="min-w-0">
               <h2 className="font-bold">{ar ? 'الإشعارات' : 'Notifications'}</h2>
               <p className="text-xs text-muted-foreground">{ar ? 'آخر 30 يوماً' : 'Last 30 days'}</p>
             </div>
+            <button type="button" onClick={() => setOpen(false)}
+              className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label={ar ? 'إغلاق' : 'Close'}><X className="h-5 w-5" /></button>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex shrink-0 items-center justify-end gap-2 border-b border-border/50 px-3 py-1.5">
             {unread > 0 && (
               <button type="button" disabled={markingAll}
                 onClick={() => {
@@ -123,7 +134,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
               </button>
             )}
           </div>
-          <div className="max-h-[min(60vh,420px)] overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {isLoading || (isFetching && !data) ? (
               <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground">
                 <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -165,14 +176,17 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
               {actionError}
             </p>
           )}
-          <div className="border-t border-border p-3 text-center">
+          <div className="shrink-0 border-t border-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-center">
             <Link href="/notifications" onClick={() => setOpen(false)}
               className="inline-flex min-h-10 items-center justify-center rounded-xl bg-primary/10 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
               {ar ? 'عرض كل الإشعارات' : 'View all notifications'}
               <ExternalLink className="ms-2 h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
-        </section>
+          </div>
+          </section>
+        </div>,
+        document.body,
       )}
     </div>
   );

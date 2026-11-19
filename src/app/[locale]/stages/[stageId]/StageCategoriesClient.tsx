@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery, type CategoryDto } from '@/store/api/categoriesApi';
@@ -10,8 +11,6 @@ import {
   Filter,
   Loader2,
   LockKeyhole,
-  LockOpen,
-  Info,
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
@@ -19,8 +18,8 @@ import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } fr
 import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
 import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
-import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
 
 // ==========================================
 // 1. Math assets
@@ -38,7 +37,6 @@ interface CategoryPremiumCardProps {
   stageAccent: string;
   iconUrl?: string | null;
   locked: boolean;
-  previewOnly: boolean;
   empty: boolean;
 }
 
@@ -61,91 +59,64 @@ function CategoryPremiumCard({
   stageAccent,
   iconUrl,
   locked,
-  previewOnly,
   empty,
 }: CategoryPremiumCardProps) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.24) }}
-      className="h-full"
+  const [hintOpen, setHintOpen] = useState(false);
+  const categoryName = locale === 'ar' ? category.NameAr : category.NameEn;
+  const tip = locale === 'ar' ? 'هذه الفئة لحساب Premium' : 'Available with Premium';
+  const body = (
+    <div
+      className={`brand-surface math-card group relative flex h-full min-h-[205px] flex-col overflow-hidden rounded-2xl border p-4 transition-[box-shadow,border-color] hover:shadow-md sm:p-5 md:min-h-[240px] md:rounded-3xl md:p-6 ${style.hoverShadow}`}
+      style={{ borderColor: `${stageAccent}30` }}
     >
-      <Link
-        href={empty ? '#' : locked ? '/premium' : `/problems?categoryId=${category.Id}&stageId=${stageId}`}
-        onClick={(event) => { if (empty) event.preventDefault(); }}
-        aria-disabled={empty}
-        aria-label={empty
-          ? locale === 'ar'
-            ? `${category.NameAr} — لا توجد مسائل منشورة بعد`
-            : `${category.NameEn} — no published questions yet`
-          : locked
-          ? locale === 'ar'
-            ? `${category.NameAr} — فئة مقفلة، اضغط لمعرفة السبب`
-            : `${category.NameEn} — locked category, learn why`
-          : undefined}
-        tabIndex={empty ? -1 : undefined}
-        className={`brand-surface math-card group relative flex h-full min-h-[220px] flex-col justify-between overflow-hidden rounded-2xl p-5 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary hover:border-primary/40 active:bg-primary/5 md:h-[240px] md:rounded-[2.5rem] md:p-8 md:hover:-translate-y-2 md:hover:shadow-2xl ${style.hoverShadow}`}
-      >
-        {/* Glow effect that appears on hover */}
-        <div
-          className="pointer-events-none absolute inset-0 rounded-[2.5rem] opacity-0 blur-2xl transition-opacity duration-500 motion-safe:group-hover:opacity-100"
-          style={{ background: style.spotlight }}
-        />
-
-        {/* Header: Icon & Name */}
-        <div className="relative z-10 flex flex-col gap-3 md:gap-6">
-          <div className="flex items-center justify-between">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-xl border border-border/50 shadow-inner transition-transform duration-200 md:h-16 md:w-16 md:rounded-2xl motion-safe:md:group-hover:scale-110 ${style.bg}`}>
-              {iconUrl ? (
-                iconUrl.startsWith('http') || iconUrl.startsWith('/') ? (
-                  <Image src={iconUrl} alt="icon" width={32} height={32} className="h-8 w-8 object-contain" />
-                ) : (
-                  <span className="text-3xl">{iconUrl}</span>
-                )
-              ) : (
-                <span className="font-serif text-2xl font-bold" style={{ color: stageAccent }}>{math.symbol}</span>
-              )}
-            </div>
-            {/* Minimal Arrow Button */}
-            <div className="flex h-9 w-9 items-center justify-center rounded-full text-white opacity-100 transition-all md:h-10 md:w-10 md:opacity-0 md:group-hover:opacity-100 md:translate-x-4 md:group-hover:translate-x-0" style={{ backgroundColor: stageAccent }}>
-              <DirectionalArrow direction="forward" size={20} />
-            </div>
-          </div>
-          
-          <h3 className={`mb-3 line-clamp-3 text-lg font-bold leading-snug transition-colors md:mb-4 md:text-2xl ${style.hoverText}`}>
-            {locale === 'ar' ? category.NameAr : category.NameEn}
-          </h3>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-1"
+        style={{ backgroundColor: stageAccent }} />
+      <div className="relative flex items-start justify-between gap-2">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border sm:h-14 sm:w-14"
+          style={{ color: stageAccent, backgroundColor: `${stageAccent}11`, borderColor: `${stageAccent}25` }}>
+          {iconUrl && (iconUrl.startsWith('https://') || iconUrl.startsWith('/'))
+            ? <Image src={iconUrl} alt="" width={30} height={30} className="h-7 w-7 object-contain" />
+            : iconUrl && iconUrl.length < 5
+              ? <span className="text-2xl">{iconUrl}</span>
+              : <span className="font-serif text-xl font-bold">{math.symbol}</span>}
         </div>
+        {locked
+          ? <LockKeyhole className="h-4 w-4 shrink-0 text-muted-foreground/75" aria-label={tip} />
+          : !empty && <DirectionalArrow direction="forward" size={20} className="shrink-0" />}
+      </div>
+      <h3 className="relative mt-4 line-clamp-3 text-base font-extrabold leading-snug sm:text-lg"
+        style={{ color: stageAccent }}>{categoryName}</h3>
+      <div className="relative mt-auto flex min-h-9 items-end justify-between gap-2 border-t border-border/60 pt-3 text-xs font-semibold text-muted-foreground sm:text-sm">
+        <span>{category.ProblemsCount ?? 0} {locale === 'ar' ? 'مسألة' : 'problems'}</span>
+        {!locked && !empty && <span style={{ color: stageAccent }}>
+          {locale === 'ar' ? 'استكشف' : 'Explore'}
+        </span>}
+      </div>
+    </div>
+  );
 
-        {/* Footer: Equation & Subtle decorative element */}
-        <div className="relative z-10 mt-auto">
-          {locked || empty ? (
-            <p className="inline-flex items-center gap-2 rounded-md bg-muted/50 px-3 py-1 text-sm text-muted-foreground">
-              {empty ? <Info className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
-              {empty
-                ? locale === 'ar' ? 'لا توجد مسائل بعد' : 'No problems yet'
-                : locale === 'ar' ? 'بعد ترقية الحساب' : 'Unlock with upgrade'}
-            </p>
-          ) : (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1 text-sm font-bold" style={{ color: stageAccent }}>
-                {previewOnly
-                  ? <Info className="h-4 w-4" aria-hidden="true" />
-                  : <LockOpen className="h-4 w-4" aria-hidden="true" />}
-                {previewOnly
-                  ? locale === 'ar' ? 'تصفح المسائل' : 'Browse problems'
-                  : locale === 'ar' ? 'مفتوحة' : 'Open'}
-              </span>
-              <span className="math-equation-chip inline-block rounded-md px-3 py-1 font-mono text-sm text-muted-foreground">
-                {category.ProblemsCount != null
-                  ? locale === 'ar' ? `${category.ProblemsCount} مسألة` : `${category.ProblemsCount} problems`
-                  : math.equation}
-              </span>
-            </div>
-          )}
-        </div>
-      </Link>
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.24) }} className="h-full">
+      {locked ? (
+        <Tooltip open={hintOpen} onOpenChange={setHintOpen} delayDuration={120}>
+          <TooltipTrigger asChild>
+            <button type="button" onClick={() => setHintOpen(value => !value)}
+              className="block h-full w-full cursor-help rounded-2xl text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              aria-label={`${categoryName} — ${tip}`}>
+              {body}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{tip}</TooltipContent>
+        </Tooltip>
+      ) : empty ? (
+        <div className="h-full opacity-75" aria-label={`${categoryName} — ${locale === 'ar' ? 'لا توجد مسائل' : 'No problems'}`}>{body}</div>
+      ) : (
+        <Link href={`/problems?categoryId=${category.Id}&stageId=${stageId}`}
+          className="block h-full rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          {body}
+        </Link>
+      )}
     </motion.div>
   );
 }
@@ -265,7 +236,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   // The JWT profile can lag behind an admin grant or a 100% code redemption.
   const {
     data: subscription,
-    isLoading: subscriptionLoading,
     isError: subscriptionError,
     refetch: refetchSubscription,
   } = useGetStudentSubscriptionQuery(undefined, {
@@ -306,7 +276,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     }))
     .sort((a, b) => (a.Order || 0) - (b.Order || 0) || a.Id - b.Id);
   
-  const otherStages = sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []);
+  const otherStages = isGuest ? sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []) : [];
   // The admin may select a different Free pair. Always use the server IDs.
   const freeCategoryIds = new Set(stageAccess?.FreeCategoryIds ?? []);
   // Stage data is usable while a separate entitlement request is pending.
@@ -378,11 +348,11 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
         {/* Header Section */}
         <div className="mb-12 text-center md:text-start">
           <Link
-            href="/stages"
+            href={isStudent ? '/dashboard' : '/stages'}
             className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-6 group math-equation-chip bg-card/50 backdrop-blur-md px-4 py-2 rounded-full"
           >
             <DirectionalArrow direction="back" className="h-4 w-4 transition-transform group-hover:-translate-x-1 rtl:group-hover:translate-x-1" />
-            {t('stages.backToStages')}
+            {isStudent ? (locale === 'ar' ? 'لوحة الطالب' : 'My dashboard') : t('stages.backToStages')}
           </Link>
           
           <motion.div 
@@ -394,21 +364,18 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             <div className="mb-4 flex items-center gap-3">
               {currentStage && <StageIconBadge stage={currentStage} size="md" />}
               <div className="math-equation-chip flex items-center gap-3 rounded-lg px-3 py-1.5">
-                <span className="flex h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-                <span className="text-xs font-bold uppercase tracking-widest text-primary">
+                <span className="flex h-1.5 w-1.5 rounded-full" style={{ backgroundColor: stageAccent }} />
+                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: stageAccent }}>
                   {currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : t('stages.title')}
                 </span>
               </div>
             </div>
             
-            <h1 className="brand-display-title text-foreground text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 tracking-tight">
-              <AccentHeadingText
-                text={currentStage
-                  ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn)
-                  : t('categories.title')}
-              />
+            <h1 className="brand-display-title mb-4 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl"
+              style={{ color: stageAccent }}>
+              {currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : t('categories.title')}
             </h1>
-            
+
             <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
               {t('categories.stageSubtitle', { 
                 stage: currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : '',
@@ -418,48 +385,11 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
           </motion.div>
         </div>
 
-        <p
-          className="mb-6 flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-muted-foreground"
-        >
-          {isPremium ? <LockOpen className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-            : <Info className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />}
-          <span>
-            {isGuest
-              ? locale === 'ar'
-                ? 'تقدر تتصفح كل الفئات وتشوف عناوين المسائل. سجل دخولك وقت تحب تبدأ الحل.'
-                : 'Explore every category and preview problem titles. Sign in when you are ready to solve.'
-              : isPremium
-              ? locale === 'ar'
-                ? 'كل فئات هذه المرحلة متاحة لحسابك.'
-                : 'All categories in this stage are available to your account.'
-              : locale === 'ar'
-                ? 'فئتان مفتوحتان مجاناً بكل مرحلة، وحل المسائل فيهما غير محدود. باقي الفئات بتنفتح بعد ترقية الحساب.'
-                : 'Two topics are free per stage with unlimited practice. Upgrade your account to unlock the rest.'}
-          </span>
-        </p>
-
-        {isStudent && subscriptionLoading && (
-          <p role="status" className="mb-6 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-            {locale === 'ar'
-              ? 'عم نتحقق من عضويتك؛ فيك تتصفح فئاتك المجانية أثناء التحقق.'
-              : 'Checking your membership. Free topics are available while we verify your plan.'}
-          </p>
-        )}
         {isStudent && subscriptionError && (
-          <div role="status" className="mb-6 flex flex-col items-start gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-muted-foreground">
-              {locale === 'ar'
-                ? 'تعذر التأكد من حالة اشتراكك. نعرض الفئات المجانية بأمان حالياً؛ حاول التحديث لإظهار جميع مزايا حسابك.'
-                : "We couldn't verify your plan. Free topics remain available; retry to restore your account's full access."}
-            </p>
-            <button
-              type="button"
-              onClick={() => void refetchSubscription()}
-              className="shrink-0 rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground"
-            >
-              {t('common.retry')}
-            </button>
-          </div>
+          <button type="button" onClick={() => void refetchSubscription()}
+            className="mb-4 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground">
+            {locale === 'ar' ? 'تعذّر تحديث الصلاحيات، إعادة المحاولة' : 'Could not refresh access. Retry'}
+          </button>
         )}
 
         {/* Main Categories Grid */}
@@ -495,7 +425,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </div>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4 lg:gap-8">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4 lg:gap-8">
             {sortedCategories.map((category, index) => {
               const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
               const style = categoryBrandStyle;
@@ -513,7 +443,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   stageAccent={stageAccent}
                   iconUrl={iconUrl}
                   locked={isAuthenticated && !isPremium && !freeCategoryIds.has(category.Id)}
-                  previewOnly={isGuest}
                   empty={category.ProblemsCount === 0}
                 />
               );

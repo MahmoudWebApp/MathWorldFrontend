@@ -165,7 +165,11 @@ export default function JourneyPage() {
               <div key={category.CategoryId} className="rounded-2xl border bg-card p-5">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h3 className="font-bold">{ar ? category.NameAr : category.NameEn}</h3>
-                  <span className="shrink-0 text-xs text-muted-foreground">{category.IsLocked ? (ar ? 'Premium · مقفلة' : 'Premium · Locked') : category.TotalProblems === 0 ? (ar ? 'قريباً' : 'Coming soon') : `${category.CompletionPercent}%`}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{category.IsLocked ? (
+                     <span title={ar ? 'لحساب Premium' : 'Premium only'} aria-label={ar ? 'لحساب Premium' : 'Premium only'}>
+                       🔒
+                     </span>
+                   ) : category.TotalProblems === 0 ? '—' : `${category.CompletionPercent}%`}</span>
                 </div>
                 <div role="progressbar" aria-valuenow={category.CompletionPercent} aria-valuemin={0} aria-valuemax={100} aria-label={ar ? category.NameAr : category.NameEn} className="mb-3 h-2 overflow-hidden rounded-full bg-muted">
                   <div className="h-full bg-primary" style={{ width: `${Math.max(0, Math.min(100, category.CompletionPercent))}%` }} />
@@ -173,10 +177,10 @@ export default function JourneyPage() {
                 <p className="mb-4 text-sm text-muted-foreground">{category.SolvedProblems} / {category.TotalProblems} · {ar ? 'متقنة' : 'Mastered'}: {category.MasteredProblems}</p>
                 {category.TotalProblems === 0 && !category.IsLocked ? (
                   <span className="text-sm text-muted-foreground">{ar ? 'لم تُنشر مسائل لهذه الفئة بعد' : 'No published problems in this topic yet'}</span>
-                ) : (
+                ) : category.IsLocked ? null : (
                   <Link className="inline-flex rounded-lg text-sm font-semibold text-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-                    href={category.IsLocked ? '/premium' : `/problems?stageId=${data.StageId}&categoryId=${category.CategoryId}`}>
-                    {category.IsLocked ? (ar ? 'مزايا Premium' : 'Premium access') : category.SolvedProblems >= category.TotalProblems ? (ar ? 'راجع المسائل' : 'Review problems') : (ar ? 'تابع الحل' : 'Continue practicing')}
+                    href={`/problems?stageId=${data.StageId}&categoryId=${category.CategoryId}`}>
+                    {category.SolvedProblems >= category.TotalProblems ? (ar ? 'راجع المسائل' : 'Review problems') : (ar ? 'تابع الحل' : 'Continue practicing')}
                   </Link>
                 )}
               </div>

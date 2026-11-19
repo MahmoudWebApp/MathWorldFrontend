@@ -36,6 +36,7 @@ export function Providers({ children, locale, messages, timeZone }: ProvidersPro
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
+            forcedTheme="system"
             enableSystem
             enableColorScheme
             storageKey="mathworld-theme-v2"
