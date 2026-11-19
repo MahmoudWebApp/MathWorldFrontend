@@ -5,7 +5,7 @@ import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link } from "@/i18n/routing";
 import type { Stage } from "@/store/api/stagesApi";
-import { getStageVisual } from "@/lib/stageVisuals";
+import { getStageVisual, getStageAccent } from "@/lib/stageVisuals";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
 import { StageGeometry } from "@/components/math/StageGeometry";
 
@@ -19,6 +19,7 @@ interface StagePremiumCardProps {
 export function StagePremiumCard({ stage, index, locale }: StagePremiumCardProps) {
   const t = useTranslations();
   const visual = getStageVisual(stage);
+  const accent = getStageAccent(stage);
   const variants = [
     { edge: "border-cyan-500/30 hover:border-cyan-500/55", bg: "from-cyan-500/12 via-card to-card", text: "text-cyan-700 dark:text-cyan-300", bar: "bg-cyan-500" },
     { edge: "border-orange-500/30 hover:border-orange-500/55", bg: "from-orange-500/12 via-card to-card", text: "text-orange-700 dark:text-orange-300", bar: "bg-orange-500" },
@@ -40,15 +41,18 @@ export function StagePremiumCard({ stage, index, locale }: StagePremiumCardProps
       <div className="relative mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-card/70">
         <StageIconBadge stage={stage} size="lg" className="border-0 bg-transparent shadow-none" />
       </div>
-      <h3 className={`relative mb-3 text-xl font-extrabold leading-snug text-foreground group-hover:underline ${tone.text}`}>
+      <h3 className="relative mb-3 text-xl font-extrabold leading-snug group-hover:underline"
+        style={{ color: accent }}>
         {locale === "ar" ? stage.NameAr : stage.NameEn}
       </h3>
       <p className="mb-6 text-sm leading-7 text-muted-foreground">
         {t(`stages.stageDescriptions.${index}`, { defaultValue: "" })}
       </p>
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/70 pt-4 text-sm font-bold text-brand-primary-strong dark:text-brand-primary-light">
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/70 pt-4 text-sm font-bold"
+        style={{ color: accent }}>
         <span>{t("common.explore")}</span>
-        <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary transition-colors group-hover:bg-brand-primary group-hover:text-white">
+        <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors group-hover:text-white"
+          style={{ backgroundColor: `${accent}15`, color: accent }}>
           <DirectionalArrow direction="forward" />
         </span>
       </div>
