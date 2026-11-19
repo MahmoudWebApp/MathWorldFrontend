@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
-import { getStageVisual, type StageVisualIdentity } from '@/lib/stageVisuals';
+import { getStageVisual, getStageAccent, type StageVisualIdentity } from '@/lib/stageVisuals';
+import { StageGeometry } from '@/components/math/StageGeometry';
 
 interface StageIconBadgeProps {
   stage: StageVisualIdentity;
@@ -28,21 +29,27 @@ export function StageIconBadge({
   className,
   iconClassName,
 }: StageIconBadgeProps) {
-  const { icon: Icon, style } = getStageVisual(stage);
+  const { index } = getStageVisual(stage);
+  const accent = getStageAccent(stage);
 
   return (
     <span
       className={cn(
-        'stage-level-icon inline-flex shrink-0 items-center justify-center border border-white/10 bg-gradient-to-br shadow-sm',
-        style.bg,
+        'stage-level-icon inline-flex shrink-0 items-center justify-center border shadow-sm',
         sizeClasses[size],
         className,
       )}
       aria-hidden="true"
+      style={{
+        color: accent,
+        borderColor: `${accent}40`,
+        backgroundColor: `${accent}15`,
+      }}
     >
-      <Icon
-        className={cn(iconSizeClasses[size], style.iconColor, iconClassName)}
-        strokeWidth={1.8}
+      <StageGeometry
+        variant={index}
+        className={cn(iconSizeClasses[size], iconClassName)}
+        strokeWidth={5}
       />
     </span>
   );
