@@ -106,19 +106,19 @@ export default function UserDashboardPage() {
       icon: NotebookTabs,
       label: journeyLabels.attempted,
       value: journey?.AttemptedProblems ?? "—",
-      color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/20", isLucide: true,
+      color: "text-fuchsia-600 dark:text-fuchsia-300", bg: "bg-fuchsia-500/10", isLucide: true,
     },
     {
       icon: Trophy,
       label: journeyLabels.points,
       value: journey?.TotalPoints ?? "—",
-      color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-900/20", isLucide: true,
+      color: "text-pink-600 dark:text-pink-300", bg: "bg-pink-500/10", isLucide: true,
     },
     {
       icon: Award,
       label: journeyLabels.progress,
       value: journey ? `${journey.CompletionPercent}%` : "—",
-      color: "text-green-500", bg: "bg-green-50 dark:bg-green-900/20", isLucide: false,
+      color: "text-violet-600 dark:text-violet-300", bg: "bg-violet-500/10", isLucide: false,
     },
   ];
 
@@ -361,7 +361,7 @@ export default function UserDashboardPage() {
                       />
                     )}
                   </div>
-                  <div className="text-2xl font-bold mb-1">{stat.value}</div>
+                  <div className="text-gradient-math text-2xl font-extrabold mb-1">{stat.value}</div>
                   <div className="text-sm text-muted-foreground">
                     {stat.label}
                   </div>
