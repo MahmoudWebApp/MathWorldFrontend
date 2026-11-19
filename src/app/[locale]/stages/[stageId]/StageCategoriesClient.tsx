@@ -16,8 +16,8 @@ import {
 import { Link } from '@/i18n/routing';
 import Image from 'next/image';
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
-import { CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
-import { getStageVisual, sortStagesByOrder } from '@/lib/stageVisuals';
+import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
+import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
@@ -35,6 +35,7 @@ interface CategoryPremiumCardProps {
   style: CategoryBrandStyle;
   locale: string;
   stageId: number;
+  stageAccent: string;
   iconUrl?: string | null;
   locked: boolean;
   previewOnly: boolean;
@@ -57,6 +58,7 @@ function CategoryPremiumCard({
   style,
   locale,
   stageId,
+  stageAccent,
   iconUrl,
   locked,
   previewOnly,
@@ -83,7 +85,7 @@ function CategoryPremiumCard({
             : `${category.NameEn} — locked category, learn why`
           : undefined}
         tabIndex={empty ? -1 : undefined}
-        className={`brand-surface math-card group relative flex min-h-[172px] flex-col justify-between overflow-hidden rounded-2xl p-5 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary hover:border-primary/40 active:bg-primary/5 md:h-[240px] md:rounded-[2.5rem] md:p-8 md:hover:-translate-y-2 md:hover:shadow-2xl ${style.hoverShadow}`}
+        className={`brand-surface math-card group relative flex h-full min-h-[220px] flex-col justify-between overflow-hidden rounded-2xl p-5 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary hover:border-primary/40 active:bg-primary/5 md:h-[240px] md:rounded-[2.5rem] md:p-8 md:hover:-translate-y-2 md:hover:shadow-2xl ${style.hoverShadow}`}
       >
         {/* Glow effect that appears on hover */}
         <div
@@ -102,11 +104,11 @@ function CategoryPremiumCard({
                   <span className="text-3xl">{iconUrl}</span>
                 )
               ) : (
-                <span className="font-serif text-2xl font-bold text-primary">{math.symbol}</span>
+                <span className="font-serif text-2xl font-bold" style={{ color: stageAccent }}>{math.symbol}</span>
               )}
             </div>
             {/* Minimal Arrow Button */}
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-100 transition-all md:h-10 md:w-10 md:opacity-0 md:group-hover:opacity-100 md:translate-x-4 md:group-hover:translate-x-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full text-white opacity-100 transition-all md:h-10 md:w-10 md:opacity-0 md:group-hover:opacity-100 md:translate-x-4 md:group-hover:translate-x-0" style={{ backgroundColor: stageAccent }}>
               <DirectionalArrow direction="forward" size={20} />
             </div>
           </div>
@@ -127,7 +129,7 @@ function CategoryPremiumCard({
             </p>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="inline-flex items-center gap-1 text-sm font-bold text-primary">
+              <span className="inline-flex items-center gap-1 text-sm font-bold" style={{ color: stageAccent }}>
                 {previewOnly
                   ? <Info className="h-4 w-4" aria-hidden="true" />
                   : <LockOpen className="h-4 w-4" aria-hidden="true" />}
@@ -291,6 +293,9 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   });
 
   const currentStage = stages?.find(s => s.Id === stageId);
+  const stageIdentity = currentStage ?? { Id: stageId };
+  const stageAccent = getStageAccent(stageIdentity);
+  const categoryBrandStyle = STAGE_CATEGORY_BRAND_STYLES[getStageVisual(stageIdentity).index];
   // The stage-scoped server catalog is authoritative for category details,
   // published inventory, order and Free access. Do not depend on a second
   // global /categories request that can fail independently and hide valid data.
@@ -493,7 +498,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4 lg:gap-8">
             {sortedCategories.map((category, index) => {
               const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
-              const style = CATEGORY_BRAND_STYLES[category.Id % CATEGORY_BRAND_STYLES.length];
+              const style = categoryBrandStyle;
               const iconUrl = category.Icon;
 
               return (
@@ -505,6 +510,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   style={style}
                   locale={locale}
                   stageId={stageId}
+                  stageAccent={stageAccent}
                   iconUrl={iconUrl}
                   locked={isAuthenticated && !isPremium && !freeCategoryIds.has(category.Id)}
                   previewOnly={isGuest}
