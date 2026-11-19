@@ -4,7 +4,7 @@ import Script from 'next/script';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useDispatch } from 'react-redux';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { AppDispatch } from '@/store';
 import {
   useGetSocialLinkStatusQuery, useGoogleLoginMutation, useLinkGoogleMutation,
@@ -103,12 +103,8 @@ export function SocialAuthButtons({ mode = 'login' }: { mode?: Mode }) {
   useEffect(() => { renderGoogle(); }, [renderGoogle]);
 
   if (!enabled || !configured) return null;
-  if (linked) {
-    return <p role="status" className="mt-5 flex items-center gap-2 text-sm font-semibold text-emerald-600">
-      <ShieldCheck size={18} />
-      {ar ? 'حساب Google مربوط مسبقاً؛ ما في حاجة تعيد الربط.' : 'Google is already connected to your account.'}
-    </p>;
-  }
+  // Once the account is linked, remove the link control entirely.
+  if (linked) return null;
   if (mode === 'link' && checking) return <p role="status" className="mt-5 text-sm text-muted-foreground">
     {ar ? 'عم نتحقق من ربط حسابك…' : 'Checking your connected account…'}
   </p>;
