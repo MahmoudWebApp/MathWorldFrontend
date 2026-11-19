@@ -17,7 +17,6 @@ interface StudentStageAccessNoticeProps {
  */
 export function StudentStageAccessNotice({
   selectedStageId,
-  requestedStageId,
 }: StudentStageAccessNoticeProps) {
   const ar = useLocale() === "ar";
   return (
