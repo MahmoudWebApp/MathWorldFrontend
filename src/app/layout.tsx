@@ -1,5 +1,5 @@
 import { Alexandria } from 'next/font/google';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 
 import '@/style/globals.css';
 
@@ -24,6 +24,13 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#faf8ff' },
+    { media: '(prefers-color-scheme: dark)', color: '#110c1e' },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
