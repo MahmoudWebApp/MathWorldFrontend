@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { useTheme } from 'next-themes';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '@/store';
@@ -24,6 +25,9 @@ import {
   Menu,
   NotebookTabs,
   Search,
+  Sun,
+  Moon,
+  Monitor,
   Settings2,
   UserPlus,
 } from 'lucide-react';
@@ -55,6 +59,7 @@ function NavbarContent() {
   const router = useRouter();
   const searchParams = useSearchParams(); 
   const dispatch = useDispatch<AppDispatch>();
+  const { theme, resolvedTheme, setTheme } = useTheme();
 
   const { user, isAuthenticated, isLoading, token } = useSelector((state: RootState) => state.auth);
   const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
@@ -312,6 +317,28 @@ function NavbarContent() {
             <Button variant="ghost" size="sm" aria-label={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'} className="h-9 shrink-0 rounded-full px-2 font-bold hover:bg-primary/10 hover:text-primary sm:px-3" onClick={toggleLocale}>
               {locale === 'ar' ? 'EN' : 'عربي'}
             </Button>
+
+            {/* The device/browser preference is the default; a user may choose
+                Light or Dark explicitly, then switch back to System anytime. */}
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-primary/10 sm:h-10 sm:w-10">
+              {mounted && resolvedTheme === 'dark'
+                ? <Moon aria-hidden="true" className="h-5 w-5 text-foreground" />
+                : mounted
+                  ? <Sun aria-hidden="true" className="h-5 w-5 text-foreground" />
+                  : <Monitor aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
+              <select
+                aria-label={locale === 'ar' ? 'مظهر الموقع: تلقائي أو فاتح أو داكن' : 'Site appearance: system, light or dark'}
+                title={locale === 'ar' ? 'تغيير مظهر الموقع' : 'Change site appearance'}
+                value={mounted ? (theme ?? 'system') : 'system'}
+                disabled={!mounted}
+                onChange={(event) => setTheme(event.target.value)}
+                className="absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-full opacity-0"
+              >
+                <option value="system">{locale === 'ar' ? 'حسب الجهاز' : 'System'}</option>
+                <option value="light">{locale === 'ar' ? 'فاتح' : 'Light'}</option>
+                <option value="dark">{locale === 'ar' ? 'داكن' : 'Dark'}</option>
+              </select>
+            </div>
 
             {mounted && isAuthenticated && <NotificationBell isAuthenticated={isAuthenticated} />}
 
