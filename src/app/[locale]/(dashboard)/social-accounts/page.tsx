@@ -8,19 +8,19 @@ import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 
 const localized = {
   ar: {
-    title: 'ربط حسابات الدخول',
+    title: 'إعدادات الحساب'
     description:
-      'للحفاظ على نقاطك ومسائلك، سجّل الدخول إلى MathWorld أولاً ثم اربط حساب Google أو Facebook من هنا. لن ننشئ حسابًا ثانيًا ولن ننقل تقدمك.',
+      'اربط Google بنفس حساب MathWorld لتحافظ على نقاطك وتقدّمك. إذا كان حساب Google مربوطاً مسبقاً، يختفي زر الربط.',
     note: 'إذا كان حساب اجتماعي مربوطًا بحساب MathWorld آخر، لا يمكن نقله تلقائيًا.',
-    inactive: 'ستظهر خيارات الربط بعد تجهيز حسابات Google وFacebook الرسمية وتفعيل الخدمة.',
+    inactive: 'سيظهر ربط Google بعد تفعيل إعداداته الرسمية.',
     back: 'العودة إلى لوحة الطالب',
   },
   en: {
-    title: 'Connect your sign-in accounts',
+    title: 'Account settings'
     description:
-      'To keep all your MathWorld points and progress, sign in to your original account first and link Google or Facebook here. We never transfer progress to another user automatically.',
+      'Connect Google to your existing MathWorld account without losing points or progress. The button disappears once connected.',
     note: 'An identity already linked to a different MathWorld account cannot be moved automatically.',
-    inactive: 'Connection options become available after official Google and Meta app setup.',
+    inactive: 'Google linking becomes available when its official configuration is enabled.',
     back: 'Return to dashboard',
   },
 };
@@ -47,7 +47,10 @@ export default function SocialAccountsPage() {
           </div>
         </div>
         {enabled ? (
-          <SocialAuthButtons mode="link" />
+          <div className="mt-6">
+            <h2 className="text-gradient-math text-lg font-bold">{locale === 'ar' ? 'ربط حساب Google' : 'Connect your Google account'}</h2>
+            <SocialAuthButtons mode="link" />
+          </div>
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">{copy.inactive}</p>
         )}
