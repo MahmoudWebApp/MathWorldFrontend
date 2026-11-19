@@ -17,6 +17,8 @@ import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Card, CardContent } from "@/components/ui/Card";
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from "@/store/api/usersApi";
 import { RichText } from "@/components/ui/RichText";
+import { StageIconBadge } from "@/components/stages/StageIconBadge";
+import { getStageAccent } from "@/lib/stageVisuals";
 import { useGetDailyChallengeQuery } from "@/store/api/stagesApi";
 import { useGetStudentSubscriptionQuery } from "@/store/api/categoriesApi";
 
@@ -57,6 +59,10 @@ export default function UserDashboardPage() {
     skip: dashboard?.Role !== "Student",
     refetchOnMountOrArgChange: true,
   });
+  const stageIdentity = stageId
+    ? { Id: stageId, NameEn: journey?.NameEn, NameAr: journey?.NameAr }
+    : null;
+  const stageAccent = stageIdentity ? getStageAccent(stageIdentity) : undefined;
   const upgraded = membership?.IsPremium === true;
   const { data: dailyPractice } = useGetDailyChallengeQuery(stageId ?? 0, {
     skip: !stageId || stageId <= 0 || dashboard?.Role !== "Student" || !upgraded,
@@ -159,7 +165,7 @@ export default function UserDashboardPage() {
     <div className="container relative mx-auto px-4 py-8 md:px-16 lg:px-24">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="brand-display-title text-gradient-math text-3xl font-bold mb-2">{t("dashboard.user.title")}</h1>
+        <h1 className="brand-display-title text-3xl font-bold mb-2" style={stageAccent ? { color: stageAccent } : undefined}>{t("dashboard.user.title")}</h1>
         {isLoading ? (
           <div className="h-5 w-48 bg-muted animate-pulse rounded" />
         ) : (
@@ -185,12 +191,8 @@ export default function UserDashboardPage() {
         </h2>
         <p className="mb-5 mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
           {stageId
-            ? (isArabic
-              ? 'رح تشوف الفئتين المفتوحتين لحسابك أولاً، ومع كل فئة زر واضح لبدء حل المسائل بلا حد.'
-              : 'Your two Free topics appear first, each with a clear Start solving button and unlimited practice.')
-            : (isArabic
-              ? 'اختيار المرحلة بيحدد فئاتك ومسائلك، وتقدر تغيّرها لاحقاً بدون خسارة نقاطك.'
-              : 'Your stage determines which topics you can practise; you can change it later without losing progress.')}
+            ? (isArabic ? 'تابع مسائل مرحلتك وتقدمك.' : 'Continue your stage problems and progress.')
+            : (isArabic ? 'اختيار المرحلة يحفظ تقدمك ويوجه رحلتك.' : 'Choose your stage to personalize your learning journey.')}
         </p>
         <Link
           href={stageId ? `/stages/${stageId}` : '/learning-stage'}
@@ -207,7 +209,10 @@ export default function UserDashboardPage() {
         <section className="math-card mb-8 rounded-3xl border border-primary/15 bg-card p-5 md:p-7">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold">{journeyLabels.title}</h2>
+              <h2 className="flex items-center gap-2 text-xl font-bold" style={stageAccent ? { color: stageAccent } : undefined}>
+                {stageIdentity && <StageIconBadge stage={stageIdentity} size="xs" />}
+                {journeyLabels.title}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {journey
                   ? (isArabic ? journey.NameAr : journey.NameEn)
@@ -254,7 +259,7 @@ export default function UserDashboardPage() {
                 className="mb-6 h-3 overflow-hidden rounded-full bg-primary/10"
               >
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500"
+                  className="h-full rounded-full bg-emerald-600"
                   style={{ width: `${journey.CompletionPercent}%` }}
                 />
               </div>
@@ -283,13 +288,6 @@ export default function UserDashboardPage() {
                 </Link>
               )}
               <h3 className="mb-3 text-sm font-semibold">{journeyLabels.categories}</h3>
-              {journey.Categories.every(category => category.IsLocked !== false) && (
-                <p className="mb-4 text-sm text-muted-foreground">
-                  {isArabic
-                    ? 'الفئات المفتوحة مو مؤكدة من بيانات التقدّم الحالية. افتح قائمة مرحلتك لتشوف الفئات المسموحة بدل تخمين صلاحياتك.'
-                    : 'Unlocked topics are not verified from this progress response. Open your stage catalogue to see which topics you can use.'}
-                </p>
-              )}
               <div className="mb-5 grid gap-2 sm:grid-cols-2">
                 {journey.Categories.filter(category => category.IsLocked === false).slice(0, 4).map((category) => (
                   <div key={category.CategoryId} className="rounded-xl border border-border p-3">
@@ -297,7 +295,7 @@ export default function UserDashboardPage() {
                       <span>{isArabic ? category.NameAr : category.NameEn}</span>
                       <span className="font-medium text-primary">{category.SolvedProblems}/{category.TotalProblems}</span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-primary/10">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                       <div className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500"
                         style={{ width: `${category.CompletionPercent}%` }} />
                     </div>
