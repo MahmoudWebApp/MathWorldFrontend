@@ -94,7 +94,7 @@ export default function StagesPageClient() {
             </button>
           </div>
         ) : (
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 pb-20 md:grid-cols-2 lg:gap-8 xl:grid-cols-4">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 pb-20 sm:gap-5 md:grid-cols-2 lg:gap-8 xl:grid-cols-4">
             {sortStagesByOrder(stages ?? []).map((stage, index) => {
               return (
                 <StagePremiumCard
