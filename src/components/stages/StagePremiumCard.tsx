@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
+import { LockKeyhole } from "lucide-react";
 
 import { Link } from "@/i18n/routing";
 import type { Stage } from "@/store/api/stagesApi";
@@ -13,10 +14,11 @@ interface StagePremiumCardProps {
   stage: Stage;
   index: number;
   locale: string;
+  locked?: boolean;
 }
 
 /** A calm alternative to the original 3D rotating stage card. */
-export function StagePremiumCard({ stage, index, locale }: StagePremiumCardProps) {
+export function StagePremiumCard({ stage, index, locale, locked = false }: StagePremiumCardProps) {
   const t = useTranslations();
   const visual = getStageVisual(stage);
   const accent = getStageAccent(stage);
@@ -30,10 +32,11 @@ export function StagePremiumCard({ stage, index, locale }: StagePremiumCardProps
 
   return (
     <Link
-      href={`/stages/${stage.Id}`}
+      href={locked ? "/learning-stage" : `/stages/${stage.Id}`}
       className={`group relative flex h-full min-h-[245px] flex-col overflow-hidden rounded-3xl border bg-gradient-to-br p-6 shadow-sm outline-none transition-[border-color,box-shadow,transform] hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${tone.edge} ${tone.bg}`}
     >
       <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1 ${tone.bar}`} />
+      {locked && <LockKeyhole aria-hidden="true" className="absolute end-5 top-5 h-5 w-5 text-muted-foreground" />}
       <StageGeometry variant={visual.index} className={`pointer-events-none absolute -end-8 top-10 h-40 w-40 opacity-[0.12] transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 ${tone.text}`} />
       <span aria-hidden="true" dir="ltr" className="absolute end-6 top-6 text-xs font-bold tracking-wider text-muted-foreground/70">
         {String(stage.Order > 0 ? stage.Order : visual.ordinal).padStart(2, "0")}
