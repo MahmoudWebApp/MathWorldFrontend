@@ -1,12 +1,10 @@
 "use client";
 
-import { useSelector } from "react-redux";
 import { useTranslations, useLocale } from "next-intl";
-import { Calculator, Eye, Lock, Star } from "lucide-react";
+import { Calculator, Eye, Star } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link } from "@/i18n/routing";
-import type { RootState } from "@/store";
 import type { ProblemPreview } from "@/store/api/types";
 import { Badge } from "@/components/ui/Badge";
 import { RichText } from "@/components/ui/RichText";
@@ -21,20 +19,18 @@ interface ProblemCardProps {
 export function ProblemCard({ problem }: ProblemCardProps) {
   const t = useTranslations();
   const locale = useLocale();
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  const requiresLogin = !isAuthenticated;
   const stageIdentity = { Id: problem.StageId, Name: problem.StageName };
   const stageAccent = getStageAccent(stageIdentity);
 
   return (
     <Link
-      href={requiresLogin ? `/login?returnTo=/stages/${problem.StageId}` : `/problems/${problem.Id}`}
+      href={`/problems/${problem.Id}`}
       className="group block rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <article className="brand-surface rounded-3xl p-5 transition-[border-color,box-shadow] hover:shadow-md sm:p-6" style={{ borderColor: `${stageAccent}30` }}>
         <div className="flex gap-4">
           <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style={{ color: stageAccent, backgroundColor: `${stageAccent}17` }}>
-            {requiresLogin ? <Lock className="h-5 w-5" /> : <Calculator className="h-6 w-6" />}
+            <Calculator className="h-6 w-6" />
           </div>
           <div className="min-w-0 flex-1">
             <RichText
@@ -63,9 +59,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
                 )}
               </div>
               <span className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: stageAccent }}>
-                {requiresLogin
-                  ? locale === 'ar' ? 'سجّل الدخول للحل' : 'Sign in to solve'
-                  : t("common.solveNow")}
+                {t("common.solveNow")}
                 <DirectionalArrow direction="forward" />
               </span>
             </div>
