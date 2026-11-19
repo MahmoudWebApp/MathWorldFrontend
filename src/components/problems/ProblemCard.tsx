@@ -26,7 +26,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
 
   return (
     <Link
-      href={requiresLogin ? '/login' : `/problems/${problem.Id}`}
+      href={requiresLogin ? `/login?returnTo=/stages/${problem.StageId}` : `/problems/${problem.Id}`}
       className="group block rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <article className="brand-surface rounded-3xl p-5 transition-[border-color,box-shadow] hover:border-brand-primary/30 hover:shadow-md sm:p-6">
