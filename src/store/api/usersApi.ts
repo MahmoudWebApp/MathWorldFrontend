@@ -368,6 +368,7 @@ export interface MathBadge {
   TitleEn: string;
   RequiredSolved: number;
   Earned: boolean;
+  IsAvailable: boolean;
   CurrentProgress: number;
 }
 
