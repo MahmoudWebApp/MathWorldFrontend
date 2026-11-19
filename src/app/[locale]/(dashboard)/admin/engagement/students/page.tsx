@@ -39,13 +39,13 @@ export default function AdminLearnerActivityPage() {
       <Link href="/admin" className="text-sm font-semibold text-primary underline">
         {ar ? 'لوحة المراقبة' : 'Monitoring dashboard'}
       </Link>
-      <h1 className="flex items-center gap-2 text-3xl font-black">
-        <UserRoundSearch className="h-7 w-7 text-primary"/>
-        {ar ? 'سجل استخدام الطلاب' : 'Learner activity directory'}
+      <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
+        <UserRoundSearch className="h-6 w-6 shrink-0 text-primary"/>
+        {ar ? 'نشاط الطلاب' : 'Learner activity'}
       </h1>
       <p className="max-w-3xl text-sm text-muted-foreground">
-        {ar ? 'راقب تسجيل الطلاب ومتى تدرّبوا، وفلتر آخر اتصال موثّق بالسيرفر خلال خمس دقائق. إغلاق المتصفح لا يعني خروجاً مؤكداً.'
-          : 'Review registrations and actual practice. Filter learners with a verified heartbeat in the last five minutes; browser closure is not a confirmed logout.'}
+        {ar ? 'تفاصيل التسجيل وآخر دخول وحل واتصال، مع تصفية حسب المرحلة.'
+          : 'Registration, latest sign-in, practice and recent activity by stage.'}
       </p>
     </header>
     <section className="grid gap-3 rounded-2xl border bg-card p-4 lg:grid-cols-[minmax(0,1fr)_190px_auto_auto]">
