@@ -8,7 +8,7 @@ import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 
 const localized = {
   ar: {
-    title: 'إعدادات الحساب'
+    title: 'إعدادات الحساب',
     description:
       'اربط Google بنفس حساب MathWorld لتحافظ على نقاطك وتقدّمك. إذا كان حساب Google مربوطاً مسبقاً، يختفي زر الربط.',
     note: 'إذا كان حساب اجتماعي مربوطًا بحساب MathWorld آخر، لا يمكن نقله تلقائيًا.',
@@ -16,7 +16,7 @@ const localized = {
     back: 'العودة إلى لوحة الطالب',
   },
   en: {
-    title: 'Account settings'
+    title: 'Account settings',
     description:
       'Connect Google to your existing MathWorld account without losing points or progress. The button disappears once connected.',
     note: 'An identity already linked to a different MathWorld account cannot be moved automatically.',
