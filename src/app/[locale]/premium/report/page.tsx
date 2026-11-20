@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { BarChart3, Download, Printer, RefreshCw } from 'lucide-react';
+import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
 import { useGetPremiumProgressReportQuery } from '@/store/api/usersApi';
@@ -80,9 +81,11 @@ export default function PremiumProgressReportPage() {
             {ar ? 'تقدر تكمل حل المسائل المتاحة لك بدون حد يومي.' :
               'You can continue solving available problems with no daily limit.'}
           </p>
-          <Link href="/premium" className="mt-4 inline-flex text-sm font-semibold text-primary underline">
-            {ar ? 'عرض مميزات الحساب' : 'Compare account benefits'}
-          </Link>
+          <LockedPremiumDialog>
+            <button type="button" className="mt-4 inline-flex items-center gap-2 rounded-xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary">
+              {ar ? 'عرض المميزات وترقية الحساب' : 'Benefits & upgrade'}
+            </button>
+          </LockedPremiumDialog>
         </section>
       ) : !activeStage ? (
         <section className="math-card rounded-2xl border border-border p-6">
