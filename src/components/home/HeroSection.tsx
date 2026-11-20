@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useSelector } from "react-redux";
 import { BookOpen, GraduationCap, Search, Sparkles, Trophy, Crown } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
@@ -13,6 +13,7 @@ import type { RootState } from "@/store";
 /** Simple, accessible home hero. Search and navigation logic are unchanged. */
 export function HeroSection() {
   const t = useTranslations();
+  const isArabic = useLocale() === "ar";
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const { user, token } = useSelector((state: RootState) => state.auth);
@@ -88,7 +89,7 @@ export function HeroSection() {
           <Button asChild variant="outline" size="lg" className="w-full gap-2 rounded-2xl sm:w-auto">
             <Link href="/premium">
               <Crown aria-hidden="true" className="h-5 w-5" />
-              {isAuthenticated ? (t("common.view") + " Free / Premium") : "Free / Premium"}
+              {isArabic ? "مقارنة الحسابات" : "Compare plans"}
             </Link>
           </Button>
         </div>
