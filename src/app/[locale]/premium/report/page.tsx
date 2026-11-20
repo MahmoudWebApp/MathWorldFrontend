@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
-import { BarChart3, Download, Printer, RefreshCw } from 'lucide-react';
+import { BarChart3, Download, Printer, RefreshCw, LockKeyhole } from 'lucide-react';
+import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
 import { useGetPremiumProgressReportQuery } from '@/store/api/usersApi';
@@ -59,7 +60,7 @@ export default function PremiumProgressReportPage() {
 
   return (
     <main className="container mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-8 print:max-w-none print:px-0 print:py-0 print:text-black">
-      <Link href="/premium" className="text-sm font-semibold text-primary hover:underline print:hidden">
+      <Link href="/dashboard/upgrade" className="text-sm font-semibold text-primary hover:underline print:hidden">
         {ar ? 'العودة لمميزات الحساب' : 'Back to account benefits'}
       </Link>
       <header>
@@ -75,14 +76,17 @@ export default function PremiumProgressReportPage() {
 
       {!premium ? (
         <section className="math-card rounded-2xl border border-border p-6">
+          <LockKeyhole className="mb-3 h-8 w-8 text-primary" aria-hidden="true" />
           <h2 className="font-bold">{ar ? 'هذه الميزة لمشتركي Premium' : 'Premium members only'}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             {ar ? 'تقدر تكمل حل المسائل المتاحة لك بدون حد يومي.' :
               'You can continue solving available problems with no daily limit.'}
           </p>
-          <Link href="/premium" className="mt-4 inline-flex text-sm font-semibold text-primary underline">
-            {ar ? 'عرض مميزات الحساب' : 'Compare account benefits'}
-          </Link>
+          <LockedPremiumDialog>
+            <button type="button" className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-primary/30 px-4 py-2 text-sm font-semibold text-primary">
+              {ar ? 'عرض مميزات الحساب' : 'Compare account benefits'}
+            </button>
+          </LockedPremiumDialog>
         </section>
       ) : !activeStage ? (
         <section className="math-card rounded-2xl border border-border p-6">

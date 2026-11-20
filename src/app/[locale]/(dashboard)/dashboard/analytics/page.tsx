@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { BarChart3, Download, FileText, LockKeyhole, Printer, RefreshCw } from 'lucide-react';
 import { Link } from '@/i18n/routing';
+import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
@@ -188,9 +189,11 @@ export default function PremiumAnalyticsPage() {
             {ar ? 'حسابك المجاني يمكنه الاستمرار بحل مسائل غير محدودة ضمن فئتين بكل مرحلة.'
               : 'Free accounts can still solve unlimited problems in two unlocked categories per stage.'}
           </p>
-          <Link href="/premium" className="inline-flex rounded-xl border border-primary/30 px-4 py-2 font-semibold text-primary">
-            {ar ? 'عرض مزايا Premium' : 'Explore Premium'}
-          </Link>
+          <LockedPremiumDialog>
+            <button type="button" className="inline-flex min-h-11 rounded-xl border border-primary/30 px-4 py-2 font-semibold text-primary">
+              {ar ? 'عرض مزايا Premium' : 'Explore Premium'}
+            </button>
+          </LockedPremiumDialog>
         </div>
       ) : isLoading ? (
         <p role="status" className="py-10 text-center">{ar ? 'جارٍ إعداد التقرير…' : 'Preparing report…'}</p>

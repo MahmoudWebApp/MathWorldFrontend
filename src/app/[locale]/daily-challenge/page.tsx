@@ -3,6 +3,8 @@
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
+import { LockKeyhole } from 'lucide-react';
+import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { useGetDailyChallengeQuery } from '@/store/api/stagesApi';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 
@@ -33,13 +35,16 @@ export default function DailyChallengePage() {
       </button>
     </div>}
     {student && membership && !upgraded && <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/5 p-6">
+      <LockKeyhole className="mb-3 h-7 w-7 text-primary" aria-hidden="true" />
       <p className="mb-3 font-semibold">{ar
         ? 'تحديات اليوم بتنفتح لما ترقّي حسابك. حل المسائل المفتوحة بيضل متاح بلا حد.'
         : 'Daily challenges unlock when you upgrade your account. Regular practice remains unlimited in your available topics.'}
       </p>
-      <Link href="/premium" className="inline-flex rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 px-5 py-2.5 font-bold text-white">
-        {ar ? 'ترقية الحساب' : 'Upgrade account'}
-      </Link>
+      <LockedPremiumDialog>
+        <button type="button" className="inline-flex min-h-11 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 px-5 py-2.5 font-bold text-white">
+          {ar ? 'عرض المميزات والترقية' : 'Benefits & upgrade'}
+        </button>
+      </LockedPremiumDialog>
     </div>}
     {upgraded && isLoading && <p role="status">{ar ? 'جاري تحميل التحدي…' : 'Loading challenge…'}</p>}
     {upgraded && isError && <div role="alert" className="space-y-3">

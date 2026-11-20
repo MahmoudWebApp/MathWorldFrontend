@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '*.googleusercontent.com' },
       { protocol: 'https', hostname: '*.fbcdn.net' },
       { protocol: 'https', hostname: 'i.ibb.co' },
+      { protocol: 'https', hostname: 'math-world-frontend.vercel.app' },
     ],
   },
 };
