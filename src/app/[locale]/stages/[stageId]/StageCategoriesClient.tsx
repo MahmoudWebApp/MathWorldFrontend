@@ -17,23 +17,19 @@ import { Link } from '@/i18n/routing';
 import { CategoryBrandIcon } from '@/components/categories/CategoryBrandIcon';
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
-import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
+import { STAGE_CATEGORY_BRAND_STYLES, type CategoryBrandStyle } from '@/lib/brand';
 import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { RichText } from '@/components/ui/RichText';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
 
 // ==========================================
 // 1. Math assets
 // ==========================================
 
-type MathSymbol = (typeof MATH_CARD_SYMBOLS)[number];
-
 interface CategoryPremiumCardProps {
   category: CategoryDto;
   index: number;
-  math: MathSymbol;
   style: CategoryBrandStyle;
   locale: string;
   stageId: number;
@@ -56,7 +52,6 @@ interface OtherStagePremiumCardProps {
 function CategoryPremiumCard({
   category,
   index,
-  math,
   style,
   locale,
   stageId,
@@ -469,7 +464,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4 lg:gap-8">
             {sortedCategories.map((category, index) => {
-              const math = MATH_CARD_SYMBOLS[category.Id % MATH_CARD_SYMBOLS.length];
               const style = categoryBrandStyle;
               const iconUrl = category.Icon;
 
@@ -478,7 +472,6 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   key={category.Id}
                   category={category}
                   index={index}
-                  math={math}
                   style={style}
                   locale={locale}
                   stageId={stageId}
