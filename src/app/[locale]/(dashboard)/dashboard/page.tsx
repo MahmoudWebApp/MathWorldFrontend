@@ -322,7 +322,7 @@ export default function UserDashboardPage() {
                   : 'Unlock every topic in your stage, preview solutions and access personal reports. Activation currently uses an admin-issued code; no prices are listed.'}
               </p>
             </div>
-            <Link href="/premium" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+            <Link href="/dashboard/upgrade" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
               {isArabic ? 'المميزات وترقية الحساب' : 'Benefits & upgrade'}
             </Link>
           </div>

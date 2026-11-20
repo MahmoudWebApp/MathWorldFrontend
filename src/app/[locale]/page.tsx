@@ -2,6 +2,7 @@
 // Next.js 15 - params is a Promise, must use await
 
 import { getTranslations } from 'next-intl/server';
+import { SITE_URL } from '@/lib/publicCurriculum';
 import { HeroSection } from "@/components/home/HeroSection";
 import { StagesSection } from '@/components/home/StagesSection';
 import { StatsSection } from '@/components/about/StatsSection';
@@ -17,7 +18,18 @@ export async function generateMetadata({
   
   return {
     title: t('title'),
-    description: t('description'), 
+    description: t('description'),
+    alternates: {
+      canonical: `${SITE_URL}/${locale}`,
+      languages: { ar: `${SITE_URL}/ar`, en: `${SITE_URL}/en` },
+    },
+    openGraph: {
+      title: t('title'),
+      description: t('description'),
+      siteName: 'MathWorld', type: 'website',
+      url: `${SITE_URL}/${locale}`,
+      images: [{ url: `${SITE_URL}/mathworld-logo.png`, alt: 'MathWorld' }],
+    }, 
   };
 }
 
