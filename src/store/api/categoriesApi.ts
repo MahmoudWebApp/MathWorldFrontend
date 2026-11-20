@@ -19,6 +19,8 @@ export interface CreateCategoryRequest {
 export interface UpdateCategoryRequest {
   NameAr?: string;
   NameEn?: string;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
   Order?: number;
   StageId?: number;
   Icon?: File;
