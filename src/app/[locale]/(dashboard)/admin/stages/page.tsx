@@ -30,6 +30,8 @@ export default function AdminStagesPage() {
     Id: 0,
     NameAr: "",
     NameEn: "",
+    DescriptionAr: "",
+    DescriptionEn: "",
     Order: 1,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,6 +49,8 @@ export default function AdminStagesPage() {
           Data: {
             NameAr: formData.NameAr,
             NameEn: formData.NameEn,
+            DescriptionAr: formData.DescriptionAr,
+            DescriptionEn: formData.DescriptionEn,
             Order: formData.Order,
           },
         }).unwrap();
@@ -54,6 +58,8 @@ export default function AdminStagesPage() {
         await createStage({
           NameAr: formData.NameAr,
           NameEn: formData.NameEn,
+          DescriptionAr: formData.DescriptionAr,
+          DescriptionEn: formData.DescriptionEn,
           Order: formData.Order,
         }).unwrap();
       }
@@ -87,6 +93,8 @@ export default function AdminStagesPage() {
         Id: stage.Id,
         NameAr: stage.NameAr,
         NameEn: stage.NameEn,
+        DescriptionAr: stage.DescriptionAr ?? "",
+        DescriptionEn: stage.DescriptionEn ?? "",
         Order: stage.Order || 1,
       });
       setIsEditing(true);
@@ -98,7 +106,7 @@ export default function AdminStagesPage() {
   };
 
   const resetForm = () => {
-    setFormData({ Id: 0, NameAr: "", NameEn: "", Order: 1 });
+    setFormData({ Id: 0, NameAr: "", NameEn: "", DescriptionAr: "", DescriptionEn: "", Order: 1 });
   };
 
   if (isLoading)
@@ -279,6 +287,17 @@ export default function AdminStagesPage() {
                   dir="ltr"
                 />
               </div>
+              {(["Ar", "En"] as const).map((lang) => (
+                <div key={lang}>
+                  <label htmlFor={`stage-description-${lang}`} className="mb-1 block text-sm font-medium">
+                    {ar ? `وصف المرحلة ${lang === "Ar" ? "بالعربية" : "بالإنجليزية"}` : `Stage description (${lang === "Ar" ? "Arabic" : "English"})`}
+                  </label>
+                  <textarea id={`stage-description-${lang}`} dir={lang === "Ar" ? "rtl" : "ltr"}
+                    className="min-h-24 w-full rounded-lg border bg-background p-3"
+                    maxLength={1500} value={formData[lang === "Ar" ? "DescriptionAr" : "DescriptionEn"]}
+                    onChange={e => setFormData(prev => ({...prev, [lang === "Ar" ? "DescriptionAr" : "DescriptionEn"]: e.target.value}))} />
+                </div>
+              ))}
               <div>
                 <label className="block mb-1 text-sm font-medium">
                   {t("admin.stages.order")}
