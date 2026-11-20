@@ -20,6 +20,7 @@ import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle
 import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { StudentStageAccessNotice } from '@/components/stages/StudentStageAccessNotice';
+import { RichText } from '@/components/ui/RichText';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
 
@@ -522,7 +523,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
               <ol className="grid gap-3 sm:grid-cols-2">
                 {stageExamples.Results.slice(0, 4).map(problem => (
                   <li key={problem.Id} className="rounded-2xl border border-border bg-background/70 px-4 py-4 text-sm font-semibold leading-7 text-foreground">
-                    {problem.Title}
+                    <RichText text={problem.Title} isArabic={locale === 'ar'} className="text-sm font-semibold leading-7" />
                   </li>
                 ))}
               </ol>
