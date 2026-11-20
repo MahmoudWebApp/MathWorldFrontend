@@ -8,6 +8,8 @@ export interface Stage {
   NameAr: string;
   NameEn: string;
   Order: number;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
 }
 
 export interface JourneyCategoryProgress {
@@ -53,6 +55,8 @@ export interface DailyChallenge {
 export interface CreateStageRequest {
   NameAr: string;
   NameEn: string;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
   Order: number;
 }
 
