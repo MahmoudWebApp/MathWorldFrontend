@@ -23,6 +23,7 @@ import {
 } from "iconsax-reactjs";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { CategoryBrandIcon } from '@/components/categories/CategoryBrandIcon';
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
 import {
   Select,
@@ -394,21 +395,7 @@ function AdminCategoriesPageContent() {
                     <td className="p-4">
                       {/* Render image URLs and text symbols safely. */}
                       {category.Icon ? (
-                        isImageUrl(category.Icon) ? (
-                          <>
-                            {/* A native image is used because icon URLs can be dynamic. */}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={category.Icon}
-                              alt={category.NameAr}
-                              className="w-10 h-10 rounded-lg object-cover border mx-auto shadow-sm"
-                            />
-                          </>
-                        ) : (
-                          <div className="w-10 h-10 flex items-center justify-center text-2xl mx-auto border rounded-lg bg-primary/10 shadow-sm">
-                            {category.Icon}
-                          </div>
-                        )
+                        <CategoryBrandIcon value={category.Icon} alt={category.NameAr} size={44} />
                       ) : (
                         <ImageIcon
                           aria-hidden="true"
@@ -595,8 +582,8 @@ function AdminCategoriesPageContent() {
                           />
                         </>
                       ) : (
-                        <div className="w-14 h-14 flex items-center justify-center text-3xl border rounded-lg bg-background shadow-sm">
-                          {previewUrl}
+                        <div className="h-14 w-14 rounded-lg border bg-background shadow-sm">
+                          <CategoryBrandIcon value={previewUrl} alt="Preview" size={54} />
                         </div>
                       )
                     ) : (
