@@ -24,7 +24,7 @@ export default function PremiumBenefitsPage() {
 
   const premiumFeatures = [
     { icon: CheckCircle2, ar: 'حل عدد غير محدود من المسائل في جميع الفئات', en: 'Unlimited problems in all categories' },
-    { icon: LockOpen, ar: 'جميع الفئات والمراحل', en: 'Every category in every stage' },
+    { icon: LockOpen, ar: 'فتح كل فئات المرحلة التي يدرسها الطالب', en: 'Unlock every topic in the learner’s selected stage' },
     { icon: GraduationCap, ar: 'مشاهدة الحل قبل إرسال الإجابة', en: 'View solutions before answering' },
     { icon: Sparkles, ar: 'تقارير وإحصائيات شخصية مع تصدير PDF وCSV لبرنامج Excel',
       en: 'Personal analytics with PDF and Excel-compatible CSV exports' },
@@ -89,12 +89,12 @@ export default function PremiumBenefitsPage() {
       </Link>
       <header className="mb-6">
         <h1 className="brand-display-title text-3xl font-black md:text-4xl">
-          {ar ? 'تغيير الخطة' : 'Change plan'}
+          {ar ? 'مقارنة حسابات Free وPremium' : 'Free vs Premium'}
         </h1>
         <p className="mt-3 text-muted-foreground">
           {ar
-            ? 'قارن Free وPremium. حل المسائل غير محدود ضمن الفئات المتاحة لخطة حسابك.'
-            : 'Compare Free and Premium. Practice is unlimited within your plan’s accessible categories.'}
+            ? 'حسابان فقط وبلا أسعار حالياً. تعرف إلى الفئات المتاحة والمزايا، ويمكن للطالب تفعيل Premium بكود تمنحه الإدارة.'
+            : 'Two plans, with no prices listed for now. Compare access and benefits; learners can activate Premium using an admin-issued code.'}
         </p>
       </header>
 
@@ -132,7 +132,7 @@ export default function PremiumBenefitsPage() {
       </div>
 
       {!premium && user?.Role === 'Student' && (
-        <section className="math-card mt-6 rounded-2xl border border-border p-5 md:p-6">
+        <section id="activate-premium" className="math-card mt-6 rounded-2xl border border-border p-5 md:p-6">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <Ticket className="h-5 w-5 text-primary" aria-hidden />
             {ar ? 'تفعيل Premium بكود خصم 100%' : 'Activate Premium with a 100% discount code'}
@@ -160,9 +160,19 @@ export default function PremiumBenefitsPage() {
           {message && <p role="status" className="mt-3 text-sm text-primary">{message}</p>}
         </section>
       )}
-      {!user && <p className="mt-6 text-sm text-muted-foreground">
-        {ar ? 'سجّل الدخول لتفعيل اشتراكك.' : 'Sign in to activate your membership.'}
-      </p>}
+      {!user && (
+        <section className="mt-7 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <p className="text-sm font-semibold">{ar ? 'ابدأ بالحساب المجاني، واستكشف المزايا قبل اتخاذ قرار الترقية.' : 'Start with Free and explore the benefits before upgrading.'}</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/register" className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">
+              {ar ? 'إنشاء حساب مجاني' : 'Create a free account'}
+            </Link>
+            <Link href="/login" className="rounded-xl border border-primary/20 px-5 py-3 text-sm font-bold text-primary">
+              {ar ? 'لديّ حساب' : 'I have an account'}
+            </Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
