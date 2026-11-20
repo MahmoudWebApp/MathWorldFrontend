@@ -170,7 +170,7 @@ function NavbarContent() {
     { href: user?.CurrentStageId ? `/stages/${user.CurrentStageId}` : '/learning-stage', ar: 'تابع التعلم', en: 'Continue learning' },
     { href: '/dashboard/favorites', ar: 'المفضلة', en: 'Favorites' },
     { href: '/dashboard/analytics', ar: 'تقدّمي', en: 'My progress' },
-    { href: '/premium', ar: hasUpgraded ? 'مميزات حسابي' : 'ترقية الحساب', en: hasUpgraded ? 'My benefits' : 'Upgrade' },
+    { href: '/dashboard/upgrade', ar: hasUpgraded ? 'مميزات حسابي' : 'ترقية الحساب', en: hasUpgraded ? 'My benefits' : 'Upgrade' },
   ] : [
     { href: '/', ar: 'الرئيسية', en: 'Home' },
     { href: '/stages', ar: 'المراحل والفئات', en: 'Stages & topics' },
@@ -378,7 +378,7 @@ function NavbarContent() {
                           <Layers3 className="h-4 w-4" />
                           {locale === 'ar' ? 'رحلتي في الرياضيات' : 'My learning journey'}
                         </Link>
-                        <Link href="/premium" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
+                        <Link href="/dashboard/upgrade" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
                           <BookMarked className="h-4 w-4" />
                           {locale === 'ar' ? 'ترقية الحساب ومميزاته' : 'Account benefits & upgrade'}
                         </Link>
