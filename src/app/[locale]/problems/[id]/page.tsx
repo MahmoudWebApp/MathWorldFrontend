@@ -51,6 +51,7 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { StudentStageAccessNotice } from "@/components/stages/StudentStageAccessNotice";
+import { LockedPremiumDialog } from "@/components/premium/LockedPremiumDialog";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
@@ -820,6 +821,17 @@ export default function ProblemPage() {
             {t("common.cancel")}
           </Button>
         </div>
+      )}
+
+      {studentProblem && entitlement && !entitlement.CanRevealSolutionBeforeAnswer && (
+        <section className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <LockedPremiumDialog>
+            <button type="button" className="flex min-h-11 items-center gap-2 rounded-xl border border-primary/30 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/10">
+              <Lock aria-hidden="true" className="h-4 w-4" />
+              {isArabic ? "مشاهدة الحل قبل الإجابة — Premium" : "See the solution before answering — Premium"}
+            </button>
+          </LockedPremiumDialog>
+        </section>
       )}
 
       {studentProblem && entitlement?.CanRevealSolutionBeforeAnswer && (
