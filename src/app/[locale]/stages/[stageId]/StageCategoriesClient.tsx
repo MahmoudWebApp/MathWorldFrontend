@@ -21,35 +21,13 @@ import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVi
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { RichText } from '@/components/ui/RichText';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
+import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 
 // ==========================================
 // 1. Math assets
 // ==========================================
 
 type MathSymbol = (typeof MATH_CARD_SYMBOLS)[number];
-
-// Informational public topic explanations, matched to the existing canonical category IDs.
-// The server still owns category names, inventory, access rights and display order.
-const CATEGORY_EXPLANATIONS: Record<number, { ar: string; en: string }> = {
-  1: { ar: "تدرّب على الجمع والطرح والضرب والقسمة وحل مسائل حياتية بالأعداد.", en: "Practice arithmetic operations and number-based word problems." },
-  2: { ar: "اكتشف الأنماط وتسلسل الأعداد والمعادلات البسيطة وتمثيل المجهول.", en: "Explore patterns, sequences and simple equations." },
-  3: { ar: "تعرّف إلى الأشكال والزوايا والمحيط والمساحة ووحدات القياس.", en: "Study shapes, angles, area, perimeter and measurement units." },
-  4: { ar: "اقرأ البيانات، واحسب المتوسط والوسيط والمنوال، وافهم الاحتمال البسيط.", en: "Read data, calculate averages and explore basic probability." },
-  5: { ar: "تعمّق في القواسم والمضاعفات وقوانين الأسس والعمليات عليها.", en: "Explore divisibility, greatest common factors and exponent laws." },
-  6: { ar: "حل المعادلات وقيّم الدوال وافهم ميل المستقيم والتعبيرات الجبرية.", en: "Solve equations, evaluate functions and interpret linear relationships." },
-  7: { ar: "تدرّب على النسب والتناسب والخصومات والمقاييس في الحياة اليومية.", en: "Apply ratios, proportional reasoning, discounts and map scales." },
-  8: { ar: "استخدم فيثاغورس والتشابه والزوايا في استدلالات هندسية.", en: "Reason with Pythagoras, similarity, polygons and geometric proofs." },
-  9: { ar: "حلّل كثيرات الحدود وادرس الجذور والمعادلات التربيعية.", en: "Factor polynomials and work with quadratic roots and discriminants." },
-  10: { ar: "افهم الجيب وجيب التمام والظل وعلاقات المثلث القائم.", en: "Learn sine, cosine, tangent and right-triangle relationships." },
-  11: { ar: "تدرّب على المشتقات وقواعد التكامل والتطبيقات الحسابية.", en: "Practice derivatives, integrals and basic calculus applications." },
-  12: { ar: "احسب احتمالات أحداث مركبة، والتوافيق والمتوسطات الإحصائية.", en: "Explore combinations, repeated trials and statistical reasoning." },
-  13: { ar: "تعرّف إلى التدرج والمشتقات الجزئية والاتجاهية لدوال متعددة المتغيرات.", en: "Learn gradients, partial derivatives and directional derivatives." },
-  14: { ar: "تدرّب على المتجهات والمحددات والمصفوفات وخصائصها.", en: "Work with vectors, matrix determinants and linear algebra basics." },
-  15: { ar: "حل المعادلات التفاضلية بشروط ابتدائية وحساب قيم الدوال الناتجة.", en: "Solve differential equations with initial conditions." },
-  16: { ar: "استكشف النهايات والمتتاليات والتقارب والاتصال ونظرية القيمة الوسيطة.", en: "Study limits, convergence, continuity and the intermediate value theorem." },
-};
-
 
 interface CategoryPremiumCardProps {
   category: CategoryDto;
@@ -87,7 +65,6 @@ function CategoryPremiumCard({
   empty,
   publicPreview,
 }: CategoryPremiumCardProps) {
-  const [hintOpen, setHintOpen] = useState(false);
   const categoryName = locale === 'ar' ? category.NameAr : category.NameEn;
   const tip = locale === 'ar' ? 'هذه الفئة لحساب Premium' : 'Available with Premium';
   const body = (
@@ -101,7 +78,7 @@ function CategoryPremiumCard({
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border sm:h-14 sm:w-14"
           style={{ color: stageAccent, backgroundColor: `${stageAccent}11`, borderColor: `${stageAccent}25` }}>
           {iconUrl && (iconUrl.startsWith('https://') || iconUrl.startsWith('/'))
-            ? <Image src={iconUrl} alt="" width={30} height={30} className="h-7 w-7 object-contain" />
+            ? <Image src={iconUrl} alt="" unoptimized width={34} height={34} className="h-9 w-9 object-contain" />
             : iconUrl && iconUrl.length < 5
               ? <span className="text-2xl">{iconUrl}</span>
               : <span className="font-serif text-xl font-bold">{math.symbol}</span>}
@@ -113,9 +90,8 @@ function CategoryPremiumCard({
       <h3 className="relative mt-4 line-clamp-3 text-base font-extrabold leading-snug sm:text-lg"
         style={{ color: stageAccent }}>{categoryName}</h3>
       {publicPreview && <p className="relative mt-2 text-sm leading-6 text-muted-foreground">
-        {locale === 'ar'
-          ? (CATEGORY_EXPLANATIONS[category.Id]?.ar || `تعرّف إلى مفاهيم ${categoryName} والتدرب عليها.`)
-          : (CATEGORY_EXPLANATIONS[category.Id]?.en || `Explore the concepts and practice in ${categoryName}.`)}
+        {(locale === 'ar' ? category.DescriptionAr : category.DescriptionEn)?.trim()
+          || (locale === 'ar' ? `تعرّف إلى محتوى ${categoryName}.` : `Explore the ${categoryName} topic.`)}
       </p>}
       <div className="relative mt-auto flex min-h-9 items-end justify-between gap-2 border-t border-border/60 pt-3 text-xs font-semibold text-muted-foreground sm:text-sm">
         <span>{category.ProblemsCount ?? 0} {locale === 'ar' ? 'مسألة' : 'problems'}</span>
@@ -132,16 +108,13 @@ function CategoryPremiumCard({
       {publicPreview ? (
         <div className="h-full" aria-label={categoryName}>{body}</div>
       ) : locked ? (
-        <Tooltip open={hintOpen} onOpenChange={setHintOpen} delayDuration={120}>
-          <TooltipTrigger asChild>
-            <button type="button" onClick={() => setHintOpen(value => !value)}
-              className="block h-full w-full cursor-help rounded-2xl text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              aria-label={`${categoryName} — ${tip}`}>
-              {body}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{tip}</TooltipContent>
-        </Tooltip>
+        <LockedPremiumDialog topicName={categoryName}>
+          <button type="button"
+            className="block h-full w-full rounded-2xl text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            aria-label={`${categoryName} — ${tip}`}>
+            {body}
+          </button>
+        </LockedPremiumDialog>
       ) : empty ? (
         <div className="h-full opacity-75" aria-label={`${categoryName} — ${locale === 'ar' ? 'لا توجد مسائل' : 'No problems'}`}>{body}</div>
       ) : (
