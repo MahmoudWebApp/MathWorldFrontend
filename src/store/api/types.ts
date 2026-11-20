@@ -19,6 +19,7 @@ export interface ProblemPreview {
   RequiresLogin: boolean;
   Points?: number;
   IsSolved?: boolean;
+  HasAttempted?: boolean;
   IsFavorite?: boolean;
 }
 
