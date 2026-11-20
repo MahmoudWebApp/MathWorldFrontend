@@ -20,6 +20,12 @@ export async function generateMetadata({
   return {
     title: t('metadata.title'),
     description: t('metadata.description'),
+    alternates: {
+      canonical: `/${locale}`,
+      languages: { ar: '/ar', en: '/en' },
+    },
+    openGraph: { title: t('metadata.title'), description: t('metadata.description'),
+      locale: locale === 'ar' ? 'ar_AR' : 'en_US', images: ['/mathworld-logo.png'] },
   };
 }
 
