@@ -228,9 +228,10 @@ function OtherStagePremiumCard({
 // ==========================================
 interface StageCategoriesClientProps {
   stageId: number;
+  serverIntroProvided?: boolean;
 }
 
-export default function StageCategoriesClient({ stageId }: StageCategoriesClientProps) {
+export default function StageCategoriesClient({ stageId, serverIntroProvided = false }: StageCategoriesClientProps) {
   const t = useTranslations();
   const locale = useLocale();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
@@ -386,21 +387,18 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
               </div>
             </div>
             
-            <h1 className="brand-display-title mb-4 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl"
-              style={{ color: stageAccent }}>
-              {currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : t('categories.title')}
-            </h1>
-
-            <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-              {publicPreview ? (
-                locale === 'ar'
-                  ? ({1: 'ابدأ بالعمليات الحسابية والأعداد والهندسة والبيانات بأسلوب تدريجي.', 2: 'انتقل إلى الجبر والدوال والنسب والهندسة، وتدرّب على التفكير المنطقي.', 3: 'طوّر مهاراتك في المعادلات والمثلثات والتفاضل والاحتمالات.', 4: 'تعمّق في التحليل الرياضي والمصفوفات والتفاضل والمعادلات المتقدمة.'} as Record<number, string>)[stageId] || 'تعرّف إلى موضوعات هذه المرحلة قبل التسجيل.'
-                  : ({1: 'Build foundations in arithmetic, early algebra, shapes and data.', 2: 'Explore algebra, functions, ratios and geometry with step-by-step practice.', 3: 'Develop skills in equations, trigonometry, calculus and probability.', 4: 'Advance through mathematical analysis, matrices, multivariable calculus and equations.'} as Record<number, string>)[stageId] || 'Explore this stage before signing up.'
-              ) : t('categories.stageSubtitle', {
-                stage: currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : '',
-                defaultValue: t('categories.subtitle')
-              })}
-            </p>
+            {!serverIntroProvided && (
+              <>
+                <h1 className="brand-display-title mb-4 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl"
+                  style={{ color: stageAccent }}>
+                  {currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : t('categories.title')}
+                </h1>
+                <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
+                  {(locale === 'ar' ? currentStage?.DescriptionAr : currentStage?.DescriptionEn)?.trim()
+                    || (locale === 'ar' ? 'تعرّف إلى فئات هذه المرحلة ومسائلها.' : 'Explore this stage and its topics.')}
+                </p>
+              </>
+            )}
           </motion.div>
         </div>
 
