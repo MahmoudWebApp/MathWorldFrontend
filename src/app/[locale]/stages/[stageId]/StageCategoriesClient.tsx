@@ -14,7 +14,8 @@ import {
   LockKeyhole,
 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
-import Image from 'next/image';
+import { CategoryBrandIcon } from '@/components/categories/CategoryBrandIcon';
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } from 'framer-motion';
 import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
 import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
@@ -28,28 +29,6 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip
 // ==========================================
 
 type MathSymbol = (typeof MATH_CARD_SYMBOLS)[number];
-
-// Informational public topic explanations, matched to the existing canonical category IDs.
-// The server still owns category names, inventory, access rights and display order.
-const CATEGORY_EXPLANATIONS: Record<number, { ar: string; en: string }> = {
-  1: { ar: "تدرّب على الجمع والطرح والضرب والقسمة وحل مسائل حياتية بالأعداد.", en: "Practice arithmetic operations and number-based word problems." },
-  2: { ar: "اكتشف الأنماط وتسلسل الأعداد والمعادلات البسيطة وتمثيل المجهول.", en: "Explore patterns, sequences and simple equations." },
-  3: { ar: "تعرّف إلى الأشكال والزوايا والمحيط والمساحة ووحدات القياس.", en: "Study shapes, angles, area, perimeter and measurement units." },
-  4: { ar: "اقرأ البيانات، واحسب المتوسط والوسيط والمنوال، وافهم الاحتمال البسيط.", en: "Read data, calculate averages and explore basic probability." },
-  5: { ar: "تعمّق في القواسم والمضاعفات وقوانين الأسس والعمليات عليها.", en: "Explore divisibility, greatest common factors and exponent laws." },
-  6: { ar: "حل المعادلات وقيّم الدوال وافهم ميل المستقيم والتعبيرات الجبرية.", en: "Solve equations, evaluate functions and interpret linear relationships." },
-  7: { ar: "تدرّب على النسب والتناسب والخصومات والمقاييس في الحياة اليومية.", en: "Apply ratios, proportional reasoning, discounts and map scales." },
-  8: { ar: "استخدم فيثاغورس والتشابه والزوايا في استدلالات هندسية.", en: "Reason with Pythagoras, similarity, polygons and geometric proofs." },
-  9: { ar: "حلّل كثيرات الحدود وادرس الجذور والمعادلات التربيعية.", en: "Factor polynomials and work with quadratic roots and discriminants." },
-  10: { ar: "افهم الجيب وجيب التمام والظل وعلاقات المثلث القائم.", en: "Learn sine, cosine, tangent and right-triangle relationships." },
-  11: { ar: "تدرّب على المشتقات وقواعد التكامل والتطبيقات الحسابية.", en: "Practice derivatives, integrals and basic calculus applications." },
-  12: { ar: "احسب احتمالات أحداث مركبة، والتوافيق والمتوسطات الإحصائية.", en: "Explore combinations, repeated trials and statistical reasoning." },
-  13: { ar: "تعرّف إلى التدرج والمشتقات الجزئية والاتجاهية لدوال متعددة المتغيرات.", en: "Learn gradients, partial derivatives and directional derivatives." },
-  14: { ar: "تدرّب على المتجهات والمحددات والمصفوفات وخصائصها.", en: "Work with vectors, matrix determinants and linear algebra basics." },
-  15: { ar: "حل المعادلات التفاضلية بشروط ابتدائية وحساب قيم الدوال الناتجة.", en: "Solve differential equations with initial conditions." },
-  16: { ar: "استكشف النهايات والمتتاليات والتقارب والاتصال ونظرية القيمة الوسيطة.", en: "Study limits, convergence, continuity and the intermediate value theorem." },
-};
-
 
 interface CategoryPremiumCardProps {
   category: CategoryDto;
@@ -100,11 +79,7 @@ function CategoryPremiumCard({
       <div className="relative flex items-start justify-between gap-2">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border sm:h-14 sm:w-14"
           style={{ color: stageAccent, backgroundColor: `${stageAccent}11`, borderColor: `${stageAccent}25` }}>
-          {iconUrl && (iconUrl.startsWith('https://') || iconUrl.startsWith('/'))
-            ? <Image src={iconUrl} alt="" width={30} height={30} className="h-7 w-7 object-contain" />
-            : iconUrl && iconUrl.length < 5
-              ? <span className="text-2xl">{iconUrl}</span>
-              : <span className="font-serif text-xl font-bold">{math.symbol}</span>}
+          <CategoryBrandIcon value={iconUrl} alt={categoryName} size={42} />
         </div>
         {locked
           ? <LockKeyhole className="h-4 w-4 shrink-0 text-muted-foreground/75" aria-label={tip} />
@@ -114,8 +89,8 @@ function CategoryPremiumCard({
         style={{ color: stageAccent }}>{categoryName}</h3>
       {publicPreview && <p className="relative mt-2 text-sm leading-6 text-muted-foreground">
         {locale === 'ar'
-          ? (CATEGORY_EXPLANATIONS[category.Id]?.ar || `تعرّف إلى مفاهيم ${categoryName} والتدرب عليها.`)
-          : (CATEGORY_EXPLANATIONS[category.Id]?.en || `Explore the concepts and practice in ${categoryName}.`)}
+          ? category.DescriptionAr?.trim() || categoryName
+          : category.DescriptionEn?.trim() || categoryName}
       </p>}
       <div className="relative mt-auto flex min-h-9 items-end justify-between gap-2 border-t border-border/60 pt-3 text-xs font-semibold text-muted-foreground sm:text-sm">
         <span>{category.ProblemsCount ?? 0} {locale === 'ar' ? 'مسألة' : 'problems'}</span>
@@ -132,16 +107,26 @@ function CategoryPremiumCard({
       {publicPreview ? (
         <div className="h-full" aria-label={categoryName}>{body}</div>
       ) : locked ? (
-        <Tooltip open={hintOpen} onOpenChange={setHintOpen} delayDuration={120}>
-          <TooltipTrigger asChild>
-            <button type="button" onClick={() => setHintOpen(value => !value)}
-              className="block h-full w-full cursor-help rounded-2xl text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              aria-label={`${categoryName} — ${tip}`}>
-              {body}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{tip}</TooltipContent>
-        </Tooltip>
+        <Dialog open={hintOpen} onOpenChange={setHintOpen}>
+          <DialogTrigger asChild>
+            <button type="button" className="block h-full w-full rounded-2xl text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              aria-label={`${categoryName} — ${tip}`}>{body}</button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md rounded-3xl p-7">
+            <DialogTitle className="flex items-center gap-3 text-xl font-extrabold">
+              <LockKeyhole className="h-6 w-6 text-primary" />
+              {locale === 'ar' ? 'هذه الفئة ضمن Premium' : 'Premium topic'}
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-7">
+              {locale === 'ar' ? 'افتح كل فئات مرحلتك، اعرض الحل قبل الإجابة واستفد من التقارير الشخصية. يمكن تفعيل الاشتراك بكود من الإدارة، بدون أسعار حالياً.'
+                : 'Unlock every topic in your stage, preview solutions and access personal reports. Activate with an admin-issued code; no prices are shown.'}
+            </DialogDescription>
+            <Link href="/dashboard/upgrade" onClick={() => setHintOpen(false)}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">
+              {locale === 'ar' ? 'المميزات وترقية حسابي' : 'Benefits & upgrade'}
+            </Link>
+          </DialogContent>
+        </Dialog>
       ) : empty ? (
         <div className="h-full opacity-75" aria-label={`${categoryName} — ${locale === 'ar' ? 'لا توجد مسائل' : 'No problems'}`}>{body}</div>
       ) : (
@@ -421,11 +406,11 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
               {publicPreview ? (
                 locale === 'ar'
-                  ? ({1: 'ابدأ بالعمليات الحسابية والأعداد والهندسة والبيانات بأسلوب تدريجي.', 2: 'انتقل إلى الجبر والدوال والنسب والهندسة، وتدرّب على التفكير المنطقي.', 3: 'طوّر مهاراتك في المعادلات والمثلثات والتفاضل والاحتمالات.', 4: 'تعمّق في التحليل الرياضي والمصفوفات والتفاضل والمعادلات المتقدمة.'} as Record<number, string>)[stageId] || 'تعرّف إلى موضوعات هذه المرحلة قبل التسجيل.'
-                  : ({1: 'Build foundations in arithmetic, early algebra, shapes and data.', 2: 'Explore algebra, functions, ratios and geometry with step-by-step practice.', 3: 'Develop skills in equations, trigonometry, calculus and probability.', 4: 'Advance through mathematical analysis, matrices, multivariable calculus and equations.'} as Record<number, string>)[stageId] || 'Explore this stage before signing up.'
+                  ? currentStage?.DescriptionAr || ''
+                  : currentStage?.DescriptionEn || ''
               ) : t('categories.stageSubtitle', {
                 stage: currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : '',
-                defaultValue: t('categories.subtitle')
+                defaultValue: (locale === 'ar' ? currentStage?.DescriptionAr : currentStage?.DescriptionEn) || t('categories.subtitle')
               })}
             </p>
           </motion.div>
@@ -538,7 +523,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             ) : (
               <p className="text-sm text-muted-foreground">{locale === 'ar' ? 'تصفّح الفئات أعلاه للتعرّف إلى الموضوعات.' : 'Explore the topics above to learn about this stage.'}</p>
             )}
-            <Link href="/register" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+            <Link href={isStudent ? '/dashboard' : '/register'} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
               {locale === 'ar' ? 'ابدأ التعلم مجاناً' : 'Start learning for free'}
             </Link>
           </section>
