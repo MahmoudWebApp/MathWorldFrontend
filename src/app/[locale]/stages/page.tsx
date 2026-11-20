@@ -14,6 +14,8 @@ export async function generateMetadata({
   return {
     title: t('stagesTitle'),
     description: t('stagesDescription'),
+    alternates: { canonical: `/${locale}/stages`, languages: { ar: '/ar/stages', en: '/en/stages' } },
+    openGraph: { title: t('stagesTitle'), description: t('stagesDescription'), images: ['/mathworld-logo.png'] },
   };
 }
 
