@@ -39,7 +39,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
               className="text-lg font-bold leading-7 text-foreground transition-colors"
             />
             <div className="mt-3 flex flex-wrap gap-2">
-              {problem.IsSolved === true ? (
+              {typeof problem.IsSolved === "boolean" && typeof problem.HasAttempted === "boolean" && (problem.IsSolved === true ? (
                 <Badge variant="secondary" className="gap-1 border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   {locale === "ar" ? "محلولة" : "Solved"}
@@ -54,7 +54,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
                   <CircleDot className="h-3.5 w-3.5" />
                   {locale === "ar" ? "جديدة" : "New"}
                 </Badge>
-              )}
+              ))}
               {problem.StageName && (
                 <Badge variant="secondary" className="gap-1.5 border bg-background/80 text-foreground" style={{ borderColor: `${stageAccent}34` }}>
                   <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-transparent shadow-none" />
