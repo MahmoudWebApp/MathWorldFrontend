@@ -30,6 +30,8 @@ export default function AdminStagesPage() {
     Id: 0,
     NameAr: "",
     NameEn: "",
+    DescriptionAr: "",
+    DescriptionEn: "",
     Order: 1,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,6 +49,8 @@ export default function AdminStagesPage() {
           Data: {
             NameAr: formData.NameAr,
             NameEn: formData.NameEn,
+            DescriptionAr: formData.DescriptionAr,
+            DescriptionEn: formData.DescriptionEn,
             Order: formData.Order,
           },
         }).unwrap();
@@ -54,6 +58,8 @@ export default function AdminStagesPage() {
         await createStage({
           NameAr: formData.NameAr,
           NameEn: formData.NameEn,
+          DescriptionAr: formData.DescriptionAr,
+          DescriptionEn: formData.DescriptionEn,
           Order: formData.Order,
         }).unwrap();
       }
@@ -87,6 +93,8 @@ export default function AdminStagesPage() {
         Id: stage.Id,
         NameAr: stage.NameAr,
         NameEn: stage.NameEn,
+        DescriptionAr: stage.DescriptionAr ?? "",
+        DescriptionEn: stage.DescriptionEn ?? "",
         Order: stage.Order || 1,
       });
       setIsEditing(true);
@@ -98,7 +106,7 @@ export default function AdminStagesPage() {
   };
 
   const resetForm = () => {
-    setFormData({ Id: 0, NameAr: "", NameEn: "", Order: 1 });
+    setFormData({ Id: 0, NameAr: "", NameEn: "", DescriptionAr: "", DescriptionEn: "", Order: 1 });
   };
 
   if (isLoading)
@@ -278,6 +286,24 @@ export default function AdminStagesPage() {
                   required
                   dir="ltr"
                 />
+              </div>
+              <div>
+                <label htmlFor="stage-description-ar" className="block mb-1 text-sm font-medium">
+                  {ar ? "وصف المرحلة بالعربي" : "Stage description (Arabic)"}
+                </label>
+                <textarea id="stage-description-ar" rows={3} maxLength={1500} dir="rtl"
+                  className="w-full rounded-md border bg-background p-2"
+                  value={formData.DescriptionAr}
+                  onChange={e => setFormData({ ...formData, DescriptionAr: e.target.value })} />
+              </div>
+              <div>
+                <label htmlFor="stage-description-en" className="block mb-1 text-sm font-medium">
+                  {ar ? "وصف المرحلة بالإنجليزي" : "Stage description (English)"}
+                </label>
+                <textarea id="stage-description-en" rows={3} maxLength={1500} dir="ltr"
+                  className="w-full rounded-md border bg-background p-2"
+                  value={formData.DescriptionEn}
+                  onChange={e => setFormData({ ...formData, DescriptionEn: e.target.value })} />
               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium">
