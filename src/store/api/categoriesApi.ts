@@ -12,6 +12,8 @@ export interface CreateCategoryRequest {
   Order?: number;
   StageId: number;
   Icon?: File;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
 }
 
 export interface UpdateCategoryRequest {
@@ -28,6 +30,8 @@ export interface CategoryDto {
   NameEn: string;
   Name?: string;
   Icon: string;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
   StageId: number;
   Order: number;
   // Returned by updated backend; older API versions omit this field.
@@ -111,6 +115,8 @@ export const categoriesApi = createApi({
         const formData = new FormData();
         formData.append('NameAr', data.NameAr);
         formData.append('NameEn', data.NameEn);
+        formData.append('DescriptionAr', data.DescriptionAr ?? '');
+        formData.append('DescriptionEn', data.DescriptionEn ?? '');
         if (data.Order !== undefined) {
           formData.append('Order', data.Order.toString());
         }
@@ -135,6 +141,8 @@ export const categoriesApi = createApi({
         const formData = new FormData();
         if (Data.NameAr) formData.append('NameAr', Data.NameAr);
         if (Data.NameEn) formData.append('NameEn', Data.NameEn);
+        if (Data.DescriptionAr !== undefined) formData.append('DescriptionAr', Data.DescriptionAr);
+        if (Data.DescriptionEn !== undefined) formData.append('DescriptionEn', Data.DescriptionEn);
         if (Data.Order !== undefined) formData.append('Order', Data.Order.toString());
         if (Data.StageId !== undefined) formData.append('StageId', Data.StageId.toString());
         if (Data.Icon) {
