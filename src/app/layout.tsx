@@ -10,6 +10,7 @@ const alexandria = Alexandria({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://math-world-frontend.vercel.app'),
   title: {
     default: 'MathWorld',
     template: '%s | MathWorld',
