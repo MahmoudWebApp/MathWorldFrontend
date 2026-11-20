@@ -312,6 +312,23 @@ export default function UserDashboardPage() {
         {isArabic ? 'المتفوقون' : 'Leaderboard'}
       </Link>
 
+      {dashboard?.Role === "Student" && membership && !upgraded && (
+        <section className="math-card mb-7 rounded-3xl border border-primary/20 bg-primary/5 p-5 md:p-7" aria-label={isArabic ? 'ترقية الحساب' : 'Upgrade account'}>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-2xl">
+              <h2 className="text-lg font-extrabold text-foreground">{isArabic ? 'اكتشف مميزات Premium' : 'Explore Premium benefits'}</h2>
+              <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                {isArabic ? 'افتح كل فئات مرحلتك، شاهد الحل قبل الإجابة، واحصل على تقارير شخصية. الترقية حالياً بكود تمنحه إدارة MathWorld، بدون عرض أسعار.'
+                  : 'Unlock every topic in your stage, preview solutions and access personal reports. Activation currently uses an admin-issued code; no prices are listed.'}
+              </p>
+            </div>
+            <Link href="/premium" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+              {isArabic ? 'المميزات وترقية الحساب' : 'Benefits & upgrade'}
+            </Link>
+          </div>
+        </section>
+      )}
+
       <StudentAchievementsPanel />
 
       {/* Stats Grid */}
