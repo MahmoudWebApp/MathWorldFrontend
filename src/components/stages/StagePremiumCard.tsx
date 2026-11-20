@@ -49,7 +49,7 @@ export function StagePremiumCard({ stage, index, locale, locked = false }: Stage
         {locale === "ar" ? stage.NameAr : stage.NameEn}
       </h3>
       <p className="mb-6 text-sm leading-7 text-muted-foreground">
-        {t(`stages.stageDescriptions.${index}`, { defaultValue: "" })}
+        {(locale === 'ar' ? stage.DescriptionAr : stage.DescriptionEn)?.trim() || (locale === 'ar' ? stage.NameAr : stage.NameEn)}
       </p>
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/70 pt-4 text-sm font-bold"
         style={{ color: accent }}>
