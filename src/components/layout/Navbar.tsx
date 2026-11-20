@@ -156,7 +156,7 @@ function NavbarContent() {
   const learnerArea = pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
     pathname === '/learning-stage' || pathname.startsWith('/journey') ||
     pathname.startsWith('/social-accounts') ||
-    (user?.Role === 'Student' && (pathname.startsWith('/problems') || pathname.startsWith('/stages/')));
+    (user?.Role === 'Student' && (pathname === '/notifications' || pathname.startsWith('/problems') || pathname.startsWith('/stages/')));
   const portalArea = adminArea || learnerArea;
   const portalLanding = user?.Role === 'Admin' ? '/admin' : '/dashboard';
   const navItems = adminArea ? [

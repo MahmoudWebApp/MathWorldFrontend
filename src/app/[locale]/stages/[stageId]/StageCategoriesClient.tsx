@@ -19,7 +19,6 @@ import { motion, useMotionValue, useSpring, useTransform, useMotionTemplate } fr
 import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle } from '@/lib/brand';
 import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
-import { StudentStageAccessNotice } from '@/components/stages/StudentStageAccessNotice';
 import { RichText } from '@/components/ui/RichText';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
@@ -268,7 +267,9 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   const isAdmin = role === 'Admin';
   const isStudent = role === 'Student';
   const chosenStageId = useSelector((state: RootState) => state.auth.user?.CurrentStageId);
-  const wrongStudentStage = isStudent && (chosenStageId == null || stageId !== chosenStageId);
+  // Public information remains viewable to logged-in students too.
+  // For another stage, render a read-only curriculum guide; never enable solving.
+  const publicPreview = isGuest || (isStudent && (chosenStageId == null || stageId !== chosenStageId));
   // The JWT profile can lag behind an admin grant or a 100% code redemption.
   const {
     data: subscription,
@@ -282,7 +283,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
   // Public sample titles are informational only: no answers or solution previews.
   const { data: stageExamples, isLoading: examplesLoading } = useSearchProblemsQuery(
     { StageId: stageId, Page: 1, PageSize: 4, locale, Engine: 'postgresql' },
-    { skip: !isGuest || stageId <= 0 },
+    { skip: !publicPreview || stageId <= 0 },
   );
 
   
@@ -299,7 +300,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     isError: accessError,
     refetch: refetchAccess,
   } = useGetStageCategoryAccessQuery(stageId, {
-    skip: stageId <= 0 || wrongStudentStage,
+    skip: stageId <= 0,
     refetchOnMountOrArgChange: true,
   });
 
@@ -317,17 +318,13 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     }))
     .sort((a, b) => (a.Order || 0) - (b.Order || 0) || a.Id - b.Id);
   
-  const otherStages = isGuest ? sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []) : [];
+  const otherStages = publicPreview ? sortStagesByOrder(stages?.filter(s => s.Id !== stageId) || []) : [];
   // The admin may select a different Free pair. Always use the server IDs.
   const freeCategoryIds = new Set(stageAccess?.FreeCategoryIds ?? []);
   // Stage data is usable while a separate entitlement request is pending.
   // Until verified, only the server-designated Free categories open.
   const isLoading = stagesLoading || accessLoading;
   const stageNotFound = !isLoading && !!stages && !currentStage;
-
-  if (wrongStudentStage) {
-    return <StudentStageAccessNotice selectedStageId={chosenStageId} requestedStageId={stageId} />;
-  }
 
   if (stageNotFound) {
     return (
@@ -393,11 +390,11 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
         {/* Header Section */}
         <div className="mb-12 text-center md:text-start">
           <Link
-            href={isStudent ? '/dashboard' : '/stages'}
+            href={publicPreview ? '/stages' : '/dashboard'}
             className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors mb-6 group math-equation-chip bg-card/50 backdrop-blur-md px-4 py-2 rounded-full"
           >
             <DirectionalArrow direction="back" className="h-4 w-4 transition-transform group-hover:-translate-x-1 rtl:group-hover:translate-x-1" />
-            {isStudent ? (locale === 'ar' ? 'لوحة الطالب' : 'My dashboard') : t('stages.backToStages')}
+            {publicPreview ? t('stages.backToStages') : (locale === 'ar' ? 'لوحة الطالب' : 'My dashboard')}
           </Link>
           
           <motion.div 
@@ -422,7 +419,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </h1>
 
             <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-              {isGuest ? (
+              {publicPreview ? (
                 locale === 'ar'
                   ? ({1: 'ابدأ بالعمليات الحسابية والأعداد والهندسة والبيانات بأسلوب تدريجي.', 2: 'انتقل إلى الجبر والدوال والنسب والهندسة، وتدرّب على التفكير المنطقي.', 3: 'طوّر مهاراتك في المعادلات والمثلثات والتفاضل والاحتمالات.', 4: 'تعمّق في التحليل الرياضي والمصفوفات والتفاضل والمعادلات المتقدمة.'} as Record<number, string>)[stageId] || 'تعرّف إلى موضوعات هذه المرحلة قبل التسجيل.'
                   : ({1: 'Build foundations in arithmetic, early algebra, shapes and data.', 2: 'Explore algebra, functions, ratios and geometry with step-by-step practice.', 3: 'Develop skills in equations, trigonometry, calculus and probability.', 4: 'Advance through mathematical analysis, matrices, multivariable calculus and equations.'} as Record<number, string>)[stageId] || 'Explore this stage before signing up.'
@@ -439,6 +436,17 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             className="mb-4 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground">
             {locale === 'ar' ? 'تعذّر تحديث الصلاحيات، إعادة المحاولة' : 'Could not refresh access. Retry'}
           </button>
+        )}
+
+        {isStudent && publicPreview && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm">
+            <span>{locale === 'ar'
+              ? 'هذا عرض تعريفي فقط. لتدرس هذه المرحلة وتحفظ تقدّمك، غيّر مرحلتك من الإعدادات.'
+              : 'This is a public preview only. Switch your learning stage to practise and save progress.'}</span>
+            <Link href="/learning-stage" className="rounded-lg bg-primary px-4 py-2 font-bold text-primary-foreground">
+              {locale === 'ar' ? 'تغيير المرحلة' : 'Change stage'}
+            </Link>
+          </div>
         )}
 
         {/* Main Categories Grid */}
@@ -491,9 +499,9 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   stageId={stageId}
                   stageAccent={stageAccent}
                   iconUrl={iconUrl}
-                  locked={isAuthenticated && !isPremium && !freeCategoryIds.has(category.Id)}
+                  locked={!publicPreview && isAuthenticated && !isPremium && !freeCategoryIds.has(category.Id)}
                   empty={category.ProblemsCount === 0}
-                  publicPreview={isGuest}
+                  publicPreview={publicPreview}
                 />
               );
             })}
@@ -501,7 +509,7 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
         )}
 
         {/* Public stage guide: categories live on this page, not on separate public category pages. */}
-        {isGuest && (
+        {publicPreview && (
           <section className="mt-10 space-y-5 rounded-3xl border border-primary/15 bg-card/90 p-5 sm:p-8" aria-label={locale === 'ar' ? 'أمثلة من مسائل المرحلة' : 'Example problem titles'}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
