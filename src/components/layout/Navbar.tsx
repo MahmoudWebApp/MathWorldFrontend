@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { Link, usePathname, useRouter } from '@/i18n/routing';
@@ -8,8 +8,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '@/store';
 import { logout } from '@/store/slices/authSlice';
 import { setLocale } from '@/store/slices/localeSlice';
-import { useGetStagesQuery } from '@/store/api/stagesApi';
-import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
+ import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'; 
 import { 
   SearchNormal1, CloseCircle, User, Logout, ArrowDown2, Element3,
@@ -17,11 +16,9 @@ import {
 import {
   BookMarked,
   ChevronDown,
-  CircleCheckBig,
+   CircleCheckBig,
   Heart,
-  Info,
   Layers3,
-  LogIn,
   Menu,
   NotebookTabs,
   Search,
@@ -29,7 +26,6 @@ import {
   Moon,
   Monitor,
   Settings2,
-  UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
@@ -38,7 +34,6 @@ import { NotificationRealtimeSync } from '@/components/layout/NotificationRealti
 import { StudentPresenceHeartbeat } from '@/components/layout/StudentPresenceHeartbeat';
 import { notificationsApi } from '@/store/api/notificationsApi';
 import { ADMIN_NAV_ITEMS, AdminNavMobile } from '@/components/admin/AdminNavigation';
-import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
@@ -49,9 +44,7 @@ import { usersApi } from '@/store/api/usersApi';
 import { clearAuthSession } from '@/lib/authSession';
 import { API_BASE_URL } from '@/store/api/baseQuery';
 import { useSearchParams } from 'next/navigation';
-import { StageIconBadge } from '@/components/stages/StageIconBadge';
-import { sortStagesByOrder } from '@/lib/stageVisuals';
-
+  
 function NavbarContent() {
   const t = useTranslations();
   const locale = useLocale();
@@ -62,9 +55,7 @@ function NavbarContent() {
   const { theme, resolvedTheme, setTheme } = useTheme();
 
   const { user, isAuthenticated, isLoading, token } = useSelector((state: RootState) => state.auth);
-  const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
-  const orderedStages = sortStagesByOrder(stages ?? []);
-  const { data: subscription } = useGetStudentSubscriptionQuery(undefined, {
+   const { data: subscription } = useGetStudentSubscriptionQuery(undefined, {
     skip: !isAuthenticated || user?.Role !== 'Student',
     refetchOnMountOrArgChange: true,
   });
@@ -75,9 +66,7 @@ function NavbarContent() {
   const [showSearch, setShowSearch] = useState(false);
   const [navSearch, setNavSearch] = useState('');
   const [mounted, setMounted] = useState(false);
-  const [stagesMenuOpen, setStagesMenuOpen] = useState(false);
-  const stagesMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+ 
   // Scroll Progress Bar
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
@@ -87,18 +76,8 @@ function NavbarContent() {
     dispatch(setLocale(locale));
   }, [dispatch, locale]);
 
-  const handleStagesMouseEnter = () => {
-    if (stagesMenuTimeoutRef.current) clearTimeout(stagesMenuTimeoutRef.current);
-    setStagesMenuOpen(true);
-  };
-
-  const handleStagesMouseLeave = () => {
-    stagesMenuTimeoutRef.current = setTimeout(() => setStagesMenuOpen(false), 200);
-  };
-
   useEffect(() => {
-    setStagesMenuOpen(false);
-    setMobileMenuOpen(false);
+     setMobileMenuOpen(false);
     setUserMenuOpen(false);
     setShowSearch(false);
   }, [pathname]);
@@ -171,8 +150,33 @@ function NavbarContent() {
     }
   };
 
-  const isStagesActive = pathname.startsWith('/stages');
-  const isAboutActive = pathname.startsWith('/about');
+  // The public website and the learner/admin workspaces share this one domain,
+  // but expose purpose-built navigation instead of one mixed list of links.
+  const adminArea = pathname === '/admin' || pathname.startsWith('/admin/');
+  const learnerArea = pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
+    pathname === '/learning-stage' || pathname.startsWith('/journey') ||
+    pathname.startsWith('/social-accounts') ||
+    (user?.Role === 'Student' && (pathname.startsWith('/problems') || pathname.startsWith('/stages/')));
+  const portalArea = adminArea || learnerArea;
+  const portalLanding = user?.Role === 'Admin' ? '/admin' : '/dashboard';
+  const navItems = adminArea ? [
+    { href: '/admin', ar: 'لوحة الإدارة', en: 'Admin home' },
+    { href: '/admin/users', ar: 'الطلاب', en: 'Learners' },
+    { href: '/admin/stages', ar: 'المراحل', en: 'Stages' },
+    { href: '/admin/categories', ar: 'الفئات', en: 'Categories' },
+    { href: '/admin/problems', ar: 'المسائل', en: 'Problems' },
+  ] : learnerArea ? [
+    { href: '/dashboard', ar: 'لوحتي', en: 'My dashboard' },
+    { href: user?.CurrentStageId ? `/stages/${user.CurrentStageId}` : '/learning-stage', ar: 'تابع التعلم', en: 'Continue learning' },
+    { href: '/dashboard/favorites', ar: 'المفضلة', en: 'Favorites' },
+    { href: '/dashboard/analytics', ar: 'تقدّمي', en: 'My progress' },
+    { href: '/premium', ar: hasUpgraded ? 'مميزات حسابي' : 'ترقية الحساب', en: hasUpgraded ? 'My benefits' : 'Upgrade' },
+  ] : [
+    { href: '/', ar: 'الرئيسية', en: 'Home' },
+    { href: '/stages', ar: 'المراحل والفئات', en: 'Stages & topics' },
+    { href: '/premium', ar: 'Free و Premium', en: 'Free vs Premium' },
+    { href: '/about', ar: 'عن المنصة', en: 'About' },
+  ];
 
   return (
     <>
@@ -189,94 +193,28 @@ function NavbarContent() {
         <nav className="container mx-auto flex h-16 min-w-0 items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6 lg:px-12">
           
           <Link
-            href="/"
+            href={portalArea ? portalLanding : '/'}
             className="group flex shrink-0 items-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="MathWorld"
           >
             <BrandLogo compact className="transition-transform duration-300 group-hover:scale-[1.025]" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-2 flex-1 justify-center">
-            <Link
-              href="/"
-              className={cn(
-                'px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300',
-                pathname === '/' ? 'bg-primary/10 text-primary shadow-inner' : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
-              )}
-            >
-              {t('nav.home')}
-            </Link>
-            
-            {user?.Role === 'Student' && user.CurrentStageId ? (
-              <Link href={`/stages/${user.CurrentStageId}`}
-                className={cn('rounded-xl px-4 py-2 text-sm font-semibold transition-colors hover:bg-muted/80',
-                  isStagesActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground')}>
-                {locale === 'ar' ? 'فئات مرحلتي' : 'My stage topics'}
+          {/* Public, learner and admin have independent menu choices. */}
+          <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+            {navItems.map((item) => (
+              <Link key={item.href} href={item.href}
+                className={cn('whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors',
+                  pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href + '/'))
+                    ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/80 hover:text-foreground')}>
+                {locale === 'ar' ? item.ar : item.en}
               </Link>
-            ) : (
-            <div className="relative" onMouseEnter={handleStagesMouseEnter} onMouseLeave={handleStagesMouseLeave}>
-              <Link
-                href="/stages"
-                className={cn(
-                  'px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-1.5',
-                  isStagesActive ? 'bg-primary/10 text-primary shadow-inner' : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
-                )}
-              >
-                {t('nav.stages')}
-                <ChevronDown className={cn('h-4 w-4 transition-transform duration-300', stagesMenuOpen && 'rotate-180')} />
-              </Link>
-
-           <AnimatePresence>
-                {stagesMenuOpen && stages && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="absolute top-full start-1/2 -translate-x-1/2 rtl:translate-x-1/2 mt-3 w-[400px] rounded-2xl border bg-popover/95 backdrop-blur-xl p-3 shadow-2xl overflow-hidden"
-                  >
-                    {/* Math Grid Background inside dropdown */}
-                    <div className="absolute inset-0 math-grid-bg opacity-10 pointer-events-none" />
-                    
-                    <div className="relative z-10">
-                      <Link href="/stages" className="flex items-center justify-between px-4 py-3 bg-muted/50 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors mb-3 group">
-                        <span className="font-bold">{t('stages.allStages')}</span>
-                        <DirectionalArrow direction="forward" className="h-4 w-4 transition-transform group-hover:scale-110" />
-                      </Link>
-                      
-                      <div className="grid grid-cols-2 gap-2">
-                        {orderedStages.map((stage) => {
-                          return (
-                            <Link key={stage.Id} href={`/stages/${stage.Id}`} className="group flex items-center gap-3 p-3 rounded-xl hover:bg-primary/5 border border-transparent hover:border-primary/10 transition-all">
-                              <StageIconBadge
-                                stage={stage}
-                                size="sm"
-                                className="transition-all duration-300 group-hover:scale-110 group-hover:shadow-md"
-                              />
-                              <span className="text-sm font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
-                                {locale === 'ar' ? stage.NameAr : stage.NameEn}
-                              </span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            )}
-            <Link
-              href="/about"
-              className={cn(
-                'px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300',
-                isAboutActive ? 'bg-primary/10 text-primary shadow-inner' : 'text-muted-foreground hover:text-foreground hover:bg-muted/80'
-              )}
-            >
-              {t('nav.about')}
-            </Link>
+            ))}
+            {(portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding}
+              className="whitespace-nowrap rounded-xl border border-primary/25 px-3 py-2 text-sm font-bold text-primary hover:bg-primary/10">
+              {portalArea ? (locale === 'ar' ? 'الذهاب إلى الموقع' : 'Visit website')
+                : (locale === 'ar' ? 'لوحة التحكم' : 'Go to dashboard')}
+            </Link>}
           </div>
 
           {/* Actions & Search */}
@@ -471,146 +409,48 @@ function NavbarContent() {
               </div>
             )}
 
-            <Button variant="ghost" size="icon" aria-label={locale === 'ar' ? (mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة') : (mobileMenuOpen ? 'Close menu' : 'Open menu')} aria-controls="mathworld-mobile-menu" aria-expanded={mobileMenuOpen} className="h-9 w-9 shrink-0 rounded-full md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <Button variant="ghost" size="icon" aria-label={locale === 'ar' ? (mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة') : (mobileMenuOpen ? 'Close menu' : 'Open menu')} aria-controls="mathworld-mobile-menu" aria-expanded={mobileMenuOpen} className="h-9 w-9 shrink-0 rounded-full lg:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <CloseCircle className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </nav>
 
-        {/* Mobile Menu with Framer Motion */}
+        {/* Compact navigation stays within the current public/learner/admin space. */}
         <AnimatePresence>
           {mobileMenuOpen && (
-            <motion.div 
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              id="mathworld-mobile-menu"
-              className="max-h-[calc(100dvh-4rem)] space-y-3 overflow-y-auto overscroll-contain border-t bg-background/95 px-4 py-4 backdrop-blur-xl md:hidden"
-            >
-              {/* Mobile Search */}
-              <form onSubmit={handleNavSearch} className="relative mb-4">
-                <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" />
-                <input type="text" value={navSearch} onChange={(e) => setNavSearch(e.target.value)}
-                  placeholder={t('search.placeholder')}
-                  className="w-full ps-10 pe-4 py-3 rounded-xl border-2 border-primary/20 bg-primary/5 text-base outline-none focus:border-primary transition-colors" />
-              </form>
-
-              <Link href="/" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', pathname === '/' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
-                <Layers3 className="h-5 w-5" />
-                {t('nav.home')}
-              </Link>
-              
-              {user?.Role === 'Student' && user.CurrentStageId ? (
-                <Link href={`/stages/${user.CurrentStageId}`}
-                  className={cn('flex items-center gap-3 rounded-xl px-4 py-3 font-semibold',
-                    isStagesActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')}
-                  onClick={() => setMobileMenuOpen(false)}>
-                  <BookMarked className="h-5 w-5" />
-                  {locale === 'ar' ? 'فئات مرحلتي' : 'My stage topics'}
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }} id="mathworld-mobile-menu"
+              className="max-h-[calc(100dvh-4rem)] space-y-2 overflow-y-auto border-t bg-background/95 px-4 py-4 backdrop-blur-xl lg:hidden">
+              <p className="px-3 text-xs font-bold text-muted-foreground">
+                {adminArea ? (locale === 'ar' ? 'قائمة الإدارة' : 'Admin menu')
+                  : learnerArea ? (locale === 'ar' ? 'قائمة الطالب' : 'Learner menu')
+                    : (locale === 'ar' ? 'الموقع العام' : 'Public website')}
+              </p>
+              {navItems.map(item => (
+                <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}
+                  className={cn('flex min-h-11 items-center rounded-xl px-4 py-3 text-sm font-semibold',
+                    pathname === item.href ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}>
+                  {locale === 'ar' ? item.ar : item.en}
                 </Link>
-              ) : (
+              ))}
+              {adminArea && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
+              {(portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding} onClick={() => setMobileMenuOpen(false)}
+                className="flex min-h-11 items-center rounded-xl border border-primary/25 px-4 py-3 text-sm font-bold text-primary">
+                {portalArea ? (locale === 'ar' ? 'العودة إلى الموقع' : 'Back to website')
+                  : (locale === 'ar' ? 'الذهاب إلى لوحة التحكم' : 'Go to dashboard')}
+              </Link>}
+              {isAuthenticated && user ? (
                 <>
-              <Link href="/stages" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', isStagesActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
-                <BookMarked className="h-5 w-5" />
-                {t('nav.stages')}
-              </Link>
-
-              {orderedStages.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border/60 bg-muted/20 p-2">
-                  {orderedStages.map((stage) => (
-                    <Link
-                      key={stage.Id}
-                      href={`/stages/${stage.Id}`}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-background/80 hover:text-foreground"
-                    >
-                      <StageIconBadge stage={stage} size="sm" className="h-9 w-9 rounded-lg" />
-                      <span className="truncate">{locale === 'ar' ? stage.NameAr : stage.NameEn}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-
-                </>
-              )}
-              <Link href="/about" className={cn('flex items-center gap-3 px-4 py-3 rounded-xl font-semibold', isAboutActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted')} onClick={() => setMobileMenuOpen(false)}>
-                <Info className="h-5 w-5" />
-                {t('nav.about')}
-              </Link>
-
-              <div className="my-2 h-px bg-border" />
-
-              {!mounted || isLoading ? (
-                <div className="h-24 animate-pulse rounded-xl bg-muted" />
-              ) : isAuthenticated && user ? (
-                <div className="space-y-2">
-                  <div className="rounded-xl border bg-muted/30 px-4 py-3">
-                    <p className="truncate text-sm font-semibold">
-                      {user.FullName || user.Email?.split('@')[0] || t('nav.user')}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">{user.Email}</p>
-                  </div>
-
-                  {user.Role !== 'Admin' && (
-                    <>
-
-                  <Link href="/dashboard" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    <Element3 className="h-5 w-5" />
-                    {t('nav.dashboard')}
-                  </Link>
-                  <Link href="/dashboard/favorites" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    <Heart className="h-5 w-5" />
-                    {t('nav.favorites')}
-                  </Link>
-                  <Link href="/dashboard/solved" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    <CircleCheckBig className="h-5 w-5" />
-                    {t('nav.solved')}
-                  </Link>
-                  <Link href="/dashboard/error-notebook" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    <NotebookTabs className="h-5 w-5" />
-                    {t('nav.errorNotebook')}
-                  </Link>
-                  <Link href="/dashboard/settings" className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>
-                    <Settings2 className="h-5 w-5" />
-                    {locale === 'ar' ? 'إعدادات الحساب' : 'Account settings'}
-                  </Link>
-                  <Link href="/learning-stage"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
-                    onClick={() => setMobileMenuOpen(false)}>
-                    <BookMarked className="h-5 w-5" />
-                    {locale === 'ar' ? 'تغيير المرحلة التعليمية' : 'Change learning stage'}
-                  </Link>
-
-                    </>
-                  )}
-                  {user.Role === 'Admin' && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      handleLogout();
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-destructive hover:bg-destructive/10"
-                  >
-                    <Logout className="h-5 w-5" />
-                    {t('nav.logout')}
+                  <div className="mt-2 border-t px-4 py-3 text-xs text-muted-foreground">{user.Email}</div>
+                  <button type="button" onClick={() => { setMobileMenuOpen(false); void handleLogout(); }}
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-destructive hover:bg-destructive/10">
+                    <Logout className="h-5 w-5" />{t('nav.logout')}
                   </button>
-                </div>
+                </>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="gap-2 rounded-xl" asChild>
-                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                      <LogIn className="h-4 w-4" />
-                      {t('nav.login')}
-                    </Link>
-                  </Button>
-                  <Button className="gap-2 rounded-xl" asChild>
-                    <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                      <UserPlus className="h-4 w-4" />
-                      {t('nav.register')}
-                    </Link>
-                  </Button>
+                <div className="grid grid-cols-2 gap-3 border-t pt-3">
+                  <Button variant="outline" asChild><Link href="/login" onClick={() => setMobileMenuOpen(false)}>{t('nav.login')}</Link></Button>
+                  <Button asChild><Link href="/register" onClick={() => setMobileMenuOpen(false)}>{t('nav.register')}</Link></Button>
                 </div>
               )}
             </motion.div>

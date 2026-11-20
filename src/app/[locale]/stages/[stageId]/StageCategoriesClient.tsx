@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery, type CategoryDto } from '@/store/api/categoriesApi';
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
+import { useSearchProblemsQuery } from '@/store/api/problemsApi';
 import {
   AlertCircle,
   Filter,
@@ -19,6 +20,7 @@ import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle
 import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { StudentStageAccessNotice } from '@/components/stages/StudentStageAccessNotice';
+import { RichText } from '@/components/ui/RichText';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip';
 
@@ -27,6 +29,28 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/Tooltip
 // ==========================================
 
 type MathSymbol = (typeof MATH_CARD_SYMBOLS)[number];
+
+// Informational public topic explanations, matched to the existing canonical category IDs.
+// The server still owns category names, inventory, access rights and display order.
+const CATEGORY_EXPLANATIONS: Record<number, { ar: string; en: string }> = {
+  1: { ar: "تدرّب على الجمع والطرح والضرب والقسمة وحل مسائل حياتية بالأعداد.", en: "Practice arithmetic operations and number-based word problems." },
+  2: { ar: "اكتشف الأنماط وتسلسل الأعداد والمعادلات البسيطة وتمثيل المجهول.", en: "Explore patterns, sequences and simple equations." },
+  3: { ar: "تعرّف إلى الأشكال والزوايا والمحيط والمساحة ووحدات القياس.", en: "Study shapes, angles, area, perimeter and measurement units." },
+  4: { ar: "اقرأ البيانات، واحسب المتوسط والوسيط والمنوال، وافهم الاحتمال البسيط.", en: "Read data, calculate averages and explore basic probability." },
+  5: { ar: "تعمّق في القواسم والمضاعفات وقوانين الأسس والعمليات عليها.", en: "Explore divisibility, greatest common factors and exponent laws." },
+  6: { ar: "حل المعادلات وقيّم الدوال وافهم ميل المستقيم والتعبيرات الجبرية.", en: "Solve equations, evaluate functions and interpret linear relationships." },
+  7: { ar: "تدرّب على النسب والتناسب والخصومات والمقاييس في الحياة اليومية.", en: "Apply ratios, proportional reasoning, discounts and map scales." },
+  8: { ar: "استخدم فيثاغورس والتشابه والزوايا في استدلالات هندسية.", en: "Reason with Pythagoras, similarity, polygons and geometric proofs." },
+  9: { ar: "حلّل كثيرات الحدود وادرس الجذور والمعادلات التربيعية.", en: "Factor polynomials and work with quadratic roots and discriminants." },
+  10: { ar: "افهم الجيب وجيب التمام والظل وعلاقات المثلث القائم.", en: "Learn sine, cosine, tangent and right-triangle relationships." },
+  11: { ar: "تدرّب على المشتقات وقواعد التكامل والتطبيقات الحسابية.", en: "Practice derivatives, integrals and basic calculus applications." },
+  12: { ar: "احسب احتمالات أحداث مركبة، والتوافيق والمتوسطات الإحصائية.", en: "Explore combinations, repeated trials and statistical reasoning." },
+  13: { ar: "تعرّف إلى التدرج والمشتقات الجزئية والاتجاهية لدوال متعددة المتغيرات.", en: "Learn gradients, partial derivatives and directional derivatives." },
+  14: { ar: "تدرّب على المتجهات والمحددات والمصفوفات وخصائصها.", en: "Work with vectors, matrix determinants and linear algebra basics." },
+  15: { ar: "حل المعادلات التفاضلية بشروط ابتدائية وحساب قيم الدوال الناتجة.", en: "Solve differential equations with initial conditions." },
+  16: { ar: "استكشف النهايات والمتتاليات والتقارب والاتصال ونظرية القيمة الوسيطة.", en: "Study limits, convergence, continuity and the intermediate value theorem." },
+};
+
 
 interface CategoryPremiumCardProps {
   category: CategoryDto;
@@ -39,6 +63,7 @@ interface CategoryPremiumCardProps {
   iconUrl?: string | null;
   locked: boolean;
   empty: boolean;
+  publicPreview: boolean;
 }
 
 interface OtherStagePremiumCardProps {
@@ -61,6 +86,7 @@ function CategoryPremiumCard({
   iconUrl,
   locked,
   empty,
+  publicPreview,
 }: CategoryPremiumCardProps) {
   const [hintOpen, setHintOpen] = useState(false);
   const categoryName = locale === 'ar' ? category.NameAr : category.NameEn;
@@ -87,9 +113,14 @@ function CategoryPremiumCard({
       </div>
       <h3 className="relative mt-4 line-clamp-3 text-base font-extrabold leading-snug sm:text-lg"
         style={{ color: stageAccent }}>{categoryName}</h3>
+      {publicPreview && <p className="relative mt-2 text-sm leading-6 text-muted-foreground">
+        {locale === 'ar'
+          ? (CATEGORY_EXPLANATIONS[category.Id]?.ar || `تعرّف إلى مفاهيم ${categoryName} والتدرب عليها.`)
+          : (CATEGORY_EXPLANATIONS[category.Id]?.en || `Explore the concepts and practice in ${categoryName}.`)}
+      </p>}
       <div className="relative mt-auto flex min-h-9 items-end justify-between gap-2 border-t border-border/60 pt-3 text-xs font-semibold text-muted-foreground sm:text-sm">
         <span>{category.ProblemsCount ?? 0} {locale === 'ar' ? 'مسألة' : 'problems'}</span>
-        {!locked && !empty && <span style={{ color: stageAccent }}>
+        {!publicPreview && !locked && !empty && <span style={{ color: stageAccent }}>
           {locale === 'ar' ? 'استكشف' : 'Explore'}
         </span>}
       </div>
@@ -99,7 +130,9 @@ function CategoryPremiumCard({
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.24) }} className="h-full">
-      {locked ? (
+      {publicPreview ? (
+        <div className="h-full" aria-label={categoryName}>{body}</div>
+      ) : locked ? (
         <Tooltip open={hintOpen} onOpenChange={setHintOpen} delayDuration={120}>
           <TooltipTrigger asChild>
             <button type="button" onClick={() => setHintOpen(value => !value)}
@@ -246,6 +279,11 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
     refetchOnMountOrArgChange: true,
   });
   const isPremium = isAdmin || (isStudent && subscription?.IsPremium === true);
+  // Public sample titles are informational only: no answers or solution previews.
+  const { data: stageExamples, isLoading: examplesLoading } = useSearchProblemsQuery(
+    { StageId: stageId, Page: 1, PageSize: 4, locale, Engine: 'postgresql' },
+    { skip: !isGuest || stageId <= 0 },
+  );
 
   
   const {
@@ -384,7 +422,11 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
             </h1>
 
             <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-              {t('categories.stageSubtitle', { 
+              {isGuest ? (
+                locale === 'ar'
+                  ? ({1: 'ابدأ بالعمليات الحسابية والأعداد والهندسة والبيانات بأسلوب تدريجي.', 2: 'انتقل إلى الجبر والدوال والنسب والهندسة، وتدرّب على التفكير المنطقي.', 3: 'طوّر مهاراتك في المعادلات والمثلثات والتفاضل والاحتمالات.', 4: 'تعمّق في التحليل الرياضي والمصفوفات والتفاضل والمعادلات المتقدمة.'} as Record<number, string>)[stageId] || 'تعرّف إلى موضوعات هذه المرحلة قبل التسجيل.'
+                  : ({1: 'Build foundations in arithmetic, early algebra, shapes and data.', 2: 'Explore algebra, functions, ratios and geometry with step-by-step practice.', 3: 'Develop skills in equations, trigonometry, calculus and probability.', 4: 'Advance through mathematical analysis, matrices, multivariable calculus and equations.'} as Record<number, string>)[stageId] || 'Explore this stage before signing up.'
+              ) : t('categories.stageSubtitle', {
                 stage: currentStage ? (locale === 'ar' ? currentStage.NameAr : currentStage.NameEn) : '',
                 defaultValue: t('categories.subtitle')
               })}
@@ -451,10 +493,47 @@ export default function StageCategoriesClient({ stageId }: StageCategoriesClient
                   iconUrl={iconUrl}
                   locked={isAuthenticated && !isPremium && !freeCategoryIds.has(category.Id)}
                   empty={category.ProblemsCount === 0}
+                  publicPreview={isGuest}
                 />
               );
             })}
           </div>
+        )}
+
+        {/* Public stage guide: categories live on this page, not on separate public category pages. */}
+        {isGuest && (
+          <section className="mt-10 space-y-5 rounded-3xl border border-primary/15 bg-card/90 p-5 sm:p-8" aria-label={locale === 'ar' ? 'أمثلة من مسائل المرحلة' : 'Example problem titles'}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
+                  {locale === 'ar' ? 'أمثلة من مسائل هذه المرحلة' : 'Sample questions from this stage'}
+                </h2>
+                <p className="mt-2 text-sm leading-7 text-muted-foreground">
+                  {locale === 'ar' ? 'نعرض عناوين الأسئلة فقط. سجّل حساباً لتبدأ الحل وتحفظ تقدّمك.'
+                    : 'Question titles only. Create an account to solve problems and save your progress.'}
+                </p>
+              </div>
+              <Link href="/premium" className="rounded-xl border border-primary/25 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10">
+                {locale === 'ar' ? 'مقارنة Free وPremium' : 'Compare Free and Premium'}
+              </Link>
+            </div>
+            {examplesLoading ? (
+              <p role="status" className="text-sm text-muted-foreground">{locale === 'ar' ? 'جارٍ تحميل الأمثلة...' : 'Loading examples...'}</p>
+            ) : stageExamples?.Results?.length ? (
+              <ol className="grid gap-3 sm:grid-cols-2">
+                {stageExamples.Results.slice(0, 4).map(problem => (
+                  <li key={problem.Id} className="rounded-2xl border border-border bg-background/70 px-4 py-4 text-sm font-semibold leading-7 text-foreground">
+                    <RichText text={problem.Title} isArabic={locale === 'ar'} className="text-sm font-semibold leading-7" />
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="text-sm text-muted-foreground">{locale === 'ar' ? 'تصفّح الفئات أعلاه للتعرّف إلى الموضوعات.' : 'Explore the topics above to learn about this stage.'}</p>
+            )}
+            <Link href="/register" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+              {locale === 'ar' ? 'ابدأ التعلم مجاناً' : 'Start learning for free'}
+            </Link>
+          </section>
         )}
 
         {/* Enhanced Other Stages Section */}

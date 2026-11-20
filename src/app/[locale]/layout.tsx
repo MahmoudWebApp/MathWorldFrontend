@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { isAppLocale, routing } from '@/i18n/routing';
 import { Providers } from '@/components/providers/Providers';
 import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
+import { ContextualFooter } from '@/components/layout/ContextualFooter';
 import { MathBackground } from '@/components/math/MathBackground';
 
 
@@ -59,7 +59,7 @@ export default async function LocaleLayout({
       <Providers locale={locale} messages={messages} timeZone={timeZone}>
         <Navbar />
         <main className="relative z-10 flex-1">{children}</main>
-        <Footer />
+        <ContextualFooter />
       </Providers>
     </div>
   );
