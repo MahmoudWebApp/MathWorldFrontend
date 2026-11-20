@@ -7,6 +7,8 @@ export interface Stage {
   Id: number;
   NameAr: string;
   NameEn: string;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
   Order: number;
 }
 
@@ -53,6 +55,8 @@ export interface DailyChallenge {
 export interface CreateStageRequest {
   NameAr: string;
   NameEn: string;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
   Order: number;
 }
 
