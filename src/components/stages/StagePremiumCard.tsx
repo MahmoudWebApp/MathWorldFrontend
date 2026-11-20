@@ -18,7 +18,7 @@ interface StagePremiumCardProps {
 }
 
 /** A calm alternative to the original 3D rotating stage card. */
-export function StagePremiumCard({ stage, index, locale, locked = false }: StagePremiumCardProps) {
+export function StagePremiumCard({ stage, locale, locked = false }: StagePremiumCardProps) {
   const t = useTranslations();
   const visual = getStageVisual(stage);
   const accent = getStageAccent(stage);
