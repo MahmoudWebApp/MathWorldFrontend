@@ -79,7 +79,7 @@ export default function UserDashboardPage() {
 
   const journeyLabels = isArabic
     ? {
-        title: "رحلتي التعليمية",
+        title: "تقدّمي",
         progress: "نسبة إنجاز المرحلة",
         attempted: "مسائل تمت تجربتها",
         solved: "مسائل تم حلها",
@@ -89,7 +89,7 @@ export default function UserDashboardPage() {
         practice: "ابدأ حل المسائل",
       }
     : {
-        title: "My learning journey",
+        title: "My progress",
         progress: "Stage completion",
         attempted: "Problems attempted",
         solved: "Problems solved",
@@ -182,7 +182,7 @@ export default function UserDashboardPage() {
       <section aria-label={isArabic ? 'خطوتك التالية' : 'Your next step'}
         className="mb-6 rounded-3xl border border-primary/25 bg-primary/5 p-5 md:p-7">
         <p className="mb-2 text-sm font-bold text-primary">
-          {isArabic ? 'فئات مرحلتي' : 'My stage topics'}
+          {isArabic ? 'تابع التعلم' : 'Continue learning'}
         </p>
         <h2 className="text-xl font-extrabold sm:text-2xl">
           {stageId
@@ -287,24 +287,9 @@ export default function UserDashboardPage() {
                   </span>
                 </Link>
               )}
-              <h3 className="mb-3 text-sm font-semibold">{journeyLabels.categories}</h3>
-              <div className="mb-5 grid gap-2 sm:grid-cols-2">
-                {journey.Categories.filter(category => category.IsLocked === false).slice(0, 4).map((category) => (
-                  <div key={category.CategoryId} className="rounded-xl border border-border p-3">
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-                      <span>{isArabic ? category.NameAr : category.NameEn}</span>
-                      <span className="font-medium text-primary">{category.SolvedProblems}/{category.TotalProblems}</span>
-                    </div>
-                    <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500"
-                        style={{ width: `${category.CompletionPercent}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
               <Link href={`/stages/${journey.StageId}`}
                 className="inline-flex rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                {isArabic ? 'عرض كل فئات مرحلتي' : 'See all topics in my stage'}
+                {isArabic ? 'الفئات' : 'Topics'}
               </Link>
             </>
           )}
@@ -324,7 +309,7 @@ export default function UserDashboardPage() {
         className="mb-8 ms-3 inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
       >
         <Trophy className="h-4 w-4" aria-hidden="true" />
-        {isArabic ? 'ترتيب طلاب مرحلتي' : 'My stage leaderboard'}
+        {isArabic ? 'المتفوقون' : 'Leaderboard'}
       </Link>
 
       <StudentAchievementsPanel />
