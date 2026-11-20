@@ -15,11 +15,10 @@ import {
 } from 'iconsax-reactjs';
 import {
   BookMarked,
+  ChevronDown,
    CircleCheckBig,
   Heart,
-  Info,
   Layers3,
-  LogIn,
   Menu,
   NotebookTabs,
   Search,
@@ -27,7 +26,6 @@ import {
   Moon,
   Monitor,
   Settings2,
-  UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
@@ -36,7 +34,6 @@ import { NotificationRealtimeSync } from '@/components/layout/NotificationRealti
 import { StudentPresenceHeartbeat } from '@/components/layout/StudentPresenceHeartbeat';
 import { notificationsApi } from '@/store/api/notificationsApi';
 import { ADMIN_NAV_ITEMS, AdminNavMobile } from '@/components/admin/AdminNavigation';
-import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
