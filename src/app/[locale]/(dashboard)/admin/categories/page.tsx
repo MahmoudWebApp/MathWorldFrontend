@@ -72,10 +72,12 @@ function AdminCategoriesPageContent() {
     Id?: number;
     NameAr: string;
     NameEn: string;
+    DescriptionAr: string;
+    DescriptionEn: string;
     Order?: number;
     StageId?: number;
     Icon?: File | null;
-  }>({ NameAr: "", NameEn: "", Order: 0, StageId: undefined, Icon: null });
+  }>({ NameAr: "", NameEn: "", DescriptionAr: "", DescriptionEn: "", Order: 0, StageId: undefined, Icon: null });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -140,6 +142,8 @@ function AdminCategoriesPageContent() {
           Data: {
             NameAr: formData.NameAr,
             NameEn: formData.NameEn,
+            DescriptionAr: formData.DescriptionAr,
+            DescriptionEn: formData.DescriptionEn,
             Order: formData.Order,
             StageId: selectedStageId,
             Icon: formData.Icon || undefined,
@@ -149,6 +153,8 @@ function AdminCategoriesPageContent() {
         await createCategory({
           NameAr: formData.NameAr,
           NameEn: formData.NameEn,
+          DescriptionAr: formData.DescriptionAr,
+          DescriptionEn: formData.DescriptionEn,
           Order: formData.Order,
           StageId: selectedStageId,
           Icon: formData.Icon || undefined,
@@ -168,6 +174,8 @@ function AdminCategoriesPageContent() {
     setFormData({
       NameAr: "",
       NameEn: "",
+      DescriptionAr: "",
+      DescriptionEn: "",
       Order: 0,
       StageId: undefined,
       Icon: null,
@@ -198,6 +206,8 @@ function AdminCategoriesPageContent() {
       Id: category.Id,
       NameAr: category.NameAr,
       NameEn: category.NameEn,
+      DescriptionAr: category.DescriptionAr ?? "",
+      DescriptionEn: category.DescriptionEn ?? "",
       Order: category.Order,
       StageId: category.StageId,
       Icon: null,
@@ -215,6 +225,8 @@ function AdminCategoriesPageContent() {
     setFormData({
       NameAr: "",
       NameEn: "",
+      DescriptionAr: "",
+      DescriptionEn: "",
       Order: 0,
       StageId: undefined,
       Icon: null,
@@ -552,6 +564,17 @@ function AdminCategoriesPageContent() {
                   {saveError}
                 </p>
               )}
+              {(["Ar", "En"] as const).map(lang => (
+                <div key={lang}>
+                  <label htmlFor={`category-description-${lang}`} className="mb-2 block text-sm font-semibold">
+                    {locale === 'ar' ? `وصف الفئة ${lang === 'Ar' ? 'بالعربي' : 'بالإنجليزي'}` : `Topic description (${lang === 'Ar' ? 'Arabic' : 'English'})`}
+                  </label>
+                  <textarea id={`category-description-${lang}`} dir={lang === 'Ar' ? 'rtl' : 'ltr'}
+                    className="min-h-24 w-full rounded-xl border bg-background p-3 text-sm" maxLength={1500}
+                    value={formData[lang === 'Ar' ? 'DescriptionAr' : 'DescriptionEn']}
+                    onChange={event => setFormData(prev => ({ ...prev, [lang === 'Ar' ? 'DescriptionAr' : 'DescriptionEn']: event.target.value }))} />
+                </div>
+              ))}
               {/* Icon Upload / Preview */}
               <div>
                 <label className="block mb-2 text-sm font-semibold">
