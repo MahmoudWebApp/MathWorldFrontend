@@ -32,6 +32,7 @@ export function StagePremiumCard({ stage, index, locale, locked = false }: Stage
 
   return (
     <Link
+      data-stage-index={index}
       href={locked ? "/learning-stage" : `/stages/${stage.Id}`}
       className={`group relative flex h-full min-h-[245px] flex-col overflow-hidden rounded-3xl border bg-gradient-to-br p-6 shadow-sm outline-none transition-[border-color,box-shadow,transform] hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${tone.edge} ${tone.bg}`}
     >
