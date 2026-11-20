@@ -84,8 +84,8 @@ export default function PremiumBenefitsPage() {
 
   return (
     <main className="container mx-auto max-w-5xl px-4 py-8 md:px-8">
-      <Link href="/dashboard" className="mb-5 inline-block text-sm font-semibold text-primary hover:underline">
-        {ar ? 'العودة لرحلتي' : 'Back to my journey'}
+      <Link href={user ? "/dashboard" : "/"} className="mb-5 inline-block text-sm font-semibold text-primary hover:underline">
+        {user ? (ar ? 'العودة لحسابي' : 'Back to dashboard') : (ar ? 'العودة للرئيسية' : 'Back to home')}
       </Link>
       <header className="mb-6">
         <h1 className="brand-display-title text-3xl font-black md:text-4xl">

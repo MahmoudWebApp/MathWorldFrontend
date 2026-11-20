@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { Calculator, Eye, Star } from "lucide-react";
+import { Calculator, Eye, Star, CheckCircle2, History, CircleDot } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link } from "@/i18n/routing";
@@ -39,6 +39,22 @@ export function ProblemCard({ problem }: ProblemCardProps) {
               className="text-lg font-bold leading-7 text-foreground transition-colors"
             />
             <div className="mt-3 flex flex-wrap gap-2">
+              {typeof problem.IsSolved === "boolean" && typeof problem.HasAttempted === "boolean" && (problem.IsSolved === true ? (
+                <Badge variant="secondary" className="gap-1 border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  {locale === "ar" ? "محلولة" : "Solved"}
+                </Badge>
+              ) : problem.HasAttempted === true ? (
+                <Badge variant="secondary" className="gap-1 border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                  <History className="h-3.5 w-3.5" />
+                  {locale === "ar" ? "تمت تجربتها" : "Attempted"}
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="gap-1 border-border bg-muted/60 text-muted-foreground">
+                  <CircleDot className="h-3.5 w-3.5" />
+                  {locale === "ar" ? "جديدة" : "New"}
+                </Badge>
+              ))}
               {problem.StageName && (
                 <Badge variant="secondary" className="gap-1.5 border bg-background/80 text-foreground" style={{ borderColor: `${stageAccent}34` }}>
                   <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-transparent shadow-none" />
