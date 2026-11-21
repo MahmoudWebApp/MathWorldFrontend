@@ -25,7 +25,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { Link } from "@/i18n/routing";
+import { Link, usePathname } from "@/i18n/routing";
 import type { RootState } from "@/store";
 import {
   type AdminProblemOption,
@@ -138,6 +138,7 @@ function formatDuration(
 
 export default function ProblemPage() {
   const params = useParams<{ id: string }>();
+  const learnerWorkspace = usePathname().startsWith("/dashboard/");
   const t = useTranslations();
   const locale = useLocale();
   const isArabic = locale === "ar";
@@ -623,7 +624,7 @@ export default function ProblemPage() {
           {t("errors.problemNotFound")}
         </p>
         <Link
-          href="/problems"
+          href={learnerWorkspace ? "/dashboard/problems" : "/problems"}
           className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
         >
           <DirectionalArrow direction="back" />
@@ -654,13 +655,13 @@ export default function ProblemPage() {
         surface
         className="mb-6"
         items={[
-          { label: t("nav.home"), href: "/" },
-          { label: t("nav.stages"), href: "/stages" },
+          { label: learnerWorkspace ? (isArabic ? "الرئيسية" : "Home") : t("nav.home"), href: learnerWorkspace ? "/dashboard" : "/" },
+          { label: learnerWorkspace ? (isArabic ? "الفئات" : "Topics") : t("nav.stages"), href: learnerWorkspace ? "/dashboard/categories" : "/stages" },
           ...(stageName
             ? [
                 {
                   label: stageName,
-                  href: `/problems?stageId=${stageId}`,
+                  href: `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
                 },
               ]
             : []),
@@ -668,7 +669,7 @@ export default function ProblemPage() {
             ? [
                 {
                   label: categoryName,
-                  href: `/problems?stageId=${stageId}&categoryId=${categoryId}`,
+                  href: `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
                 },
               ]
             : []),
@@ -1128,10 +1129,10 @@ export default function ProblemPage() {
 
                       <Link
                         href={categoryId != null
-                          ? `/problems?categoryId=${categoryId}&stageId=${stageId}`
+                          ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
                           : stageId != null
-                            ? `/problems?stageId=${stageId}`
-                            : "/problems"}
+                            ? `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`
+                            : learnerWorkspace ? "/dashboard/problems" : "/problems"}
                         className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
                       >
                         <DirectionalArrow direction="back" />
