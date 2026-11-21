@@ -19,7 +19,8 @@ interface ProblemCardProps {
 /** A readable, accessible preview. A green check is never used for unsolved work. */
 export function ProblemCard({ problem }: ProblemCardProps) {
   const t = useTranslations();
-  const inStudentWorkspace = usePathname().startsWith("/dashboard/");
+  const pathname = usePathname();
+  const inStudentWorkspace = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const locale = useLocale();
   const stageIdentity = { Id: problem.StageId, Name: problem.StageName };
   const stageAccent = getStageAccent(stageIdentity);
