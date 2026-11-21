@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getPublicCategories, getPublicStages, SITE_URL } from '@/lib/publicCurriculum';
+import { getPublicCategories, getPublicStages, getPublicStageExamples, SITE_URL } from '@/lib/publicCurriculum';
 import { Link } from '@/i18n/routing';
 import StageCategoriesClient from './StageCategoriesClient';
 
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function StagePage({ params }: Props) {
   const { locale, stageId: raw } = await params;
   const stageId = Number(raw);
-  const [stages, categories] = await Promise.all([getPublicStages(), getPublicCategories()]);
+  const [stages, categories, examples] = await Promise.all([getPublicStages(), getPublicCategories(), getPublicStageExamples(stageId)]);
   const stage = stages.find(s => s.Id === stageId);
   const topics = categories
     .filter(c => c.StageId === stageId)
@@ -100,12 +100,12 @@ export default async function StagePage({ params }: Props) {
               {ar ? 'تسجيل الدخول' : 'Sign in'}
             </Link>
             <Link href="/premium" className="inline-flex min-h-11 items-center rounded-xl border border-primary/30 px-5 py-3 text-sm font-bold text-primary">
-              {ar ? 'Free مقابل Premium' : 'Free vs Premium'}
+              {ar ? 'الباقات' : 'Plans'}
             </Link>
           </div>
         </section>
       )}
-      <StageCategoriesClient stageId={stageId} serverIntroProvided={Boolean(stage)} />
+      <StageCategoriesClient stageId={stageId} serverIntroProvided={Boolean(stage)} examples={examples} />
       {schema && (
         <script type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, '\\u003c') }} />
