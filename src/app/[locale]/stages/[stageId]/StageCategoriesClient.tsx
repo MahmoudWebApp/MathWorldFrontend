@@ -499,7 +499,7 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
               <ol className="grid gap-3 sm:grid-cols-2">
                 {stageExamples.Results.slice(0, 4).map(problem => (
                   <li key={problem.Id} className="min-w-0 overflow-x-auto rounded-2xl border border-border bg-background/70 px-4 py-4 text-sm font-semibold leading-7 text-foreground">
-                    <RichText text={problem.Title} isArabic={locale === 'ar'} className="text-sm font-semibold leading-7" />
+                    <RichText text={problem.QuestionText || problem.Title} isArabic={locale === 'ar'} className="text-sm font-semibold leading-7" />
                   </li>
                 ))}
               </ol>
