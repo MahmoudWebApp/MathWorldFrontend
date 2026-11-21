@@ -240,7 +240,7 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
   const chosenStageId = useSelector((state: RootState) => state.auth.user?.CurrentStageId);
   // Public information remains viewable to logged-in students too.
   // For another stage, render a read-only curriculum guide; never enable solving.
-  const publicPreview = isGuest || (isStudent && (chosenStageId == null || stageId !== chosenStageId));
+  const publicPreview = true; // /stages is always a public informational route.
   // The JWT profile can lag behind an admin grant or a 100% code redemption.
   const {
     data: subscription,
@@ -404,17 +404,6 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
             className="mb-4 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground hover:text-foreground">
             {locale === 'ar' ? 'تعذّر تحديث الصلاحيات، إعادة المحاولة' : 'Could not refresh access. Retry'}
           </button>
-        )}
-
-        {isStudent && publicPreview && (
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm">
-            <span>{locale === 'ar'
-              ? 'هذا عرض تعريفي فقط. لتدرس هذه المرحلة وتحفظ تقدّمك، غيّر مرحلتك من الإعدادات.'
-              : 'This is a public preview only. Switch your learning stage to practise and save progress.'}</span>
-            <Link href="/learning-stage" className="rounded-lg bg-primary px-4 py-2 font-bold text-primary-foreground">
-              {locale === 'ar' ? 'تغيير المرحلة' : 'Change stage'}
-            </Link>
-          </div>
         )}
 
         {/* Main Categories Grid */}
