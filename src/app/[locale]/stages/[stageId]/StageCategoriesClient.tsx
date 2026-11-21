@@ -82,9 +82,7 @@ function CategoryPremiumCard({
               ? <span className="text-2xl">{iconUrl}</span>
               : <span className="font-serif text-xl font-bold">{math.symbol}</span>}
         </div>
-        {locked
-          ? <LockKeyhole className="h-4 w-4 shrink-0 text-muted-foreground/75" aria-label={tip} />
-          : !empty && <DirectionalArrow direction="forward" size={20} className="shrink-0" />}
+        {locked && <LockKeyhole className="h-4 w-4 shrink-0 text-muted-foreground/75" aria-label={tip} />}
       </div>
       <h3 className="relative mt-4 line-clamp-3 text-base font-extrabold leading-snug sm:text-lg"
         style={{ color: stageAccent }}>{categoryName}</h3>
@@ -492,7 +490,7 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
                 </p>
               </div>
               <Link href="/premium" className="rounded-xl border border-primary/25 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10">
-                {locale === 'ar' ? 'مقارنة Free وPremium' : 'Compare Free and Premium'}
+                {locale === 'ar' ? 'الباقات' : 'Plans'}
               </Link>
             </div>
             {examplesLoading ? (
@@ -500,7 +498,7 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
             ) : stageExamples?.Results?.length ? (
               <ol className="grid gap-3 sm:grid-cols-2">
                 {stageExamples.Results.slice(0, 4).map(problem => (
-                  <li key={problem.Id} className="rounded-2xl border border-border bg-background/70 px-4 py-4 text-sm font-semibold leading-7 text-foreground">
+                  <li key={problem.Id} className="min-w-0 overflow-x-auto rounded-2xl border border-border bg-background/70 px-4 py-4 text-sm font-semibold leading-7 text-foreground">
                     <RichText text={problem.Title} isArabic={locale === 'ar'} className="text-sm font-semibold leading-7" />
                   </li>
                 ))}
@@ -525,10 +523,10 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
             <div className="text-center md:text-start mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
                 <h2 className="text-gradient-math text-2xl md:text-3xl font-bold mb-2">
-                  {t('stages.exploreOtherLevels')}
+                  {locale === 'ar' ? 'استكشف المراحل الأخرى' : 'Explore other stages'}
                 </h2>
                 <p className="text-muted-foreground">
-                  {t('stages.exploreOtherLevelsDesc')}
+                  {locale === 'ar' ? 'تعرّف إلى محتوى كل مرحلة تعليمية.' : 'Discover the topics in each learning stage.'}
                 </p>
               </div>
             </div>
