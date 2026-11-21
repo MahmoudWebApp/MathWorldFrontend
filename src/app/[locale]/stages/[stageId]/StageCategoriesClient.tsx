@@ -480,9 +480,9 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
                 {examples.slice(0, 4).map(problem => (
                   <li key={problem.Id} className="min-w-0 rounded-2xl border border-border bg-background/70 p-4 shadow-sm sm:p-5">
                     <p className="mb-2 text-xs font-bold text-primary">{locale === 'ar' ? problem.CategoryNameAr : problem.CategoryNameEn}</p>
-                    <h3 className="mb-3 text-sm font-bold text-foreground">
+                    <div className="mb-3 text-sm font-bold text-foreground">
                       <RichText text={locale === 'ar' ? problem.TitleAr : problem.TitleEn} isArabic={locale === 'ar'} className="!text-sm !leading-7" />
-                    </h3>
+                    </div>
                     <div className="min-w-0 overflow-x-auto rounded-xl bg-card p-3 text-foreground" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
                       <RichText text={(locale === 'ar' ? problem.QuestionTextAr : problem.QuestionTextEn) || (locale === 'ar' ? problem.TitleAr : problem.TitleEn)} isArabic={locale === 'ar'} className="!text-base !leading-8" />
                     </div>
