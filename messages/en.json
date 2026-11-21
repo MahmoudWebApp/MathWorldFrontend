@@ -3,7 +3,7 @@
     "title": "MathWorld - The World of Mathematics",
     "description": "An interactive platform for solving math problems",
     "stagesTitle": "Educational Stages | MathWorld",
-    "stagesDescription": "Explore math problems by your educational level"
+    "stagesDescription": "Explore math problems by educational stage"
   },
   "nav": {
     "home": "Home",
@@ -43,7 +43,7 @@
   },
   "stages": {
     "title": "Educational Stages",
-    "heading": "Explore by Stage",
+    "heading": "Explore by educational stage",
     "subtitle": "Find problems tailored to your academic level",
     "allStages": "View All Stages",
     "backToStages": "Back to Stages",
@@ -53,8 +53,8 @@
       "2": "Advanced calculus and trigonometry for high school",
       "3": "University-level linear algebra and real analysis"
     },
-    "exploreOtherLevels": "Explore Other Levels",
-    "exploreOtherLevelsDesc": "Navigate to another level to continue your learning journey"
+    "exploreOtherLevels": "Explore other stages",
+    "exploreOtherLevelsDesc": "Browse the subjects in other educational stages"
   },
   "categories": {
     "title": "Categories",
