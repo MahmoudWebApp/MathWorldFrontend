@@ -9,6 +9,7 @@ import type { ProblemPreview } from "@/store/api/types";
 import { Badge } from "@/components/ui/Badge";
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
+import { usePathname } from "@/i18n/routing";
 import { getStageAccent } from "@/lib/stageVisuals";
 
 interface ProblemCardProps {
@@ -18,13 +19,14 @@ interface ProblemCardProps {
 /** A readable, accessible preview. A green check is never used for unsolved work. */
 export function ProblemCard({ problem }: ProblemCardProps) {
   const t = useTranslations();
+  const inStudentWorkspace = usePathname().startsWith("/dashboard/");
   const locale = useLocale();
   const stageIdentity = { Id: problem.StageId, Name: problem.StageName };
   const stageAccent = getStageAccent(stageIdentity);
 
   return (
     <Link
-      href={`/problems/${problem.Id}`}
+      href={`${inStudentWorkspace ? "/dashboard" : ""}/problems/${problem.Id}`}
       className="group block rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <article className="brand-surface rounded-3xl p-5 transition-[border-color,box-shadow] hover:shadow-md sm:p-6" style={{ borderColor: `${stageAccent}30` }}>
