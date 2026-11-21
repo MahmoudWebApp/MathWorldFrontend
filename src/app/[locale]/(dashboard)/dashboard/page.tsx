@@ -6,6 +6,7 @@ import { Link, useRouter } from '@/i18n/routing';
 import { BookOpen, Heart, Medal, NotebookTabs, Target, Trophy } from 'lucide-react';
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from '@/store/api/usersApi';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
+import { useSearchProblemsQuery } from '@/store/api/problemsApi';
 import { StudentAchievementsPanel } from '@/components/dashboard/StudentAchievementsPanel';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { getStageAccent } from '@/lib/stageVisuals';
@@ -26,6 +27,12 @@ export default function UserDashboardPage() {
   });
   const accent = getStageAccent({ Id: stageId, NameAr: journey?.NameAr, NameEn: journey?.NameEn });
   const isPremium = subscription?.IsPremium === true;
+  const { data: nextUnsolved } = useSearchProblemsQuery(
+    { StageId: stageId, HideSolved: true, Page: 1, PageSize: 1 },
+    { skip: !isPremium || dashboard?.Role !== 'Student' || stageId <= 0,
+      refetchOnMountOrArgChange: true },
+  );
+  const nextProblemId = nextUnsolved?.Results?.[0]?.Id;
 
   useEffect(() => {
     if (!isLoading && !isError && dashboard?.Role === 'Student' && !dashboard.CurrentStageId) {
@@ -92,10 +99,15 @@ export default function UserDashboardPage() {
             </div>
           ))}
         </div>
-        <Link href={stageId > 0 ? '/dashboard/categories' : '/learning-stage'}
+        <Link href={nextProblemId
+          ? `/dashboard/problems/${nextProblemId}`
+          : stageId > 0 ? '/dashboard/categories' : '/learning-stage'}
           className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-extrabold text-primary-foreground hover:opacity-90">
           <BookOpen className="h-5 w-5" aria-hidden="true" />
-          {stageId > 0 ? (ar ? 'ابدأ التعلم' : 'Start learning') : (ar ? 'اختيار المرحلة' : 'Choose stage')}
+          {nextProblemId
+            ? (ar ? 'تابع التعلم' : 'Continue learning')
+            : stageId > 0 ? (ar ? 'ابدأ التعلم' : 'Start learning')
+            : (ar ? 'اختيار المرحلة' : 'Choose stage')}
         </Link>
       </section>
 

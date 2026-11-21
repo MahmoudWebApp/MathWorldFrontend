@@ -126,6 +126,7 @@ export interface SearchProblemsParams {
   Q?: string;
   CategoryId?: number;
   StageId?: number;
+  HideSolved?: boolean;
   Engine?: 'meilisearch' | 'postgresql';
   Page?: number;
   PageSize?: number;
@@ -209,6 +210,7 @@ export const problemsApi = createApi({
           q: params.Q?.trim() || '',
           categoryId: params.CategoryId,
           stageId: params.StageId,
+          hideSolved: params.HideSolved === true ? true : undefined,
           engine: params.Engine || 'postgresql',
           page: params.Page || 1,
           pageSize: params.PageSize || 10,
