@@ -173,8 +173,8 @@ function NavbarContent() {
     { href: '/dashboard/upgrade', ar: hasUpgraded ? 'مميزات حسابي' : 'ترقية الحساب', en: hasUpgraded ? 'My benefits' : 'Upgrade' },
   ] : [
     { href: '/', ar: 'الرئيسية', en: 'Home' },
-    { href: '/stages', ar: 'المراحل والفئات', en: 'Stages & topics' },
-    { href: '/premium', ar: 'Free و Premium', en: 'Free vs Premium' },
+    { href: '/stages', ar: 'المراحل', en: 'Stages' },
+    { href: '/premium', ar: 'الباقات', en: 'Plans' },
     { href: '/about', ar: 'عن المنصة', en: 'About' },
   ];
 
