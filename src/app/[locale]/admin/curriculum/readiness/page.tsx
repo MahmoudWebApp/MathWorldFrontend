@@ -4,6 +4,7 @@ import { useGetCurriculumReadinessQuery } from '@/store/api/curriculumApi';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { CurriculumImportPreviewPanel } from '@/components/admin/CurriculumImportPreviewPanel';
+import { CurriculumSkillCoveragePanel } from '@/components/admin/CurriculumSkillCoveragePanel';
 
 export default function CurriculumReadinessPage() {
   const locale = useLocale();
@@ -29,6 +30,7 @@ export default function CurriculumReadinessPage() {
             : 'Topics expand by mathematical learning objectives, with no fixed topic or problem quota. Template similarity is a review signal, not proof of a bad question. Skill mastery cannot be estimated reliably until question-to-skill tagging is reviewed.'}
         </p>
         <CurriculumImportPreviewPanel stages={data.Stages} />
+        <CurriculumSkillCoveragePanel />
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             [ar ? 'المراحل' : 'Stages', data.StageCount],
