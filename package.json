@@ -9,7 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "qa:preflight": "node scripts/check-qa-api.mjs",
-    "qa:dev": "node scripts/check-qa-api.mjs && next dev --turbo"
+    "qa:dev": "node scripts/check-qa-api.mjs && next dev --turbo",
+    "qa:math": "node scripts/check-math-rendering.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
