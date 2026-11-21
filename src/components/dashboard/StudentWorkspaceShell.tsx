@@ -24,7 +24,8 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
   const dispatch = useDispatch<AppDispatch>();
   const token = useSelector((state: RootState) => state.auth.token);
   const isStudent = useSelector((state: RootState) => state.auth.isAuthenticated && state.auth.user?.Role === 'Student');
-  const learnerRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname === '/learning-stage';
+  const learnerRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
+    pathname === '/learning-stage' || pathname === '/social-accounts' || pathname === '/notifications';
   const { data: subscription } = useGetStudentSubscriptionQuery(undefined, { skip: !isStudent || !learnerRoute });
 
   const signOut = async () => {
