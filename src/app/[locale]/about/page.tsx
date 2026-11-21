@@ -5,6 +5,7 @@ import { ValuesSection } from '@/components/about/ValuesSection';
 import { FeaturesSection } from '@/components/about/FeaturesSection';
 import { CTASection } from '@/components/about/CTASection';
 import { StatsSection } from '@/components/about/StatsSection';
+import { CurriculumSourcesSection } from '@/components/curriculum/CurriculumSourcesSection';
 
 export async function generateMetadata({ 
   params 
@@ -26,6 +27,7 @@ export default function AboutPage() {
       <AboutHero />
       <MissionSection />
       <ValuesSection />
+      <CurriculumSourcesSection />
       <StatsSection />
       <FeaturesSection />
       <CTASection />
