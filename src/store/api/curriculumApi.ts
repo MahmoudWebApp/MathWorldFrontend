@@ -160,6 +160,8 @@ export interface CurriculumTopicProposal {
   SortOrder: number;
   EditorialStatus: 'Draft' | 'Reviewed' | 'Rejected' | 'Published';
   ProposedQuestionCount: number;
+  PublishedQuestionCount: number;
+  DraftQuestionCount: number;
 }
 
 export interface CurriculumTopicProposalReport {
