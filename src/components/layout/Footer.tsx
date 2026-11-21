@@ -15,7 +15,7 @@ export function Footer() {
       links: [
         { href: '/', label: t('nav.home') },
         { href: '/stages', label: t('nav.stages') },
-        { href: '/premium', label: 'Free / Premium' },
+        { href: '/premium', label: t('plans.title') },
         { href: '/about', label: t('footer.about') },
       ],
     },
