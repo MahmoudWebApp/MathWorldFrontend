@@ -4,7 +4,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { GraduationCap, Loader2 } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
-import { Link } from "@/i18n/routing";
 
 import { useGetStagesQuery } from "@/store/api/stagesApi";
 import { sortStagesByOrder } from "@/lib/stageVisuals";
@@ -16,8 +15,7 @@ import { Button } from "@/components/ui/Button";
 export function StagesSection() {
   const t = useTranslations();
   const locale = useLocale();
-  const { user, isAuthenticated, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
-  const student = isAuthenticated && user?.Role === 'Student';
+  const authLoading = useSelector((state: RootState) => state.auth.isLoading);
   const { data: stages, isLoading, isError, refetch } = useGetStagesQuery(locale, {
     refetchOnMountOrArgChange: true,
   });
