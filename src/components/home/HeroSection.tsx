@@ -83,13 +83,12 @@ export function HeroSection() {
             <Link href={isAuthenticated ? "/problems" : "/login"}>
               {isAuthenticated ? <BookOpen aria-hidden="true" className="h-5 w-5" /> : <Trophy aria-hidden="true" className="h-5 w-5" />}
               {t("hero.startChallenge")}
-              <DirectionalArrow direction="forward" />
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full gap-2 rounded-2xl sm:w-auto">
             <Link href="/premium">
               <Crown aria-hidden="true" className="h-5 w-5" />
-              {isArabic ? "مقارنة الحسابات" : "Compare plans"}
+              {isArabic ? "الباقات" : "Plans"}
             </Link>
           </Button>
         </div>
