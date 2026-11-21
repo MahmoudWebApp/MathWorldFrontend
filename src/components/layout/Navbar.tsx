@@ -11,7 +11,7 @@ import { setLocale } from '@/store/slices/localeSlice';
  import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'; 
 import { 
-  SearchNormal1, CloseCircle, User, Logout, ArrowDown2, Element3,
+  CloseCircle, User, Logout, ArrowDown2, Element3,
 } from 'iconsax-reactjs';
 import {
   BookMarked,
@@ -21,7 +21,6 @@ import {
   Layers3,
   Menu,
   NotebookTabs,
-  Search,
   Sun,
   Moon,
   Monitor,
@@ -64,8 +63,6 @@ function NavbarContent() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [navSearch, setNavSearch] = useState('');
   const [mounted, setMounted] = useState(false);
  
   // Scroll Progress Bar
@@ -80,7 +77,6 @@ function NavbarContent() {
   useEffect(() => {
      setMobileMenuOpen(false);
     setUserMenuOpen(false);
-    setShowSearch(false);
   }, [pathname]);
 
   const handleLogout = async () => {
@@ -140,15 +136,6 @@ function NavbarContent() {
     
     // Hard refresh to the new locale URL
     window.location.assign(`/${newLocale}${newPath}`);
-  };
-
-  const handleNavSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (navSearch.trim()) {
-      router.push(`/problems?q=${encodeURIComponent(navSearch.trim())}`);
-      setNavSearch('');
-      setShowSearch(false);
-    }
   };
 
   // The public website and the learner/admin workspaces share this one domain,
@@ -212,41 +199,8 @@ function NavbarContent() {
             </Link>}
           </div>
 
-          {/* Actions & Search */}
+          {/* Account actions, theme, language and notifications. Public search is intentionally removed. */}
           <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
-            <div className="hidden md:flex items-center">
-              <AnimatePresence mode="wait">
-                {showSearch ? (
-                  <motion.form 
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 220, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    className="relative flex items-center overflow-hidden mr-2"
-                    onSubmit={handleNavSearch}
-                  >
-                    <Search className="absolute start-3 h-4 w-4 text-primary" />
-                    <input
-                      autoFocus
-                      type="text"
-                      value={navSearch}
-                      onChange={(e) => setNavSearch(e.target.value)}
-                      placeholder={t('search.placeholder')}
-                      className="w-full ps-9 pe-8 py-2 rounded-full border border-primary/30 bg-primary/5 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    />
-                    <button type="button" onClick={() => setShowSearch(false)} className="absolute end-2 text-muted-foreground hover:text-foreground">
-                      <CloseCircle className="h-4 w-4" />
-                    </button>
-                  </motion.form>
-                ) : (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => setShowSearch(true)}>
-                      <SearchNormal1 className="h-5 w-5" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             <Button variant="ghost" size="sm" aria-label={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'} className="h-9 shrink-0 rounded-full px-2 font-bold hover:bg-primary/10 hover:text-primary sm:px-3" onClick={toggleLocale}>
               {locale === 'ar' ? 'EN' : 'عربي'}
             </Button>
