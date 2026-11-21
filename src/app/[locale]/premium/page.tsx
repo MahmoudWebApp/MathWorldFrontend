@@ -95,7 +95,7 @@ export default function PremiumBenefitsPage() {
         </h1>
         <p className="mt-3 text-muted-foreground">
           {ar
-            ? 'تعرّف على مميزات الباقة المجانية وPremium، واختر ما يناسب تعلمك.'
+            ? 'قارن بين مميزات حساب Free وحساب Premium، واختر ما يناسب تعلمك.'
             : 'Explore what Free and Premium offer for your learning journey.'}
         </p>
       </header>
@@ -164,10 +164,10 @@ export default function PremiumBenefitsPage() {
       )}
       {!user && (
         <section className="mt-7 rounded-2xl border border-primary/20 bg-primary/5 p-5">
-          <p className="text-sm font-semibold">{ar ? 'ابدأ بالحساب المجاني، واستكشف المزايا قبل اتخاذ قرار الترقية.' : 'Start with Free and explore the benefits before upgrading.'}</p>
+          <p className="text-sm font-semibold">{ar ? 'استكشف مميزات Free وPremium، واختر الحساب الأنسب لتعلمك.' : 'Start with Free and explore the benefits before upgrading.'}</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link href="/register" className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">
-              {ar ? 'إنشاء حساب مجاني' : 'Create a free account'}
+              {ar ? 'إنشاء حساب' : 'Create an account'}
             </Link>
             <Link href="/login" className="rounded-xl border border-primary/20 px-5 py-3 text-sm font-bold text-primary">
               {ar ? 'لديّ حساب' : 'I have an account'}
