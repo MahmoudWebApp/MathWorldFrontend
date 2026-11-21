@@ -100,7 +100,7 @@
     "allProblems": "كل المسائل",
     "filters": "فلاتر",
     "allCategories": "كل التصنيفات",
-    "allDifficulties": "كل المستويات",
+    "allDifficulties": "كل درجات الصعوبة",
     "categoryLabel": "التصنيف",
     "resultsFound": "تم العثور على {count} نتيجة",
     "noResultsFound": "لا توجد نتائج",
@@ -255,7 +255,7 @@
       "activeToday": "نشطون اليوم",
       "recentUsers": "أحدث المستخدمين",
       "statsOverview": "نظرة عامة على الإحصائيات",
-      "stages": "المستويات"
+      "stages": "المراحل التعليمية"
     }
   },
   "admin": {
@@ -347,9 +347,9 @@
       "detailedSolutionAr": "حل مفصل (بالعربية)",
       "detailedSolutionEn": "حل مفصل (بالإنجليزية)",
       "detailedSolutionPlaceholder": "اكتب حلاً مفصلاً هنا...",
-      "stage": "المستوى التعليمي",
-      "stageRequired": "يجب اختيار مستوى تعليمي",
-      "selectStageFirst": "اختر المستوى أولاً",
+      "stage": "المرحلة التعليمية",
+      "stageRequired": "يجب اختيار مرحلة تعليمية",
+      "selectStageFirst": "اختر المرحلة التعليمية أولاً",
       "viewDetails": "عرض التفاصيل",
       "questionPreview": "معاينة السؤال",
       "solutionPreview": "معاينة الحل"
@@ -534,7 +534,7 @@
     },
     "cta": {
       "title": "مستعد لبدء رحلتك؟",
-      "subtitle": "انضم لآلاف المتعلمين الذين اكتشفوا متعة الرياضيات",
+      "subtitle": "تعرّف على فئات الرياضيات والمهارات التعليمية، وابدأ رحلتك حسب مرحلتك التعليمية.",
       "primaryButton": "تصفح المراحل التعليمية",
       "secondaryButton": "انضم الآن"
     }

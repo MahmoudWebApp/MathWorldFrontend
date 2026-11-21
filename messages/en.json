@@ -533,8 +533,8 @@
     },
     "cta": {
       "title": "Ready to Start?",
-      "subtitle": "Join thousands of learners",
-      "primaryButton": "Browse Stages",
+      "subtitle": "Explore mathematics topics and learning objectives, then begin with your educational stage.",
+      "primaryButton": "Browse educational stages",
       "secondaryButton": "Join Now"
     }
   },
