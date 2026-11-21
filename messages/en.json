@@ -9,7 +9,7 @@
     "home": "Home",
     "problems": "Problems",
     "categories": "Categories",
-    "stages": "Stages",
+    "stages": "Educational Stages",
     "search": "Search",
     "login": "Login",
     "register": "Register",
@@ -22,7 +22,8 @@
     "favorites": "Favorites",
     "solved": "Solved Problems",
     "errorNotebook": "Error Notebook",
-    "user": "User"
+    "user": "User",
+    "plans": "Plans"
   },
   "hero": {
     "title": "Discover the World of Mathematics",
@@ -45,8 +46,8 @@
     "title": "Educational Stages",
     "heading": "Explore by educational stage",
     "subtitle": "Find problems tailored to your academic level",
-    "allStages": "View All Stages",
-    "backToStages": "Back to Stages",
+    "allStages": "View all educational stages",
+    "backToStages": "Back to educational stages",
     "stageDescriptions": {
       "0": "Basic arithmetic and geometry problems for elementary school",
       "1": "Intermediate algebra and geometry for middle school",

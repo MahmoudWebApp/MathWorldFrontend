@@ -6,7 +6,7 @@ export async function generateMetadata({ params }: { params: Promise<{locale: st
   const ar = locale === 'ar';
   const title = ar ? 'الباقات | MathWorld' : 'Plans | MathWorld';
   const description = ar
-    ? 'تعرّف إلى باقات MathWorld المجانية وPremium ومميزات التعلم والفئات والحلول والتقارير، بدون عرض أسعار.'
+    ? 'تعرّف إلى باقتي MathWorld Free وPremium ومميزات التعلم والفئات والحلول والتقارير، بدون عرض أسعار.'
     : 'Explore MathWorld Free and Premium plans, learning topics, solutions, and reports, with no prices displayed.';
   return {
     title, description,

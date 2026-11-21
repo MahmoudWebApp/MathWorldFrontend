@@ -13,7 +13,6 @@ import type { RootState } from '@/store';
 import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { sortStagesByOrder } from '@/lib/stageVisuals';
 import { StagePremiumCard } from '@/components/stages/StagePremiumCard';
-import { CurriculumFrameworkNote } from '@/components/curriculum/CurriculumFrameworkNote';
 import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 
 export default function StagesPageClient() {
@@ -66,7 +65,7 @@ export default function StagesPageClient() {
           <div className="math-equation-chip mb-6 inline-flex items-center justify-center gap-3 rounded-full px-4 py-2">
             <span className="flex h-2 w-2 rounded-full bg-brand-primary animate-pulse" />
             <span className="text-sm font-bold uppercase tracking-widest text-primary">
-              {locale === 'ar' ? 'المراحل' : 'Stages'}
+              {t('stages.title')}
             </span>
             <span className="flex h-2 w-2 rounded-full bg-brand-secondary animate-pulse" />
           </div>
@@ -78,10 +77,6 @@ export default function StagesPageClient() {
             {t('stages.subtitle')}
           </p>
         </motion.div>
-
-        <div className="mx-auto mb-8 max-w-3xl">
-          <CurriculumFrameworkNote />
-        </div>
 
         {isLoading || authLoading ? (
           <div className="flex min-h-[30vh] items-center justify-center">

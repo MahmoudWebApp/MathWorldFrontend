@@ -6,6 +6,7 @@ import { SITE_URL } from '@/lib/publicCurriculum';
 import { HeroSection } from "@/components/home/HeroSection";
 import { StagesSection } from '@/components/home/StagesSection';
 import { StatsSection } from '@/components/about/StatsSection';
+import { CurriculumSourcesSection } from '@/components/curriculum/CurriculumSourcesSection';
 
 
 export async function generateMetadata({ 
@@ -38,6 +39,7 @@ export default function HomePage() {
     <div className="flex flex-col">
       <HeroSection />
       <StagesSection />
+      <CurriculumSourcesSection />
       <StatsSection />
     </div>
   );
