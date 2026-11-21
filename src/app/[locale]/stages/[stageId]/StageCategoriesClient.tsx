@@ -75,7 +75,7 @@ function CategoryPremiumCard({
         style={{ backgroundColor: stageAccent }} />
       <div className="relative flex items-start justify-between gap-2">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border sm:h-14 sm:w-14"
-          style={{ color: stageAccent, backgroundColor: `${stageAccent}11`, borderColor: `${stageAccent}25` }}>
+          style={{ color: stageAccent, backgroundColor: `${stageAccent}18`, borderColor: `${stageAccent}40` }}>
           {iconUrl && (iconUrl.startsWith('https://') || iconUrl.startsWith('/'))
             ? <Image src={iconUrl} alt="" unoptimized width={34} height={34} className="h-9 w-9 object-contain" />
             : iconUrl && iconUrl.length < 5
