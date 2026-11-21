@@ -4,7 +4,6 @@ import { useState, type FormEvent } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useSelector } from "react-redux";
 import { BookOpen, GraduationCap, Search, Sparkles, Trophy, Crown } from "lucide-react";
-import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link, useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
