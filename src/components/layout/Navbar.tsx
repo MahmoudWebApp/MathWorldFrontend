@@ -52,7 +52,7 @@ function NavbarContent() {
   const router = useRouter();
   const searchParams = useSearchParams(); 
   const dispatch = useDispatch<AppDispatch>();
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const { user, isAuthenticated, isLoading, token } = useSelector((state: RootState) => state.auth);
    const { data: subscription } = useGetStudentSubscriptionQuery(undefined, {
@@ -150,12 +150,12 @@ function NavbarContent() {
   const navItems = adminArea ? [
     { href: '/admin', ar: 'لوحة الإدارة', en: 'Admin home' },
     { href: '/admin/users', ar: 'الطلاب', en: 'Learners' },
-    { href: '/admin/stages', ar: 'المراحل', en: 'Stages' },
+    { href: '/admin/stages', ar: 'المراحل التعليمية', en: 'Educational Stages' },
     { href: '/admin/categories', ar: 'الفئات', en: 'Categories' },
     { href: '/admin/problems', ar: 'المسائل', en: 'Problems' },
   ] : learnerArea ? [] : [
     { href: '/', ar: 'الرئيسية', en: 'Home' },
-    { href: '/stages', ar: 'المراحل', en: 'Stages' },
+    { href: '/stages', ar: 'المراحل التعليمية', en: 'Educational Stages' },
     { href: '/premium', ar: 'الباقات', en: 'Plans' },
     { href: '/about', ar: 'عن المنصة', en: 'About' },
   ];
@@ -205,27 +205,24 @@ function NavbarContent() {
               {locale === 'ar' ? 'EN' : 'عربي'}
             </Button>
 
-            {/* The device/browser preference is the default; a user may choose
-                Light or Dark explicitly, then switch back to System anytime. */}
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-primary/10 sm:h-10 sm:w-10">
+            {/* Follow the browser theme automatically until the user taps the icon.
+                After that, respect the explicit Light/Dark preference. */}
+            <button
+              type="button"
+              disabled={!mounted}
+              aria-label={locale === 'ar'
+                ? (resolvedTheme === 'dark' ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن')
+                : (resolvedTheme === 'dark' ? 'Use light mode' : 'Use dark mode')}
+              title={locale === 'ar' ? 'تغيير مظهر الموقع' : 'Toggle appearance'}
+              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 sm:h-10 sm:w-10"
+            >
               {mounted && resolvedTheme === 'dark'
-                ? <Moon aria-hidden="true" className="h-5 w-5 text-foreground" />
+                ? <Sun aria-hidden="true" className="h-5 w-5 text-foreground" />
                 : mounted
-                  ? <Sun aria-hidden="true" className="h-5 w-5 text-foreground" />
+                  ? <Moon aria-hidden="true" className="h-5 w-5 text-foreground" />
                   : <Monitor aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
-              <select
-                aria-label={locale === 'ar' ? 'مظهر الموقع: تلقائي أو فاتح أو داكن' : 'Site appearance: system, light or dark'}
-                title={locale === 'ar' ? 'تغيير مظهر الموقع' : 'Change site appearance'}
-                value={mounted ? (theme ?? 'system') : 'system'}
-                disabled={!mounted}
-                onChange={(event) => setTheme(event.target.value)}
-                className="absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-full opacity-0"
-              >
-                <option value="system">{locale === 'ar' ? 'حسب الجهاز' : 'System'}</option>
-                <option value="light">{locale === 'ar' ? 'فاتح' : 'Light'}</option>
-                <option value="dark">{locale === 'ar' ? 'داكن' : 'Dark'}</option>
-              </select>
-            </div>
+            </button>
 
             {mounted && isAuthenticated && <NotificationBell isAuthenticated={isAuthenticated} />}
 
