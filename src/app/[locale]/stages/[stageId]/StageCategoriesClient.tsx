@@ -22,6 +22,7 @@ import type { PublicStageExample } from '@/lib/publicCurriculum';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { CurriculumFrameworkNote } from '@/components/curriculum/CurriculumFrameworkNote';
+import { PublishedStageSkillsPanel } from '@/components/curriculum/PublishedStageSkillsPanel';
 
 // ==========================================
 // 1. Math assets
@@ -394,6 +395,7 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
         </div>
 
         <div className="mb-8 max-w-3xl"><CurriculumFrameworkNote /></div>
+        <PublishedStageSkillsPanel stageId={stageId} categories={sortedCategories} />
 
         {isStudent && subscriptionError && (
           <button type="button" onClick={() => void refetchSubscription()}

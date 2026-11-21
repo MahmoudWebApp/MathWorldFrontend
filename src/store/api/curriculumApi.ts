@@ -170,6 +170,16 @@ export interface CurriculumTopicProposalReport {
   Topics: CurriculumTopicProposal[];
 }
 
+export interface PublishedCurriculumSkill {
+  StableKey: string;
+  CategoryId: number;
+  DomainKey: string;
+  NameAr: string;
+  NameEn: string;
+  DescriptionAr: string;
+  DescriptionEn: string;
+}
+
 export interface CurriculumSkillSummary {
   StableKey: string;
   DomainKey: string;
@@ -223,6 +233,9 @@ export const curriculumApi = createApi({
     }),
     previewCurriculumImport: builder.mutation<CurriculumImportPreview, { Problems: ProposedCurriculumProblem[] }>({
       query: body => ({ url: '/admin/curriculum/import/preview', method: 'POST', body }),
+    }),
+    getPublishedStageSkills: builder.query<PublishedCurriculumSkill[], number>({
+      query: (stageId) => `/curriculum/stages/${stageId}/skills`,
     }),
     getCurriculumDraftTopicQuestions: builder.query<CurriculumDraftTopicQuestionReport, string>({
       query: (stableKey) => `/admin/curriculum/topics/proposals/${encodeURIComponent(stableKey)}/questions`,
@@ -284,6 +297,7 @@ export const curriculumApi = createApi({
 });
 
 export const {
+  useGetPublishedStageSkillsQuery,
   useGetCurriculumDraftTopicQuestionsQuery,
   useGetCurriculumTopicProposalsQuery,
   useGetCurriculumSkillCoverageQuery,
