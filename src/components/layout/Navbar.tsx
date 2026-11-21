@@ -34,6 +34,7 @@ import { NotificationRealtimeSync } from '@/components/layout/NotificationRealti
 import { StudentPresenceHeartbeat } from '@/components/layout/StudentPresenceHeartbeat';
 import { notificationsApi } from '@/store/api/notificationsApi';
 import { ADMIN_NAV_ITEMS, AdminNavMobile } from '@/components/admin/AdminNavigation';
+import { StudentWorkspaceNavigation } from '@/components/dashboard/StudentWorkspaceNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
@@ -165,13 +166,7 @@ function NavbarContent() {
     { href: '/admin/stages', ar: 'المراحل', en: 'Stages' },
     { href: '/admin/categories', ar: 'الفئات', en: 'Categories' },
     { href: '/admin/problems', ar: 'المسائل', en: 'Problems' },
-  ] : learnerArea ? [
-    { href: '/dashboard', ar: 'لوحتي', en: 'My dashboard' },
-    { href: user?.CurrentStageId ? `/stages/${user.CurrentStageId}` : '/learning-stage', ar: 'تابع التعلم', en: 'Continue learning' },
-    { href: '/dashboard/favorites', ar: 'المفضلة', en: 'Favorites' },
-    { href: '/dashboard/analytics', ar: 'تقدّمي', en: 'My progress' },
-    { href: '/dashboard/upgrade', ar: hasUpgraded ? 'مميزات حسابي' : 'ترقية الحساب', en: hasUpgraded ? 'My benefits' : 'Upgrade' },
-  ] : [
+  ] : learnerArea ? [] : [
     { href: '/', ar: 'الرئيسية', en: 'Home' },
     { href: '/stages', ar: 'المراحل', en: 'Stages' },
     { href: '/premium', ar: 'الباقات', en: 'Plans' },
@@ -201,7 +196,7 @@ function NavbarContent() {
           </Link>
 
           {/* Public, learner and admin have independent menu choices. */}
-          <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+          <div className={cn("hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex", learnerArea && "lg:hidden")}>
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}
                 className={cn('whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors',
@@ -283,6 +278,11 @@ function NavbarContent() {
             {/* Auth Section */}
             {!mounted || isLoading ? (
               <div className="hidden h-9 w-24 animate-pulse rounded-full bg-muted md:block" />
+            ) : isAuthenticated && user?.Role === 'Student' && learnerArea ? (
+              <div className="hidden items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold lg:flex">
+                <User className="h-4 w-4 text-primary" />
+                <span className="max-w-36 truncate">{user.FullName || user.Email?.split('@')[0] || t('nav.user')}</span>
+              </div>
             ) : isAuthenticated && user ? (
               <div className="relative hidden md:block">
                 <Button variant="outline" className="flex items-center gap-2 rounded-full border-primary/20 hover:bg-primary/5 hover:border-primary/50" onClick={() => setUserMenuOpen(!userMenuOpen)}>
@@ -426,13 +426,14 @@ function NavbarContent() {
                   : learnerArea ? (locale === 'ar' ? 'قائمة الطالب' : 'Learner menu')
                     : (locale === 'ar' ? 'الموقع العام' : 'Public website')}
               </p>
-              {navItems.map(item => (
+              {!learnerArea && navItems.map(item => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}
                   className={cn('flex min-h-11 items-center rounded-xl px-4 py-3 text-sm font-semibold',
                     pathname === item.href ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}>
                   {locale === 'ar' ? item.ar : item.en}
                 </Link>
               ))}
+              {learnerArea && <StudentWorkspaceNavigation isPremium={hasUpgraded} onNavigate={() => setMobileMenuOpen(false)} />}
               {adminArea && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
               {(portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding} onClick={() => setMobileMenuOpen(false)}
                 className="flex min-h-11 items-center rounded-xl border border-primary/25 px-4 py-3 text-sm font-bold text-primary">
