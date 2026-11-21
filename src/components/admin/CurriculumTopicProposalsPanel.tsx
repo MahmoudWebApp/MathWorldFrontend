@@ -32,12 +32,12 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="curriculum-topic-proposals-title" className="text-lg font-bold">
-            {ar ? 'فئات جديدة قيد المراجعة' : 'New topics awaiting editorial review'}
+            {ar ? 'فئات المنهج الجديدة وحالة نشرها' : 'New curriculum topics and publication status'}
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
             {ar
-              ? 'هذه مقترحات غير منشورة. لا تظهر للطلاب قبل تدقيق صحة المسائل والتصنيف والرموز.'
-              : 'These are unpublished proposals. Questions, topic scope and icons must pass review before appearing to learners.'}
+              ? 'نعرض هنا فئات المنهج المقترحة والمنشورة، وتفاصيل تدقيق المسائل والتصنيف.'
+              : 'Review proposed and published curriculum topics, including their questions, classifications and icons.'}
           </p>
         </div>
         <button type="button" onClick={() => refetch()} className="rounded-lg border px-3 py-2 text-sm">
@@ -53,7 +53,7 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
           <div className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">{data.Total}</span> {ar ? 'فئات مقترحة' : 'proposed topics'}
             {' · '}
-            <span className="font-semibold text-foreground">{data.TotalDraftProblems}</span> {ar ? 'مسائل مسودة' : 'draft questions'}
+            <span className="font-semibold text-foreground">{data.TotalDraftProblems}</span> {ar ? 'مسائل تنتظر المراجعة' : 'pending-review questions'}
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {data.Topics.map(topic => (
@@ -64,14 +64,18 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
                     <h3 className="mt-1 font-semibold">{ar ? topic.NameAr : topic.NameEn}</h3>
                   </div>
                   <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
-                    {ar ? 'مسودة' : 'Draft'}
+                    {topic.EditorialStatus === 'Published'
+                      ? (ar ? 'منشورة' : 'Published')
+                      : (ar ? 'مسودة' : 'Draft')}
                   </span>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   {ar ? topic.DescriptionAr : topic.DescriptionEn}
                 </p>
                 <div className="mt-3 border-t pt-2 text-xs text-muted-foreground">
-                  {topic.ProposedQuestionCount} {ar ? 'مسائل تنتظر مراجعة المحتوى' : 'questions pending content review'}
+                  {topic.ProposedQuestionCount} {topic.EditorialStatus === 'Published'
+                    ? (ar ? 'مسائل منشورة' : 'published questions')
+                    : (ar ? 'مسائل تنتظر مراجعة المحتوى' : 'questions pending content review')}
                   {' · '}{topic.DomainKey}
                 </div>
                 <button
@@ -139,8 +143,8 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
           )}
           <p className="text-xs text-muted-foreground">
             {ar
-              ? 'أعداد المسائل المعروضة هي أعداد مسودات، وليست هدفاً ثابتاً للفئات ولا مؤشراً لإتقان الطالب.'
-              : 'Draft question counts are neither fixed quotas nor proof of learner mastery.'}
+              ? 'أعداد المسائل المعروضة ليست حصصاً ثابتة للفئات ولا دليلاً على إتقان الطالب.'
+              : 'Question counts are neither fixed quotas nor proof of learner mastery.'}
           </p>
         </>
       )}
