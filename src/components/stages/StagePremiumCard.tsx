@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { LockKeyhole } from "lucide-react";
 
 import { Link } from "@/i18n/routing";
@@ -33,32 +32,28 @@ export function StagePremiumCard({ stage, locale, locked = false }: StagePremium
   return (
     <Link
       href={locked ? "/learning-stage" : `/stages/${stage.Id}`}
-      className={`group relative flex h-full min-h-[245px] flex-col overflow-hidden rounded-3xl border bg-gradient-to-br p-6 shadow-sm outline-none transition-[border-color,box-shadow,transform] hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${tone.edge} ${tone.bg}`}
+      className={`group relative flex h-full min-h-[235px] flex-col overflow-hidden rounded-2xl border bg-gradient-to-br p-3 sm:min-h-[245px] sm:rounded-3xl sm:p-6 shadow-sm outline-none transition-[border-color,box-shadow,transform] hover:-translate-y-1 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${tone.edge} ${tone.bg}`}
     >
       <span aria-hidden="true" className={`absolute inset-x-0 top-0 h-1 ${tone.bar}`} />
       {locked && <LockKeyhole aria-hidden="true" className="absolute end-5 top-5 h-5 w-5 text-muted-foreground" />}
       <StageGeometry variant={visual.index} className={`pointer-events-none absolute -end-8 top-10 h-40 w-40 opacity-[0.12] transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110 ${tone.text}`} />
-      <span aria-hidden="true" dir="ltr" className="absolute end-6 top-6 text-xs font-bold tracking-wider text-muted-foreground/70">
+      <span aria-hidden="true" dir="ltr" className="absolute end-3 top-4 text-xs sm:end-6 sm:top-6 font-bold tracking-wider text-muted-foreground/70">
         {String(stage.Order > 0 ? stage.Order : visual.ordinal).padStart(2, "0")}
       </span>
-      <div className="relative mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-card/70">
+      <div className="relative mb-3 flex h-12 w-12 sm:mb-5 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-card/70">
         <StageIconBadge stage={stage} size="lg" className="border-0 bg-transparent shadow-none" />
       </div>
-      <h3 className="relative mb-3 text-xl font-extrabold leading-snug group-hover:underline"
+      <h3 className="relative mb-2 text-base font-extrabold sm:mb-3 sm:text-xl leading-snug group-hover:underline"
         style={{ color: accent }}>
         {locale === "ar" ? stage.NameAr : stage.NameEn}
       </h3>
-      <p className="mb-6 text-sm leading-7 text-muted-foreground">
+      <p className="mb-4 line-clamp-3 text-xs leading-5 text-muted-foreground sm:mb-6 sm:line-clamp-none sm:text-sm sm:leading-7">
         {(locale === 'ar' ? stage.DescriptionAr : stage.DescriptionEn)?.trim()
           || (locale === 'ar' ? 'استكشف هذه المرحلة وفئاتها ومسائلها التعليمية.' : 'Explore the learning stage, topics and practice questions.')}
       </p>
-      <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/70 pt-4 text-sm font-bold"
+      <div className="mt-auto flex items-center gap-3 border-t border-border/70 pt-3 text-xs font-bold sm:pt-4 sm:text-sm"
         style={{ color: accent }}>
         <span>{t("common.explore")}</span>
-        <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors group-hover:text-white"
-          style={{ backgroundColor: `${accent}15`, color: accent }}>
-          <DirectionalArrow direction="forward" />
-        </span>
       </div>
     </Link>
   );
