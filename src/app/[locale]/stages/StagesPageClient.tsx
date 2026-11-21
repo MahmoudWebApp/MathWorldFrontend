@@ -55,7 +55,7 @@ export default function StagesPageClient() {
       <div className="pointer-events-none absolute right-0 top-0 h-[500px] w-[500px] rounded-full bg-brand-primary/10 blur-[150px]" />
       <div className="pointer-events-none absolute bottom-1/4 left-0 h-[400px] w-[400px] rounded-full bg-brand-secondary/10 blur-[120px]" />
 
-      <div className="container relative z-10 mx-auto px-6 lg:px-12">
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -98,7 +98,7 @@ export default function StagesPageClient() {
           </div>
         ) : (
           <div>
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 pb-20 sm:grid-cols-2 sm:gap-5 lg:gap-8 xl:grid-cols-4">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 pb-20 sm:grid-cols-2 sm:gap-5 lg:gap-8 xl:grid-cols-4">
             {sortStagesByOrder(stages ?? []).map((stage, index) => {
               return (
                 <StagePremiumCard
