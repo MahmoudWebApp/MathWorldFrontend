@@ -17,7 +17,7 @@ export const STUDENT_NAV_ITEMS = [
   { href: '/dashboard/error-notebook', ar: 'دفتر الأخطاء', en: 'Error notebook', icon: NotebookPen },
   { href: '/dashboard/leaderboard', ar: 'المتفوقون', en: 'Leaderboard', icon: Trophy },
   { href: '/dashboard/achievements', ar: 'الشارات والإنجازات', en: 'Badges', icon: Medal },
-  { href: '/daily-challenge', ar: 'تحدي اليوم', en: 'Daily challenge', icon: CalendarCheck, premium: true },
+  { href: '/dashboard/daily-challenge', ar: 'تحدي اليوم', en: 'Daily challenge', icon: CalendarCheck, premium: true },
   { href: '/dashboard/analytics', ar: 'التقارير والإحصائيات', en: 'Reports & analytics', icon: ChartNoAxesCombined, premium: true },
   { href: '/dashboard/settings', ar: 'الإعدادات', en: 'Settings', icon: Settings },
   { href: '/dashboard/upgrade', ar: 'ترقية الحساب', en: 'Upgrade', icon: Crown },
