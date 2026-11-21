@@ -66,9 +66,8 @@ export default function LearningStagePage() {
     setError('');
     try {
       await setLearningStage({ StageId: effectiveId }).unwrap();
-      // Go straight to the stage's verified category catalogue. The
-      // learner should not get lost in an empty dashboard after switching.
-      window.location.assign(`/${locale}/stages/${effectiveId}`);
+      // Keep the learner in the private workspace after onboarding or switching stages.
+      window.location.assign(`/${locale}/dashboard/categories`);
     } catch (reason) {
       setError(getApiErrorMessage(reason, copy.submitError));
     }
