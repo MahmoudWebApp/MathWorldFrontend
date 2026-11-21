@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import { useSelector } from "react-redux";
-import { BookOpen, GraduationCap, Sparkles, Trophy, Crown } from "lucide-react";
+import { BookOpen, GraduationCap, Sparkles, Trophy } from "lucide-react";
 
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
@@ -54,15 +54,10 @@ export function HeroSection() {
           <Button asChild variant="outline" size="lg" className="w-full gap-2 rounded-2xl sm:w-auto">
             <Link href={isAuthenticated && user?.Role === "Student" ? "/dashboard/categories" : isAuthenticated ? "/admin" : "/login"}>
               {isAuthenticated ? <BookOpen aria-hidden="true" className="h-5 w-5" /> : <Trophy aria-hidden="true" className="h-5 w-5" />}
-              {t("hero.startChallenge")}
+              {isAuthenticated ? t('nav.dashboard') : t('nav.login')}
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="w-full gap-2 rounded-2xl sm:w-auto">
-            <Link href="/premium">
-              <Crown aria-hidden="true" className="h-5 w-5" />
-              {isArabic ? "الباقات" : "Plans"}
-            </Link>
-          </Button>
+
         </div>
       </div>
     </section>
