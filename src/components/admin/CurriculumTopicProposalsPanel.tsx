@@ -1,7 +1,11 @@
 'use client';
 
 import { useLocale } from 'next-intl';
+import { useState } from 'react';
+import { RichText } from '@/components/ui/RichText';
+import { LatexPreview } from '@/components/ui/LatexPreview';
 import {
+  useGetCurriculumDraftTopicQuestionsQuery,
   useGetCurriculumTopicProposalsQuery,
   type CurriculumStageCoverage,
 } from '@/store/api/curriculumApi';
@@ -12,6 +16,14 @@ import {
  */
 export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumStageCoverage[] }) {
   const ar = useLocale() === 'ar';
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const {
+    data: questionData,
+    isLoading: questionsLoading,
+    error: questionsError,
+  } = useGetCurriculumDraftTopicQuestionsQuery(selectedTopic ?? '', {
+    skip: selectedTopic === null,
+  });
   const { data, isLoading, error, refetch } = useGetCurriculumTopicProposalsQuery();
   const stageNames = new Map(stages.map(x => [x.StageId, ar ? x.NameAr : x.NameEn]));
 
@@ -62,9 +74,69 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
                   {topic.ProposedQuestionCount} {ar ? 'مسائل تنتظر مراجعة المحتوى' : 'questions pending content review'}
                   {' · '}{topic.DomainKey}
                 </div>
+                <button
+                  type="button"
+                  className="mt-3 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted focus-visible:outline-2 focus-visible:outline-primary"
+                  onClick={() => setSelectedTopic(previous => previous === topic.StableKey ? null : topic.StableKey)}
+                  aria-expanded={selectedTopic === topic.StableKey}
+                >
+                  {selectedTopic === topic.StableKey
+                    ? (ar ? 'إغلاق تفاصيل المسائل' : 'Close question details')
+                    : (ar ? 'مراجعة المسائل والحلول' : 'Review questions and solutions')}
+                </button>
               </div>
             ))}
           </div>
+          {selectedTopic && (
+            <div className="rounded-xl border border-border/80 p-4">
+              {questionsLoading && <p role="status">{ar ? 'جارٍ تحميل المسائل...' : 'Loading draft questions...'}</p>}
+              {questionsError && <p role="alert" className="text-sm text-red-600">
+                {ar ? 'تعذر تحميل تفاصيل المسائل.' : 'Unable to load draft question details.'}
+              </p>}
+              {questionData && questionData.TopicKey === selectedTopic && (
+                <>
+                  <h3 className="text-base font-bold">
+                    {ar ? questionData.TopicNameAr : questionData.TopicNameEn}
+                    <span className="ms-2 text-sm font-normal text-muted-foreground">
+                      ({questionData.Total} {ar ? 'مسائل مسودة' : 'draft questions'})
+                    </span>
+                  </h3>
+                  <div className="mt-3 space-y-3">
+                    {questionData.Questions.map((item, index) => (
+                      <details key={item.ContentKey} className="rounded-lg border border-border/80 p-3">
+                        <summary className="cursor-pointer text-sm font-semibold">
+                          {index + 1}. {ar ? item.LearningObjectiveAr : item.LearningObjectiveEn}
+                          <span className="ms-2 text-xs font-normal text-muted-foreground">
+                            {ar ? 'صعوبة' : 'Difficulty'} {item.DifficultyLevel}/5
+                          </span>
+                        </summary>
+                        <div className="mt-3 space-y-3 text-sm">
+                          <RichText text={ar ? item.QuestionTextAr : item.QuestionTextEn} isArabic={ar} className="text-sm" />
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {item.Options.map(option => (
+                              <div key={option.Order} className={`rounded-lg border p-2 ${option.IsCorrect ? 'border-emerald-500/50' : 'border-border/80'}`}>
+                                <span className="me-2 text-xs text-muted-foreground">{option.Order}.</span>
+                                <LatexPreview latex={option.LatexCode} />
+                                {option.IsCorrect && <span className="ms-2 text-xs font-medium text-emerald-600">
+                                  {ar ? 'الإجابة الصحيحة' : 'Correct answer'}
+                                </span>}
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-xs font-semibold text-muted-foreground">{ar ? 'الحل المفسّر' : 'Worked explanation'}</p>
+                          <RichText text={ar ? item.DetailedSolutionAr : item.DetailedSolutionEn} isArabic={ar} className="text-sm" />
+                          <div className="text-xs text-muted-foreground">
+                            {ar ? 'المهارة' : 'Skill'}: {item.PrimarySkillKey}
+                            {' · '}{ar ? 'الحالة' : 'Status'}: {item.EditorialStatus}
+                          </div>
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             {ar
               ? 'أعداد المسائل المعروضة هي أعداد مسودات، وليست هدفاً ثابتاً للفئات ولا مؤشراً لإتقان الطالب.'
