@@ -122,6 +122,90 @@ export interface CurriculumDraftPage {
   Batches: CurriculumDraft[];
 }
 
+export interface CurriculumDraftTopicQuestion {
+  ContentKey: string;
+  PrimarySkillKey: string;
+  TemplateFamilyKey: string;
+  DifficultyLevel: number;
+  PisaProcess: string;
+  LearningObjectiveAr: string;
+  LearningObjectiveEn: string;
+  QuestionTextAr: string;
+  QuestionTextEn: string;
+  DetailedSolutionAr: string;
+  DetailedSolutionEn: string;
+  Options: { Order: number; LatexCode: string; IsCorrect: boolean }[];
+  EditorialStatus: string;
+}
+
+export interface CurriculumDraftTopicQuestionReport {
+  TopicKey: string;
+  TopicNameAr: string;
+  TopicNameEn: string;
+  TopicStatus: string;
+  Total: number;
+  ApprovedForPublication: boolean;
+  Questions: CurriculumDraftTopicQuestion[];
+}
+
+export interface CurriculumTopicProposal {
+  StableKey: string;
+  StageId: number;
+  DomainKey: string;
+  NameAr: string;
+  NameEn: string;
+  DescriptionAr: string;
+  DescriptionEn: string;
+  IconKey: string;
+  SortOrder: number;
+  EditorialStatus: 'Draft' | 'Reviewed' | 'Rejected';
+  ProposedQuestionCount: number;
+}
+
+export interface CurriculumTopicProposalReport {
+  Published: boolean;
+  Total: number;
+  TotalDraftProblems: number;
+  RequiresIndependentReview: boolean;
+  Topics: CurriculumTopicProposal[];
+}
+
+export interface CurriculumSkillSummary {
+  StableKey: string;
+  DomainKey: string;
+  NameAr: string;
+  NameEn: string;
+  IsPublished: boolean;
+  ProblemCount: number;
+  StandardMappingCount: number;
+}
+
+export interface CurriculumCategorySkillCoverage {
+  CategoryId: number;
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  ProblemCount: number;
+  MappedProblemCount: number;
+  SkillCount: number;
+  DraftSkillCount: number;
+  Skills: CurriculumSkillSummary[];
+}
+
+export interface CurriculumSkillCoverage {
+  TotalProblems: number;
+  MappedProblems: number;
+  UnmappedProblems: number;
+  TotalSkills: number;
+  DraftSkills: number;
+  PublishedSkills: number;
+  StandardsMappedSkills: number;
+  InvalidPrimaryLinks: number;
+  SkillTaggingApproved: boolean;
+  MasteryEvidenceReady: boolean;
+  Categories: CurriculumCategorySkillCoverage[];
+}
+
 export const curriculumApi = createApi({
   reducerPath: 'curriculumApi',
   baseQuery,
@@ -139,6 +223,18 @@ export const curriculumApi = createApi({
     }),
     previewCurriculumImport: builder.mutation<CurriculumImportPreview, { Problems: ProposedCurriculumProblem[] }>({
       query: body => ({ url: '/admin/curriculum/import/preview', method: 'POST', body }),
+    }),
+    getCurriculumDraftTopicQuestions: builder.query<CurriculumDraftTopicQuestionReport, string>({
+      query: (stableKey) => `/admin/curriculum/topics/proposals/${encodeURIComponent(stableKey)}/questions`,
+      providesTags: ['CurriculumReadiness'],
+    }),
+    getCurriculumTopicProposals: builder.query<CurriculumTopicProposalReport, void>({
+      query: () => '/admin/curriculum/topics/proposals',
+      providesTags: ['CurriculumReadiness'],
+    }),
+    getCurriculumSkillCoverage: builder.query<CurriculumSkillCoverage, void>({
+      query: () => '/admin/curriculum/skills/coverage',
+      providesTags: ['CurriculumReadiness'],
     }),
     getCurriculumReadiness: builder.query<CurriculumReadiness, void>({
       query: () => '/admin/curriculum/readiness',
@@ -188,6 +284,9 @@ export const curriculumApi = createApi({
 });
 
 export const {
+  useGetCurriculumDraftTopicQuestionsQuery,
+  useGetCurriculumTopicProposalsQuery,
+  useGetCurriculumSkillCoverageQuery,
   useGetCurriculumReadinessQuery,
   usePreviewCurriculumImportMutation,
   usePreviewCategoriesImportMutation,
