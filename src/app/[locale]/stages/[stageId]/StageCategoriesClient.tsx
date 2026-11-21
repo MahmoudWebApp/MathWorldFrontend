@@ -24,7 +24,8 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
     skip: stageId <= 0,
     refetchOnMountOrArgChange: true,
   });
-  const categories = [...(data?.Categories ?? [])]
+  const categories = (data?.Categories ?? [])
+    .map(category => ({ ...category, StageId: stageId }))
     .sort((a, b) => (a.Order ?? 0) - (b.Order ?? 0) || a.Id - b.Id);
 
   return (
