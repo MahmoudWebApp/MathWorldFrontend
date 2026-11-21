@@ -4,10 +4,10 @@ import { SITE_URL } from '@/lib/publicCurriculum';
 export async function generateMetadata({ params }: { params: Promise<{locale: string}> }): Promise<Metadata> {
   const { locale } = await params;
   const ar = locale === 'ar';
-  const title = ar ? 'مقارنة Free وPremium | MathWorld' : 'Free vs Premium | MathWorld';
+  const title = ar ? 'الباقات | MathWorld' : 'Plans | MathWorld';
   const description = ar
-    ? 'قارن مميزات الحساب المجاني وPremium في MathWorld دون أسعار. تعرّف على الفئات المتاحة والحلول والتقارير وكيفية ترقية حسابك.'
-    : 'Compare MathWorld Free and Premium benefits without prices: learning topics, solutions, reports and account upgrades.';
+    ? 'تعرّف إلى باقات MathWorld المجانية وPremium ومميزات التعلم والفئات والحلول والتقارير، بدون عرض أسعار.'
+    : 'Explore MathWorld Free and Premium plans, learning topics, solutions, and reports, with no prices displayed.';
   return {
     title, description,
     alternates: {

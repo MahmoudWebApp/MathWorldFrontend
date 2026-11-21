@@ -18,7 +18,7 @@ import {
   Search,
   RotateCcw,
 } from "lucide-react";
-import { Link } from "@/i18n/routing";
+import { Link, usePathname } from "@/i18n/routing";
 import { ProblemCard } from "@/components/problems/ProblemCard";
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { getStageAccent } from '@/lib/stageVisuals';
@@ -61,6 +61,7 @@ function ProblemsPageClient() {
   const t = useTranslations();
   const locale = useLocale();
   const searchParams = useSearchParams();
+  const learnerWorkspace = usePathname().startsWith("/dashboard/");
 
   // ── Get filters from URL params ─────────────────────────
   const urlStageId = searchParams.get("stageId") || "";
@@ -172,10 +173,10 @@ function ProblemsPageClient() {
 
   // Build breadcrumb
   const breadcrumbItems: { href: string; label: string }[] = [
-    { href: "/stages", label: t("nav.stages") },
+    { href: learnerWorkspace ? "/dashboard/categories" : "/stages", label: learnerWorkspace ? (locale === "ar" ? "الفئات" : "Topics") : t("nav.stages") },
   ];
   if (stageId && stageName) {
-    breadcrumbItems.push({ href: `/stages/${stageId}`, label: stageName });
+    breadcrumbItems.push({ href: learnerWorkspace ? "/dashboard/categories" : `/stages/${stageId}`, label: stageName });
   }
   if (categoryId && categoryName) {
     breadcrumbItems.push({ href: "", label: categoryName });
@@ -217,7 +218,7 @@ function ProblemsPageClient() {
           }}>
             {t('common.retry')}
           </Button>
-          <Link href={`/stages/${stageId}`} className="rounded-xl border px-5 py-3">
+          <Link href={learnerWorkspace ? "/dashboard/categories" : `/stages/${stageId}`} className="rounded-xl border px-5 py-3">
             {locale === 'ar' ? 'العودة إلى المرحلة' : 'Back to stage'}
           </Link>
         </div>
@@ -256,7 +257,7 @@ function ProblemsPageClient() {
     <div className="container relative mx-auto px-4 py-12 md:px-16 lg:px-24">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-        <Link href="/" className="hover:text-primary transition-colors">
+        <Link href={learnerWorkspace ? "/dashboard" : "/"} className="hover:text-primary transition-colors">
           {t("nav.home")}
         </Link>
         {breadcrumbItems.map((item, index) => (
@@ -428,7 +429,7 @@ function ProblemsPageClient() {
               {(stageId || categoryId) && (
                 <div className="mt-4">
                   <Link
-                    href="/problems"
+                    href={learnerWorkspace ? "/dashboard/problems" : "/problems"}
                     className="text-primary hover:underline text-sm"
                   >
                     {t("problems.browseAll")}

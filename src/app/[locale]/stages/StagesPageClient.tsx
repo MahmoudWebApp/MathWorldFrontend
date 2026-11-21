@@ -9,7 +9,6 @@ import {
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import { Link } from '@/i18n/routing';
 
 import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { sortStagesByOrder } from '@/lib/stageVisuals';
@@ -19,9 +18,7 @@ import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 export default function StagesPageClient() {
   const t = useTranslations();
   const locale = useLocale();
-  const { user, isAuthenticated, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
-  const student = isAuthenticated && user?.Role === 'Student';
-  const chosenStageId = student ? user.CurrentStageId : null;
+  const authLoading = useSelector((state: RootState) => state.auth.isLoading);
   const { data: stages, isLoading, error, refetch } = useGetStagesQuery(locale, {
     refetchOnMountOrArgChange: true,
   });
@@ -58,7 +55,7 @@ export default function StagesPageClient() {
       <div className="pointer-events-none absolute right-0 top-0 h-[500px] w-[500px] rounded-full bg-brand-primary/10 blur-[150px]" />
       <div className="pointer-events-none absolute bottom-1/4 left-0 h-[400px] w-[400px] rounded-full bg-brand-secondary/10 blur-[120px]" />
 
-      <div className="container relative z-10 mx-auto px-6 lg:px-12">
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,12 +65,12 @@ export default function StagesPageClient() {
           <div className="math-equation-chip mb-6 inline-flex items-center justify-center gap-3 rounded-full px-4 py-2">
             <span className="flex h-2 w-2 rounded-full bg-brand-primary animate-pulse" />
             <span className="text-sm font-bold uppercase tracking-widest text-primary">
-              {t('stages.title')}
+              {locale === 'ar' ? 'المراحل' : 'Stages'}
             </span>
             <span className="flex h-2 w-2 rounded-full bg-brand-secondary animate-pulse" />
           </div>
           <h1 className="brand-display-title text-foreground mb-6 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
-            <AccentHeadingText text={t('stages.heading')} />
+            <AccentHeadingText text={locale === 'ar' ? 'المراحل' : 'Stages'} />
           </h1>
           <div className="math-divider mx-auto mb-6 w-56" />
           <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
@@ -101,11 +98,7 @@ export default function StagesPageClient() {
           </div>
         ) : (
           <div>
-            {student && <div className="mb-6 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-border bg-card/80 px-4 py-3">
-              <span className="text-sm font-semibold">{locale === "ar" ? "فقط مرحلتك الحالية مفتوحة" : "Only your selected stage is unlocked"}</span>
-              <Link href="/learning-stage" className="rounded-lg border border-border bg-background px-3 py-2 text-sm font-bold">{locale === "ar" ? "تغيير المرحلة" : "Change stage"}</Link>
-            </div>}
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 pb-20 sm:grid-cols-2 sm:gap-5 lg:gap-8 xl:grid-cols-4">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 pb-20 sm:grid-cols-2 sm:gap-5 lg:gap-8 xl:grid-cols-4">
             {sortStagesByOrder(stages ?? []).map((stage, index) => {
               return (
                 <StagePremiumCard
@@ -113,7 +106,7 @@ export default function StagesPageClient() {
                   stage={stage}
                   index={index}
                   locale={locale}
-                  locked={student && stage.Id !== chosenStageId}
+                  locked={false}
                 />
               );
             })}

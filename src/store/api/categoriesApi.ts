@@ -49,6 +49,8 @@ export interface StageCategoryAccessDto {
     Id: number;
     NameAr: string;
     NameEn: string;
+    DescriptionAr?: string;
+    DescriptionEn?: string;
     Icon: string;
     Order: number;
     ProblemsCount?: number | null;

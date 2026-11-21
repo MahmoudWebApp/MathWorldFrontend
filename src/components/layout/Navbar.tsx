@@ -11,7 +11,7 @@ import { setLocale } from '@/store/slices/localeSlice';
  import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'; 
 import { 
-  SearchNormal1, CloseCircle, User, Logout, ArrowDown2, Element3,
+  CloseCircle, User, Logout, ArrowDown2, Element3,
 } from 'iconsax-reactjs';
 import {
   BookMarked,
@@ -21,7 +21,6 @@ import {
   Layers3,
   Menu,
   NotebookTabs,
-  Search,
   Sun,
   Moon,
   Monitor,
@@ -34,6 +33,7 @@ import { NotificationRealtimeSync } from '@/components/layout/NotificationRealti
 import { StudentPresenceHeartbeat } from '@/components/layout/StudentPresenceHeartbeat';
 import { notificationsApi } from '@/store/api/notificationsApi';
 import { ADMIN_NAV_ITEMS, AdminNavMobile } from '@/components/admin/AdminNavigation';
+import { StudentWorkspaceNavigation } from '@/components/dashboard/StudentWorkspaceNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
@@ -63,8 +63,6 @@ function NavbarContent() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [navSearch, setNavSearch] = useState('');
   const [mounted, setMounted] = useState(false);
  
   // Scroll Progress Bar
@@ -79,7 +77,6 @@ function NavbarContent() {
   useEffect(() => {
      setMobileMenuOpen(false);
     setUserMenuOpen(false);
-    setShowSearch(false);
   }, [pathname]);
 
   const handleLogout = async () => {
@@ -141,22 +138,13 @@ function NavbarContent() {
     window.location.assign(`/${newLocale}${newPath}`);
   };
 
-  const handleNavSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (navSearch.trim()) {
-      router.push(`/problems?q=${encodeURIComponent(navSearch.trim())}`);
-      setNavSearch('');
-      setShowSearch(false);
-    }
-  };
-
   // The public website and the learner/admin workspaces share this one domain,
   // but expose purpose-built navigation instead of one mixed list of links.
   const adminArea = pathname === '/admin' || pathname.startsWith('/admin/');
   const learnerArea = pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
     pathname === '/learning-stage' || pathname.startsWith('/journey') ||
     pathname.startsWith('/social-accounts') ||
-    (user?.Role === 'Student' && (pathname === '/notifications' || pathname.startsWith('/problems') || pathname.startsWith('/stages/')));
+    (user?.Role === 'Student' && pathname === '/notifications');
   const portalArea = adminArea || learnerArea;
   const portalLanding = user?.Role === 'Admin' ? '/admin' : '/dashboard';
   const navItems = adminArea ? [
@@ -165,16 +153,10 @@ function NavbarContent() {
     { href: '/admin/stages', ar: 'المراحل', en: 'Stages' },
     { href: '/admin/categories', ar: 'الفئات', en: 'Categories' },
     { href: '/admin/problems', ar: 'المسائل', en: 'Problems' },
-  ] : learnerArea ? [
-    { href: '/dashboard', ar: 'لوحتي', en: 'My dashboard' },
-    { href: user?.CurrentStageId ? `/stages/${user.CurrentStageId}` : '/learning-stage', ar: 'تابع التعلم', en: 'Continue learning' },
-    { href: '/dashboard/favorites', ar: 'المفضلة', en: 'Favorites' },
-    { href: '/dashboard/analytics', ar: 'تقدّمي', en: 'My progress' },
-    { href: '/dashboard/upgrade', ar: hasUpgraded ? 'مميزات حسابي' : 'ترقية الحساب', en: hasUpgraded ? 'My benefits' : 'Upgrade' },
-  ] : [
+  ] : learnerArea ? [] : [
     { href: '/', ar: 'الرئيسية', en: 'Home' },
-    { href: '/stages', ar: 'المراحل والفئات', en: 'Stages & topics' },
-    { href: '/premium', ar: 'Free و Premium', en: 'Free vs Premium' },
+    { href: '/stages', ar: 'المراحل', en: 'Stages' },
+    { href: '/premium', ar: 'الباقات', en: 'Plans' },
     { href: '/about', ar: 'عن المنصة', en: 'About' },
   ];
 
@@ -201,7 +183,7 @@ function NavbarContent() {
           </Link>
 
           {/* Public, learner and admin have independent menu choices. */}
-          <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+          <div className={cn("hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex", learnerArea && "lg:hidden")}>
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}
                 className={cn('whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold transition-colors',
@@ -217,41 +199,8 @@ function NavbarContent() {
             </Link>}
           </div>
 
-          {/* Actions & Search */}
+          {/* Account actions, theme, language and notifications. Public search is intentionally removed. */}
           <div className="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2">
-            <div className="hidden md:flex items-center">
-              <AnimatePresence mode="wait">
-                {showSearch ? (
-                  <motion.form 
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 220, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    className="relative flex items-center overflow-hidden mr-2"
-                    onSubmit={handleNavSearch}
-                  >
-                    <Search className="absolute start-3 h-4 w-4 text-primary" />
-                    <input
-                      autoFocus
-                      type="text"
-                      value={navSearch}
-                      onChange={(e) => setNavSearch(e.target.value)}
-                      placeholder={t('search.placeholder')}
-                      className="w-full ps-9 pe-8 py-2 rounded-full border border-primary/30 bg-primary/5 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                    />
-                    <button type="button" onClick={() => setShowSearch(false)} className="absolute end-2 text-muted-foreground hover:text-foreground">
-                      <CloseCircle className="h-4 w-4" />
-                    </button>
-                  </motion.form>
-                ) : (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary" onClick={() => setShowSearch(true)}>
-                      <SearchNormal1 className="h-5 w-5" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             <Button variant="ghost" size="sm" aria-label={locale === 'ar' ? 'Switch to English' : 'التبديل إلى العربية'} className="h-9 shrink-0 rounded-full px-2 font-bold hover:bg-primary/10 hover:text-primary sm:px-3" onClick={toggleLocale}>
               {locale === 'ar' ? 'EN' : 'عربي'}
             </Button>
@@ -283,6 +232,11 @@ function NavbarContent() {
             {/* Auth Section */}
             {!mounted || isLoading ? (
               <div className="hidden h-9 w-24 animate-pulse rounded-full bg-muted md:block" />
+            ) : isAuthenticated && user?.Role === 'Student' && learnerArea ? (
+              <div className="hidden items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold lg:flex">
+                <User className="h-4 w-4 text-primary" />
+                <span className="max-w-36 truncate">{user.FullName || user.Email?.split('@')[0] || t('nav.user')}</span>
+              </div>
             ) : isAuthenticated && user ? (
               <div className="relative hidden md:block">
                 <Button variant="outline" className="flex items-center gap-2 rounded-full border-primary/20 hover:bg-primary/5 hover:border-primary/50" onClick={() => setUserMenuOpen(!userMenuOpen)}>
@@ -426,13 +380,14 @@ function NavbarContent() {
                   : learnerArea ? (locale === 'ar' ? 'قائمة الطالب' : 'Learner menu')
                     : (locale === 'ar' ? 'الموقع العام' : 'Public website')}
               </p>
-              {navItems.map(item => (
+              {!learnerArea && navItems.map(item => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}
                   className={cn('flex min-h-11 items-center rounded-xl px-4 py-3 text-sm font-semibold',
                     pathname === item.href ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}>
                   {locale === 'ar' ? item.ar : item.en}
                 </Link>
               ))}
+              {learnerArea && <StudentWorkspaceNavigation isPremium={hasUpgraded} onNavigate={() => setMobileMenuOpen(false)} />}
               {adminArea && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
               {(portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding} onClick={() => setMobileMenuOpen(false)}
                 className="flex min-h-11 items-center rounded-xl border border-primary/25 px-4 py-3 text-sm font-bold text-primary">

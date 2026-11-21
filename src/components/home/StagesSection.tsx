@@ -4,7 +4,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { GraduationCap, Loader2 } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
-import { Link } from "@/i18n/routing";
 
 import { useGetStagesQuery } from "@/store/api/stagesApi";
 import { sortStagesByOrder } from "@/lib/stageVisuals";
@@ -16,9 +15,7 @@ import { Button } from "@/components/ui/Button";
 export function StagesSection() {
   const t = useTranslations();
   const locale = useLocale();
-  const { user, isAuthenticated, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
-  const student = isAuthenticated && user?.Role === 'Student';
-  const chosenStageId = student ? user.CurrentStageId : null;
+  const authLoading = useSelector((state: RootState) => state.auth.isLoading);
   const { data: stages, isLoading, isError, refetch } = useGetStagesQuery(locale, {
     refetchOnMountOrArgChange: true,
   });
@@ -58,13 +55,9 @@ export function StagesSection() {
             {t("stages.subtitle")}
           </p>
         </div>
-        {student && <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
-          <span className="text-sm font-semibold text-foreground">{locale === "ar" ? "مرحلتك الحالية مميزة، والباقي مقفل" : "Your selected stage is available; other stages are locked"}</span>
-          <Link href="/learning-stage" className="inline-flex rounded-xl border border-border bg-card px-4 py-2 text-sm font-bold">{locale === "ar" ? "تغيير المرحلة" : "Change stage"}</Link>
-        </div>}
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 lg:gap-5">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 lg:gap-5">
           {sortStagesByOrder(stages).map((stage, index) => (
-            <StagePremiumCard key={stage.Id} stage={stage} index={index} locale={locale} locked={student && stage.Id !== chosenStageId} />
+            <StagePremiumCard key={stage.Id} stage={stage} index={index} locale={locale} locked={false} />
           ))}
         </div>
       </div>

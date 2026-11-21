@@ -1,32 +1,21 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useSelector } from "react-redux";
-import { BookOpen, GraduationCap, Search, Sparkles, Trophy, Crown } from "lucide-react";
-import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
+import { BookOpen, GraduationCap, Sparkles, Trophy, Crown } from "lucide-react";
 
-import { Link, useRouter } from "@/i18n/routing";
+import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import type { RootState } from "@/store";
 
-/** Simple, accessible home hero. Search and navigation logic are unchanged. */
+/** Public landing hero focused on stages and plan discovery, without public search. */
 export function HeroSection() {
   const t = useTranslations();
   const isArabic = useLocale() === "ar";
-  const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
   const { user, token } = useSelector((state: RootState) => state.auth);
   const isAuthenticated = Boolean(user && token);
   const titleWords = t("hero.title").split(" ");
 
-  function handleSearch(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const query = searchQuery.trim();
-    if (query) {
-      router.push(`/problems?q=${encodeURIComponent(query)}`);
-    }
-  }
 
   return (
     <section className="brand-hero-bg relative isolate overflow-hidden px-4 py-16 sm:py-24 lg:py-28">
@@ -55,23 +44,6 @@ export function HeroSection() {
           <span className="rounded-xl border border-brand-primary/10 bg-card/75 px-4 py-2">∑ n</span>
         </div>
 
-        <form onSubmit={handleSearch} role="search" className="mb-7 w-full max-w-2xl">
-          <div className="flex items-center gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm transition-colors focus-within:border-brand-primary/50 focus-within:ring-2 focus-within:ring-brand-primary/15">
-            <Search aria-hidden="true" className="ms-2 h-5 w-5 shrink-0 text-brand-primary" />
-            <input
-              type="search"
-              aria-label={t("hero.searchPlaceholder")}
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder={t("hero.searchPlaceholder")}
-              className="min-w-0 flex-1 bg-transparent px-1 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground sm:text-base"
-            />
-            <Button type="submit" size="sm" className="h-11 shrink-0 rounded-xl px-4 sm:px-6">
-              {t("hero.searchButton")}
-            </Button>
-          </div>
-        </form>
-
         <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
           <Button asChild size="lg" className="w-full gap-2 rounded-2xl sm:w-auto">
             <Link href="/stages">
@@ -80,16 +52,15 @@ export function HeroSection() {
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full gap-2 rounded-2xl sm:w-auto">
-            <Link href={isAuthenticated ? "/problems" : "/login"}>
+            <Link href={isAuthenticated && user?.Role === "Student" ? "/dashboard/categories" : isAuthenticated ? "/admin" : "/login"}>
               {isAuthenticated ? <BookOpen aria-hidden="true" className="h-5 w-5" /> : <Trophy aria-hidden="true" className="h-5 w-5" />}
               {t("hero.startChallenge")}
-              <DirectionalArrow direction="forward" />
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full gap-2 rounded-2xl sm:w-auto">
             <Link href="/premium">
               <Crown aria-hidden="true" className="h-5 w-5" />
-              {isArabic ? "مقارنة الحسابات" : "Compare plans"}
+              {isArabic ? "الباقات" : "Plans"}
             </Link>
           </Button>
         </div>

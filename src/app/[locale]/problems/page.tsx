@@ -1,24 +1,12 @@
-import { getTranslations } from 'next-intl/server';
-import ProblemsPageClientWrapper from './ProblemsPageClient';
+import { redirect } from 'next/navigation';
 
-export async function generateMetadata({ 
-  params 
-}: { 
-  params: Promise<{ locale: string }> 
+// The public website is a curriculum guide, not a searchable problem catalogue.
+// Learners continue to use /dashboard/problems in their private workspace.
+export default async function PublicProblemsRedirect({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'problems' });
-  
-  return {
-    title: t('title') + ' | MathWorld',
-    description: t('subtitle'),
-  };
-}
-
-export default async function ProblemsPage() {
-  return (
-    <div className="min-h-screen math-section-bg">
-      <ProblemsPageClientWrapper />
-    </div>
-  );
+  redirect(`/${locale}/stages`);
 }

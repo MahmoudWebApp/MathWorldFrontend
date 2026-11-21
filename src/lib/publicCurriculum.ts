@@ -44,3 +44,33 @@ async function getPublicList<T>(endpoint: string): Promise<T[]> {
 }
 export const getPublicStages = () => getPublicList<PublicStage>('stages');
 export const getPublicCategories = () => getPublicList<PublicCategory>('categories');
+
+export interface PublicStageExample {
+  Id: number;
+  TitleAr: string;
+  TitleEn: string;
+  QuestionTextAr: string;
+  QuestionTextEn: string;
+  CategoryNameAr: string;
+  CategoryNameEn: string;
+}
+
+// Stage samples expose only the four free-topic questions explicitly
+// selected by the API. No answers or solutions are sent to the public site.
+export async function getPublicStageExamples(stageId: number): Promise<PublicStageExample[]> {
+  if (!Number.isSafeInteger(stageId) || stageId <= 0) return [];
+  try {
+    const response = await fetch(`${API}/stages/${stageId}/examples`, {
+      headers: { Accept: 'application/json' },
+      next: { revalidate: 120 },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return [];
+    const payload: unknown = await response.json();
+    if (!payload || typeof payload !== 'object' || !('Results' in payload)) return [];
+    const results = (payload as { Results?: unknown }).Results;
+    return Array.isArray(results) ? results as PublicStageExample[] : [];
+  } catch {
+    return [];
+  }
+}

@@ -149,7 +149,7 @@ export default function StudentLeaderboardPage() {
                     : (ar
                       ? 'ما في نتائج لهذه الفترة. حلّ مسائل حتى تظهر بالقائمة.'
                       : 'No results for this period. Solve questions to appear here.')}</p>
-                  <Link href={`/stages/${stageId}`}
+                  <Link href="/dashboard/categories"
                     className="mt-4 inline-flex min-h-10 items-center rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
                     {ar ? 'انتقل لفئات مرحلتي' : 'Browse my stage topics'}
                   </Link>
