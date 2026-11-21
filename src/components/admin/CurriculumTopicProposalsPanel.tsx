@@ -73,9 +73,9 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
                   {ar ? topic.DescriptionAr : topic.DescriptionEn}
                 </p>
                 <div className="mt-3 border-t pt-2 text-xs text-muted-foreground">
-                  <span>{topic.PublishedQuestionCount} {ar ? 'مسائل منشورة' : 'published questions'}</span>
+                  <span>{(topic.PublishedQuestionCount ?? (topic.EditorialStatus === 'Published' ? topic.ProposedQuestionCount : 0))} {ar ? 'مسائل منشورة' : 'published questions'}</span>
                   {' · '}
-                  <span>{topic.DraftQuestionCount} {ar ? 'قيد المراجعة' : 'pending review'}</span>
+                  <span>{(topic.DraftQuestionCount ?? (topic.EditorialStatus === 'Published' ? 0 : topic.ProposedQuestionCount))} {ar ? 'قيد المراجعة' : 'pending review'}</span>
                   {' · '}{topic.DomainKey}
                 </div>
                 <button
