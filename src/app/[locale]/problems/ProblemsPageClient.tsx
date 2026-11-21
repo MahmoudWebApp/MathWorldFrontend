@@ -70,6 +70,7 @@ function ProblemsPageClient() {
 
   // ── State ───────────────────────────────────────────────
   const [page, setPage] = useState(1);
+  const [hideSolved, setHideSolved] = useState(false);
   const [inputValue, setInputValue] = useState(urlSearch);
   const debouncedSearch = useDebounce(inputValue, DEBOUNCE_DELAY);
 
@@ -121,6 +122,7 @@ function ProblemsPageClient() {
       Q: debouncedSearch || "",
       CategoryId: categoryId ? parseInt(categoryId) : undefined,
       StageId: stageId ? parseInt(stageId) : undefined,
+      HideSolved: learnerWorkspace && authenticated && hideSolved,
       Page: page,
       PageSize: DEFAULT_PAGE_SIZE,
       locale: locale,
@@ -161,7 +163,7 @@ function ProblemsPageClient() {
   // Reset page when search changes
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, stageId, categoryId]);
+  }, [debouncedSearch, stageId, categoryId, hideSolved]);
 
   // ── Helper functions ────────────────────────────────────
   const clearSearch = () => {
@@ -231,7 +233,7 @@ function ProblemsPageClient() {
         <h1 className="mb-6 text-xl font-bold">
           {locale === 'ar' ? 'هذه الفئة غير متاحة لحسابك' : 'This topic is not available to your account'}
         </h1>
-        <Link href={`/stages/${stageId}`} className="inline-flex rounded-xl border border-border px-5 py-3 font-semibold">
+        <Link href={learnerWorkspace ? "/dashboard/categories" : `/stages/${stageId}`} className="inline-flex rounded-xl border border-border px-5 py-3 font-semibold">
           {locale === 'ar' ? 'العودة لفئات مرحلتي' : 'Back to stage topics'}
         </Link>
       </section>
@@ -319,6 +321,18 @@ function ProblemsPageClient() {
           </div>
         </div>
       </div>
+
+      {learnerWorkspace && authenticated && (
+        <label className="mb-6 inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={hideSolved}
+            onChange={event => setHideSolved(event.target.checked)}
+            className="h-4 w-4 accent-primary"
+          />
+          <span>{locale === 'ar' ? 'إخفاء المسائل المحلولة' : 'Hide solved problems'}</span>
+        </label>
+      )}
 
       {/* Active search badge */}
       {debouncedSearch && (
