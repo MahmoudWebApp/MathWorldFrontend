@@ -122,6 +122,42 @@ export interface CurriculumDraftPage {
   Batches: CurriculumDraft[];
 }
 
+export interface CurriculumSkillSummary {
+  StableKey: string;
+  DomainKey: string;
+  NameAr: string;
+  NameEn: string;
+  IsPublished: boolean;
+  ProblemCount: number;
+  StandardMappingCount: number;
+}
+
+export interface CurriculumCategorySkillCoverage {
+  CategoryId: number;
+  StageId: number;
+  NameAr: string;
+  NameEn: string;
+  ProblemCount: number;
+  MappedProblemCount: number;
+  SkillCount: number;
+  DraftSkillCount: number;
+  Skills: CurriculumSkillSummary[];
+}
+
+export interface CurriculumSkillCoverage {
+  TotalProblems: number;
+  MappedProblems: number;
+  UnmappedProblems: number;
+  TotalSkills: number;
+  DraftSkills: number;
+  PublishedSkills: number;
+  StandardsMappedSkills: number;
+  InvalidPrimaryLinks: number;
+  SkillTaggingApproved: boolean;
+  MasteryEvidenceReady: boolean;
+  Categories: CurriculumCategorySkillCoverage[];
+}
+
 export const curriculumApi = createApi({
   reducerPath: 'curriculumApi',
   baseQuery,
@@ -139,6 +175,10 @@ export const curriculumApi = createApi({
     }),
     previewCurriculumImport: builder.mutation<CurriculumImportPreview, { Problems: ProposedCurriculumProblem[] }>({
       query: body => ({ url: '/admin/curriculum/import/preview', method: 'POST', body }),
+    }),
+    getCurriculumSkillCoverage: builder.query<CurriculumSkillCoverage, void>({
+      query: () => '/admin/curriculum/skills/coverage',
+      providesTags: ['CurriculumReadiness'],
     }),
     getCurriculumReadiness: builder.query<CurriculumReadiness, void>({
       query: () => '/admin/curriculum/readiness',
@@ -188,6 +228,7 @@ export const curriculumApi = createApi({
 });
 
 export const {
+  useGetCurriculumSkillCoverageQuery,
   useGetCurriculumReadinessQuery,
   usePreviewCurriculumImportMutation,
   usePreviewCategoriesImportMutation,
