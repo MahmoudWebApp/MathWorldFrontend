@@ -31,6 +31,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck frontend
         run: pnpm run typecheck
+      - name: Verify bilingual LaTeX parsing
+        run: pnpm run qa:math
       - name: Build Next.js release
         env:
           NEXT_TELEMETRY_DISABLED: '1'
