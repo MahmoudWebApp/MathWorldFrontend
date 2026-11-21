@@ -122,6 +122,32 @@ export interface CurriculumDraftPage {
   Batches: CurriculumDraft[];
 }
 
+export interface CurriculumDraftTopicQuestion {
+  ContentKey: string;
+  PrimarySkillKey: string;
+  TemplateFamilyKey: string;
+  DifficultyLevel: number;
+  PisaProcess: string;
+  LearningObjectiveAr: string;
+  LearningObjectiveEn: string;
+  QuestionTextAr: string;
+  QuestionTextEn: string;
+  DetailedSolutionAr: string;
+  DetailedSolutionEn: string;
+  Options: { Order: number; LatexCode: string; IsCorrect: boolean }[];
+  EditorialStatus: string;
+}
+
+export interface CurriculumDraftTopicQuestionReport {
+  TopicKey: string;
+  TopicNameAr: string;
+  TopicNameEn: string;
+  TopicStatus: string;
+  Total: number;
+  ApprovedForPublication: boolean;
+  Questions: CurriculumDraftTopicQuestion[];
+}
+
 export interface CurriculumTopicProposal {
   StableKey: string;
   StageId: number;
@@ -198,6 +224,10 @@ export const curriculumApi = createApi({
     previewCurriculumImport: builder.mutation<CurriculumImportPreview, { Problems: ProposedCurriculumProblem[] }>({
       query: body => ({ url: '/admin/curriculum/import/preview', method: 'POST', body }),
     }),
+    getCurriculumDraftTopicQuestions: builder.query<CurriculumDraftTopicQuestionReport, string>({
+      query: (stableKey) => `/admin/curriculum/topics/proposals/${encodeURIComponent(stableKey)}/questions`,
+      providesTags: ['CurriculumReadiness'],
+    }),
     getCurriculumTopicProposals: builder.query<CurriculumTopicProposalReport, void>({
       query: () => '/admin/curriculum/topics/proposals',
       providesTags: ['CurriculumReadiness'],
@@ -254,6 +284,7 @@ export const curriculumApi = createApi({
 });
 
 export const {
+  useGetCurriculumDraftTopicQuestionsQuery,
   useGetCurriculumTopicProposalsQuery,
   useGetCurriculumSkillCoverageQuery,
   useGetCurriculumReadinessQuery,
