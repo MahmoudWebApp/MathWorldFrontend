@@ -158,7 +158,7 @@ export interface CurriculumTopicProposal {
   DescriptionEn: string;
   IconKey: string;
   SortOrder: number;
-  EditorialStatus: 'Draft' | 'Reviewed' | 'Rejected';
+  EditorialStatus: 'Draft' | 'Reviewed' | 'Rejected' | 'Published';
   ProposedQuestionCount: number;
 }
 
