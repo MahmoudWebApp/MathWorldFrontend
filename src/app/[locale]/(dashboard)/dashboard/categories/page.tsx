@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Link } from '@/i18n/routing';
 import { BookOpen, LockKeyhole, RefreshCw } from 'lucide-react';
 import { useGetLearningStageQuery } from '@/store/api/usersApi';
-import { useGetCategoriesQuery, useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
+import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
 
@@ -18,12 +18,10 @@ export default function StudentCategoriesPage() {
     useGetStageCategoryAccessQuery(stageId, { skip: stageId <= 0, refetchOnMountOrArgChange: true });
   const { data: subscription, isLoading: loadingPlan, isError: planError, refetch: reloadPlan } =
     useGetStudentSubscriptionQuery(undefined, { refetchOnMountOrArgChange: true });
-  const { data: allCategories } = useGetCategoriesQuery(locale);
   const accent = getStageAccent({ Id: stageId, NameAr: selected?.NameAr, NameEn: selected?.NameEn });
   const loading = selecting || (stageId > 0 && (loadingAccess || loadingPlan));
   const failed = selectedError || accessError || planError;
   const stageName = ar ? selected?.NameAr : selected?.NameEn;
-  const categoryDetails = new Map((allCategories ?? []).map(category => [category.Id, category]));
   const unlocked = new Set(access?.FreeCategoryIds ?? []);
 
   return (
@@ -65,12 +63,11 @@ export default function StudentCategoriesPage() {
           </p>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {[...access.Categories].sort((a,b)=>a.Order-b.Order || a.Id-b.Id).map(category => {
-              const detail = categoryDetails.get(category.Id);
               const name = ar ? category.NameAr : category.NameEn;
-              const description = ar ? detail?.DescriptionAr : detail?.DescriptionEn;
+              const description = ar ? category.DescriptionAr : category.DescriptionEn;
               const locked = !subscription.IsPremium && !unlocked.has(category.Id);
               const empty = category.ProblemsCount === 0;
-              const iconUrl = detail?.Icon || category.Icon;
+              const iconUrl = category.Icon;
               const card = (
                 <div className="flex h-full min-h-52 flex-col rounded-2xl border bg-card p-4 transition-shadow hover:shadow-md" style={{ borderColor: `${accent}33` }}>
                   <div className="mb-4 flex items-start justify-between gap-2">
