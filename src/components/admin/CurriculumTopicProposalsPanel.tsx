@@ -25,7 +25,7 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
     skip: selectedTopic === null,
   });
   const { data, isLoading, error, refetch } = useGetCurriculumTopicProposalsQuery();
-  const stageNames = new Map(stages.map(x => [x.StageId, ar ? x.NameAr : x.NameEn]));
+  const stageNames = new Map<number, string>(stages.map(x => [x.StageId, ar ? x.NameAr : x.NameEn] as const));
 
   return (
     <section className="space-y-3 rounded-xl border bg-card p-4 sm:p-5" aria-labelledby="curriculum-topic-proposals-title">
