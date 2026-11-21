@@ -234,10 +234,8 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const role = useSelector((state: RootState) =>
     state.auth.isAuthenticated ? state.auth.user?.Role : undefined);
-  const isGuest = !isAuthenticated;
   const isAdmin = role === 'Admin';
   const isStudent = role === 'Student';
-  const chosenStageId = useSelector((state: RootState) => state.auth.user?.CurrentStageId);
   // Public information remains viewable to logged-in students too.
   // For another stage, render a read-only curriculum guide; never enable solving.
   const publicPreview = true; // /stages is always a public informational route.
