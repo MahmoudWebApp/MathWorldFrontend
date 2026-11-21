@@ -4,16 +4,22 @@ import { useLocale } from 'next-intl';
 import Image from 'next/image';
 import { Link } from '@/i18n/routing';
 import { BookOpen, LockKeyhole, RefreshCw } from 'lucide-react';
-import { useGetLearningStageQuery } from '@/store/api/usersApi';
+import { useGetLearningStageQuery, useGetLearningJourneyQuery } from '@/store/api/usersApi';
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
+import { CurriculumFrameworkNote } from '@/components/curriculum/CurriculumFrameworkNote';
 
 export default function StudentCategoriesPage() {
   const locale = useLocale();
   const ar = locale === 'ar';
   const { data: selected, isLoading: selecting, isError: selectedError, refetch: reloadSelected } = useGetLearningStageQuery();
   const stageId = selected?.StageId ?? 0;
+  const { data: journey } = useGetLearningJourneyQuery(stageId, {
+    skip: stageId <= 0,
+    refetchOnMountOrArgChange: true,
+  });
+  const categoryProgress = new Map((journey?.Categories ?? []).map(item => [item.CategoryId, item]));
   const { data: access, isLoading: loadingAccess, isError: accessError, refetch: reloadAccess } =
     useGetStageCategoryAccessQuery(stageId, { skip: stageId <= 0, refetchOnMountOrArgChange: true });
   const { data: subscription, isLoading: loadingPlan, isError: planError, refetch: reloadPlan } =
@@ -32,6 +38,7 @@ export default function StudentCategoriesPage() {
           {stageName && <p className="mt-2 text-sm text-muted-foreground">{ar ? 'المرحلة التعليمية:' : 'Learning stage:'} {stageName}</p>}
         </div>
       </header>
+      <CurriculumFrameworkNote />
       {loading ? (
         <p role="status" className="rounded-2xl border p-8 text-center text-muted-foreground">{ar ? 'جارٍ تحميل فئات مرحلتك…' : 'Loading your stage topics…'}</p>
       ) : failed ? (
@@ -68,6 +75,10 @@ export default function StudentCategoriesPage() {
               const locked = !subscription.IsPremium && !unlocked.has(category.Id);
               const empty = category.ProblemsCount === 0;
               const iconUrl = category.Icon;
+              const progress = categoryProgress.get(category.Id);
+              const solvedCount = progress?.SolvedProblems ?? 0;
+              const totalCount = progress?.TotalProblems ?? category.ProblemsCount ?? 0;
+              const completion = totalCount > 0 ? Math.min(100, Math.round(100 * solvedCount / totalCount)) : 0;
               const card = (
                 <div className="flex h-full min-h-52 flex-col rounded-2xl border bg-card p-4 transition-shadow hover:shadow-md" style={{ borderColor: `${accent}33` }}>
                   <div className="mb-4 flex items-start justify-between gap-2">
@@ -81,6 +92,20 @@ export default function StudentCategoriesPage() {
                   </div>
                   <h2 className="text-base font-bold" style={{ color: accent }}>{name}</h2>
                   {description && <p className="mt-2 line-clamp-3 text-xs leading-6 text-muted-foreground">{description}</p>}
+                  {progress && progress.AttemptedProblems > 0 && (
+                    <div className="mt-3 space-y-1.5">
+                      <p className="text-xs text-muted-foreground">
+                        {ar
+                          ? `حللت ${solvedCount} من ${totalCount} · أتقنت ${progress.MasteredProblems} مسألة`
+                          : `Solved ${solvedCount} of ${totalCount} · mastered ${progress.MasteredProblems}`}
+                      </p>
+                      <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completion}
+                        aria-label={ar ? `تقدمك في ${name}` : `Your progress in ${name}`}
+                        className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-emerald-600" style={{ width: `${completion}%` }} />
+                      </div>
+                    </div>
+                  )}
                   <div className="mt-auto pt-4 text-xs font-semibold text-muted-foreground">
                     {locked ? (ar ? 'Premium · مقفولة' : 'Premium · Locked')
                       : empty ? (ar ? 'لا توجد مسائل حالياً' : 'No problems yet')
