@@ -17,6 +17,7 @@ export default function PremiumBenefitsPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   const token = useSelector((state: RootState) => state.auth.token);
   const premium = user?.SubscriptionType?.toLowerCase() === 'premium';
+  const student = user?.Role === 'Student';
   const [code, setCode] = useState('');
   const [redeeming, setRedeeming] = useState(false);
   const [message, setMessage] = useState('');
@@ -89,20 +90,20 @@ export default function PremiumBenefitsPage() {
       </Link>
       <header className="mb-6">
         <h1 className="brand-display-title text-3xl font-black md:text-4xl">
-          {ar ? 'مقارنة حسابات Free وPremium' : 'Free vs Premium'}
+          {ar ? 'الباقات' : 'Plans'}
         </h1>
         <p className="mt-3 text-muted-foreground">
           {ar
-            ? 'حسابان فقط وبلا أسعار حالياً. تعرف إلى الفئات المتاحة والمزايا، ويمكن للطالب تفعيل Premium بكود تمنحه الإدارة.'
-            : 'Two plans, with no prices listed for now. Compare access and benefits; learners can activate Premium using an admin-issued code.'}
+            ? 'تعرّف على مميزات الباقة المجانية وPremium، واختر ما يناسب تعلمك.'
+            : 'Explore what Free and Premium offer for your learning journey.'}
         </p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <section className={`math-card rounded-2xl border p-5 md:p-6 ${!premium ? 'border-primary' : 'border-border'}`}>
+        <section className={`math-card rounded-2xl border p-5 md:p-6 ${student && !premium ? 'border-primary' : 'border-border'}`}>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-2xl font-extrabold">Free</h2>
-            {!premium && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            {student && !premium && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
               {ar ? 'خطتك الحالية' : 'Current plan'}</span>}
           </div>
           <ul className="mt-5 space-y-3">
@@ -112,11 +113,11 @@ export default function PremiumBenefitsPage() {
           </ul>
         </section>
 
-        <section className={`math-card rounded-2xl border p-5 md:p-6 ${premium ? 'border-primary' : 'border-border'}`}>
+        <section className={`math-card rounded-2xl border p-5 md:p-6 ${student && premium ? 'border-primary' : 'border-border'}`}>
           <div className="flex items-center justify-between gap-3">
             <h2 className="inline-flex items-center gap-2 text-2xl font-extrabold">
               <Crown className="h-6 w-6 text-primary" aria-hidden /> Premium</h2>
-            {premium && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+            {student && premium && <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
               {ar ? 'خطتك الحالية' : 'Current plan'}</span>}
           </div>
           <ul className="mt-5 space-y-3">
@@ -125,7 +126,7 @@ export default function PremiumBenefitsPage() {
               <Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
               {ar ? titleAr : titleEn}</li>)}
           </ul>
-          {premium && <Link href="/premium/report"
+          {student && premium && <Link href="/premium/report"
             className="mt-6 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">
             {ar ? 'عرض تقريري' : 'Open my report'}</Link>}
         </section>
