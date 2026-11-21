@@ -5,7 +5,6 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery, type CategoryDto } from '@/store/api/categoriesApi';
 import { useGetStagesQuery, type Stage } from '@/store/api/stagesApi';
-import { useSearchProblemsQuery } from '@/store/api/problemsApi';
 import {
   AlertCircle,
   Filter,
@@ -19,6 +18,7 @@ import { STAGE_CATEGORY_BRAND_STYLES, MATH_CARD_SYMBOLS, type CategoryBrandStyle
 import { getStageVisual, getStageAccent, sortStagesByOrder } from '@/lib/stageVisuals';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { RichText } from '@/components/ui/RichText';
+import type { PublicStageExample } from '@/lib/publicCurriculum';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 
@@ -226,9 +226,10 @@ function OtherStagePremiumCard({
 interface StageCategoriesClientProps {
   stageId: number;
   serverIntroProvided?: boolean;
+  examples?: PublicStageExample[];
 }
 
-export default function StageCategoriesClient({ stageId, serverIntroProvided = false }: StageCategoriesClientProps) {
+export default function StageCategoriesClient({ stageId, serverIntroProvided = false, examples = [] }: StageCategoriesClientProps) {
   const t = useTranslations();
   const locale = useLocale();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
@@ -249,12 +250,6 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
     refetchOnMountOrArgChange: true,
   });
   const isPremium = isAdmin || (isStudent && subscription?.IsPremium === true);
-  // Public sample titles are informational only: no answers or solution previews.
-  const { data: stageExamples, isLoading: examplesLoading } = useSearchProblemsQuery(
-    { StageId: stageId, Page: 1, PageSize: 4, locale, Engine: 'postgresql' },
-    { skip: !publicPreview || stageId <= 0 },
-  );
-
   
   const {
     data: stages,
@@ -465,28 +460,32 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
 
         {/* Public stage guide: categories live on this page, not on separate public category pages. */}
         {publicPreview && (
-          <section className="mt-10 space-y-5 rounded-3xl border border-primary/15 bg-card/90 p-5 sm:p-8" aria-label={locale === 'ar' ? 'أمثلة من مسائل المرحلة' : 'Example problem titles'}>
+          <section className="mt-10 space-y-5 rounded-3xl border border-primary/15 bg-card/90 p-5 sm:p-8" aria-label={locale === 'ar' ? 'أمثلة من مسائل المرحلة' : 'Sample mathematics questions'}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
                   {locale === 'ar' ? 'أمثلة من مسائل هذه المرحلة' : 'Sample questions from this stage'}
                 </h2>
                 <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                  {locale === 'ar' ? 'نعرض عناوين الأسئلة فقط. سجّل حساباً لتبدأ الحل وتحفظ تقدّمك.'
-                    : 'Question titles only. Create an account to solve problems and save your progress.'}
+                  {locale === 'ar' ? 'أمثلة من أسئلة الرياضيات دون الإجابات. سجّل حساباً لتبدأ الحل وتحفظ تقدّمك.'
+                    : 'Sample math questions without answers. Create an account to practise and save your progress.'}
                 </p>
               </div>
               <Link href="/premium" className="rounded-xl border border-primary/25 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10">
                 {locale === 'ar' ? 'الباقات' : 'Plans'}
               </Link>
             </div>
-            {examplesLoading ? (
-              <p role="status" className="text-sm text-muted-foreground">{locale === 'ar' ? 'جارٍ تحميل الأمثلة...' : 'Loading examples...'}</p>
-            ) : stageExamples?.Results?.length ? (
+            {examples.length ? (
               <ol className="grid gap-3 sm:grid-cols-2">
-                {stageExamples.Results.slice(0, 4).map(problem => (
-                  <li key={problem.Id} className="min-w-0 overflow-x-auto rounded-2xl border border-border bg-background/70 px-4 py-4 text-sm font-semibold leading-7 text-foreground">
-                    <RichText text={problem.Title} isArabic={locale === 'ar'} className="text-sm font-semibold leading-7" />
+                {examples.slice(0, 4).map(problem => (
+                  <li key={problem.Id} className="min-w-0 rounded-2xl border border-border bg-background/70 p-4 shadow-sm sm:p-5">
+                    <p className="mb-2 text-xs font-bold text-primary">{locale === 'ar' ? problem.CategoryNameAr : problem.CategoryNameEn}</p>
+                    <h3 className="mb-3 text-sm font-bold text-foreground">
+                      <RichText text={locale === 'ar' ? problem.TitleAr : problem.TitleEn} isArabic={locale === 'ar'} className="!text-sm !leading-7" />
+                    </h3>
+                    <div className="min-w-0 overflow-x-auto rounded-xl bg-card p-3 text-foreground" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+                      <RichText text={(locale === 'ar' ? problem.QuestionTextAr : problem.QuestionTextEn) || (locale === 'ar' ? problem.TitleAr : problem.TitleEn)} isArabic={locale === 'ar'} className="!text-base !leading-8" />
+                    </div>
                   </li>
                 ))}
               </ol>
