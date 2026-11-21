@@ -73,9 +73,9 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
                   {ar ? topic.DescriptionAr : topic.DescriptionEn}
                 </p>
                 <div className="mt-3 border-t pt-2 text-xs text-muted-foreground">
-                  {topic.ProposedQuestionCount} {topic.EditorialStatus === 'Published'
-                    ? (ar ? 'مسائل منشورة' : 'published questions')
-                    : (ar ? 'مسائل تنتظر مراجعة المحتوى' : 'questions pending content review')}
+                  <span>{(topic.PublishedQuestionCount ?? (topic.EditorialStatus === 'Published' ? topic.ProposedQuestionCount : 0))} {ar ? 'مسائل منشورة' : 'published questions'}</span>
+                  {' · '}
+                  <span>{(topic.DraftQuestionCount ?? (topic.EditorialStatus === 'Published' ? 0 : topic.ProposedQuestionCount))} {ar ? 'قيد المراجعة' : 'pending review'}</span>
                   {' · '}{topic.DomainKey}
                 </div>
                 <button
@@ -102,7 +102,7 @@ export function CurriculumTopicProposalsPanel({ stages }: { stages: CurriculumSt
                   <h3 className="text-base font-bold">
                     {ar ? questionData.TopicNameAr : questionData.TopicNameEn}
                     <span className="ms-2 text-sm font-normal text-muted-foreground">
-                      ({questionData.Total} {ar ? 'مسائل مسودة' : 'draft questions'})
+                      ({questionData.Total} {ar ? 'مسائل بالمجموعة' : 'questions in this topic'})
                     </span>
                   </h3>
                   <div className="mt-3 space-y-3">
