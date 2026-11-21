@@ -12,10 +12,11 @@ import {
 interface LockedPremiumDialogProps {
   children: ReactNode;
   topicName?: string;
+  featureName?: string;
 }
 
 /** Accessible, shared paywall explanation. Never grants access in the client. */
-export function LockedPremiumDialog({ children, topicName }: LockedPremiumDialogProps) {
+export function LockedPremiumDialog({ children, topicName, featureName }: LockedPremiumDialogProps) {
   const ar = useLocale() === 'ar';
   return (
     <Dialog>
@@ -29,7 +30,9 @@ export function LockedPremiumDialog({ children, topicName }: LockedPremiumDialog
             {ar ? 'هذه الميزة متاحة لحساب Premium' : 'This feature is for Premium learners'}
           </DialogTitle>
           <DialogDescription className="pt-1 text-sm leading-7">
-            {topicName
+            {featureName
+              ? (ar ? `ميزة «${featureName}» متاحة بعد ترقية حسابك.` : `Upgrade to unlock “${featureName}”.`)
+              : topicName
               ? (ar ? `فئة «${topicName}» متاحة عند ترقية حسابك.` : `Upgrade to access the “${topicName}” topic.`)
               : (ar ? 'تعرّف إلى المزايا التي يمكن فتحها عند الترقية.' : 'Explore the additional benefits available with Premium.')}
           </DialogDescription>
