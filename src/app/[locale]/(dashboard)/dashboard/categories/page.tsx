@@ -71,7 +71,8 @@ export default function StudentCategoriesPage() {
               const card = (
                 <div className="flex h-full min-h-52 flex-col rounded-2xl border bg-card p-4 transition-shadow hover:shadow-md" style={{ borderColor: `${accent}33` }}>
                   <div className="mb-4 flex items-start justify-between gap-2">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+                      style={{ backgroundColor: `${accent}18`, borderColor: `${accent}40` }}>
                       {iconUrl && (iconUrl.startsWith('/') || iconUrl.startsWith('https://'))
                         ? <Image src={iconUrl} alt="" width={36} height={36} unoptimized className="h-9 w-9 object-contain" />
                         : <BookOpen className="h-6 w-6" style={{color:accent}} />}
