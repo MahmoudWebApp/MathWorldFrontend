@@ -8,6 +8,11 @@ export interface CurriculumCategoryCoverage {
   Icon: string;
   Order: number;
   ProblemCount: number;
+  DistinctTemplateFamilies: number;
+  RepeatedTemplateFamilies: number;
+  TemplateVariantProblems: number;
+  ExactDuplicateProblemIds: number[];
+  NeedsEditorialReview: boolean;
 }
 
 export interface CurriculumStageCoverage {
@@ -15,23 +20,27 @@ export interface CurriculumStageCoverage {
   NameAr: string;
   NameEn: string;
   Order: number;
+  CategoryCount: number;
   ProblemCount: number;
-  RequiredMinimum: number;
-  MissingToMinimum: number;
-  MeetsMinimum: boolean;
+  EmptyCategoryCount: number;
+  CategoriesWithRepeatedTemplates: number;
   InvalidProblemCount: number;
   InvalidProblemIds: number[];
   Categories: CurriculumCategoryCoverage[];
 }
 
 export interface CurriculumReadiness {
-  MinimumProblemsPerStage: number;
+  CurriculumModel: string;
+  FixedCategoryOrProblemQuota: boolean;
+  SkillCoverageMeasured: boolean;
+  SkillCoverageExplanation: string;
   StageCount: number;
+  TotalCategories: number;
   TotalProblems: number;
   OrphanProblemIds: number[];
   OrphanProblemCount: number;
-  TotalMissingToMinimum: number;
-  StagesBelowMinimum: number;
+  EmptyCategories: number;
+  CategoriesWithRepeatedTemplates: number;
   StagesWithInvalidProblems: number;
   Stages: CurriculumStageCoverage[];
 }
