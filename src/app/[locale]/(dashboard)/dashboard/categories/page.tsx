@@ -33,9 +33,6 @@ export default function StudentCategoriesPage() {
           <h1 className="text-3xl font-extrabold">{ar ? 'الفئات' : 'Topics'}</h1>
           {stageName && <p className="mt-2 text-sm text-muted-foreground">{ar ? 'المرحلة التعليمية:' : 'Learning stage:'} {stageName}</p>}
         </div>
-        <Link href="/learning-stage" className="rounded-xl border border-border px-4 py-2 text-sm font-semibold">
-          {ar ? 'تغيير المرحلة' : 'Change stage'}
-        </Link>
       </header>
       {loading ? (
         <p role="status" className="rounded-2xl border p-8 text-center text-muted-foreground">{ar ? 'جارٍ تحميل فئات مرحلتك…' : 'Loading your stage topics…'}</p>
