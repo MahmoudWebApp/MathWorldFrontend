@@ -122,6 +122,28 @@ export interface CurriculumDraftPage {
   Batches: CurriculumDraft[];
 }
 
+export interface CurriculumTopicProposal {
+  StableKey: string;
+  StageId: number;
+  DomainKey: string;
+  NameAr: string;
+  NameEn: string;
+  DescriptionAr: string;
+  DescriptionEn: string;
+  IconKey: string;
+  SortOrder: number;
+  EditorialStatus: 'Draft' | 'Reviewed' | 'Rejected';
+  ProposedQuestionCount: number;
+}
+
+export interface CurriculumTopicProposalReport {
+  Published: boolean;
+  Total: number;
+  TotalDraftProblems: number;
+  RequiresIndependentReview: boolean;
+  Topics: CurriculumTopicProposal[];
+}
+
 export interface CurriculumSkillSummary {
   StableKey: string;
   DomainKey: string;
@@ -176,6 +198,10 @@ export const curriculumApi = createApi({
     previewCurriculumImport: builder.mutation<CurriculumImportPreview, { Problems: ProposedCurriculumProblem[] }>({
       query: body => ({ url: '/admin/curriculum/import/preview', method: 'POST', body }),
     }),
+    getCurriculumTopicProposals: builder.query<CurriculumTopicProposalReport, void>({
+      query: () => '/admin/curriculum/topics/proposals',
+      providesTags: ['CurriculumReadiness'],
+    }),
     getCurriculumSkillCoverage: builder.query<CurriculumSkillCoverage, void>({
       query: () => '/admin/curriculum/skills/coverage',
       providesTags: ['CurriculumReadiness'],
@@ -228,6 +254,7 @@ export const curriculumApi = createApi({
 });
 
 export const {
+  useGetCurriculumTopicProposalsQuery,
   useGetCurriculumSkillCoverageQuery,
   useGetCurriculumReadinessQuery,
   usePreviewCurriculumImportMutation,
