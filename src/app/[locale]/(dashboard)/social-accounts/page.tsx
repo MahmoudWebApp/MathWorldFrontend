@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
+import { Link, usePathname } from '@/i18n/routing';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
@@ -28,6 +28,7 @@ const localized = {
 
 export default function SocialAccountsPage() {
   const locale = useLocale();
+  const withinSettings = usePathname() === '/dashboard/settings';
   const copy = locale === 'en' ? localized.en : localized.ar;
   const enabled = process.env.NEXT_PUBLIC_SOCIAL_LOGIN_ENABLED === 'true';
   const { data: linkStatus, isLoading: checkingLink } = useGetSocialLinkStatusQuery(undefined, {
@@ -46,6 +47,17 @@ export default function SocialAccountsPage() {
         <p className="mb-6 leading-relaxed text-muted-foreground">
           {copy.description}
         </p>
+        {withinSettings && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-card p-4">
+            <div>
+              <h2 className="font-bold">{locale === 'ar' ? 'المرحلة التعليمية' : 'Learning stage'}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{locale === 'ar' ? 'يمكنك تغيير مرحلتك من هنا دون حذف تقدمك السابق.' : 'Change your stage here without losing earlier progress.'}</p>
+            </div>
+            <Link href="/learning-stage" className="rounded-xl border border-primary/25 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10">
+              {locale === 'ar' ? 'تغيير المرحلة' : 'Change stage'}
+            </Link>
+          </div>
+        )}
         <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm">
           <div className="flex items-start gap-2">
             <LockKeyhole size={18} className="shrink-0 text-primary" />
