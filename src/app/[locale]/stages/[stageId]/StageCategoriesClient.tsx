@@ -21,6 +21,7 @@ import { RichText } from '@/components/ui/RichText';
 import type { PublicStageExample } from '@/lib/publicCurriculum';
 import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
+import { CurriculumFrameworkNote } from '@/components/curriculum/CurriculumFrameworkNote';
 
 // ==========================================
 // 1. Math assets
@@ -391,6 +392,8 @@ export default function StageCategoriesClient({ stageId, serverIntroProvided = f
             )}
           </motion.div>
         </div>
+
+        <div className="mb-8 max-w-3xl"><CurriculumFrameworkNote /></div>
 
         {isStudent && subscriptionError && (
           <button type="button" onClick={() => void refetchSubscription()}

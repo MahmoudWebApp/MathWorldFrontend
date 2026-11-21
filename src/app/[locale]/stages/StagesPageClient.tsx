@@ -13,6 +13,7 @@ import type { RootState } from '@/store';
 import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { sortStagesByOrder } from '@/lib/stageVisuals';
 import { StagePremiumCard } from '@/components/stages/StagePremiumCard';
+import { CurriculumFrameworkNote } from '@/components/curriculum/CurriculumFrameworkNote';
 import { AccentHeadingText } from '@/components/ui/AccentHeadingText';
 
 export default function StagesPageClient() {
@@ -77,6 +78,10 @@ export default function StagesPageClient() {
             {t('stages.subtitle')}
           </p>
         </motion.div>
+
+        <div className="mx-auto mb-8 max-w-3xl">
+          <CurriculumFrameworkNote />
+        </div>
 
         {isLoading || authLoading ? (
           <div className="flex min-h-[30vh] items-center justify-center">
