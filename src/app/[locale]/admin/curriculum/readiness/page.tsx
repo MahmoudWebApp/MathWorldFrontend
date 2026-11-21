@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { CurriculumImportPreviewPanel } from '@/components/admin/CurriculumImportPreviewPanel';
 import { CurriculumSkillCoveragePanel } from '@/components/admin/CurriculumSkillCoveragePanel';
+import { CurriculumTopicProposalsPanel } from '@/components/admin/CurriculumTopicProposalsPanel';
 
 export default function CurriculumReadinessPage() {
   const locale = useLocale();
@@ -31,6 +32,7 @@ export default function CurriculumReadinessPage() {
         </p>
         <CurriculumImportPreviewPanel stages={data.Stages} />
         <CurriculumSkillCoveragePanel />
+        <CurriculumTopicProposalsPanel stages={data.Stages} />
         <div className="grid gap-3 sm:grid-cols-3">
           {[
             [ar ? 'المراحل' : 'Stages', data.StageCount],
