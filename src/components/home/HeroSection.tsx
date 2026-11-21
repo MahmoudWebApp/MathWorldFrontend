@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useSelector } from "react-redux";
 import { BookOpen, GraduationCap, Sparkles, Trophy } from "lucide-react";
 
@@ -11,7 +11,6 @@ import type { RootState } from "@/store";
 /** Public landing hero focused on stages and plan discovery, without public search. */
 export function HeroSection() {
   const t = useTranslations();
-  const isArabic = useLocale() === "ar";
   const { user, token } = useSelector((state: RootState) => state.auth);
   const isAuthenticated = Boolean(user && token);
   const titleWords = t("hero.title").split(" ");
