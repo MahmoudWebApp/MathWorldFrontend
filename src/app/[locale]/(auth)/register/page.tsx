@@ -11,13 +11,11 @@ import {
   Lock,
   Mail,
   User as UserIcon,
-  GraduationCap,
 } from 'lucide-react';
 
 import { Link } from '@/i18n/routing';
 import type { AppDispatch } from '@/store';
 import { useRegisterMutation } from '@/store/api/authApi';
-import { useGetStagesQuery } from '@/store/api/stagesApi';
 import { setCredentials } from '@/store/slices/authSlice';
 import { Button } from '@/components/ui/Button';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
@@ -51,9 +49,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
-  const [stageId, setStageId] = useState<number | ''>('');
-  const { data: stages, isLoading: stagesLoading, isError: stagesError, refetch: retryStages } =
-    useGetStagesQuery(locale);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -63,13 +58,6 @@ export default function RegisterPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
-
-    if (stageId === '' || stagesError || !stages?.some((stage) => stage.Id === stageId)) {
-      setError(locale === 'ar'
-        ? 'اختر مرحلتك التعليمية أولاً للمتابعة.'
-        : 'Choose your educational stage before continuing.');
-      return;
-    }
 
     if (formData.password !== formData.confirmPassword) {
       setError(t('errors.passwordMismatch'));
@@ -81,7 +69,6 @@ export default function RegisterPage() {
         FullName: formData.fullName.trim(),
         Email: formData.email.trim(),
         Password: formData.password,
-        StageId: stageId,
       }).unwrap();
 
       if (!user.Token) {
@@ -92,12 +79,7 @@ export default function RegisterPage() {
       dispatch(setCredentials({ user, token: user.Token }));
       persistAuthSession(user);
 
-      const destination =
-        user.Role === 'Admin'
-          ? 'admin'
-          : user.CurrentStageId == null
-            ? 'learning-stage'
-            : 'dashboard';
+      const destination = user.Role === 'Admin' ? 'admin' : 'learning-stage';
       window.location.assign(`/${locale}/${destination}`);
     } catch (registerError) {
       setError(
@@ -147,46 +129,6 @@ export default function RegisterPage() {
                   required
                 />
               </div>
-            </div>
-
-            <div>
-              <label htmlFor="registration-stage" className="mb-1.5 flex items-center gap-2 text-sm font-medium">
-                <GraduationCap className="h-4 w-4 text-primary" aria-hidden="true" />
-                {locale === 'ar' ? 'مرحلتك التعليمية' : 'Your learning stage'}
-              </label>
-              <select
-                id="registration-stage"
-                required
-                value={stageId}
-                disabled={stagesLoading || stagesError}
-                onChange={(event) => setStageId(event.target.value === ''
-                  ? '' : Number(event.target.value))}
-                className="w-full rounded-xl border border-brand-primary/15 bg-card/70 px-4 py-3 text-sm outline-none focus:border-brand-secondary/50 focus:ring-4 focus:ring-primary/10 disabled:opacity-60"
-              >
-                <option value="">
-                  {stagesLoading
-                    ? locale === 'ar' ? 'جاري تحميل المراحل...' : 'Loading stages...'
-                    : locale === 'ar' ? 'اختر المرحلة' : 'Select your stage'}
-                </option>
-                {(stages ?? []).map((stage) => (
-                  <option key={stage.Id} value={stage.Id}>
-                    {locale === 'ar' ? stage.NameAr : stage.NameEn}
-                  </option>
-                ))}
-              </select>
-              {stagesError && (
-                <button type="button" onClick={() => void retryStages()}
-                  className="mt-2 text-sm font-semibold text-destructive underline">
-                  {locale === 'ar'
-                    ? 'تعذر تحميل المراحل. اضغط لإعادة المحاولة.'
-                    : 'Could not load stages. Tap to retry.'}
-                </button>
-              )}
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                {locale === 'ar'
-                  ? 'رح نبدأ من مرحلتك المختارة، وبتقدر تغيّرها لاحقاً دون فقدان تقدمك.'
-                  : 'Start with your chosen stage. You can change it later without losing progress.'}
-              </p>
             </div>
 
             <div>
