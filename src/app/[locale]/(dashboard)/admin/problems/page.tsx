@@ -202,11 +202,6 @@ function AdminProblemsPageContent() {
     allCategories?.filter((c) => !form.StageId || c.StageId === form.StageId) ||
     [];
 
-  const filteredCategoriesForFilter =
-    allCategories?.filter(
-      (c) => !filters.StageId || c.StageId === filters.StageId,
-    ) || [];
-
   /* ── Validation ── */
   const validateForm = useCallback((): boolean => {
     const errors: FormErrors = {};
@@ -262,6 +257,7 @@ function AdminProblemsPageContent() {
   }, [searchText]);
 
   useEffect(() => {
+    if (!filters.StageId || !filters.CategoryId) return;
     fetchProblems({
       q: debouncedQ,
       categoryId: filters.CategoryId,
@@ -274,7 +270,7 @@ function AdminProblemsPageContent() {
   const handleResetFilters = () => {
     setSearchText("");
     setDebouncedQ("");
-    setFilters(defaultFilters);
+    setFilters(prev => ({ ...prev, Page: 1 }));
   };
 
   const openForm = (problem?: ProblemAdminDetail) => {
@@ -446,6 +442,31 @@ function AdminProblemsPageContent() {
     );
   };
 
+  // The admin editor cannot be entered without a real parent stage and topic.
+  const requestedStage = Number(searchParams.get('stageId'));
+  const requestedCategory = Number(searchParams.get('categoryId'));
+  const validContext = Number.isSafeInteger(requestedStage) &&
+    Number.isSafeInteger(requestedCategory) &&
+    requestedStage > 0 && requestedCategory > 0 &&
+    stages?.some(stage => stage.Id === requestedStage) === true &&
+    allCategories?.some(cat => cat.Id === requestedCategory && cat.StageId === requestedStage) === true;
+  if (!stages || !allCategories) {
+    return <div role="status" aria-busy="true" className="mx-auto max-w-4xl p-8 text-muted-foreground">
+      {locale === 'ar' ? 'جارٍ تحميل المرحلة والفئة…' : 'Loading stage and topic…'}
+    </div>;
+  }
+  if (!validContext) {
+    return <main className="mx-auto max-w-xl space-y-4 px-4 py-12 text-center">
+      <h1 className="text-2xl font-bold">{locale === 'ar' ? 'ابدأ من المرحلة ثم الفئة' : 'Start with a stage, then a topic'}</h1>
+      <p className="text-muted-foreground">{locale === 'ar'
+        ? 'لا يمكن إدارة المسائل دون اختيار مرحلة ثم إحدى فئاتها.'
+        : 'Choose a stage and one of its topics before managing problems.'}</p>
+      <Link href={`/${locale}/admin/stages`} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 py-2 font-bold text-primary-foreground">
+        {locale === 'ar' ? 'المراحل التعليمية' : 'Educational stages'}
+      </Link>
+    </main>;
+  }
+
   /* ══════════════════════════════════════════
      RENDER FORM VIEW
      ══════════════════════════════════════════ */
@@ -537,7 +558,8 @@ function AdminProblemsPageContent() {
                     <span className="text-red-500">*</span>
                   </label>
                   <Select
-                    value={form.StageId ? form.StageId.toString() : undefined}
+                     disabled
+                     value={form.StageId ? form.StageId.toString() : undefined}
                     onValueChange={(v) => {
                       setForm((f) => ({
                         ...f,
@@ -578,7 +600,7 @@ function AdminProblemsPageContent() {
                       setForm((f) => ({ ...f, CategoryId: Number(v) }));
                       clearError("CategoryId");
                     }}
-                    disabled={!form.StageId}
+                    disabled
                   >
                     <SelectTrigger
                       className={cn(
@@ -998,56 +1020,10 @@ function AdminProblemsPageContent() {
                 className="h-11 bg-muted/50"
               />
             </div>
-            <Select
-              value={filters.StageId?.toString() ?? ""}
-              onValueChange={(v) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  StageId: v === "all" ? undefined : Number(v),
-                  CategoryId: undefined,
-                  Page: 1,
-                }))
-              }
-            >
-              <SelectTrigger className="h-11 w-full md:w-[160px] bg-muted/50">
-                <SelectValue placeholder={t("admin.problems.stage")} />
-              </SelectTrigger>
-              <SelectContent>
-                {stages?.map((s) => (
-                  <SelectItem key={s.Id} value={s.Id.toString()}>
-                    {locale === "ar" ? s.NameAr : s.NameEn}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.CategoryId?.toString() ?? ""}
-              onValueChange={(v) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  CategoryId: v === "all" ? undefined : Number(v),
-                  Page: 1,
-                }))
-              }
-              disabled={!filters.StageId}
-            >
-              <SelectTrigger className="h-11 w-full md:w-[180px] bg-muted/50">
-                <SelectValue
-                  placeholder={
-                    filters.StageId
-                      ? t("admin.problems.category")
-                      : t("admin.problems.selectStageFirst")
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredCategoriesForFilter.map((c) => (
-                  <SelectItem key={c.Id} value={c.Id.toString()}>
-                    {locale === "ar" ? c.NameAr : c.NameEn}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2 text-xs font-bold text-primary">
+              <span className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">{getStageName(requestedStage)}</span>
+              <span className="rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">{getCategoryName(requestedCategory)}</span>
+            </div>
             <Button
               variant="outline"
               size="icon"
