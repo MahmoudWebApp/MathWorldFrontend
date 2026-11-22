@@ -256,9 +256,9 @@ function ProblemsPageClient() {
 
   // ── Main render ─────────────────────────────────────────
   return (
-    <div className="container relative mx-auto px-4 py-12 md:px-16 lg:px-24">
+    <div className="container relative mx-auto px-4 py-5 sm:px-6 lg:px-8">
       {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+      <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
         <Link href={learnerWorkspace ? "/dashboard" : "/"} className="hover:text-primary transition-colors">
           {t("nav.home")}
         </Link>
@@ -280,18 +280,18 @@ function ProblemsPageClient() {
       </div>
 
       {/* Page header */}
-      <div className="mb-10 text-center md:text-start">
-        <h1 className="brand-display-title text-4xl md:text-5xl font-extrabold mb-4" style={stageAccent ? { color: stageAccent } : undefined}>
+      <div className="mb-4 text-start">
+        <h1 className="brand-display-title text-2xl sm:text-3xl font-extrabold mb-1" style={stageAccent ? { color: stageAccent } : undefined}>
           {pageTitle}
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl">
+        <p className="text-sm text-muted-foreground max-w-2xl">
           {pageSubtitle}
         </p>
       </div>
 
       {/* Search bar */}
-      <div className="mb-8">
-        <div className="relative">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary/50 z-10" />
 
           <input
@@ -300,7 +300,7 @@ function ProblemsPageClient() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder={searchPlaceholder}
-            className="w-full rounded-2xl border border-brand-primary/15 bg-card/80 backdrop-blur-xl py-4 ps-12 pe-10 text-base outline-none transition-all focus:border-brand-secondary/50 focus:ring-4 focus:ring-primary/10 shadow-[0_12px_36px_rgba(57,26,84,0.08)]"
+            className="w-full rounded-2xl border border-brand-primary/15 bg-card/80 backdrop-blur-xl py-3 ps-12 pe-10 text-base outline-none transition-all focus:border-brand-secondary/50 focus:ring-4 focus:ring-primary/10 shadow-[0_12px_36px_rgba(57,26,84,0.08)]"
           />
 
           <div className="absolute inset-y-0 end-3 flex items-center gap-1">
@@ -320,19 +320,15 @@ function ProblemsPageClient() {
             )}
           </div>
         </div>
+        {learnerWorkspace && authenticated && (
+          <label className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold">
+            <input type="checkbox" checked={hideSolved}
+              onChange={event => setHideSolved(event.target.checked)}
+              className="h-4 w-4 accent-primary" />
+            <span>{locale === 'ar' ? 'إخفاء المحلولة' : 'Hide solved'}</span>
+          </label>
+        )}
       </div>
-
-      {learnerWorkspace && authenticated && (
-        <label className="mb-6 inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold">
-          <input
-            type="checkbox"
-            checked={hideSolved}
-            onChange={event => setHideSolved(event.target.checked)}
-            className="h-4 w-4 accent-primary"
-          />
-          <span>{locale === 'ar' ? 'إخفاء المسائل المحلولة' : 'Hide solved problems'}</span>
-        </label>
-      )}
 
       {/* Active search badge */}
       {debouncedSearch && (
@@ -355,7 +351,7 @@ function ProblemsPageClient() {
       )}
 
       {/* Context info badge */}
-      {(stageName || categoryName) && (
+      {!learnerWorkspace && (stageName || categoryName) && (
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <span className="text-sm text-muted-foreground">
             {t("problems.showing")}:
@@ -375,7 +371,7 @@ function ProblemsPageClient() {
       )}
 
       {/* Only show an authoritative count for the current query. */}
-      {!searchError && searchResults && <p className="text-sm font-medium text-muted-foreground mb-6 flex items-center gap-2">
+      {!searchError && searchResults && <p className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
         <span className="h-px bg-border flex-1"></span>
         <span>
           {totalResults > 0
@@ -406,7 +402,7 @@ function ProblemsPageClient() {
         <>
           {/* Problem cards */}
           {problems.length > 0 ? (
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {problems.map((problem) => (
                 <ProblemCard key={problem.Id} problem={problem} />
               ))}
