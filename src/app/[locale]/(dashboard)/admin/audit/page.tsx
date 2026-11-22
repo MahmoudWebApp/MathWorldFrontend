@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { History, ShieldCheck, Users, RefreshCw, Download } from 'lucide-react';
+import { History, ShieldCheck, RefreshCw, Download } from 'lucide-react';
 import { useGetAdminAuditEventsQuery, useGetAdminAuditSummaryQuery } from '@/store/api/statsApi';
 import { StageGeometry } from '@/components/math/StageGeometry';
 import { useSelector } from 'react-redux';
@@ -12,7 +12,6 @@ import { API_BASE_URL } from '@/store/api/baseQuery';
 
 export default function AdminAuditPage() {
   const ar = useLocale() === 'ar';
-  const [role, setRole] = useState<'' | 'Admin' | 'Student'>('');
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const [page, setPage] = useState(1);
   const [userId, setUserId] = useState('');
@@ -29,7 +28,7 @@ export default function AdminAuditPage() {
     }
   }, []);
   const actorId = /^\d+$/.test(userId) && Number(userId) > 0 ? Number(userId) : undefined;
-  const filter = { page, days, ...(role ? { role } : {}), ...(actorId ? { actorId } : {}),
+  const filter = { page, days, role: 'Admin' as const, ...(actorId ? { actorId } : {}),
     ...(action ? { action } : {}) };
   const events = useGetAdminAuditEventsQuery(filter, { refetchOnMountOrArgChange: true });
   const summary = useGetAdminAuditSummaryQuery(days, { refetchOnMountOrArgChange: true });
@@ -40,7 +39,7 @@ export default function AdminAuditPage() {
       ? new Intl.DateTimeFormat(ar ? 'ar' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
       : '—';
   };
-  const actionOptions = Array.from(new Set((summary.data?.ByAction ?? []).map(row => row.Action)))
+  const actionOptions = Array.from(new Set((summary.data?.ByAction ?? []).filter(row => row.ActorRole === 'Admin').map(row => row.Action)))
     .filter(Boolean).sort();
   const downloadAudit = async () => {
     if (exporting || !token || (userId.trim() && !actorId)) return;
@@ -51,7 +50,7 @@ export default function AdminAuditPage() {
     try {
       const url = new URL(API_BASE_URL + '/admin/activity-audit/export.csv');
       url.searchParams.set('days', String(days));
-      if (role) url.searchParams.set('role', role);
+      url.searchParams.set('role', 'Admin');
       if (actorId) url.searchParams.set('actorId', String(actorId));
       if (action) url.searchParams.set('action', action);
       const response = await fetch(url, {
@@ -109,18 +108,19 @@ export default function AdminAuditPage() {
       </Link>
       <h1 className="flex items-center gap-2 text-3xl font-black">
         <History className="h-7 w-7 text-primary" />
-        {ar ? 'سجل نشاط الطلاب والأدمن' : 'Student and admin activity log'}
+        {ar ? 'سجل عمليات الإدارة' : 'Administrator action log'}
       </h1>
       <p className="max-w-3xl text-sm text-muted-foreground">
-        {ar ? 'أحداث موثّقة بعد العمليات الناجحة على السيرفر. السجل لا يخمّن متى أغلق الطالب المتصفح أو غادر التطبيق، ولا يحتوي كلمات مرور أو نص إجابات.'
-          : 'Server-observed events after successful actions. Closing a browser is not a verified logout. Passwords and answer contents are never included.'}
+        {ar ? 'سجل مستقل لعمليات حسابات الإدارة فقط. لعرض تسجيل الطلاب ودخولهم وخروجهم ونشاطهم استخدم صفحة «متابعة الطلاب وسجلهم». لا يتضمن كلمات مرور أو نصوص إجابات.'
+          : 'A separate log of verified administrator operations only. Student registrations, sign-ins, explicit sign-outs and activity belong in Student monitoring. No passwords or answer contents.'}
       </p>
     </header>
-    <section className="grid gap-3 sm:grid-cols-3">
+    <section className="grid gap-3 sm:grid-cols-2">
       {[
-        { text: ar ? 'عمليات مسجلة' : 'Recorded actions', value: summary.data?.RecordedEvents, icon: History },
-        { text: ar ? 'طلاب ظهر نشاطهم بالسجل' : 'Students appearing in log', value: summary.data?.UniqueStudents, icon: Users },
-        { text: ar ? 'مدراء ظهر نشاطهم بالسجل' : 'Admins appearing in log', value: summary.data?.UniqueAdmins, icon: ShieldCheck },
+        { text: ar ? 'عمليات الإدارة المسجلة' : 'Recorded admin operations',
+          value: summary.data?.ByAction.filter(row => row.ActorRole === 'Admin').reduce((total, row) => total + row.Count, 0),
+          icon: History },
+        { text: ar ? 'مسؤولون لديهم نشاط مسجل' : 'Admins with recorded activity', value: summary.data?.UniqueAdmins, icon: ShieldCheck },
       ].map((metric,index) => {
         const Icon = metric.icon;
         return <div key={metric.text} className="relative overflow-hidden rounded-2xl border bg-card p-5">
@@ -150,19 +150,10 @@ export default function AdminAuditPage() {
           </button>
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="block space-y-1">
-          <span className="block text-sm font-semibold">{ar ? 'نوع الحساب' : 'Account type'}</span>
-          <select value={role} onChange={e => { setRole(e.target.value as '' | 'Admin' | 'Student'); setPage(1); }}
-            className="w-full rounded-xl border bg-background px-3 py-2">
-            <option value="">{ar ? 'الكل' : 'All'}</option>
-            <option value="Student">{ar ? 'طالب' : 'Student'}</option>
-            <option value="Admin">{ar ? 'أدمن' : 'Admin'}</option>
-          </select>
-        </label>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <label className="block space-y-1">
           <span className="block text-sm font-semibold">{ar ? 'المستخدم (رقم ID)' : 'User ID'}</span>
-          <input type="number" min="1" step="1" placeholder={ar ? 'كل المستخدمين' : 'All users'}
+          <input type="number" min="1" step="1" placeholder={ar ? 'جميع المسؤولين' : 'All administrators'}
             value={userId} onChange={e => { setUserId(e.target.value); setPage(1); }}
             className="w-full rounded-xl border bg-background px-3 py-2" />
         </label>
@@ -207,12 +198,12 @@ export default function AdminAuditPage() {
               {events.data.Entries.map(item =>
                 <li key={item.Id} className="flex gap-3 py-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    {item.ActorRole === 'Admin' ? <ShieldCheck className="h-5 w-5" /> : <Users className="h-5 w-5" />}
+                    <ShieldCheck className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <strong className="text-sm">{item.ActorName || `#${item.ActorUserId}`}
-                        {' · '}{item.ActorRole === 'Admin' ? (ar ? 'أدمن' : 'Admin') : (ar ? 'طالب' : 'Student')}
+                        {' · '}{ar ? 'أدمن' : 'Admin'}
                       </strong>
                       <time dateTime={item.CreatedAtUtc} className="text-xs text-muted-foreground">{dt(item.CreatedAtUtc)}</time>
                     </div>

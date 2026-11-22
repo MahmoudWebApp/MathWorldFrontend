@@ -2,7 +2,7 @@
 "use client";
 
 import { useTranslations } from 'next-intl';
-import { TrendingUp, Target, Clock, Award, Users, FileText, CircleCheckBig, Globe } from 'lucide-react';
+import { TrendingUp, Target, Clock, Award, Users, FileText, Shapes, BrainCircuit } from 'lucide-react';
 import { useGetStatsQuery } from '@/store/api/statsApi';
 import { useInView } from '@/lib/useInView';
 import { AnimatedCounter } from './AnimatedCounter';
@@ -30,17 +30,17 @@ export function StatsSection() {
       mathBg: 'from-blue-500/10 to-cyan-500/5 dark:from-blue-500/15 dark:to-cyan-500/5'
     },
     { 
-      icon: CircleCheckBig, 
-      value: stats?.TotalSolved || 0, 
-      label: t('stats.totalSolved'), 
+      icon: Shapes, 
+      value: stats?.TotalCategories || 0, 
+      label: t('stats.totalCategories'), 
       suffix: "+",
       mathSymbol: "∞",
       mathBg: 'from-amber-500/10 to-yellow-500/5 dark:from-amber-500/15 dark:to-yellow-500/5'
     },
     { 
-      icon: Globe, 
-      value: stats?.TotalViews || 0, 
-      label: t('stats.totalViews'), 
+      icon: BrainCircuit, 
+      value: stats?.TotalSkills || 0, 
+      label: t('stats.totalSkills'), 
       suffix: "+",
       mathSymbol: "∂",
       mathBg: 'from-rose-500/10 to-pink-500/5 dark:from-rose-500/15 dark:to-pink-500/5'
