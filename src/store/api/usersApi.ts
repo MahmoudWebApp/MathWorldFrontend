@@ -46,6 +46,19 @@ export interface FavoriteCheck {
   IsFavorite: boolean;
 }
 
+export interface PracticeResetRequest {
+  StageId: number;
+  CategoryId?: number;
+}
+export interface PracticeResetResult {
+  StageId: number;
+  CategoryId?: number | null;
+  ResetProblems: number;
+  ResetSolved: number;
+  PreservedFavorites: number;
+  PracticeCycleReset: boolean;
+}
+
 export interface ErrorNotebookProblem {
   Id: number;
   Title: string;
@@ -821,6 +834,30 @@ export const usersApi = createApi({
       providesTags: ['Favorite'],
     }),
 
+    resetPractice: builder.mutation<PracticeResetResult, PracticeResetRequest>({
+      query: (body) => ({
+        url: '/users/practice/reset',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [
+        'Solved', 'Dashboard', 'User', 'LearningJourney',
+        'Leaderboard', 'Achievements', 'ErrorNotebook', 'Favorite',
+      ],
+      async onQueryStarted(_request, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          // These APIs own independent caches. Never show stale New/Solved
+          // badges or today's challenge progress after a reset.
+          const [{ problemsApi }, { stagesApi }] = await Promise.all([
+            import('./problemsApi'), import('./stagesApi'),
+          ]);
+          dispatch(problemsApi.util.invalidateTags(['Problem', 'Category', 'AttemptHistory']));
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+        } catch { /* Failed resets must not update any cache. */ }
+      },
+    }),
+
     getSolvedProblems: builder.query<ProblemPreview[], string>({
       query: () => '/users/solved',
       providesTags: ['Solved'],
@@ -988,6 +1025,7 @@ export const {
   useGetProfileQuery,
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,
+  useResetPracticeMutation,
   useGetErrorNotebookQuery,
   useSetErrorNotebookArchiveMutation,
   useToggleFavoriteMutation,
