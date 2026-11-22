@@ -70,8 +70,6 @@
     "description": "منصة متكاملة مصممة خصيصاً لمساعدتك على إتقان الرياضيات",
     "totalProblems": "المسائل",
     "totalUsers": "المستخدمين",
-    "totalSolved": "الحلول",
-    "totalViews": "المشاهدات",
     "features": {
       "variety": {
         "title": "مسائل متنوعة",
@@ -89,7 +87,9 @@
         "title": "نظام نقاط",
         "description": "اكسب النقاط ونافس الطلاب الآخرين"
       }
-    }
+    },
+    "totalCategories": "الفئات الرياضية",
+    "totalSkills": "المهارات التعليمية"
   },
   "search": {
     "title": "البحث في المسائل",
