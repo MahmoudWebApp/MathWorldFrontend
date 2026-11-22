@@ -267,7 +267,7 @@ export default function ErrorNotebookPage() {
                   </div>
 
                   <Link
-                    href={`/dashboard/problems/${problem.Id}`}
+                    href={`/dashboard/problems/${problem.Id}?review=1`}
                     className="block text-lg font-semibold transition-colors hover:text-primary"
                   >
                     <RichText text={problem.Title} isArabic={isArabic} />
@@ -311,7 +311,7 @@ export default function ErrorNotebookPage() {
 
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/20 p-4">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/problems/${problem.Id}`}>
+                    <Link href={`/dashboard/problems/${problem.Id}?review=1`}>
                       <BookOpen className="me-2 h-4 w-4" />
                       {t('errorNotebook.practiceNow')}
                     </Link>
