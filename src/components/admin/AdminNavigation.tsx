@@ -23,10 +23,10 @@ export const ADMIN_NAV_ITEMS = [
   {
     href: '/admin/engagement',
     icon: ChartNoAxesCombined,
-    labelAr: 'التقارير ونشاط الطلاب',
-    labelEn: 'Learner reports & activity',
-    descriptionAr: 'دخول الطلاب وحل المسائل وتفاعلهم عبر المراحل',
-    descriptionEn: 'Student sessions, solutions and engagement by stage',
+    labelAr: 'التقارير والإحصائيات',
+    labelEn: 'Reports and analytics',
+    descriptionAr: 'متابعة تسجيل الطلاب منفصلة عن إحصائيات التعلّم والتفاعل',
+    descriptionEn: 'Student sign-in monitoring separate from learning analytics',
     group: 'overview',
   },
   {
