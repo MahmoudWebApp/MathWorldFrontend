@@ -21,7 +21,7 @@ export function SolvedProblemsPage() {
   }, []);
 
   const { data: solvedProblems, isLoading, error } = useGetSolvedProblemsQuery(locale, {
-    refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: 45,
   });
 
   const totalCount = solvedProblems?.length ?? 0;
