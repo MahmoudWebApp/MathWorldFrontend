@@ -8,6 +8,8 @@ export interface DashboardStats {
   TotalUsers: number;
   TotalSolved: number;
   TotalViews: number;
+  TotalCategories?: number;
+  TotalSkills?: number;
 }
 
 
