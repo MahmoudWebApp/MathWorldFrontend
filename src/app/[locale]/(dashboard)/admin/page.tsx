@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Activity, UsersRound, UserPlus, ArrowUpRight, ChartNoAxesCombined, UserRoundSearch, Radio } from 'lucide-react';
+import { Activity, UsersRound, UserPlus, ArrowUpRight, ChartNoAxesCombined, UserRoundSearch, Radio, BookOpen, Shapes, GraduationCap, NotebookPen, Crown, ClipboardList } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useGetAdminEngagementOverviewQuery } from '@/store/api/statsApi';
 import { StageGeometry } from '@/components/math/StageGeometry';
@@ -132,7 +132,52 @@ export default function AdminDashboardPage() {
         </section>
       </>}
 
-      <section aria-label={ar ? 'مراكز المتابعة' : 'Monitoring pages'} className="grid gap-3 sm:grid-cols-3">
+      {/* Direct management shortcuts stay available even while analytics is loading.
+          Topic and problem management deliberately start at the stage list. */}
+      <section aria-label={ar ? 'إدارة المنصة' : 'Platform management'} className="space-y-3">
+        <div>
+          <h2 className="text-lg font-bold">{ar ? 'إدارة المنصة' : 'Manage MathWorld'}</h2>
+          <p className="text-xs text-muted-foreground">
+            {ar ? 'اختصارات لإدارة الطلاب والمحتوى والاشتراكات. لإدارة المسائل اختر المرحلة ثم الفئة أولاً.'
+              : 'Shortcuts for learners, learning content and subscriptions. Choose a stage, then a topic, before editing problems.'}
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { key: 'students', href: '/admin/users', icon: UsersRound,
+              ar: 'إدارة الطلاب', en: 'Manage learners',
+              subAr: 'الحسابات والملفات وصلاحيات الطلاب', subEn: 'Accounts, profiles and access' },
+            { key: 'content', href: '/admin/stages', icon: BookOpen,
+              ar: 'المحتوى التعليمي', en: 'Learning content',
+              subAr: 'ابدأ بالمرحلة ثم انتقل للفئات والمسائل', subEn: 'Browse stages, topics and problems' },
+            { key: 'topics', href: '/admin/stages', icon: Shapes,
+              ar: 'إدارة الفئات', en: 'Manage topics',
+              subAr: 'اختر المرحلة لفتح فئاتها وتعديلها', subEn: 'Select a stage to manage its topics' },
+            { key: 'stages', href: '/admin/stages', icon: GraduationCap,
+              ar: 'إدارة المراحل', en: 'Manage stages',
+              subAr: 'أوصاف المراحل وترتيبها ومحتواها', subEn: 'Stage descriptions, order and content' },
+            { key: 'problems', href: '/admin/stages', icon: NotebookPen,
+              ar: 'إدارة المسائل', en: 'Manage problems',
+              subAr: 'اختر مرحلة ثم فئة لإضافة المسائل أو تعديلها', subEn: 'Select stage and topic before editing' },
+            { key: 'subscriptions', href: '/admin/users', icon: Crown,
+              ar: 'إدارة الاشتراكات', en: 'Manage subscriptions',
+              subAr: 'تفعيل Premium وتجديده أو إلغاؤه من ملفات الطلاب', subEn: 'Grant, renew or revoke Premium for learners' },
+          ].map(item => {
+            const Icon = item.icon;
+            return <Link key={item.key} href={item.href}
+              className="group flex items-start gap-3 rounded-2xl border bg-card p-4 transition-colors hover:border-primary/50 hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              <span className="rounded-xl bg-primary/10 p-3 text-primary"><Icon className="h-5 w-5" aria-hidden /></span>
+              <span className="min-w-0 flex-1">
+                <strong className="block text-sm font-bold">{ar ? item.ar : item.en}</strong>
+                <span className="mt-1 block text-xs leading-5 text-muted-foreground">{ar ? item.subAr : item.subEn}</span>
+              </span>
+              <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </Link>;
+          })}
+        </div>
+      </section>
+
+      <section aria-label={ar ? 'مراكز المتابعة' : 'Monitoring pages'} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { href: '/admin/engagement', icon: ChartNoAxesCombined, ar: 'نشاط المستويات والفئات', en: 'Stages & categories',
             subAr: 'الأكثر حلاً، ترتيب الطلاب، ومقارنة الفئات', subEn: 'Top solvers, rankings, category usage' },
@@ -140,6 +185,8 @@ export default function AdminDashboardPage() {
             subAr: 'مين سجل وآخر دخول ونشاط', subEn: 'Registration, last login and activity' },
           { href: '/admin/analytics', icon: ChartNoAxesCombined, ar: 'إحصائيات التعلم', en: 'Learning analytics',
             subAr: 'الطلاب الأكثر حلاً ونسب النجاح والأخطاء', subEn: 'Top solvers, success rates and mistakes' },
+          { href: '/admin/audit', icon: ClipboardList, ar: 'سجل النشاط', en: 'Activity audit log',
+            subAr: 'عمليات الطلاب والإدارة وتصدير CSV', subEn: 'Learner/admin events and CSV export' },
         ].map(item => {
           const Icon = item.icon;
           return <Link key={item.href} href={item.href}
