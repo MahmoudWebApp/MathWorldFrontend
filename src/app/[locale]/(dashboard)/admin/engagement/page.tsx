@@ -79,6 +79,21 @@ export default function AdminEngagementPage() {
       </p>
     </header>
 
+    <div className="grid gap-3 sm:grid-cols-2">
+      <Link href="/admin/activity" className="rounded-2xl border border-primary/20 bg-card/80 p-4 transition-colors hover:bg-primary/5 hover:border-primary/40">
+        <strong className="block font-bold">{ar ? 'دخول وتفاعل الطلاب' : 'Learner logins & engagement'}</strong>
+        <span className="mt-1 block text-xs text-muted-foreground">{ar
+          ? 'آخر دخول وآخر محاولة وتفاعل كل طالب — دون احتساب الأدمن'
+          : 'Last sign-in, practice and engagement for each learner — admins excluded'}</span>
+      </Link>
+      <Link href="/admin/analytics" className="rounded-2xl border border-primary/20 bg-card/80 p-4 transition-colors hover:bg-primary/5 hover:border-primary/40">
+        <strong className="block font-bold">{ar ? 'إحصائيات الحل والتقدم' : 'Problem-solving analytics'}</strong>
+        <span className="mt-1 block text-xs text-muted-foreground">{ar
+          ? 'المتفوقون والأكثر حلاً والدقة والأخطاء حسب المرحلة والفئة'
+          : 'Top solvers, accuracy and mistakes across stages and topics'}</span>
+      </Link>
+    </div>
+
     <div className="flex flex-wrap gap-2" role="group" aria-label={ar ? 'الفترة الزمنية' : 'Time window'}>
       {([7,30,90] as const).map(value => <button key={value} type="button" onClick={() => { setDays(value); setShowAllCategories(false); }}
         aria-pressed={days === value} className={`rounded-xl border px-4 py-2 text-sm font-semibold ${days === value ? 'bg-primary text-primary-foreground' : 'bg-card'}`}>
