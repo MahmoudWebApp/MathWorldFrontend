@@ -21,13 +21,13 @@ export default function StudentCategoriesPage() {
   const stageId = selected?.StageId ?? 0;
   const { data: journey } = useGetLearningJourneyQuery(stageId, {
     skip: stageId <= 0,
-    refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: 45,
   });
   const categoryProgress = new Map((journey?.Categories ?? []).map(item => [item.CategoryId, item]));
   const { data: access, isLoading: loadingAccess, isError: accessError, refetch: reloadAccess } =
-    useGetStageCategoryAccessQuery(stageId, { skip: stageId <= 0, refetchOnMountOrArgChange: true });
+    useGetStageCategoryAccessQuery(stageId, { skip: stageId <= 0, refetchOnMountOrArgChange: 45 });
   const { data: subscription, isLoading: loadingPlan, isError: planError, refetch: reloadPlan } =
-    useGetStudentSubscriptionQuery(undefined, { refetchOnMountOrArgChange: true });
+    useGetStudentSubscriptionQuery(undefined, { refetchOnMountOrArgChange: 45 });
   const accent = getStageAccent({ Id: stageId, NameAr: selected?.NameAr, NameEn: selected?.NameEn });
   const loading = selecting || (stageId > 0 && (loadingAccess || loadingPlan));
   const failed = selectedError || accessError || planError;
