@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { useGetFavoritesQuery, useToggleFavoriteMutation } from '@/store/api/usersApi';
+import { useGetFavoritesQuery, useGetLearningStageQuery, useToggleFavoriteMutation } from '@/store/api/usersApi';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -20,12 +20,17 @@ export function FavoritesProblemsPage() {
     setMounted(true);
   }, []);
 
+  const { data: selectedStage, isLoading: stageLoading, isError: stageError, refetch: retryStage } = useGetLearningStageQuery();
+  const stageId = selectedStage?.StageId ?? 0;
   const { data: favorites, isLoading, error } = useGetFavoritesQuery(locale, {
     refetchOnMountOrArgChange: true,
   });
   const [toggleFavorite] = useToggleFavoriteMutation();
 
-  const totalCount = favorites?.length ?? 0;
+  // Favorites remain stored across stage changes; the student only browses
+  // items belonging to the currently selected stage.
+  const stageFavorites = (favorites ?? []).filter(problem => problem.StageId === stageId);
+  const totalCount = stageFavorites.length;
 
   const handleRemoveFavorite = async (problemId: number) => {
     try {
@@ -38,13 +43,13 @@ export function FavoritesProblemsPage() {
     }
   };
 
-  if (error) {
+  if (error || stageError) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-red-500 dark:text-red-400 py-20">
           <AlertCircle className="h-12 w-12" />
           <p className="text-lg font-medium">{t('common.errorLoadingData')}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
+          <Button onClick={() => { void retryStage(); window.location.reload(); }} variant="outline">
             {t('common.retry')}
           </Button>
         </div>
@@ -57,7 +62,7 @@ export function FavoritesProblemsPage() {
       {/* Header */}
       <div className="mb-8">
         <Link 
-          href="/dashboard" 
+          href="/dashboard/categories" 
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
         >
           <DirectionalArrow direction="back" />
@@ -76,7 +81,7 @@ export function FavoritesProblemsPage() {
           </div>
           <div>
             <div className="text-3xl font-bold">
-              {isLoading ? (
+              {isLoading || stageLoading ? (
                 <span className="inline-block w-16 h-8 bg-muted animate-pulse rounded" />
               ) : mounted ? (
                 <AnimatedCounter end={totalCount} duration={1500} />
@@ -96,9 +101,9 @@ export function FavoritesProblemsPage() {
             <div key={i} className="h-32 bg-muted/50 animate-pulse rounded-xl" />
           ))}
         </div>
-      ) : favorites && favorites.length > 0 ? (
+      ) : stageFavorites.length > 0 ? (
         <div className="space-y-4">
-          {favorites.map((problem) => (
+          {stageFavorites.map((problem) => (
             <div key={problem.Id} className="relative group/card">
               <ProblemCard problem={problem} />
               
@@ -126,7 +131,7 @@ export function FavoritesProblemsPage() {
             <h3 className="text-xl font-semibold mb-2">{t('favorites.empty.title')}</h3>
             <p className="text-muted-foreground mb-6">{t('favorites.empty.description')}</p>
             <Button asChild>
-              <Link href="/stages">
+              <Link href="/dashboard/categories">
                   {t("hero.browseStages")}
                 <DirectionalArrow direction="forward" className="ms-2" />
               </Link>
