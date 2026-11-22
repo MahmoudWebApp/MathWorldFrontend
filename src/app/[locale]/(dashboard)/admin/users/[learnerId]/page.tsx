@@ -14,6 +14,7 @@ import {
   useGetAdminLearnerDetailQuery,
   useGetAdminLearnerAttemptsQuery,
   useUpdateAdminLearnerSubscriptionMutation,
+  useGetAdminLearnerSubscriptionHistoryQuery,
 } from '@/store/api/usersApi';
 
 export default function AdminLearnerDetailPage() {
@@ -27,7 +28,8 @@ export default function AdminLearnerDetailPage() {
   const [tierMessage, setTierMessage] = useState('');
   const [tierError, setTierError] = useState('');
   const [tierReason, setTierReason] = useState('');
-  const [tierExpiresAt, setTierExpiresAt] = useState('');
+  const [tierExpiresAt, setTierExpiresAt] = useState<string | null>(null);
+  const [tierHistoryPage, setTierHistoryPage] = useState(1);
   const [setSubscription, { isLoading: savingTier }] =
     useUpdateAdminLearnerSubscriptionMutation();
 
@@ -40,6 +42,11 @@ export default function AdminLearnerDetailPage() {
       { LearnerId: learnerId, StageId: stageId ?? data?.Learner.CurrentStageId ?? undefined, Page: page },
       { skip: !validId || isError, refetchOnMountOrArgChange: true },
     );
+
+  const tierHistory = useGetAdminLearnerSubscriptionHistoryQuery(
+    { LearnerId: learnerId, Page: tierHistoryPage, PageSize: 10 },
+    { skip: !validId, refetchOnMountOrArgChange: true },
+  );
 
   const label = ar ? {
     back: 'العودة إلى الطلاب', title: 'ملف الطالب', active: 'نشط', disabled: 'معطّل',
@@ -91,16 +98,30 @@ export default function AdminLearnerDetailPage() {
 
   };
 
+  const localInputDateTime = (utc?: string | null) => {
+    if (!utc) return '';
+    const parsed = new Date(utc);
+    if (!Number.isFinite(parsed.getTime())) return '';
+    return new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60_000)
+      .toISOString().slice(0, 16);
+  };
   const currentTier = data?.Learner.SubscriptionType === 'Premium'
     ? 'Premium' : 'Free';
   const effectiveTier = selectedTier ?? currentTier;
+  const currentExpiryInput = currentTier === 'Premium'
+    ? localInputDateTime(data?.Learner.PremiumExpiresAtUtc) : '';
+  const expiryForInput = tierExpiresAt ??
+    (effectiveTier === currentTier ? currentExpiryInput : '');
+  const subscriptionChanged = effectiveTier !== currentTier ||
+    (effectiveTier === 'Premium' && currentTier === 'Premium' &&
+      tierExpiresAt !== null && tierExpiresAt !== currentExpiryInput);
   const saveTier = async () => {
-    if (!validId || savingTier || effectiveTier === currentTier) return;
+    if (!validId || savingTier || !subscriptionChanged) return;
     if (tierReason.trim().length < 3 || tierReason.trim().length > 500) {
       setTierError(ar ? 'سبب التعديل مطلوب (من 3 إلى 500 حرف).' : 'A reason of 3–500 characters is required.');
       return;
     }
-    const expiry = effectiveTier === 'Premium' && tierExpiresAt ? new Date(tierExpiresAt) : null;
+    const expiry = effectiveTier === 'Premium' && expiryForInput ? new Date(expiryForInput) : null;
     if (expiry && (!Number.isFinite(expiry.getTime()) || expiry.getTime() <= Date.now())) {
       setTierError(ar ? 'تاريخ الانتهاء يجب أن يكون بالمستقبل.' : 'Expiration must be in the future.');
       return;
@@ -119,7 +140,7 @@ export default function AdminLearnerDetailPage() {
       }).unwrap();
       setSelectedTier(null);
       setTierReason('');
-      setTierExpiresAt('');
+      setTierExpiresAt(null);
       void refetch();
       setTierMessage(label.tierSuccess);
     } catch (error) {
@@ -187,6 +208,7 @@ export default function AdminLearnerDetailPage() {
                   value={effectiveTier}
                   onChange={(e) => {
                     setSelectedTier(e.target.value as 'Free' | 'Premium');
+                    setTierExpiresAt(null);
                     setTierError('');
                     setTierMessage('');
                   }}
@@ -207,12 +229,12 @@ export default function AdminLearnerDetailPage() {
               {effectiveTier === 'Premium' && (
                 <label className="flex min-w-[190px] flex-col gap-1 text-sm font-semibold">
                   <span>{ar ? 'انتهاء Premium (اختياري)' : 'Premium expires (optional)'}</span>
-                  <input type="datetime-local" value={tierExpiresAt} onChange={event => setTierExpiresAt(event.target.value)}
+                  <input type="datetime-local" value={expiryForInput} onChange={event => setTierExpiresAt(event.target.value)}
                     className="min-h-11 rounded-xl border border-border bg-card px-3 py-2" />
                 </label>
               )}
               <button type="button"
-                disabled={savingTier || effectiveTier === currentTier || tierReason.trim().length < 3}
+                disabled={savingTier || !subscriptionChanged || tierReason.trim().length < 3}
                 onClick={saveTier}
                 className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -233,6 +255,50 @@ export default function AdminLearnerDetailPage() {
               ))}
             </dl>
           </header>
+
+          <section className="mb-7 rounded-2xl border border-border bg-card p-4 sm:p-5"
+            aria-label={ar ? 'سجل تغييرات اشتراك الطالب' : 'Learner subscription change history'}>
+            <h2 className="mb-3 text-lg font-bold">{ar ? 'سجل تغييرات الاشتراك' : 'Subscription change history'}</h2>
+            {tierHistory.isFetching && (
+              <p role="status" className="text-sm text-muted-foreground">{ar ? 'جارٍ تحميل السجل…' : 'Loading change history…'}</p>
+            )}
+            {tierHistory.isError && (
+              <div role="alert" className="space-y-2 text-sm text-destructive">
+                <p>{ar ? 'تعذّر تحميل سجل الاشتراك.' : 'Could not load subscription history.'}</p>
+                <button type="button" className="font-semibold underline" onClick={() => void tierHistory.refetch()}>
+                  {label.retry}
+                </button>
+              </div>
+            )}
+            {!tierHistory.isFetching && !tierHistory.isError && tierHistory.data?.Records.length === 0 && (
+              <p className="text-sm text-muted-foreground">{ar ? 'لا توجد تغييرات مسجلة.' : 'No recorded changes.'}</p>
+            )}
+            {!tierHistory.isError && (
+              <ol className="space-y-2">
+                {tierHistory.data?.Records.map(record => (
+                  <li key={record.Id} className="rounded-xl border border-border/70 p-3 text-sm">
+                    <div className="font-semibold" dir="ltr">{record.PreviousType} → {record.NewType}</div>
+                    <p className="mt-1 break-words">{record.Reason}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {date(record.ChangedAtUtc)}
+                      {record.NewExpiresAtUtc && ` · ${ar ? 'ينتهي' : 'Expires'}: ${date(record.NewExpiresAtUtc)}`}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+            {!tierHistory.isError && (tierHistory.data?.Total ?? 0) > 10 && (
+              <div className="mt-3 flex items-center gap-3 text-sm">
+                <button type="button" disabled={tierHistoryPage <= 1 || tierHistory.isFetching}
+                  className="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+                  onClick={() => setTierHistoryPage(p => Math.max(1, p - 1))}>{label.prev}</button>
+                <span>{tierHistoryPage}</span>
+                <button type="button" disabled={tierHistory.isFetching || tierHistoryPage * 10 >= (tierHistory.data?.Total ?? 0)}
+                  className="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+                  onClick={() => setTierHistoryPage(p => p + 1)}>{label.next}</button>
+              </div>
+            )}
+          </section>
 
           <section aria-label={label.title} className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {summary.map(({ label: title, value, Icon }) => (

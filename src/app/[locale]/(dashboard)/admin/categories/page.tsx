@@ -32,6 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/Tooltip";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { StageFreeCategoryAccessEditor } from "@/components/admin/StageFreeCategoryAccessEditor";
 import { getApiErrorMessage } from "@/lib/authSession";
 
 export default function AdminCategoriesPage() {
@@ -319,6 +320,10 @@ function AdminCategoriesPageContent() {
         </Button>
         </div>
       </div>
+
+      {/* Free access stays exactly two categories, explicitly chosen and
+          audited by web administrators for each educational stage. */}
+      <StageFreeCategoryAccessEditor stageId={selectedStageId} locale={locale} />
 
       {deleteError && (
         <div role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
