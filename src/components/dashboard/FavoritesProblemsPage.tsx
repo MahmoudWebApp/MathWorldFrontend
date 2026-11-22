@@ -23,7 +23,7 @@ export function FavoritesProblemsPage() {
   const { data: selectedStage, isLoading: stageLoading, isError: stageError, refetch: retryStage } = useGetLearningStageQuery();
   const stageId = selectedStage?.StageId ?? 0;
   const { data: favorites, isLoading, error } = useGetFavoritesQuery(locale, {
-    refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: 45,
   });
   const [toggleFavorite] = useToggleFavoriteMutation();
 
