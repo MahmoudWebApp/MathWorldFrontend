@@ -53,7 +53,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
                   {locale === "ar" ? "تمت تجربتها" : "Attempted"}
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="gap-1 border-border bg-muted/60 text-muted-foreground">
+                <Badge variant="secondary" className="gap-1 border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-300">
                   <CircleDot className="h-3.5 w-3.5" />
                   {locale === "ar" ? "جديدة" : "New"}
                 </Badge>
@@ -74,7 +74,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5"><Eye aria-hidden="true" className="h-4 w-4" />{problem.ViewsCount}</span>
                 {typeof problem.Points === "number" && (
-                  <span className="inline-flex items-center gap-1.5"><Star aria-hidden="true" className="h-4 w-4 text-brand-secondary" />{problem.Points}</span>
+                  <span className="inline-flex items-center gap-1.5"><Star aria-hidden="true" className="h-4 w-4 text-amber-500" />{problem.Points}</span>
                 )}
               </div>
               <span className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: stageAccent }}>
