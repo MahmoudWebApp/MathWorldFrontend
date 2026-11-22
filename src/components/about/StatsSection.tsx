@@ -83,8 +83,8 @@ export function StatsSection() {
   const t = useTranslations('about');
   const locale = useLocale();
   const { data, isFetching, isLoading, isError, refetch } = useGetStatsQuery(undefined, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
 
   const stats: StatItem[] = [
