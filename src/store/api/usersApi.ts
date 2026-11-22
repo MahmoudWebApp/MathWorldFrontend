@@ -270,6 +270,13 @@ export interface AdminSubscriptionChange {
   Reason: string;
 }
 
+export interface AnnualPremiumGrantResult {
+  Updated: number;
+  UpdatedIds: number[];
+  SkippedIndefiniteIds: number[];
+  DurationMonths: number;
+}
+
 export interface AdminSubscriptionStatus {
   LearnerId: number;
   SubscriptionType: 'Free' | 'Premium';
@@ -770,6 +777,15 @@ export const usersApi = createApi({
     getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, void>({
       query: () => '/users/premium-analytics',
       providesTags: ['PremiumAnalytics'],
+    }),
+
+    grantAnnualPremium: builder.mutation<AnnualPremiumGrantResult, number[]>({
+      query: (learnerIds) => ({
+        url: '/admin/learners/premium-annual',
+        method: 'POST',
+        body: { LearnerIds: learnerIds },
+      }),
+      invalidatesTags: ['AdminLearners', 'Subscription', 'User', 'Dashboard'],
     }),
 
     updateAdminLearnerSubscription: builder.mutation<
