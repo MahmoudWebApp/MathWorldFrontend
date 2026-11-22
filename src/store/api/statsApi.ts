@@ -165,6 +165,7 @@ export interface AdminEngagementStudent {
   CurrentStageId: number | null;
   IsActive: boolean;
   LastPracticeAt: string | null;
+  LastExplicitSignOutAtUtc?: string | null;
   LastHeartbeatAtUtc: string | null;
   IsOnline: boolean;
   Attempts: number;
