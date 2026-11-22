@@ -983,6 +983,7 @@ export const {
   useRevokeAdminPremiumCodeMutation,
   useRedeemPremiumCodeMutation,
   useUpdateAdminLearnerSubscriptionMutation,
+  useGrantAnnualPremiumMutation,
   useGetAdminLearnerSubscriptionHistoryQuery,
   useGetProfileQuery,
   useGetFavoritesQuery,
