@@ -143,7 +143,6 @@ export default function ProblemPage() {
   const locale = useLocale();
   const isArabic = locale === "ar";
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const isPremium = user?.SubscriptionType?.toLowerCase() === 'premium';
   const problemId = Number.parseInt(params.id, 10);
   const solutionRef = useRef<HTMLDivElement>(null);
   const questionCardRef = useRef<HTMLDivElement>(null);
@@ -199,11 +198,7 @@ export default function ProblemPage() {
 
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
-  const [requestSolutionPreview, {
-    data: solutionPreviewData,
-    isFetching: previewLoading,
-    error: previewError,
-  }] = useLazyGetSolutionPreviewQuery();
+  const [, { data: solutionPreviewData }] = useLazyGetSolutionPreviewQuery();
   const solutionPreview = solutionPreviewData?.ProblemId === problemId
     ? solutionPreviewData : null;
 
