@@ -191,7 +191,7 @@ export default function StudentLeaderboardPage() {
                             <strong className="min-w-0 truncate text-base">{entry.DisplayName}</strong>
                             {entry.IsCurrentUser && (
                               <span className="shrink-0 rounded-full bg-violet-700 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-violet-300 dark:text-violet-950">
-                                {ar ? 'أنت' : 'You'}
+                                {ar ? 'ترتيبك' : 'Your ranking'}
                               </span>
                             )}
                           </div>
