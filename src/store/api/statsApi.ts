@@ -288,6 +288,9 @@ export const statsApi = createApi({
     // Calls: GET /api/stats
     getStats: builder.query<DashboardStats, void>({
       query: () => '/stats',
+      // Public impact numbers do not need a new network request whenever
+      // a learner returns to the landing page or refocuses the browser.
+      keepUnusedDataFor: 300,
       providesTags: ['Stats'],
     }),
 
