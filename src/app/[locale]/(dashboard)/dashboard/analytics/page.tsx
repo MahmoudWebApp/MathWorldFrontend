@@ -11,7 +11,6 @@ import {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
   useExportPremiumAnalyticsXlsxMutation,
-  type StudentPremiumAnalyticsReport,
 } from '@/store/api/usersApi';
 
 function formatReportDate(value: string, locale: string): string {
