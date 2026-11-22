@@ -132,7 +132,7 @@ export function FavoritesProblemsPage() {
             <p className="text-muted-foreground mb-6">{t('favorites.empty.description')}</p>
             <Button asChild>
               <Link href="/dashboard/categories">
-                  {t("hero.browseStages")}
+                  {locale === "ar" ? "استكشف الفئات" : "Explore categories"}
                 <DirectionalArrow direction="forward" className="ms-2" />
               </Link>
             </Button>
