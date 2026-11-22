@@ -122,6 +122,10 @@ export default function AdminLearnerActivityPage() {
                 <dd className="font-medium">{timestamp(student.LastLoginAt)}</dd>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
+                <dt className="flex items-center gap-2 text-muted-foreground"><Clock3 className="h-4 w-4" />{ar ? 'آخر خروج صريح' : 'Last explicit sign-out'}</dt>
+                <dd className="font-medium">{timestamp(student.LastExplicitSignOutAtUtc)}</dd>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <dt className="flex items-center gap-2 text-muted-foreground"><Clock3 className="h-4 w-4" />{ar ? 'آخر حل' : 'Last practice'}</dt>
                 <dd className="font-medium">{timestamp(student.LastPracticeAt)}</dd>
               </div>
@@ -148,8 +152,8 @@ export default function AdminLearnerActivityPage() {
       </div>
     </>}
     <p className="text-xs text-muted-foreground">
-      {ar ? 'ما منعرض وقت خروج لأن JWT لا يثبت إمتى المستخدم أغلق المتصفح أو التطبيق. ممكن نضيف جلسات Heartbeat لاحقاً لتقدير آخر ظهور.'
-        : 'JWT does not reliably detect browser/app shutdown. Sign-out time is intentionally not invented; heartbeat sessions can provide approximate presence later.'}
+      {ar ? 'آخر خروج بيظهر فقط لما الطالب يضغط تسجيل الخروج. إغلاق المتصفح أو التطبيق فجأة ما منعتبره خروجاً مؤكداً. وقت آخر ظهور يعتمد على نبضات النشاط.'
+        : 'Only explicit learner sign-out is recorded as sign-out. Abrupt browser/app closure is not verified; heartbeat tracks approximate last presence.'}
     </p>
   </main>;
 }
