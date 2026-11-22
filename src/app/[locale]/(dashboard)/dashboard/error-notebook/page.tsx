@@ -234,7 +234,7 @@ export default function ErrorNotebookPage() {
               </Button>
             ) : activeTab === 'active' && (
               <Button asChild>
-                <Link href="/dashboard/categories">{t('hero.browseStages')}</Link>
+                <Link href="/dashboard/categories">{locale === 'ar' ? 'استكشف الفئات' : 'Explore categories'}</Link>
               </Button>
             )}
           </CardContent>

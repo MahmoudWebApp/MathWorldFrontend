@@ -17,7 +17,7 @@ export default function UserDashboardPage() {
   const ar = locale === 'ar';
   const router = useRouter();
   const { data: dashboard, isLoading, isError, refetch } = useGetDashboardQuery(locale, {
-    refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: 45,
   });
   const stageId = dashboard?.CurrentStageId ?? 0;
   const { data: journey, isLoading: journeyLoading, isError: progressError, refetch: reloadProgress } = useGetLearningJourneyQuery(stageId, {
@@ -31,7 +31,7 @@ export default function UserDashboardPage() {
   const { data: nextUnsolved } = useSearchProblemsQuery(
     { StageId: stageId, HideSolved: true, Page: 1, PageSize: 1 },
     { skip: !isPremium || dashboard?.Role !== 'Student' || stageId <= 0,
-      refetchOnMountOrArgChange: true },
+      refetchOnMountOrArgChange: 45 },
   );
   const nextProblemId = nextUnsolved?.Results?.[0]?.Id;
 

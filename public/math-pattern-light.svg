@@ -1,19 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="560" height="380" viewBox="0 0 560 380" role="img" aria-label="Subtle mathematics pattern">
-  <g fill="none" stroke="#7b42d9" stroke-width="1.5" opacity=".30">
+  <g fill="none" stroke="#7b42d9" stroke-width="1.35" opacity=".13">
     <circle cx="74" cy="84" r="33"/>
     <path d="M60 111 L73 55 L91 105 Z"/>
     <path d="M335 57 L403 57 L403 114 L335 114 Z M335 57 L403 114"/>
     <path d="M476 260 Q493 204 516 221 T557 233"/>
     <path d="M55 315 C103 287 128 350 184 322"/>
     <path d="M235 250 L271 205 L308 250 Z"/>
+    <path d="M400 340 Q430 300 463 332 T535 340" stroke="#e14eac"/>
+    <path d="M140 110 Q155 78 176 101 T220 108" stroke="#06b6d4"/>
     <path d="M237 250 L273 268 L308 250"/>
   </g>
-  <g font-family="Georgia,serif" font-size="28" fill="#7b42d9" opacity=".25">
-    <text x="188" y="98">π</text><text x="460" y="103">∑</text>
-    <text x="100" y="225">x²</text><text x="365" y="324">∞</text>
-    <text x="29" y="360">∫</text><text x="332" y="191">θ</text>
+  <g font-family="Georgia,serif" font-size="28" fill="#9f5add" opacity=".13">
+    <text x="188" y="98" fill="#8b5cf6">π</text><text x="460" y="103" fill="#d946a8">∑</text>
+    <text x="100" y="225" fill="#d946a8">x²</text><text x="365" y="324" fill="#7b42d9">∞</text>
+    <text x="29" y="360" fill="#06b6d4">∫</text><text x="332" y="191" fill="#8b5cf6">θ</text>
   </g>
-  <g fill="#e14eac" opacity=".22">
+  <g fill="#e14eac" opacity=".14">
     <circle cx="200" cy="286" r="3.5"/><circle cx="451" cy="169" r="3.5"/>
     <circle cx="266" cy="137" r="3.5"/><circle cx="44" cy="175" r="3.5"/>
   </g>

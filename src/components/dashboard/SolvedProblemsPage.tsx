@@ -21,7 +21,7 @@ export function SolvedProblemsPage() {
   }, []);
 
   const { data: solvedProblems, isLoading, error } = useGetSolvedProblemsQuery(locale, {
-    refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: 45,
   });
 
   const totalCount = solvedProblems?.length ?? 0;
@@ -87,7 +87,8 @@ export function SolvedProblemsPage() {
       ) : solvedProblems && solvedProblems.length > 0 ? (
         <div className="space-y-4">
           {solvedProblems.map((problem) => (
-            <ProblemCard key={problem.Id} problem={problem} />
+            <ProblemCard key={problem.Id}
+              problem={{ ...problem, IsSolved: true, HasAttempted: true }} />
           ))}
         </div>
       ) : (
@@ -98,7 +99,7 @@ export function SolvedProblemsPage() {
             <p className="text-muted-foreground mb-6">{t('solved.empty.description')}</p>
             <Button asChild>
                 <Link href="/dashboard/categories">
-                  {t("hero.browseStages")}
+                  {locale === "ar" ? "استكشف الفئات" : "Explore categories"}
                 <DirectionalArrow direction="forward" className="h-4 w-4 ms-2" />
               </Link>
             </Button>
