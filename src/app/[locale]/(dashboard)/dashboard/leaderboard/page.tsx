@@ -26,7 +26,7 @@ export default function StudentLeaderboardPage() {
   const stageId = stage?.StageId;
   const { currentData: data, isLoading, isFetching, isError, refetch } = useGetStageLeaderboardQuery(
     { stageId: stageId ?? 0, period, page },
-    { skip: !isStudent || !stageId, refetchOnMountOrArgChange: true,
+    { skip: !isStudent || !stageId, refetchOnMountOrArgChange: 45,
       refetchOnFocus: true, refetchOnReconnect: true }
   );
 
