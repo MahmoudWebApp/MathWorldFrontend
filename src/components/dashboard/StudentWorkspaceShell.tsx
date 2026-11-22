@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useLocale } from 'next-intl';
 import { usePathname, useRouter, Link } from '@/i18n/routing';
 import { useDispatch, useSelector } from 'react-redux';
-import { Globe, LogOut } from 'lucide-react';
+import { Globe, LogOut, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import type { AppDispatch, RootState } from '@/store';
 import { logout } from '@/store/slices/authSlice';
 import { clearAuthSession } from '@/lib/authSession';
@@ -18,6 +20,7 @@ import { notificationsApi } from '@/store/api/notificationsApi';
 import { StudentWorkspaceNavigation } from './StudentWorkspaceNavigation';
 
 export function StudentWorkspaceShell({ children }: { children: React.ReactNode }) {
+  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
@@ -61,14 +64,25 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
 
   return (
     <div className="mx-auto flex w-full max-w-[1600px] items-start">
-      <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-64 shrink-0 flex-col overflow-y-auto border-e border-border/70 bg-card/55 px-3 py-6 lg:flex">
-        <StudentWorkspaceNavigation isPremium={subscription?.IsPremium === true} />
+      <aside className={`sticky top-16 hidden h-[calc(100dvh-4rem)] shrink-0 flex-col overflow-y-auto border-e border-border/70 bg-card/55 py-4 transition-[width,padding] duration-200 lg:flex ${collapsed ? 'w-[76px] px-2' : 'w-64 px-3'}`}>
+        <button
+          type="button"
+          onClick={() => setCollapsed(value => !value)}
+          aria-expanded={!collapsed}
+          aria-label={locale === 'ar' ? (collapsed ? 'فتح القائمة الجانبية' : 'طي القائمة الجانبية') : (collapsed ? 'Expand sidebar' : 'Collapse sidebar')}
+          title={locale === 'ar' ? (collapsed ? 'فتح القائمة' : 'طي القائمة') : (collapsed ? 'Expand menu' : 'Collapse menu')}
+          className="mb-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/70 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          {collapsed ? <PanelRightOpen className="h-5 w-5" /> : <PanelRightClose className="h-5 w-5" />}
+          {!collapsed && <span className="text-xs font-bold">{locale === 'ar' ? 'طي القائمة' : 'Collapse'}</span>}
+        </button>
+        <StudentWorkspaceNavigation isPremium={subscription?.IsPremium === true} collapsed={collapsed} />
         <div className="mt-auto space-y-1 border-t border-border/70 pt-4">
-          <Link href="/" className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-muted-foreground hover:bg-muted">
-            <Globe className="h-5 w-5" />{locale === 'ar' ? 'الموقع العام' : 'Public website'}
+          <Link href="/" title={locale === "ar" ? "الموقع العام" : "Public website"} aria-label={locale === "ar" ? "الموقع العام" : "Public website"} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-muted-foreground hover:bg-muted ${collapsed ? "justify-center px-2" : ""}`}>
+            <Globe className="h-5 w-5 shrink-0" /><span className={collapsed ? "sr-only" : ""}>{locale === 'ar' ? 'الموقع العام' : 'Public website'}</span>
           </Link>
-          <button type="button" onClick={() => void signOut()} className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-sm font-semibold text-destructive hover:bg-destructive/10">
-            <LogOut className="h-5 w-5" />{locale === 'ar' ? 'تسجيل الخروج' : 'Sign out'}
+          <button type="button" onClick={() => void signOut()} title={locale === "ar" ? "تسجيل الخروج" : "Sign out"} aria-label={locale === "ar" ? "تسجيل الخروج" : "Sign out"} className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-start text-sm font-semibold text-destructive hover:bg-destructive/10 ${collapsed ? "justify-center px-2" : ""}`}>
+            <LogOut className="h-5 w-5 shrink-0" /><span className={collapsed ? "sr-only" : ""}>{locale === 'ar' ? 'تسجيل الخروج' : 'Sign out'}</span>
           </button>
         </div>
       </aside>
