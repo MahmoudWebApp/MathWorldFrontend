@@ -15,6 +15,7 @@ import {
   useGetAdminLearnerAttemptsQuery,
   useUpdateAdminLearnerSubscriptionMutation,
   useGetAdminLearnerSubscriptionHistoryQuery,
+  useGrantAnnualPremiumMutation,
 } from '@/store/api/usersApi';
 
 export default function AdminLearnerDetailPage() {
@@ -24,14 +25,12 @@ export default function AdminLearnerDetailPage() {
   const validId = Number.isSafeInteger(learnerId) && learnerId > 0;
   const [stageId, setStageId] = useState<number | undefined>();
   const [page, setPage] = useState(1);
-  const [selectedTier, setSelectedTier] = useState<'Free' | 'Premium' | null>(null);
   const [tierMessage, setTierMessage] = useState('');
   const [tierError, setTierError] = useState('');
-  const [tierReason, setTierReason] = useState('');
-  const [tierExpiresAt, setTierExpiresAt] = useState<string | null>(null);
   const [tierHistoryPage, setTierHistoryPage] = useState(1);
-  const [setSubscription, { isLoading: savingTier }] =
+  const [setSubscription, { isLoading: revokingTier }] =
     useUpdateAdminLearnerSubscriptionMutation();
+  const [grantAnnualPremium, { isLoading: grantingTier }] = useGrantAnnualPremiumMutation();
 
 
   const { data, isLoading, isError, refetch } = useGetAdminLearnerDetailQuery(
@@ -98,51 +97,43 @@ export default function AdminLearnerDetailPage() {
 
   };
 
-  const localInputDateTime = (utc?: string | null) => {
-    if (!utc) return '';
-    const parsed = new Date(utc);
-    if (!Number.isFinite(parsed.getTime())) return '';
-    return new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60_000)
-      .toISOString().slice(0, 16);
-  };
   const currentTier = data?.Learner.SubscriptionType === 'Premium'
     ? 'Premium' : 'Free';
-  const effectiveTier = selectedTier ?? currentTier;
-  const currentExpiryInput = currentTier === 'Premium'
-    ? localInputDateTime(data?.Learner.PremiumExpiresAtUtc) : '';
-  const expiryForInput = tierExpiresAt ??
-    (effectiveTier === currentTier ? currentExpiryInput : '');
-  const subscriptionChanged = effectiveTier !== currentTier ||
-    (effectiveTier === 'Premium' && currentTier === 'Premium' &&
-      tierExpiresAt !== null && tierExpiresAt !== currentExpiryInput);
-  const saveTier = async () => {
-    if (!validId || savingTier || !subscriptionChanged) return;
-    if (tierReason.trim().length < 3 || tierReason.trim().length > 500) {
-      setTierError(ar ? 'سبب التعديل مطلوب (من 3 إلى 500 حرف).' : 'A reason of 3–500 characters is required.');
-      return;
-    }
-    const expiry = effectiveTier === 'Premium' && expiryForInput ? new Date(expiryForInput) : null;
-    if (expiry && (!Number.isFinite(expiry.getTime()) || expiry.getTime() <= Date.now())) {
-      setTierError(ar ? 'تاريخ الانتهاء يجب أن يكون بالمستقبل.' : 'Expiration must be in the future.');
-      return;
-    }
-    if (!window.confirm(label.tierConfirm)) return;
-    setTierError('');
+
+  const grantYear = async () => {
+    if (!validId || grantingTier || revokingTier) return;
     setTierMessage('');
+    setTierError('');
+    try {
+      const result = await grantAnnualPremium([learnerId]).unwrap();
+      // Both detail and directory refetch automatically via RTK tags;
+      // wait for this detail here so the status changes without page refresh.
+      await refetch().unwrap();
+      void tierHistory.refetch();
+      setTierMessage(result.SkippedIndefiniteIds.length
+        ? (ar ? 'الطالب Premium بلا تاريخ انتهاء، ولم يتم تقصير اشتراكه.' : 'Learner already has indefinite Premium access; no term was shortened.')
+        : (ar ? 'تم تفعيل أو تجديد Premium لمدة سنة بنجاح.' : 'One year of Premium was granted or renewed.'));
+    } catch (error) {
+      setTierError(getApiErrorMessage(error, label.tierError));
+    }
+  };
+
+  const revokePremium = async () => {
+    if (!validId || grantingTier || revokingTier || currentTier !== 'Premium') return;
+    setTierMessage('');
+    setTierError('');
     try {
       await setSubscription({
         LearnerId: learnerId,
         Change: {
-          SubscriptionType: effectiveTier,
-          Reason: tierReason.trim(),
-          PremiumExpiresAtUtc: expiry ? expiry.toISOString() : null,
+          SubscriptionType: 'Free',
+          PremiumExpiresAtUtc: null,
+          Reason: 'AdminPremiumRevocation',
         },
       }).unwrap();
-      setSelectedTier(null);
-      setTierReason('');
-      setTierExpiresAt(null);
-      void refetch();
-      setTierMessage(label.tierSuccess);
+      await refetch().unwrap();
+      void tierHistory.refetch();
+      setTierMessage(ar ? 'تم إلغاء Premium وأصبح الحساب Free.' : 'Premium revoked; the account is now Free.');
     } catch (error) {
       setTierError(getApiErrorMessage(error, label.tierError));
     }
@@ -201,48 +192,37 @@ export default function AdminLearnerDetailPage() {
                 <span className="rounded-xl border border-border px-3 py-2 text-sm">{data.Learner.SubscriptionType}</span>
               </div>
             </div>
-            <div className="mt-5 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-muted/20 p-3">
-              <label className="flex flex-col gap-1 text-sm font-semibold">
-                <span>{label.manageTier}</span>
-                <select
-                  value={effectiveTier}
-                  onChange={(e) => {
-                    setSelectedTier(e.target.value as 'Free' | 'Premium');
-                    setTierExpiresAt(null);
-                    setTierError('');
-                    setTierMessage('');
-                  }}
-                  disabled={savingTier}
-                  className="rounded-xl border border-border bg-card px-4 py-2"
-                >
-                  <option value="Free">Free</option>
-                  <option value="Premium">Premium</option>
-                </select>
-              </label>
-              <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm font-semibold">
-                <span>{ar ? 'سبب تغيير الاشتراك' : 'Reason for change'}</span>
-                <input value={tierReason} onChange={event => setTierReason(event.target.value)}
-                  minLength={3} maxLength={500} required
-                  placeholder={ar ? 'مثلاً: منحة تجريبية' : 'Example: introductory grant'}
-                  className="min-h-11 rounded-xl border border-border bg-card px-3 py-2" />
-              </label>
-              {effectiveTier === 'Premium' && (
-                <label className="flex min-w-[190px] flex-col gap-1 text-sm font-semibold">
-                  <span>{ar ? 'انتهاء Premium (اختياري)' : 'Premium expires (optional)'}</span>
-                  <input type="datetime-local" value={expiryForInput} onChange={event => setTierExpiresAt(event.target.value)}
-                    className="min-h-11 rounded-xl border border-border bg-card px-3 py-2" />
-                </label>
+            <div className="mt-5 space-y-3 rounded-xl border border-border bg-muted/20 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-bold">{label.manageTier}</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {ar ? 'Premium لمدة سنة من تاريخ التفعيل. التجديد يضيف سنة إلى المدة المتبقية.'
+                      : 'Premium for one year. Renewals add one year to the remaining term.'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={grantingTier || revokingTier || !data.Learner.IsActive}
+                    onClick={() => void grantYear()}
+                    className="min-h-11 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50">
+                    {grantingTier ? label.loading : currentTier === 'Premium'
+                      ? (ar ? 'تجديد Premium سنة' : 'Renew Premium for 1 year')
+                      : (ar ? 'تفعيل Premium سنة' : 'Activate Premium for 1 year')}
+                  </button>
+                  {currentTier === 'Premium' && (
+                    <button type="button" disabled={grantingTier || revokingTier}
+                      onClick={() => void revokePremium()}
+                      className="min-h-11 rounded-xl border border-destructive/40 px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-50">
+                      {revokingTier ? label.loading : ar ? 'إلغاء Premium' : 'Revoke Premium'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {currentTier === 'Premium' && data.Learner.PremiumExpiresAtUtc && (
+                <p className="text-xs text-muted-foreground">{ar ? 'ينتهي في: ' : 'Expires: '}{new Date(data.Learner.PremiumExpiresAtUtc).toLocaleDateString(ar ? 'ar' : 'en')}</p>
               )}
-              <button type="button"
-                disabled={savingTier || !subscriptionChanged || tierReason.trim().length < 3}
-                onClick={saveTier}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {savingTier ? label.loading : label.saveTier}
-              </button>
-              <p className="w-full text-xs text-muted-foreground">{label.tierHint}</p>
-              {tierMessage && <p role="status" className="w-full text-sm text-primary">{tierMessage}</p>}
-              {tierError && <p role="alert" className="w-full text-sm text-destructive">{tierError}</p>}
+              {tierMessage && <p role="status" className="text-sm font-semibold text-primary">{tierMessage}</p>}
+              {tierError && <p role="alert" className="text-sm text-destructive">{tierError}</p>}
             </div>
             <dl className="mt-5 grid gap-3 border-t border-border pt-4 text-sm md:grid-cols-3 xl:grid-cols-4">
               {[
