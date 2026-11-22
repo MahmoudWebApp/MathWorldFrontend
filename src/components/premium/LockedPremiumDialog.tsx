@@ -41,7 +41,7 @@ export function LockedPremiumDialog({ children, topicName, featureName }: Locked
           <li className="flex items-start gap-3"><BookOpenCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             {ar ? 'فتح فئات مرحلتك وحل مسائل غير محدودة' : 'Unlock the topics in your stage, with unlimited practice'}</li>
           <li className="flex items-start gap-3"><Crown className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            {ar ? 'مشاهدة الحل قبل إرسال الإجابة' : 'View solutions before answering'}</li>
+            {ar ? 'طريقة الحل قبل إرسال الإجابة' : 'Reveal the solution method before answering'}</li>
           <li className="flex items-start gap-3"><ChartNoAxesCombined className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             {ar ? 'إحصائيات وتقارير شخصية متقدمة' : 'Personal analytics and progress reports'}</li>
         </ul>
