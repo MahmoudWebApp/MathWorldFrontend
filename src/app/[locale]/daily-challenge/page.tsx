@@ -28,7 +28,7 @@ export default function DailyChallengePage() {
 
   return <main className="container mx-auto max-w-4xl px-4 py-12" dir={ar ? 'rtl' : 'ltr'}>
     <h1 className="brand-display-title text-gradient-math mb-3 text-3xl font-bold">{ar ? 'تحدي اليوم' : 'Daily challenge'}</h1>
-    <p className="mb-7 text-muted-foreground">{ar ? 'خمس مسائل من فئات مرحلتك، مع تنويع الموضوعات قدر الإمكان. تتجدد منتصف الليل بتوقيت UTC، ولا تحدّ عدد مسائل التدريب العادي.' : 'Five questions across your selected stage's topics where possible, refreshed at UTC midnight. Regular practice stays unlimited.'}</p>
+    <p className="mb-7 text-muted-foreground">{ar ? 'خمس مسائل من فئات مرحلتك، مع تنويع الموضوعات قدر الإمكان. تتجدد منتصف الليل بتوقيت UTC، ولا تحدّ عدد مسائل التدريب العادي.' : 'Five questions across your selected stage topics where possible, refreshed at UTC midnight. Regular practice stays unlimited.'}</p>
     {!student && <p>{ar ? 'سجّل الدخول كطالب لتبدأ التحدي.' : 'Sign in as a student to start.'}</p>}
     {student && checking && <p role="status">{ar ? 'عم نتحقق من مزايا حسابك…' : 'Checking account benefits…'}</p>}
     {student && checkError && <div role="alert" className="space-y-3">
