@@ -132,15 +132,17 @@ function AdminProblemsPageContent() {
 
   const [
     fetchProblems,
-    { data: searchResult, isLoading: isSearching, isFetching, isError: searchError },
+    { currentData: searchResult, isLoading: isSearching, isFetching, isError: searchError },
   ] = useLazyGetAdminProblemsQuery();
 
   const problems: ProblemAdminDetail[] = searchResult?.Results || [];
   const totalPages = searchResult?.TotalPages || 1;
   const totalProblems = searchResult?.Total || 0;
 
-  const { data: allCategories } = useGetAdminCategoriesQuery();
-  const { data: stages } = useGetAdminStagesQuery();
+  const { data: allCategories, isError: categoriesLoadError, refetch: retryCategories } =
+    useGetAdminCategoriesQuery();
+  const { data: stages, isError: stagesLoadError, refetch: retryStages } =
+    useGetAdminStagesQuery();
 
   // Following Stage -> Category -> Problems preserves the category and
   // opens a ready-to-fill question form when the link says create=1.
@@ -453,6 +455,17 @@ function AdminProblemsPageContent() {
     requestedStage > 0 && requestedCategory > 0 &&
     stages?.some(stage => stage.Id === requestedStage) === true &&
     allCategories?.some(cat => cat.Id === requestedCategory && cat.StageId === requestedStage) === true;
+  if (stagesLoadError || categoriesLoadError) {
+    return <main role="alert" className="mx-auto max-w-xl space-y-4 px-4 py-12 text-center">
+      <p className="text-destructive">{locale === 'ar'
+        ? 'تعذر تحميل مراحل أو فئات الإدارة. لم يتم تغيير المسائل.'
+        : 'Could not load admin stages or categories. No problems were changed.'}</p>
+      <button type="button" className="rounded-xl border border-primary/30 px-4 py-2 text-primary"
+        onClick={() => { void retryStages(); void retryCategories(); }}>
+        {locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+      </button>
+    </main>;
+  }
   if (!stages || !allCategories) {
     return <div role="status" aria-busy="true" className="mx-auto max-w-4xl p-8 text-muted-foreground">
       {locale === 'ar' ? 'جارٍ تحميل المرحلة والفئة…' : 'Loading stage and topic…'}
