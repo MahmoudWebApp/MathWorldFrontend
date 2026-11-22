@@ -293,8 +293,11 @@ function AdminProblemsPageContent() {
       });
     } else {
       setEditingId(null);
-      setForm({ ...emptyForm, StageId: filters.StageId ?? 0,
-        CategoryId: filters.CategoryId ?? 0,
+      // The parent route is authoritative even during the first render,
+      // before the list filter effect hydrates from the URL.
+      setForm({ ...emptyForm,
+        StageId: Number(searchParams.get('stageId')) || 0,
+        CategoryId: Number(searchParams.get('categoryId')) || 0,
         Options: emptyForm.Options.map(option => ({...option})) });
     }
     setFormErrors({});
