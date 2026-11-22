@@ -1,20 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="560" height="380" viewBox="0 0 560 380" role="img" aria-label="Subtle mathematics pattern">
-  <g fill="none" stroke="#7b42d9" stroke-width="1.5" opacity=".30">
-    <circle cx="74" cy="84" r="33"/>
-    <path d="M60 111 L73 55 L91 105 Z"/>
-    <path d="M335 57 L403 57 L403 114 L335 114 Z M335 57 L403 114"/>
-    <path d="M476 260 Q493 204 516 221 T557 233"/>
-    <path d="M55 315 C103 287 128 350 184 322"/>
-    <path d="M235 250 L271 205 L308 250 Z"/>
-    <path d="M237 250 L273 268 L308 250"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="510" viewBox="0 0 760 510" aria-hidden="true">
+  <defs>
+    <linearGradient id="mw-math-curve" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7448C5" stop-opacity=".11"/>
+      <stop offset=".52" stop-color="#C26AB7" stop-opacity=".095"/>
+      <stop offset="1" stop-color="#7D9DC5" stop-opacity=".10"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" stroke="url(#mw-math-curve)" stroke-width="1.25" stroke-linecap="round">
+    <circle cx="94" cy="83" r="36"/><path d="M70 112 L89 51 L113 104 Z"/>
+    <path d="M346 58 H416 V122 H346 Z M346 58 L416 122 M416 58 L346 122"/>
+    <path d="M569 316 Q599 247 636 282 T736 276"/>
+    <path d="M35 399 C92 342 132 435 207 383"/>
+    <path d="M284 327 L331 266 L382 327 Z M284 327 L333 351 L382 327"/>
+    <circle cx="520" cy="91" r="25"/><path d="M496 91 H545 M520 66 V116"/>
+    <path d="M156 217 Q202 176 250 222 T343 220" stroke-dasharray="5 9"/>
   </g>
-  <g font-family="Georgia,serif" font-size="28" fill="#7b42d9" opacity=".25">
-    <text x="188" y="98">π</text><text x="460" y="103">∑</text>
-    <text x="100" y="225">x²</text><text x="365" y="324">∞</text>
-    <text x="29" y="360">∫</text><text x="332" y="191">θ</text>
+  <g font-family="Georgia, 'Noto Serif', serif" font-size="26" fill="#865DC2" opacity=".12">
+    <text x="224" y="95">π</text><text x="665" y="136">∑</text>
+    <text x="92" y="309" fill="#C26AAB">x²</text>
+    <text x="430" y="431">∞</text><text x="46" y="477" fill="#759AB7">∫</text>
+    <text x="421" y="224" fill="#C16FA7">θ</text>
   </g>
-  <g fill="#e14eac" opacity=".22">
-    <circle cx="200" cy="286" r="3.5"/><circle cx="451" cy="169" r="3.5"/>
-    <circle cx="266" cy="137" r="3.5"/><circle cx="44" cy="175" r="3.5"/>
+  <g fill="#B66EB6" opacity=".13">
+    <circle cx="205" cy="359" r="2.8"/><circle cx="574" cy="194" r="2.8"/>
+    <circle cx="303" cy="178" r="2.8"/><circle cx="44" cy="225" r="2.8"/>
   </g>
 </svg>
