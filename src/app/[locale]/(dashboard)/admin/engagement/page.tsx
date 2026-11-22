@@ -80,14 +80,14 @@ export default function AdminEngagementPage() {
     </header>
 
     <div className="grid gap-3 sm:grid-cols-2">
-      <Link href="/admin/activity" className="rounded-2xl border border-primary/20 bg-card/80 p-4 transition-colors hover:bg-primary/5 hover:border-primary/40">
-        <strong className="block font-bold">{ar ? 'دخول وتفاعل الطلاب' : 'Learner logins & engagement'}</strong>
+      <Link href="/admin/engagement/students" className="rounded-2xl border border-primary/20 bg-card/80 p-4 transition-colors hover:bg-primary/5 hover:border-primary/40">
+        <strong className="block font-bold">{ar ? 'التسجيل والدخول وسجل الطلاب' : 'Student sign-ins and event log'}</strong>
         <span className="mt-1 block text-xs text-muted-foreground">{ar
-          ? 'آخر دخول وآخر محاولة وتفاعل كل طالب — دون احتساب الأدمن'
-          : 'Last sign-in, practice and engagement for each learner — admins excluded'}</span>
+          ? 'التسجيل والدخول والخروج الصريح وآخر نشاط وسجل العمليات لكل طالب'
+          : 'Registrations, sign-ins, explicit sign-outs and individual student activity; no admin events'}</span>
       </Link>
       <Link href="/admin/analytics" className="rounded-2xl border border-primary/20 bg-card/80 p-4 transition-colors hover:bg-primary/5 hover:border-primary/40">
-        <strong className="block font-bold">{ar ? 'إحصائيات الحل والتقدم' : 'Problem-solving analytics'}</strong>
+        <strong className="block font-bold">{ar ? 'إحصائيات التعلّم والتفاعل' : 'Learning and engagement analytics'}</strong>
         <span className="mt-1 block text-xs text-muted-foreground">{ar
           ? 'المتفوقون والأكثر حلاً والدقة والأخطاء حسب المرحلة والفئة'
           : 'Top solvers, accuracy and mistakes across stages and topics'}</span>
@@ -232,11 +232,8 @@ export default function AdminEngagementPage() {
       </section>
     </>}
     <div className="flex flex-wrap gap-3 border-t pt-5">
-      <Link href="/admin/activity" className="rounded-xl border px-4 py-2 text-sm font-bold hover:bg-muted">
-        <UsersRound className="me-2 inline h-4 w-4" />{ar ? 'آخر نشاط الطلاب' : 'Learner activity'}
-      </Link>
-      <Link href="/admin/audit" className="rounded-xl border px-4 py-2 text-sm font-bold hover:bg-muted">
-        {ar ? 'سجل عمليات الطلاب والأدمن' : 'Audit trail'}
+      <Link href="/admin/engagement/students" className="rounded-xl border px-4 py-2 text-sm font-bold hover:bg-muted">
+        <UsersRound className="me-2 inline h-4 w-4" />{ar ? 'متابعة الطلاب وسجلهم' : 'Student monitoring and log'}
       </Link>
     </div>
   </main>;
