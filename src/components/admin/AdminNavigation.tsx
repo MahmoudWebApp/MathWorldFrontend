@@ -3,8 +3,8 @@
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
-  ChartNoAxesCombined, History, BookOpenText, ChevronDown, FolderTree, LockKeyhole,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, ClipboardList, Gift, TicketPercent,
+  ChartNoAxesCombined, ChevronDown,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, Gift,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
