@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { Calculator, Eye, Star, CheckCircle2, AlertCircle, CircleDot } from "lucide-react";
+import { Calculator, Star, CheckCircle2, AlertCircle, CircleDot } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link } from "@/i18n/routing";
@@ -72,7 +72,6 @@ export function ProblemCard({ problem }: ProblemCardProps) {
             </div>
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5"><Eye aria-hidden="true" className="h-4 w-4" />{problem.ViewsCount}</span>
                 {typeof problem.Points === "number" && (
                   <span className="inline-flex items-center gap-1.5"><Star aria-hidden="true" className="h-4 w-4 text-amber-500" />{problem.Points}</span>
                 )}
