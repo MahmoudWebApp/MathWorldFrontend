@@ -502,10 +502,10 @@
       "title": "Our Impact",
       "subtitle": "Numbers that reflect our commitment",
       "items": {
-        "users": "Active Learners",
-        "problems": "Math Problems",
-        "solutions": "Solutions",
-        "views": "Problem views"
+        "users": "Registered learners",
+        "problems": "Math problems",
+        "categories": "Math topics",
+        "skills": "Learning skills"
       },
       "live": "Live platform data"
     },
