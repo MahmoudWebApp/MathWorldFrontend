@@ -19,6 +19,7 @@ import {
   Trash,
   Image as ImageIcon,
   CloseCircle,
+  Filter,
 } from "iconsax-reactjs";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -57,7 +58,6 @@ function AdminCategoriesPageContent() {
   const [selectedStageId, setSelectedStageId] = useState<number | undefined>(
     undefined,
   );
-  const [stageError, setStageError] = useState(false);
 
   const [formData, setFormData] = useState<{
     Id?: number;
@@ -121,8 +121,7 @@ function AdminCategoriesPageContent() {
     setSaveError('');
 
     if (!selectedStageId) {
-      setStageError(true);
-      return;
+        return;
     }
 
     try {
@@ -172,7 +171,6 @@ function AdminCategoriesPageContent() {
     });
     setPreviewUrl(null);
     setIconError('');
-    setStageError(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -207,7 +205,6 @@ function AdminCategoriesPageContent() {
     setIconError('');
     setIsEditing(true);
     setIsModalOpen(true);
-    setStageError(false);
   };
 
   const openCreateModal = () => {
@@ -225,7 +222,6 @@ function AdminCategoriesPageContent() {
     setIconError('');
     setIsEditing(false);
     setIsModalOpen(true);
-    setStageError(false);
   };
 
   const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
