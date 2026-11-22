@@ -61,12 +61,12 @@ export function CurriculumSourcesSection() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={reference.fullName}
-              className="group flex min-h-28 flex-col items-center justify-center gap-3 rounded-2xl border border-border/75 bg-card/85 px-3 py-5 text-center shadow-sm transition-[border-color,transform] hover:-translate-y-0.5 hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="math-reference-wave group relative isolate flex min-h-28 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-primary/20 bg-card/85 px-3 py-5 text-center shadow-sm transition-[border-color,transform,box-shadow] hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span aria-hidden="true" className="flex h-12 min-w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 px-2 font-serif text-lg font-black tracking-tight text-primary">
+              <span aria-hidden="true" className="relative z-10 flex h-12 min-w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 px-2 font-serif text-lg font-black tracking-tight text-primary">
                 {reference.shortMark}
               </span>
-              <span className="flex items-center gap-1 text-xs font-bold sm:text-sm">
+              <span className="relative z-10 flex items-center gap-1 text-xs font-bold sm:text-sm">
                 {reference.label}
                 <ExternalLink aria-hidden="true" className="h-3 w-3 text-muted-foreground opacity-70" />
               </span>

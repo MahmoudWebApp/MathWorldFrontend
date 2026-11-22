@@ -71,12 +71,12 @@ export default function AdminPremiumGiftCodesPage() {
       </Link>
       <header className="space-y-3">
         <h1 className="flex items-center gap-2 text-3xl font-extrabold">
-          <Gift className="h-7 w-7 text-primary" />{ar ? 'أكواد هدية Premium' : 'Premium gift codes'}
+          <Gift className="h-7 w-7 text-primary" />{ar ? 'أكواد Premium' : 'Premium activation codes'}
         </h1>
         <p className="text-muted-foreground">
           {ar
             ? 'إنشاء أكواد تمنح اشتراكاً مجانياً لمرة واحدة، بدون بوابة دفع إلكتروني.'
-            : 'Issue one-use Premium access gifts without a payment checkout.'}
+            : 'Issue introductory Premium activation codes without checkout or prices.'}
         </p>
         <div className="flex gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
           <ShieldCheck className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
@@ -89,12 +89,12 @@ export default function AdminPremiumGiftCodesPage() {
       </header>
 
       <section className="space-y-4 rounded-2xl border bg-card p-5">
-        <h2 className="text-lg font-bold">{ar ? 'إصدار هدية جديدة' : 'Create a new gift'}</h2>
+        <h2 className="text-lg font-bold">{ar ? 'إنشاء كود Premium ترويجي' : 'Create a promotional Premium code'}</h2>
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="space-y-2 sm:col-span-3">
             <span className="block text-sm font-semibold">{ar ? 'وصف داخلي للكود' : 'Internal code label'}</span>
             <input value={label} onChange={e => setLabel(e.target.value)} maxLength={80}
-              placeholder={ar ? 'هدية إطلاق المنصة' : 'Launch gift'}
+              placeholder={ar ? 'كود تجربة إطلاق MathWorld' : 'MathWorld launch promotion'}
               className="w-full rounded-xl border bg-background px-3 py-2.5 outline-none focus:ring-2 focus:ring-primary" />
           </label>
           <label className="space-y-2">
@@ -131,7 +131,7 @@ export default function AdminPremiumGiftCodesPage() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground">
-              {ar ? 'هذا الكود يمنح:' : 'This code grants:'} {revealed.PremiumDays}
+              {ar ? 'مدة التفعيل:' : 'Premium duration:'} {revealed.PremiumDays}
               {' '}{ar ? 'يوماً. صالح للتفعيل حتى:' : 'days. Redeem by:'}
               {' '}{new Intl.DateTimeFormat(ar ? 'ar' : 'en', {dateStyle:'medium'}).format(new Date(revealed.ExpiresAtUtc))}
             </p>
@@ -140,7 +140,7 @@ export default function AdminPremiumGiftCodesPage() {
       </section>
 
       <section className="space-y-4 rounded-2xl border bg-card p-5">
-        <h2 className="text-lg font-bold">{ar ? 'سجل الأكواد (بدون إظهار النص السري)' : 'Gift history (no plaintext codes)'}</h2>
+        <h2 className="text-lg font-bold">{ar ? 'سجل الأكواد (بدون إظهار النص السري)' : 'Code history (no plaintext codes)'}</h2>
         {isLoading ? <p className="text-sm text-muted-foreground">{ar ? 'جارٍ التحميل…' : 'Loading…'}</p>
           : isError ? <p role="alert" className="text-sm text-destructive">{ar ? 'تعذر تحميل الأكواد' : 'Could not load codes'}</p>
           : !data?.Codes.length ? <p className="text-sm text-muted-foreground">{ar ? 'ما في أكواد بعد.' : 'No codes yet.'}</p>

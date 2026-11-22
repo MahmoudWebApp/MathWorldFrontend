@@ -24,14 +24,7 @@ import {
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
-import { AlertCircle, FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet } from "lucide-react";
 // Tooltip components are configured globally.
 import {
   Tooltip,
@@ -39,7 +32,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/Tooltip";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { StageFreeCategoryAccessEditor } from "@/components/admin/StageFreeCategoryAccessEditor";
 import { getApiErrorMessage } from "@/lib/authSession";
 
 export default function AdminCategoriesPage() {
@@ -66,7 +58,6 @@ function AdminCategoriesPageContent() {
   const [selectedStageId, setSelectedStageId] = useState<number | undefined>(
     undefined,
   );
-  const [stageError, setStageError] = useState(false);
 
   const [formData, setFormData] = useState<{
     Id?: number;
@@ -100,8 +91,7 @@ function AdminCategoriesPageContent() {
     if (matched) {
       setSelectedStageId(matched.Id);
     } else {
-      setSelectedStageId(prev => prev && stages.some(stage => stage.Id === prev)
-        ? prev : stages[0].Id);
+      setSelectedStageId(undefined);
     }
   }, [stages, searchParams]);
 
@@ -131,8 +121,7 @@ function AdminCategoriesPageContent() {
     setSaveError('');
 
     if (!selectedStageId) {
-      setStageError(true);
-      return;
+        return;
     }
 
     try {
@@ -182,7 +171,6 @@ function AdminCategoriesPageContent() {
     });
     setPreviewUrl(null);
     setIconError('');
-    setStageError(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -217,7 +205,6 @@ function AdminCategoriesPageContent() {
     setIconError('');
     setIsEditing(true);
     setIsModalOpen(true);
-    setStageError(false);
   };
 
   const openCreateModal = () => {
@@ -235,7 +222,6 @@ function AdminCategoriesPageContent() {
     setIconError('');
     setIsEditing(false);
     setIsModalOpen(true);
-    setStageError(false);
   };
 
   const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,6 +261,20 @@ function AdminCategoriesPageContent() {
       </Button>
     </div>
   );
+
+  if (!selectedStageId) {
+    return (
+      <main className="mx-auto max-w-xl space-y-4 px-4 py-12 text-center">
+        <h1 className="text-2xl font-bold">{locale === 'ar' ? 'اختر المرحلة التعليمية أولاً' : 'Choose an educational stage first'}</h1>
+        <p className="text-muted-foreground">{locale === 'ar'
+          ? 'لإدارة الفئات، ادخل من المراحل التعليمية واختر المرحلة المطلوبة.'
+          : 'To manage topics, open Educational Stages and choose a stage.'}</p>
+        <Link href="/admin/stages" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 py-2 font-bold text-primary-foreground">
+          {locale === 'ar' ? 'المراحل التعليمية' : 'Educational stages'}
+        </Link>
+      </main>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 lg:px-24 md:px-16 px-4">
@@ -319,47 +319,6 @@ function AdminCategoriesPageContent() {
         </Button>
         </div>
       </div>
-
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Filter className="h-5 w-5" />
-              <span className="font-medium">
-                {t("admin.categories.filterByStage")}:
-              </span>
-            </div>
-            <Select
-              value={selectedStageId?.toString() ?? ""}
-              onValueChange={(v) => {
-                setSelectedStageId(v === "all" ? undefined : Number(v));
-                setStageError(false);
-              }}
-            >
-              <SelectTrigger className="h-11 w-full min-w-[180px] sm:w-[220px]">
-                <SelectValue placeholder={t("admin.categories.selectStage")} />
-              </SelectTrigger>
-              <SelectContent>
-                {stages?.map((stage) => (
-                  <SelectItem key={stage.Id} value={stage.Id.toString()}>
-                    {locale === "ar" ? stage.NameAr : stage.NameEn}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {stageError && (
-              <div className="flex items-center gap-2 text-red-500 text-sm">
-                <AlertCircle className="h-4 w-4" />
-                <span>{t("admin.categories.selectStageRequired")}</span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {selectedStageId && (
-        <StageFreeCategoryAccessEditor stageId={selectedStageId} locale={locale} />
-      )}
 
       {deleteError && (
         <div role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">

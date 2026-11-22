@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Activity, UsersRound, UserPlus, ArrowUpRight, ChartNoAxesCombined, History, UserRoundSearch, Radio } from 'lucide-react';
+import { Activity, UsersRound, UserPlus, ArrowUpRight, ChartNoAxesCombined, UserRoundSearch, Radio } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useGetAdminEngagementOverviewQuery } from '@/store/api/statsApi';
 import { StageGeometry } from '@/components/math/StageGeometry';
@@ -138,8 +138,8 @@ export default function AdminDashboardPage() {
             subAr: 'الأكثر حلاً، ترتيب الطلاب، ومقارنة الفئات', subEn: 'Top solvers, rankings, category usage' },
           { href: '/admin/engagement/students', icon: UserRoundSearch, ar: 'نشاط الطلاب ودخولهم', en: 'Learner activity',
             subAr: 'مين سجل وآخر دخول ونشاط', subEn: 'Registration, last login and activity' },
-          { href: '/admin/audit', icon: History, ar: 'سجل العمليات', en: 'Activity & audit log',
-            subAr: 'شو عمل كل طالب والأدمن داخل المنصة', subEn: 'Student and administrator actions' },
+          { href: '/admin/analytics', icon: ChartNoAxesCombined, ar: 'إحصائيات التعلم', en: 'Learning analytics',
+            subAr: 'الطلاب الأكثر حلاً ونسب النجاح والأخطاء', subEn: 'Top solvers, success rates and mistakes' },
         ].map(item => {
           const Icon = item.icon;
           return <Link key={item.href} href={item.href}
