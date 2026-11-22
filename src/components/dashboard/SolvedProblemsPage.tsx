@@ -99,7 +99,7 @@ export function SolvedProblemsPage() {
             <p className="text-muted-foreground mb-6">{t('solved.empty.description')}</p>
             <Button asChild>
                 <Link href="/dashboard/categories">
-                  {t("hero.browseStages")}
+                  {locale === "ar" ? "استكشف الفئات" : "Explore categories"}
                 <DirectionalArrow direction="forward" className="h-4 w-4 ms-2" />
               </Link>
             </Button>
