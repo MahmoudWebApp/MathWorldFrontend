@@ -12,7 +12,6 @@ import {
   ChevronUp,
   Clock3,
   Heart,
-  Eye,
   History,
   Loader2,
   Lock,
