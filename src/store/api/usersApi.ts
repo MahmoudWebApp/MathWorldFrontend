@@ -140,6 +140,7 @@ export interface AdminLearnerSummary {
   StageNameAr?: string | null;
   StageNameEn?: string | null;
   SubscriptionType: string;
+  PremiumExpiresAtUtc?: string | null;
   IsActive: boolean;
   CreatedAt: string;
   LastLoginAt?: string | null;
