@@ -164,7 +164,7 @@ export default function StudentLeaderboardPage() {
                       <div className="min-w-0 flex-1">
                         <strong className="block truncate text-base">{entry.IsCurrentUser
                           ? (ar ? 'أنت' : 'You')
-                          : (ar ? `طالب #${entry.Rank}` : `Learner #${entry.Rank}`)}</strong>
+                          : entry.DisplayName}</strong>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {ar ? 'صحيحة من أول محاولة:' : 'First-try correct:'} {entry.FirstTryCorrect}
                         </p>
@@ -192,8 +192,8 @@ export default function StudentLeaderboardPage() {
               </div>
               <p className="flex items-center gap-2 border-t bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
                 <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-                {ar ? 'لا نعرض أسماء أو بريد الطلاب الآخرين. الترتيب يتحدد من محاولات مسجلة على الخادم.'
-                  : 'Other learners’ names and emails are never shown. Scores come from server-recorded attempts.'}
+                {ar ? 'نعرض أسماء مختصرة للمتعلمين فقط بدون بريدهم الإلكتروني. الترتيب والنتائج من بيانات الحل الحقيقية.'
+                  : 'Only abbreviated learner names are displayed, never email addresses. Rankings use real recorded solves.'}
               </p>
             </section>
           )}
