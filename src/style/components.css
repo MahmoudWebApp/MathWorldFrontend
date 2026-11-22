@@ -808,3 +808,34 @@
 }
 .math-grid-bg { opacity: 0.18; }
 .home-stages-orb { display: none; }
+
+/* Brand wave for international reference cards. Decorative only: reference
+   names remain legible and no institutional marks are represented. */
+.math-reference-wave::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  inset: -60% -40% 10% -40%;
+  border-radius: 42% 58% 61% 39% / 58% 43% 57% 42%;
+  background:
+    radial-gradient(ellipse at 28% 64%, rgba(109, 40, 217, 0.16), transparent 48%),
+    radial-gradient(ellipse at 79% 26%, rgba(236, 72, 153, 0.15), transparent 54%);
+  transform: rotate(-13deg);
+  transition: transform 300ms ease, opacity 300ms ease;
+}
+.math-reference-wave::after {
+  content: "π  ∑  x²";
+  position: absolute;
+  z-index: -1;
+  inset-inline-end: .5rem;
+  bottom: .2rem;
+  color: rgb(var(--sr-primary-rgb) / 0.10);
+  letter-spacing: .3em;
+  pointer-events: none;
+}
+.math-reference-wave:hover::before { transform: rotate(-7deg) translateY(-6px); }
+.dark .math-reference-wave::before { opacity: .75; }
+@media (prefers-reduced-motion: reduce) {
+  .math-reference-wave::before { transition: none; }
+}
