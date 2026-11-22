@@ -29,7 +29,7 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
   const isStudent = useSelector((state: RootState) => state.auth.isAuthenticated && state.auth.user?.Role === 'Student');
   const learnerRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
     pathname === '/learning-stage' || pathname === '/social-accounts' || pathname === '/notifications';
-  const { data: subscription } = useGetStudentSubscriptionQuery(undefined, { skip: !isStudent || !learnerRoute });
+  const { data: subscription, isLoading: membershipLoading, isError: membershipError } = useGetStudentSubscriptionQuery(undefined, { skip: !isStudent || !learnerRoute });
 
   const signOut = async () => {
     try {
@@ -76,7 +76,11 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
           {collapsed ? <PanelRightOpen className="h-5 w-5" /> : <PanelRightClose className="h-5 w-5" />}
           {!collapsed && <span className="text-xs font-bold">{locale === 'ar' ? 'طي القائمة' : 'Collapse'}</span>}
         </button>
-        <StudentWorkspaceNavigation isPremium={subscription?.IsPremium === true} collapsed={collapsed} />
+        {membershipLoading || (membershipError && !subscription) ? (
+          <div className="space-y-2" role="status" aria-label={locale === 'ar' ? 'جارٍ تحميل صلاحيات القائمة' : 'Loading navigation access'}>
+            {Array.from({ length: 8 }, (_, index) => <div key={index} className="h-10 animate-pulse rounded-xl bg-muted" />)}
+          </div>
+        ) : <StudentWorkspaceNavigation isPremium={subscription?.IsPremium === true} collapsed={collapsed} />}
         <div className="mt-auto space-y-1 border-t border-border/70 pt-4">
           <Link href="/" title={locale === "ar" ? "الموقع العام" : "Public website"} aria-label={locale === "ar" ? "الموقع العام" : "Public website"} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold text-muted-foreground hover:bg-muted ${collapsed ? "justify-center px-2" : ""}`}>
             <Globe className="h-5 w-5 shrink-0" /><span className={collapsed ? "sr-only" : ""}>{locale === 'ar' ? 'الموقع العام' : 'Public website'}</span>
