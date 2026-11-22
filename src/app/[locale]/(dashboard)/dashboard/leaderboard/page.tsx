@@ -155,26 +155,57 @@ export default function StudentLeaderboardPage() {
                   </Link>
                 </div>
               ) : (
-                <ol className="divide-y">
-                  {data.Entries.map(entry => (
-                    <li key={entry.Rank} className={`flex flex-wrap items-center gap-3 px-4 py-4 sm:gap-5 sm:px-6 ${entry.IsCurrentUser ? 'bg-primary/5' : ''}`}>
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-muted/50 text-lg font-extrabold tabular-nums">
-                        {entry.Rank <= 3 ? <Medal className="h-6 w-6 text-primary" aria-hidden="true" /> : entry.Rank}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <strong className="block truncate text-base">{entry.IsCurrentUser
-                          ? (ar ? 'أنت' : 'You')
-                          : entry.DisplayName}</strong>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {ar ? 'صحيحة من أول محاولة:' : 'First-try correct:'} {entry.FirstTryCorrect}
-                        </p>
-                      </div>
-                      <div className="text-end">
-                        <strong className="block text-sm text-primary">{entry.SolvedProblems} {ar ? 'مسألة' : 'solved'}</strong>
-                        <span className="text-xs text-muted-foreground">{entry.Points} {ar ? 'نقطة' : 'points'}</span>
-                      </div>
-                    </li>
-                  ))}
+                <ol className="space-y-2 p-3 sm:p-4">
+                  {data.Entries.map(entry => {
+                    const podium =
+                      entry.Rank === 1 ? {
+                        row: 'border-amber-400/50 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10',
+                        badge: 'border-amber-500/40 bg-amber-200 text-amber-900 dark:bg-amber-500/25 dark:text-amber-200',
+                        label: ar ? 'المركز الأول' : 'First place',
+                      } : entry.Rank === 2 ? {
+                        row: 'border-slate-300 bg-slate-100 dark:border-slate-400/40 dark:bg-slate-300/10',
+                        badge: 'border-slate-400/40 bg-slate-200 text-slate-800 dark:bg-slate-300/25 dark:text-slate-100',
+                        label: ar ? 'المركز الثاني' : 'Second place',
+                      } : entry.Rank === 3 ? {
+                        row: 'border-orange-500/40 bg-orange-50 dark:border-orange-500/40 dark:bg-orange-500/10',
+                        badge: 'border-orange-600/40 bg-orange-200 text-orange-900 dark:bg-orange-500/25 dark:text-orange-200',
+                        label: ar ? 'المركز الثالث' : 'Third place',
+                      } : {
+                        row: 'border-border/70 bg-muted/20',
+                        badge: 'border-border bg-muted/60 text-foreground',
+                        label: ar ? `المركز ${entry.Rank}` : `Rank ${entry.Rank}`,
+                      };
+                    return (
+                      <li key={entry.Rank}
+                        aria-label={`${podium.label}، ${entry.IsCurrentUser ? (ar ? 'ترتيبك' : 'Your ranking') : entry.DisplayName}`}
+                        className={`flex flex-wrap items-center gap-3 rounded-2xl border px-3 py-4 transition-colors sm:gap-5 sm:px-5 ${entry.IsCurrentUser
+                          ? 'border-violet-500/60 bg-violet-100 ring-2 ring-violet-500/20 dark:border-violet-400/60 dark:bg-violet-400/15 dark:ring-violet-300/20'
+                          : podium.row}`}>
+                        <span className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl border font-extrabold tabular-nums ${podium.badge}`}
+                          title={podium.label}>
+                          {entry.Rank <= 3 && <Medal className="h-5 w-5" aria-hidden="true" />}
+                          <span className={entry.Rank <= 3 ? 'text-xs leading-4' : 'text-lg'}>{entry.Rank}</span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <strong className="min-w-0 truncate text-base">{entry.DisplayName}</strong>
+                            {entry.IsCurrentUser && (
+                              <span className="shrink-0 rounded-full bg-violet-700 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-violet-300 dark:text-violet-950">
+                                {ar ? 'أنت' : 'You'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {ar ? 'صحيحة من أول محاولة:' : 'First-try correct:'} {entry.FirstTryCorrect}
+                          </p>
+                        </div>
+                        <div className="text-end">
+                          <strong className="block text-sm text-foreground">{entry.SolvedProblems} {ar ? 'مسألة' : 'solved'}</strong>
+                          <span className="text-xs text-muted-foreground">{entry.Points} {ar ? 'نقطة' : 'points'}</span>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ol>
               )}
               <div className="flex items-center justify-between gap-3 border-t p-4 text-sm">
