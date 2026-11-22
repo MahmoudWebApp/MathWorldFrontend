@@ -4,11 +4,12 @@ import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { BellRing, Send } from 'lucide-react';
-import { useSendAdminNotificationMutation } from '@/store/api/notificationsApi';
+import { useGetAdminEmailStatusQuery, useSendAdminEmailMutation, useSendAdminNotificationMutation } from '@/store/api/notificationsApi';
 
 export default function AdminNotificationsPage() {
   const ar = useLocale() === 'ar';
   const [learnerId, setLearnerId] = useState('');
+  const [channel, setChannel] = useState<'inapp' | 'email'>('inapp');
   const [titleAr, setTitleAr] = useState('');
   const [titleEn, setTitleEn] = useState('');
   const [bodyAr, setBodyAr] = useState('');
@@ -16,6 +17,10 @@ export default function AdminNotificationsPage() {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
   const [send, { isLoading }] = useSendAdminNotificationMutation();
+  const [sendEmail, { isLoading: sendingEmail }] = useSendAdminEmailMutation();
+  const { data: emailStatus, isLoading: checkingEmail } = useGetAdminEmailStatusQuery();
+  const emailReady = emailStatus?.IsConfigured === true;
+  const sending = isLoading || sendingEmail;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,24 +33,37 @@ export default function AdminNotificationsPage() {
         : 'Enter a valid learner ID and both languages.');
       return;
     }
+    if (channel === 'email' && !emailReady) {
+      setError(ar ? 'البريد غير مهيّأ على السيرفر. لا يمكن الإرسال قبل إعداد SMTP.'
+        : 'Email is not configured on the server. Configure SMTP before sending.');
+      return;
+    }
     const confirmed = window.confirm(ar
-      ? `تأكيد إرسال إشعار داخل التطبيق إلى الطالب رقم ${id} فقط؟ لا يمكن سحب الإشعار بعد الإرسال.\n\n${titleAr.trim()}`
-      : `Send an in-app notification to learner #${id} only? This action cannot be undone.\n\n${titleEn.trim()}`);
+      ? `تأكيد إرسال ${channel === 'email' ? 'بريد إلكتروني' : 'إشعار داخل التطبيق'} إلى الطالب رقم ${id} فقط؟ لا يمكن سحب الرسالة بعد الإرسال.\n\n${titleAr.trim()}`
+      : `Send a ${channel === 'email' ? 'single-student email' : 'single-student in-app notification'} to learner #${id}? This action cannot be undone.\n\n${titleEn.trim()}`);
     if (!confirmed) return;
     try {
-      const notice = await send({
+      const payload = {
         learnerId: id,
         TitleAr: titleAr.trim(),
         TitleEn: titleEn.trim(),
         BodyAr: bodyAr.trim(),
         BodyEn: bodyEn.trim(),
         TargetPath: '/dashboard',
-      }).unwrap();
-      setResult(ar ? `تم إرسال الإشعار رقم ${notice.Id} للطالب ${id}.`
-        : `Notice #${notice.Id} sent to learner #${id}.`);
+      };
+      if (channel === 'email') {
+        const delivery = await sendEmail(payload).unwrap();
+        if (!delivery.EmailSent) throw new Error('EmailNotDelivered');
+        setResult(ar ? `تم إرسال البريد الإلكتروني للطالب رقم ${id}.`
+          : `Email delivered to learner #${id}.`);
+      } else {
+        const notice = await send(payload).unwrap();
+        setResult(ar ? `تم إنشاء الإشعار رقم ${notice.Id} للطالب ${id}.`
+          : `In-app notice #${notice.Id} created for learner #${id}.`);
+      }
     } catch {
-      setError(ar ? 'فشل الإرسال. تحقق من صلاحية الأدمن ورقم الطالب وحالة API.'
-        : 'Sending failed. Check admin permissions, learner ID and API availability.');
+      setError(ar ? 'فشل الإرسال. تحقق من صلاحياتك ورقم الطالب وإعدادات الخدمة المختارة.'
+        : 'Sending failed. Check permissions, learner ID and the selected channel configuration.');
     }
   }
 
@@ -60,16 +78,38 @@ export default function AdminNotificationsPage() {
           {ar ? 'إرسال إشعار لطالب' : 'Send a learner notification'}
         </h1>
         <p className="text-muted-foreground">
-          {ar ? 'رسالة داخل الموقع والتطبيق لطالب محدد، بالعربية والإنجليزية.'
-            : 'Send a bilingual in-app notice to one learner.'}
+          {ar ? 'إشعار داخل التطبيق أو رسالة بريد إلكتروني إلى طالب واحد، بالعربية والإنجليزية.'
+            : 'Send a bilingual in-app notice or email to one student.'}
         </p>
         <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
-          {ar ? 'هذه الميزة لا ترسل SMS أو بريد إلكتروني أو إشعارات Push حالياً، ولا تدعم الإرسال الجماعي.'
-            : 'This sends in-app messages only. Email, SMS, push and bulk sending are not enabled.'}
+          {ar
+            ? (emailReady ? 'إرسال البريد مهيأ. SMS والإرسال الجماعي غير مفعّلين.'
+              : 'البريد الإلكتروني يحتاج إعداد SMTP على السيرفر. الإشعارات داخل التطبيق متاحة؛ SMS والإرسال الجماعي غير مفعّلين.')
+            : (emailReady ? 'Email is configured. SMS and bulk sending remain disabled.'
+              : 'SMTP must be configured before email is available. In-app notices work; SMS and bulk sending remain disabled.')}
         </p>
       </div>
       <form onSubmit={(event) => void onSubmit(event)}
         className="space-y-5 rounded-2xl border bg-card p-5 sm:p-6">
+        <fieldset className="space-y-2">
+          <legend className="font-semibold">{ar ? 'طريقة الإرسال' : 'Delivery channel'}</legend>
+          <div className="flex flex-wrap gap-4">
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input type="radio" checked={channel === 'inapp'}
+                onChange={() => setChannel('inapp')} />
+              {ar ? 'إشعار داخل التطبيق' : 'In-app notice'}
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input type="radio" checked={channel === 'email'}
+                disabled={!emailReady || checkingEmail}
+                onChange={() => setChannel('email')} />
+              {ar ? 'بريد إلكتروني' : 'Email'}
+              {!emailReady && <span className="text-xs text-muted-foreground">
+                {checkingEmail ? (ar ? 'جارٍ الفحص' : 'Checking') : (ar ? 'غير مهيّأ' : 'Not configured')}
+              </span>}
+            </label>
+          </div>
+        </fieldset>
         <label className="block space-y-2">
           <span className="font-semibold">{ar ? 'رقم الطالب' : 'Learner ID'}</span>
           <input type="text" inputMode="numeric" pattern="[0-9]+" autoComplete="off" required value={learnerId}
@@ -113,10 +153,12 @@ export default function AdminNotificationsPage() {
         )}
         {error && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
         {result && <p role="status" className="rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{result}</p>}
-        <button disabled={isLoading} type="submit"
+        <button disabled={sending || (channel === 'email' && !emailReady)} type="submit"
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground disabled:opacity-50">
           <Send className="h-4 w-4" />
-          {isLoading ? (ar ? 'جارٍ الإرسال' : 'Sending') : (ar ? 'مراجعة وإرسال الإشعار' : 'Review and send notification')}
+          {sending ? (ar ? 'جارٍ الإرسال' : 'Sending')
+            : channel === 'email' ? (ar ? 'مراجعة وإرسال البريد' : 'Review and send email')
+              : (ar ? 'مراجعة وإرسال الإشعار' : 'Review and send notification')}
         </button>
       </form>
     </main>
