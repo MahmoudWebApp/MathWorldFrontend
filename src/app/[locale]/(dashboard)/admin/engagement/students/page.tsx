@@ -118,6 +118,7 @@ export default function AdminLearnerActivityPage() {
                   {[
                     [ar ? 'مسجل منذ' : 'Registered', date(student.CreatedAt)],
                     [ar ? 'آخر دخول' : 'Last login', date(student.LastLoginAt)],
+                     [ar ? 'آخر خروج مؤكد' : 'Last explicit sign-out', date(student.LastExplicitSignOutAtUtc)],
                     [ar ? 'آخر حل' : 'Last practice', date(student.LastPracticeAt)],
                     [ar ? 'آخر اتصال' : 'Last heartbeat', date(student.LastHeartbeatAtUtc)],
                   ].map(([label, value]) => <div key={label} className="min-w-0">
@@ -132,13 +133,14 @@ export default function AdminLearnerActivityPage() {
             ))}
           </div>
           <div className="hidden overflow-x-auto md:block">
-          <table className="w-full min-w-[870px] text-sm">
+          <table className="w-full min-w-[1040px] text-sm">
             <thead className="bg-muted/50 text-muted-foreground">
               <tr>
                 <th className="p-3 text-start">{ar ? 'الطالب' : 'Learner'}</th>
                 <th className="p-3 text-start">{ar ? 'المستوى' : 'Stage'}</th>
                 <th className="p-3 text-start">{ar ? 'تاريخ التسجيل' : 'Registered'}</th>
                 <th className="p-3 text-start">{ar ? 'آخر دخول' : 'Last login'}</th>
+                 <th className="p-3 text-start">{ar ? 'آخر خروج مؤكد' : 'Last explicit sign-out'}</th>
                 <th className="p-3 text-start">{ar ? 'آخر حل' : 'Last practice'}</th>
                 <th className="p-3 text-start">{ar ? 'آخر اتصال' : 'Last heartbeat'}</th>
                 <th className="p-3 text-end">{ar ? 'المحاولات' : 'Attempts'}</th>
@@ -161,6 +163,7 @@ export default function AdminLearnerActivityPage() {
                 <td className="p-3">{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}</td>
                 <td className="p-3">{date(student.CreatedAt)}</td>
                 <td className="p-3">{date(student.LastLoginAt)}</td>
+                 <td className="p-3">{date(student.LastExplicitSignOutAtUtc)}</td>
                 <td className="p-3">{date(student.LastPracticeAt)}</td>
                 <td className="p-3">{date(student.LastHeartbeatAtUtc)}</td>
                 <td className="p-3 text-end font-bold tabular-nums">{n(student.Attempts)}</td>
@@ -170,8 +173,8 @@ export default function AdminLearnerActivityPage() {
           </div>
         </>}
       <p className="border-t px-4 py-3 text-xs text-muted-foreground">
-        {ar ? 'وجود اتصال حديث لا يضمن أن الطالب يشاهد الصفحة بنفس اللحظة؛ يتوقف التحديث في الخلفية وينتهي اعتباره متصلاً بعد خمس دقائق.'
-          : 'Recent connectivity is not a live socket. Backgrounded clients pause heartbeats and are considered offline after five minutes.'}
+        {ar ? 'آخر خروج مؤكد يُسجّل فقط عندما يضغط الطالب تسجيل الخروج؛ إغلاق التطبيق أو المتصفح ليس خروجاً مؤكداً. وجود اتصال حديث لا يضمن أن الطالب يشاهد الصفحة بنفس اللحظة؛ يتوقف التحديث في الخلفية وينتهي اعتباره متصلاً بعد خمس دقائق.'
+          : 'Last explicit sign-out requires an actual learner sign-out; closing the browser or app is not a verified sign-out. Recent connectivity is not a live socket. Backgrounded clients pause heartbeats and are considered offline after five minutes.'}
       </p>
       <div className="flex items-center justify-between gap-3 border-t p-4 text-sm">
         <button type="button" disabled={page <= 1 || result.isFetching}
