@@ -1,15 +1,20 @@
 'use client';
 
 import { useLocale } from 'next-intl';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Link } from '@/i18n/routing';
-import { BookOpen, LockKeyhole, RefreshCw } from 'lucide-react';
-import { useGetLearningStageQuery, useGetLearningJourneyQuery } from '@/store/api/usersApi';
+import { BookOpen, LockKeyhole, RefreshCw, RotateCcw } from 'lucide-react';
+import { useGetLearningStageQuery, useGetLearningJourneyQuery, useResetPracticeMutation } from '@/store/api/usersApi';
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
 
 export default function StudentCategoriesPage() {
+  const [target, setTarget] = useState<{ categoryId?: number; name: string } | null>(null);
+  const [resetMessage, setResetMessage] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetPractice, { isLoading: resetting }] = useResetPracticeMutation();
   const locale = useLocale();
   const ar = locale === 'ar';
   const { data: selected, isLoading: selecting, isError: selectedError, refetch: reloadSelected } = useGetLearningStageQuery();
@@ -28,6 +33,19 @@ export default function StudentCategoriesPage() {
   const failed = selectedError || accessError || planError;
   const stageName = ar ? selected?.NameAr : selected?.NameEn;
   const unlocked = new Set(access?.FreeCategoryIds ?? []);
+  async function confirmReset() {
+    if (!target || resetting || stageId <= 0) return;
+    setResetError('');
+    try {
+      await resetPractice({ StageId: stageId, CategoryId: target.categoryId }).unwrap();
+      setResetMessage(ar ? `بدأ تدريب جديد في ${target.name}.` :
+        `A new practice cycle has started in ${target.name}.`);
+      setTarget(null);
+    } catch {
+      setResetError(ar ? 'تعذرت إعادة التدريب. لم يتغير تقدمك.' :
+        'Practice restart failed. Your progress was not changed.');
+    }
+  }
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
@@ -36,7 +54,36 @@ export default function StudentCategoriesPage() {
           <h1 className="text-3xl font-extrabold">{ar ? 'الفئات' : 'Topics'}</h1>
           {stageName && <p className="mt-2 text-sm text-muted-foreground">{ar ? 'المرحلة التعليمية:' : 'Learning stage:'} {stageName}</p>}
         </div>
+        {(journey?.AttemptedProblems ?? 0) > 0 && stageId > 0 && (
+          <button type="button" disabled={resetting} onClick={() => { setResetError(''); setTarget({
+            name: stageName || (ar ? 'المرحلة الحالية' : 'current stage'),
+          }); }}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-500/40 px-4 py-2 text-sm font-semibold">
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            {ar ? 'إعادة تدريب المرحلة' : 'Restart stage'}
+          </button>
+        )}
       </header>
+      {target && (
+        <section className="space-y-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5" role="group"
+          aria-label={ar ? 'تأكيد إعادة التدريب' : 'Confirm practice restart'}>
+          <p className="font-bold">{ar ? `إعادة تدريب ${target.name} من البداية؟` :
+            `Restart all practice in ${target.name}?`}</p>
+          <p className="text-sm text-muted-foreground">{ar
+            ? 'رح تصير مسائل هذا النطاق جديدة، وينمسح تقدم دورتك الحالية وأخطاؤها. المفضلة محفوظة، وما في تراجع.'
+            : 'All questions in this scope become New; the current progress and error notebook reset. Favorites stay. This cannot be undone.'}</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={resetting} onClick={() => void confirmReset()}
+              className="min-h-11 rounded-xl bg-amber-600 px-4 py-2 font-semibold text-white disabled:opacity-50">
+              {resetting ? (ar ? 'جارٍ التصفير…' : 'Resetting…') : (ar ? 'نعم، ابدأ دورة جديدة' : 'Yes, start a new cycle')}
+            </button>
+            <button type="button" disabled={resetting} onClick={() => setTarget(null)}
+              className="min-h-11 rounded-xl border px-4 py-2 font-semibold">{ar ? 'إلغاء' : 'Cancel'}</button>
+          </div>
+          {resetError && <p role="alert" className="text-destructive">{resetError}</p>}
+        </section>
+      )}
+      {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
       {loading ? (
         <p role="status" className="rounded-2xl border p-8 text-center text-muted-foreground">{ar ? 'جارٍ تحميل فئات مرحلتك…' : 'Loading your stage topics…'}</p>
       ) : failed ? (
@@ -117,9 +164,18 @@ export default function StudentCategoriesPage() {
                 </LockedPremiumDialog>
               );
               return empty ? <div key={category.Id} className="opacity-75">{card}</div> : (
-                <Link key={category.Id} href={`/dashboard/problems?categoryId=${category.Id}&stageId=${stageId}`} className="block h-full rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                  {card}
-                </Link>
+                <div key={category.Id} className="flex h-full flex-col gap-2">
+                  <Link href={`/dashboard/problems?categoryId=${category.Id}&stageId=${stageId}`}
+                    className="block flex-1 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{card}</Link>
+                  {(progress?.AttemptedProblems ?? 0) > 0 && (
+                    <button type="button" disabled={resetting} onClick={() => {
+                      setResetError(''); setTarget({ categoryId: category.Id, name });
+                    }} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-amber-500/35 px-3 py-2 text-xs font-semibold hover:bg-amber-500/10">
+                      <RotateCcw className="h-4 w-4" aria-hidden="true"/>
+                      {ar ? 'إعادة تدريب الفئة' : 'Restart topic'}
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>

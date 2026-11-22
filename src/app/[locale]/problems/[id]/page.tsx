@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useSelector } from "react-redux";
 import {
   BookOpen,
   CalendarClock,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   Clock3,
   Heart,
   History,
@@ -24,7 +22,8 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { Link, usePathname } from "@/i18n/routing";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
+import { useGetDailyChallengeQuery } from "@/store/api/stagesApi";
 import type { RootState } from "@/store";
 import {
   type AdminProblemOption,
@@ -35,7 +34,6 @@ import {
   type ProblemDetail,
   type ProblemForPublic,
   type ProblemForStudent,
-  useGetProblemAttemptsQuery,
   useGetProblemDiagramQuery,
   useGetProblemQuery,
   useLazyGetPremiumSolutionQuery,
@@ -139,10 +137,25 @@ export default function ProblemPage() {
   const params = useParams<{ id: string }>();
   const learnerWorkspace = usePathname().startsWith("/dashboard/");
   const t = useTranslations();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   const isArabic = locale === "ar";
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const problemId = Number.parseInt(params.id, 10);
+  const challengeStageId = Number(searchParams.get('stageId') ?? 0);
+  const challengeDate = searchParams.get('daily') ?? '';
+  const challengeIndex = Number(searchParams.get('step') ?? -1);
+  const challengeRequested = /^\d{4}-\d{2}-\d{2}$/.test(challengeDate) &&
+    Number.isSafeInteger(challengeStageId) && challengeStageId > 0 &&
+    Number.isSafeInteger(challengeIndex) && challengeIndex >= 0 && challengeIndex < 5;
+  const { data: dailyChallenge } = useGetDailyChallengeQuery(challengeStageId, {
+    skip: !challengeRequested,
+  });
+  const inDailyChallenge = challengeRequested &&
+    dailyChallenge?.DateUtc === challengeDate &&
+    dailyChallenge?.StageId === challengeStageId &&
+    dailyChallenge.Problems[challengeIndex]?.Id === problemId;
   const solutionRef = useRef<HTMLDivElement>(null);
   const questionCardRef = useRef<HTMLDivElement>(null);
   const attemptStartedAtRef = useRef(Date.now());
@@ -175,16 +188,7 @@ export default function ProblemPage() {
     : isGeometryScene(remoteDiagram) ? remoteDiagram : embeddedDiagram;
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
-  const {
-    data: attemptHistory,
-    isFetching: isAttemptHistoryLoading,
-    refetch: refetchAttemptHistory,
-  } = useGetProblemAttemptsQuery({ ProblemId: problemId, Locale: locale }, {
-    skip:
-      !isAuthenticated ||
-      Number.isNaN(problemId) ||
-      !studentProblem?.HasAttempted,
-  });
+
 
   const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
     skip: !isAuthenticated || Number.isNaN(problemId),
@@ -208,7 +212,6 @@ export default function ProblemPage() {
   const [retryMode, setRetryMode] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [activeTab, setActiveTab] = useState<"question" | "video">("question");
-  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   // The same dynamic route component can remain mounted when navigating
   // between question IDs. Never expose a previous question's selected answer,
@@ -220,7 +223,6 @@ export default function ProblemPage() {
     setRetryMode(false);
     setSubmitError("");
     setActiveTab("question");
-    setHistoryExpanded(false);
     attemptStartedAtRef.current = Date.now();
   }, [problemId]);
 
@@ -258,6 +260,19 @@ export default function ProblemPage() {
 
     return () => window.clearTimeout(timer);
   }, [localAnswerResult, retryMode]);
+
+  // Daily challenge is a guided flow, not five independent problem links.
+  // Show the answer briefly and advance to the next item automatically.
+  useEffect(() => {
+    if (!localAnswerResult || !inDailyChallenge || !dailyChallenge) return;
+    const next = dailyChallenge.Problems[challengeIndex + 1];
+    const target = next
+      ? `/dashboard/problems/${next.Id}?daily=${challengeDate}&stageId=${challengeStageId}&step=${challengeIndex + 1}`
+      : '/dashboard/daily-challenge';
+    const timer = window.setTimeout(() => router.replace(target), 1800);
+    return () => window.clearTimeout(timer);
+  }, [localAnswerResult, inDailyChallenge, dailyChallenge, challengeIndex,
+    challengeDate, challengeStageId, router]);
 
   const problemData = useMemo(() => {
     if (!problem) {
@@ -314,8 +329,8 @@ export default function ProblemPage() {
         null)
       : null;
 
-  const canRetry =
-    localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
+  const canRetry = searchParams.get('review') === '1' &&
+    (localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false);
   const canAnswer =
     isAuthenticated &&
     !!studentProblem &&
@@ -323,36 +338,30 @@ export default function ProblemPage() {
 
   const currentMastery =
     localAnswerResult?.MasteryStatus ??
-    attemptHistory?.MasteryStatus ??
     studentProblem?.MasteryStatus ??
     "New";
 
   const currentAttemptCount =
     localAnswerResult?.TotalAttempts ??
-    attemptHistory?.TotalAttempts ??
     studentProblem?.AttemptCount ??
     0;
 
   const bestTime =
     localAnswerResult?.BestTimeSeconds ??
-    attemptHistory?.BestTimeSeconds ??
     studentProblem?.BestTimeSeconds ??
     null;
 
   const averageTime =
-    attemptHistory?.AverageTimeSeconds ??
     studentProblem?.AverageTimeSeconds ??
     null;
 
   const nextReviewAt =
     localAnswerResult?.NextReviewAt ??
-    attemptHistory?.NextReviewAt ??
     studentProblem?.NextReviewAt ??
     null;
 
   const isInErrorNotebook =
     localAnswerResult?.IsInErrorNotebook ??
-    attemptHistory?.IsInErrorNotebook ??
     studentProblem?.IsInErrorNotebook ??
     false;
 
@@ -449,9 +458,7 @@ export default function ProblemPage() {
   }
 
   function handleStartRetry() {
-    if (!canRetry) {
-      return;
-    }
+    if (!canRetry || !isInErrorNotebook) return;
 
     setRetryMode(true);
     setSubmissionDone(false);
@@ -503,12 +510,8 @@ export default function ProblemPage() {
       setSelectedOptionId(result.SelectedOptionId);
       setSubmissionDone(true);
       setRetryMode(false);
-      setHistoryExpanded(true);
       await refetchProblem();
 
-      if (studentProblem.HasAttempted) {
-        await refetchAttemptHistory();
-      }
     } catch (submitFailure) {
       const normalized = submitFailure as {
         status?: number;
@@ -1058,13 +1061,7 @@ export default function ProblemPage() {
                           </span>
                         </div>
 
-                        {localAnswerResult && (
-                          <Badge variant="outline">
-                            {localAnswerResult.IsOfficialAttempt
-                              ? t("problem.officialAttempt")
-                              : t("problem.trainingAttempt")}
-                          </Badge>
-                        )}
+
                       </div>
 
                       {!isCorrect && (
@@ -1075,11 +1072,7 @@ export default function ProblemPage() {
 
                       {localAnswerResult && (
                         <div className="mt-4 flex flex-wrap gap-2 text-sm">
-                          <Badge variant="secondary">
-                            {t("problem.attemptNumber", {
-                              number: localAnswerResult.AttemptNumber,
-                            })}
-                          </Badge>
+
                           <Badge variant="secondary">
                             {formatDuration(
                               localAnswerResult.AttemptTimeSeconds,
@@ -1097,8 +1090,14 @@ export default function ProblemPage() {
                         </div>
                       )}
 
+                      {inDailyChallenge && (
+                        <p role="status" className="mt-4 text-sm font-semibold text-primary">
+                          {isArabic ? 'جارٍ الانتقال للمسألة التالية تلقائياً…' :
+                            'Moving to the next challenge question automatically…'}
+                        </p>
+                      )}
                       <Link
-                        href={categoryId != null
+                        href={inDailyChallenge ? '/dashboard/daily-challenge' : categoryId != null
                           ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
                           : stageId != null
                             ? `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`
@@ -1106,19 +1105,20 @@ export default function ProblemPage() {
                         className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90"
                       >
                         <DirectionalArrow direction="back" />
-                        {t("problem.backToProblems")}
+                        {inDailyChallenge ? (isArabic ? 'العودة للتحدي' : 'Back to challenge') :
+                          t("problem.backToProblems")}
                       </Link>
 
-                      {canRetry && (
+                      {isInErrorNotebook && !inDailyChallenge && (
                         <div className="mt-5 flex flex-wrap items-center gap-3">
-                          <Button
+                          {canRetry && <Button
                             variant="outline"
                             className="gap-2"
                             onClick={handleStartRetry}
                           >
                             <RotateCcw className="h-4 w-4" />
                             {t("problem.tryAgain")}
-                          </Button>
+                          </Button>}
 
                           {isInErrorNotebook && (
                             <Link
@@ -1192,107 +1192,6 @@ export default function ProblemPage() {
           </div>
         )}
 
-        {studentProblem?.HasAttempted && (
-          <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-            <button
-              type="button"
-              onClick={() => setHistoryExpanded((value) => !value)}
-              aria-expanded={historyExpanded}
-              aria-controls="problem-attempt-history"
-              className="flex w-full items-center justify-between gap-3 p-5 text-start hover:bg-muted/40"
-            >
-              <span className="flex items-center gap-2 font-semibold">
-                <History className="h-5 w-5 text-primary" />
-                {t("problem.attemptHistory")}
-              </span>
-              {historyExpanded ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground" />
-              )}
-            </button>
-
-            {historyExpanded && (
-              <div id="problem-attempt-history" className="border-t p-5">
-                {isAttemptHistoryLoading ? (
-                  <div className="flex items-center justify-center py-8 text-muted-foreground">
-                    <Loader2 className="me-2 h-5 w-5 animate-spin" />
-                    {t("common.loading")}
-                  </div>
-                ) : attemptHistory?.Attempts.length ? (
-                  <div className="space-y-3">
-                    {attemptHistory.Attempts.map((attempt) => (
-                      <div
-                        key={attempt.Id}
-                        className={`rounded-xl border p-4 ${
-                          attempt.IsCorrect
-                            ? "border-green-200 bg-green-50/40 dark:border-green-900 dark:bg-green-900/10"
-                            : "border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-900/10"
-                        }`}
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {attempt.IsCorrect ? (
-                              <CheckCircle className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-red-600" />
-                            )}
-                            <span className="font-semibold">
-                              {t("problem.attemptNumber", {
-                                number: attempt.AttemptNumber,
-                              })}
-                            </span>
-                            <Badge variant="outline">
-                              {attempt.IsOfficial
-                                ? t("problem.officialAttempt")
-                                : t("problem.trainingAttempt")}
-                            </Badge>
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDate(attempt.SubmittedAt)}
-                          </span>
-                        </div>
-
-                        <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-                          <div>
-                            <span className="text-muted-foreground">
-                              {t("problem.selectedAnswer")}:
-                            </span>
-                            <div className="mt-1">
-                              <LatexPreview
-                                latex={attempt.SelectedOptionText}
-                              />
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                            <Badge variant="secondary">
-                              <Clock3 className="me-1 h-3.5 w-3.5" />
-                              {formatDuration(
-                                attempt.TimeSpentSeconds,
-                                t("common.noData"),
-                                t("problem.minutesShort"),
-                                t("problem.secondsShort"),
-                              )}
-                            </Badge>
-                            {attempt.PointsEarned > 0 && (
-                              <Badge variant="secondary">
-                                +{attempt.PointsEarned}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="py-6 text-center text-muted-foreground">
-                    {t("problem.noAttemptHistory")}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

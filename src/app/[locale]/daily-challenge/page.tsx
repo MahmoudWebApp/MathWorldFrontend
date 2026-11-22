@@ -3,79 +3,140 @@
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
-import { LockKeyhole } from 'lucide-react';
+import { CheckCircle2, CircleAlert, LockKeyhole, Target } from 'lucide-react';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { useGetDailyChallengeQuery } from '@/store/api/stagesApi';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { useGetLearningStageQuery } from '@/store/api/usersApi';
 
+/** A five-step challenge: only the next unanswered question is offered.
+ * Completing an answer (right OR wrong) advances the workflow. */
 export default function DailyChallengePage() {
   const ar = useLocale() === 'ar';
   const student = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
     state.auth.isAuthenticated && state.auth.user?.Role === 'Student');
-  const { data: membership, isLoading: checking, isError: checkError,
-    refetch: retryMembership } = useGetStudentSubscriptionQuery(undefined, {
-    skip: !student,
-    refetchOnMountOrArgChange: true,
-  });
+  const { data: membership, isLoading: checking, isError: membershipError, refetch: retryMembership } =
+    useGetStudentSubscriptionQuery(undefined, { skip: !student, refetchOnMountOrArgChange: true });
   const upgraded = membership?.IsPremium === true;
-  const { data: selectedStage, isLoading: stageLoading } = useGetLearningStageQuery(undefined, { skip: !student });
+  const { data: selectedStage, isLoading: stageLoading } =
+    useGetLearningStageQuery(undefined, { skip: !student });
   const stageId = selectedStage?.StageId ?? 0;
   const { data, isLoading, isError, refetch } = useGetDailyChallengeQuery(stageId, {
     skip: !student || !upgraded || stageId <= 0,
     refetchOnMountOrArgChange: true,
   });
+  const nextIndex = data?.Problems.findIndex(p => !p.IsAnswered) ?? -1;
+  const next = nextIndex >= 0 ? data?.Problems[nextIndex] : undefined;
+  const correct = data?.Correct ?? 0;
+  const total = data?.Total ?? 0;
+  const completed = data?.Completed ?? 0;
 
-  return <main className="container mx-auto max-w-4xl px-4 py-12" dir={ar ? 'rtl' : 'ltr'}>
-    <h1 className="brand-display-title text-gradient-math mb-3 text-3xl font-bold">{ar ? 'تحدي اليوم' : 'Daily challenge'}</h1>
-    <p className="mb-7 text-muted-foreground">{ar ? 'خمس مسائل من فئات مرحلتك، مع تنويع الموضوعات قدر الإمكان. تتجدد منتصف الليل بتوقيت UTC، ولا تحدّ عدد مسائل التدريب العادي.' : 'Five questions across your selected stage topics where possible, refreshed at UTC midnight. Regular practice stays unlimited.'}</p>
-    {!student && <p>{ar ? 'سجّل الدخول كطالب لتبدأ التحدي.' : 'Sign in as a student to start.'}</p>}
-    {student && checking && <p role="status">{ar ? 'عم نتحقق من مزايا حسابك…' : 'Checking account benefits…'}</p>}
-    {student && checkError && <div role="alert" className="space-y-3">
-      <p>{ar ? 'ما قدرنا نتحقق من مزايا حسابك.' : 'We could not verify account benefits.'}</p>
-      <button type="button" onClick={() => void retryMembership()} className="rounded-lg border px-4 py-2">
-        {ar ? 'إعادة المحاولة' : 'Retry'}
-      </button>
-    </div>}
-    {student && membership && !upgraded && <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/5 p-6">
-      <LockKeyhole className="mb-3 h-7 w-7 text-primary" aria-hidden="true" />
-      <p className="mb-3 font-semibold">{ar
-        ? 'تحديات اليوم بتنفتح لما ترقّي حسابك. حل المسائل المفتوحة بيضل متاح بلا حد.'
-        : 'Daily challenges unlock when you upgrade your account. Regular practice remains unlimited in your available topics.'}
-      </p>
-      <LockedPremiumDialog>
-        <button type="button" className="inline-flex min-h-11 rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500 px-5 py-2.5 font-bold text-white">
-          {ar ? 'عرض المميزات والترقية' : 'Benefits & upgrade'}
-        </button>
-      </LockedPremiumDialog>
-    </div>}
-    {upgraded && stageLoading && <p role="status">{ar ? 'جارٍ تحديد مرحلتك…' : 'Loading your stage…'}</p>}
-    {upgraded && !stageLoading && stageId <= 0 && <Link href="/learning-stage" className="font-bold text-primary underline">{ar ? 'اختر مرحلتك لبدء التحدي' : 'Choose your stage to begin'}</Link>}
-    {upgraded && isLoading && <p role="status">{ar ? 'جاري تحميل التحدي…' : 'Loading challenge…'}</p>}
-    {upgraded && isError && <div role="alert" className="space-y-3">
-      <p>{ar ? 'تعذّر تحميل التحدي. تأكد من اختيار مرحلتك التعليمية.' : 'Could not load the challenge. Check your learning stage.'}</p>
-      <button type="button" onClick={() => void refetch()} className="rounded-lg border px-4 py-2">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
-      <Link href="/learning-stage" className="ms-3 underline">{ar ? 'اختيار المرحلة' : 'Choose stage'}</Link>
-    </div>}
-    {upgraded && data && <>
-      <div className="mb-7 rounded-2xl border bg-card p-6">
-        <p className="text-sm text-muted-foreground">{data.DateUtc} · UTC</p>
-        <p className="mt-2 text-2xl font-bold">{data.Completed} / {data.Total}</p>
-        <div role="progressbar" aria-valuenow={data.Completed} aria-valuemin={0} aria-valuemax={data.Total} aria-label={ar ? 'إنجاز التحدي' : 'Challenge completion'} className="mt-3 h-3 overflow-hidden rounded-full bg-muted">
-          <div className="h-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-pink-500" style={{ width: `${data.Total ? (100 * data.Completed / data.Total) : 0}%` }} />
+  return (
+    <main className="mx-auto w-full max-w-3xl space-y-5 px-4 py-6 sm:px-6" dir={ar ? 'rtl' : 'ltr'}>
+      <header>
+        <h1 className="brand-display-title text-gradient-math text-3xl font-bold">
+          {ar ? 'تحدي اليوم' : 'Daily challenge'}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {ar ? 'تحدٍّ من خمس مسائل في مرحلتك. بعد إرسال إجابة كل مسألة تنتقل تلقائياً للتالية، والتدريب العادي بلا حد.'
+            : 'Five questions from your stage. Submitting each answer advances to the next, while regular practice remains unlimited.'}
+        </p>
+      </header>
+
+      {!student && <p>{ar ? 'سجّل الدخول كطالب لبدء التحدي.' : 'Sign in as a learner to start.'}</p>}
+      {student && checking && <p role="status">{ar ? 'جارٍ التحقق من حسابك…' : 'Checking account…'}</p>}
+      {student && membershipError && (
+        <div role="alert" className="space-y-2 rounded-2xl border p-4">
+          <p>{ar ? 'تعذر التحقق من صلاحيات حسابك.' : 'Could not check account access.'}</p>
+          <button type="button" onClick={() => void retryMembership()} className="rounded-xl border px-4 py-2">
+            {ar ? 'إعادة المحاولة' : 'Retry'}
+          </button>
         </div>
-      </div>
-      {data.Completed === data.Total && data.Total > 0 && <p role="status" className="mb-5 rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-4 text-sm font-semibold text-emerald-700 dark:text-emerald-300">{ar ? 'أكملت تحدي اليوم! ارجع بكرا لتحدٍّ جديد.' : 'You completed today’s challenge! Come back tomorrow for fresh problems.'}</p>}
-      {data.Total === 0 && <p>{ar ? 'لا توجد مسائل متاحة لهذه المرحلة حالياً.' : 'No eligible problems are available for this stage yet.'}</p>}
-      <div className="space-y-3">
-        {data.Problems.map((problem, index) => <div key={problem.Id} className="flex items-center justify-between gap-4 rounded-2xl border bg-card p-5">
-          <div><p className="text-xs text-muted-foreground">{ar ? 'مسألة' : 'Problem'} {index + 1} · {problem.Points} XP</p>
-            <h2 className="mt-1 font-semibold">{ar ? problem.TitleAr : problem.TitleEn}</h2>
-            <p className="mt-1 text-sm">{problem.IsSolved ? (ar ? 'تم الحل ✓' : 'Solved ✓') : (ar ? 'بانتظار الحل' : 'Not solved yet')}</p>
-          </div>
-          <Link href={`/dashboard/problems/${problem.Id}`} className="shrink-0 rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-muted">{ar ? 'افتح المسألة' : 'Open problem'}</Link>
-        </div>)}
-      </div>
-    </>}
-  </main>;
+      )}
+      {student && membership && !upgraded && (
+        <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/5 p-6">
+          <LockKeyhole className="mb-3 h-7 w-7 text-primary" aria-hidden="true" />
+          <p className="mb-4 font-semibold">{ar ? 'تحدي اليوم ميزة Premium. فئات Free المفتوحة تبقى متاحة للتدريب.'
+            : 'The daily challenge is a Premium benefit. Free topics remain available for practice.'}</p>
+          <LockedPremiumDialog>
+            <button type="button" className="min-h-11 rounded-xl bg-primary px-5 py-2 font-bold text-primary-foreground">
+              {ar ? 'عرض المميزات' : 'View benefits'}
+            </button>
+          </LockedPremiumDialog>
+        </div>
+      )}
+      {upgraded && stageLoading && <p role="status">{ar ? 'جارٍ تحميل مرحلتك…' : 'Loading your stage…'}</p>}
+      {upgraded && !stageLoading && stageId <= 0 &&
+        <Link href="/learning-stage" className="font-semibold text-primary underline">
+          {ar ? 'اختيار المرحلة' : 'Select stage'}
+        </Link>}
+      {upgraded && isLoading && <p role="status">{ar ? 'جارٍ تحميل التحدي…' : 'Loading challenge…'}</p>}
+      {upgraded && isError && (
+        <div role="alert" className="space-y-2 rounded-2xl border p-4">
+          <p>{ar ? 'تعذر تحميل التحدي.' : 'Could not load the challenge.'}</p>
+          <button type="button" onClick={() => void refetch()} className="rounded-xl border px-4 py-2">
+            {ar ? 'إعادة المحاولة' : 'Retry'}
+          </button>
+        </div>
+      )}
+
+      {upgraded && data && (
+        <>
+          <section className="rounded-2xl border bg-card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm text-muted-foreground">{data.DateUtc} · UTC</span>
+              <span className="font-extrabold" dir="ltr">{completed} / {total}</span>
+            </div>
+            <div className="mt-3 grid grid-cols-5 gap-1.5" role="progressbar"
+              aria-label={ar ? 'تقدم تحدي اليوم' : 'Daily challenge progress'}
+              aria-valuemin={0} aria-valuemax={total} aria-valuenow={completed}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} className={`h-2 rounded-full ${i < completed
+                  ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500' : 'bg-muted'}`} />
+              ))}
+            </div>
+          </section>
+          {total === 0 ? (
+            <div className="rounded-2xl border bg-card p-6">
+              <CircleAlert className="mb-3 h-8 w-8 text-primary" aria-hidden="true" />
+              <p>{ar ? 'ما في مسائل جديدة كافية للتحدي اليوم. كمل تدريب الفئات أو ابدأ دورة جديدة من صفحة الفئات.'
+                : 'No new eligible challenge questions today. Continue topic practice or restart a topic cycle.'}</p>
+              <Link href="/dashboard/categories" className="mt-3 inline-block text-primary underline">
+                {ar ? 'اكتشف فئات مرحلتك' : 'Explore your topics'}
+              </Link>
+            </div>
+          ) : next ? (
+            <section className="space-y-4 rounded-2xl border bg-card p-6">
+              <span className="inline-flex items-center gap-2 text-sm font-bold text-primary">
+                <Target className="h-4 w-4" aria-hidden="true" />
+                {ar ? `المسألة ${nextIndex + 1} من ${total}` : `Problem ${nextIndex + 1} of ${total}`}
+              </span>
+              <h2 className="text-xl font-bold">{ar ? next.TitleAr : next.TitleEn}</h2>
+              <p className="text-sm text-muted-foreground">{ar
+                ? 'حل المسألة وأرسل الإجابة. بعدها يظهر السؤال التالي تلقائياً.'
+                : 'Solve and submit your answer. The next question will appear automatically.'}</p>
+              <Link href={`/dashboard/problems/${next.Id}?daily=${encodeURIComponent(data.DateUtc)}&stageId=${stageId}&step=${nextIndex}`}
+                className="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-foreground">
+                {ar ? 'ابدأ المسألة' : 'Start question'}
+              </Link>
+            </section>
+          ) : (
+            <section role="status" className="space-y-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6">
+              <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden="true" />
+              <h2 className="text-2xl font-extrabold">{ar ? 'أكملت تحدي اليوم!' : 'Daily challenge complete!'}</h2>
+              <p className="font-semibold">{ar
+                ? `${correct} صحيحة · ${completed - correct} بحاجة مراجعة · ${completed} من ${total} مجابة`
+                : `${correct} correct · ${completed - correct} to review · ${completed} of ${total} answered`}</p>
+              <p className="text-sm text-muted-foreground">{ar
+                ? 'الأسئلة الخاطئة موجودة بدفتر الأخطاء. تحدٍّ جديد غداً بتوقيت UTC.'
+                : 'Incorrect answers appear in your error notebook. A fresh challenge arrives tomorrow (UTC).'}</p>
+              <Link href="/dashboard/error-notebook" className="inline-flex min-h-11 items-center rounded-xl border px-4 py-2 font-semibold">
+                {ar ? 'دفتر الأخطاء' : 'Error notebook'}
+              </Link>
+            </section>
+          )}
+        </>
+      )}
+    </main>
+  );
 }

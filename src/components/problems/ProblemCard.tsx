@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { Calculator, Eye, Star, CheckCircle2, History, CircleDot } from "lucide-react";
+import { Calculator, Eye, Star, CheckCircle2, AlertCircle, CircleDot } from "lucide-react";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 
 import { Link } from "@/i18n/routing";
@@ -49,8 +49,8 @@ export function ProblemCard({ problem }: ProblemCardProps) {
                 </Badge>
               ) : problem.HasAttempted === true ? (
                 <Badge variant="secondary" className="gap-1 border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300">
-                  <History className="h-3.5 w-3.5" />
-                  {locale === "ar" ? "تمت تجربتها" : "Attempted"}
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {locale === "ar" ? "تحتاج مراجعة" : "Needs review"}
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="gap-1 border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-300">
@@ -78,7 +78,8 @@ export function ProblemCard({ problem }: ProblemCardProps) {
                 )}
               </div>
               <span className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: stageAccent }}>
-                {t("common.solveNow")}
+                {problem.IsSolved ? (locale === "ar" ? "عرض المسألة" : "View question") :
+                  problem.HasAttempted ? (locale === "ar" ? "راجع الخطأ" : "Review mistake") : t("common.solveNow")}
                 <DirectionalArrow direction="forward" />
               </span>
             </div>
