@@ -10,6 +10,7 @@ import {
   CheckCircle,
   Clock3,
   Heart,
+  History,
   Loader2,
   Lock,
   NotebookTabs,
