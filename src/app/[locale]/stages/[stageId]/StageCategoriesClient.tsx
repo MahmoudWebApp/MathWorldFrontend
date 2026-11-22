@@ -106,8 +106,8 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
         </p>
         <PublishedStageSkillsPanel stageId={stageId} categories={categories} />
         {!isAuthenticated && (
-          <Link href="/login" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
-            {ar ? 'تسجيل الدخول' : 'Sign in'}
+          <Link href="/register" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+            {ar ? 'انضم إلينا' : 'Join us'}
           </Link>
         )}
       </section>
