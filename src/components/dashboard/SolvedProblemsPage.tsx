@@ -87,7 +87,8 @@ export function SolvedProblemsPage() {
       ) : solvedProblems && solvedProblems.length > 0 ? (
         <div className="space-y-4">
           {solvedProblems.map((problem) => (
-            <ProblemCard key={problem.Id} problem={problem} />
+            <ProblemCard key={problem.Id}
+              problem={{ ...problem, IsSolved: true, HasAttempted: true }} />
           ))}
         </div>
       ) : (
