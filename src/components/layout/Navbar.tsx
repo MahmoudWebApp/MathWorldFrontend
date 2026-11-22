@@ -15,7 +15,6 @@ import {
 } from 'iconsax-reactjs';
 import {
   BookMarked,
-  ChevronDown,
    CircleCheckBig,
   Heart,
   Layers3,
@@ -32,7 +31,7 @@ import { NotificationBell } from '@/components/layout/NotificationBell';
 import { NotificationRealtimeSync } from '@/components/layout/NotificationRealtimeSync';
 import { StudentPresenceHeartbeat } from '@/components/layout/StudentPresenceHeartbeat';
 import { notificationsApi } from '@/store/api/notificationsApi';
-import { ADMIN_NAV_ITEMS, AdminNavMobile } from '@/components/admin/AdminNavigation';
+import { AdminNavMobile } from '@/components/admin/AdminNavigation';
 import { StudentWorkspaceNavigation } from '@/components/dashboard/StudentWorkspaceNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
@@ -147,13 +146,9 @@ function NavbarContent() {
     (user?.Role === 'Student' && pathname === '/notifications');
   const portalArea = adminArea || learnerArea;
   const portalLanding = user?.Role === 'Admin' ? '/admin' : '/dashboard';
-  const navItems = adminArea ? [
-    { href: '/admin', ar: 'لوحة الإدارة', en: 'Admin home' },
-    { href: '/admin/users', ar: 'الطلاب', en: 'Learners' },
-    { href: '/admin/stages', ar: 'المراحل التعليمية', en: 'Educational Stages' },
-    { href: '/admin/categories', ar: 'الفئات', en: 'Categories' },
-    { href: '/admin/problems', ar: 'المسائل', en: 'Problems' },
-  ] : learnerArea ? [] : [
+  // Admin navigation lives in the desktop sidebar (or mobile drawer),
+  // not in a second horizontal menu across the top.
+  const navItems = portalArea ? [] : [
     { href: '/', ar: 'الرئيسية', en: 'Home' },
     { href: '/stages', ar: 'المراحل التعليمية', en: 'Educational Stages' },
     { href: '/premium', ar: 'الباقات', en: 'Plans' },
@@ -257,54 +252,12 @@ function NavbarContent() {
                       >
                         <div className="px-3 py-2.5 text-xs text-muted-foreground border-b mb-2">{user.Email}</div>
                         {user.Role === 'Admin' && (
-                          <nav aria-label={locale === 'ar' ? 'تنقل الأدمن' : 'Admin navigation'} className="space-y-1">
-                            <div className="px-3 pb-1 text-xs font-bold text-muted-foreground">
-                              {locale === 'ar' ? 'لوحة الإدارة' : 'Admin dashboard'}
-                            </div>
-                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'overview').map(item => (
-                              <Link key={item.href} href={item.href}
-                                onClick={() => setUserMenuOpen(false)}
-                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
-                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                                {locale === 'ar' ? item.labelAr : item.labelEn}
-                              </Link>
-                            ))}
-                            <div className="mx-2 my-2 border-t" />
-                            <details className="group rounded-xl">
-                              <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-muted [&::-webkit-details-marker]:hidden">
-                                {locale === 'ar' ? 'إدارة الطلاب والاشتراكات' : 'Learners & access'}
-                                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden />
-                              </summary>
-                              <div className="ps-2">
-                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'management').map(item => (
-                              <Link key={item.href} href={item.href}
-                                onClick={() => setUserMenuOpen(false)}
-                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
-                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                                {locale === 'ar' ? item.labelAr : item.labelEn}
-                              </Link>
-                            ))}
-                              </div>
-                            </details>
-                            <div className="mx-2 my-2 border-t" />
-                            <details className="group rounded-xl">
-                              <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold hover:bg-muted [&::-webkit-details-marker]:hidden">
-                                {locale === 'ar' ? 'إدارة المحتوى التعليمي' : 'Learning content'}
-                                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden />
-                              </summary>
-                              <div className="ps-2">
-                            {ADMIN_NAV_ITEMS.filter(item => item.group === 'content').map(item => (
-                              <Link key={item.href} href={item.href}
-                                onClick={() => setUserMenuOpen(false)}
-                                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
-                                <item.icon className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                                {locale === 'ar' ? item.labelAr : item.labelEn}
-                              </Link>
-                            ))}
-                              </div>
-                            </details>
-                            <div className="mx-2 my-2 border-t" />
-                          </nav>
+                          <Link href="/admin"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
+                            <Element3 className="h-4 w-4 text-primary" aria-hidden="true" />
+                            {locale === 'ar' ? 'لوحة الإدارة' : 'Admin dashboard'}
+                          </Link>
                         )}
                         {user.Role !== 'Admin' && (
                           <>
@@ -377,7 +330,7 @@ function NavbarContent() {
                   : learnerArea ? (locale === 'ar' ? 'قائمة الطالب' : 'Learner menu')
                     : (locale === 'ar' ? 'الموقع العام' : 'Public website')}
               </p>
-              {!learnerArea && navItems.map(item => (
+              {!portalArea && navItems.map(item => (
                 <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}
                   className={cn('flex min-h-11 items-center rounded-xl px-4 py-3 text-sm font-semibold',
                     pathname === item.href ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}>
