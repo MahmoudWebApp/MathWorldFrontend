@@ -187,11 +187,14 @@ function NavbarContent() {
                 {locale === 'ar' ? item.ar : item.en}
               </Link>
             ))}
-            {(portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding}
-              className="whitespace-nowrap rounded-xl border border-primary/25 px-3 py-2 text-sm font-bold text-primary hover:bg-primary/10">
-              {portalArea ? (locale === 'ar' ? 'الذهاب إلى الموقع' : 'Visit website')
-                : (locale === 'ar' ? 'لوحة التحكم' : 'Go to dashboard')}
-            </Link>}
+            {/* Admin dashboard is already in the profile dropdown; do not
+                duplicate 'Visit website' or a dashboard action in the header. */}
+            {mounted && isAuthenticated && user?.Role === 'Student' && !portalArea && (
+              <Link href="/dashboard"
+                className="whitespace-nowrap rounded-xl border border-primary/25 px-3 py-2 text-sm font-bold text-primary hover:bg-primary/10">
+                {locale === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
+              </Link>
+            )}
           </div>
 
           {/* Account actions, theme, language and notifications. Public search is intentionally removed. */}
