@@ -113,6 +113,19 @@ export const notificationsApi = createApi({
       query: () => ({ url: '/notifications/v2/read-all', method: 'PUT' }),
       invalidatesTags: ['Inbox'],
     }),
+    getAdminEmailStatus: builder.query<{ IsConfigured: boolean }, void>({
+      query: () => ({ url: '/admin/notifications/email-status' }),
+    }),
+    sendAdminEmail: builder.mutation<
+      { EmailSent: boolean; UserId: number },
+      SendAdminNotificationRequest
+    >({
+      query: ({ learnerId, ...body }) => ({
+        url: `/admin/notifications/email/learners/${learnerId}`,
+        method: 'POST',
+        body,
+      }),
+    }),
     sendAdminNotification: builder.mutation<
       { Id: number; UserId: number; CreatedAtUtc: string },
       SendAdminNotificationRequest
@@ -134,4 +147,6 @@ export const {
   useMarkNotificationReadMutation,
   useMarkAllNotificationsReadMutation,
   useSendAdminNotificationMutation,
+  useGetAdminEmailStatusQuery,
+  useSendAdminEmailMutation,
 } = notificationsApi;
