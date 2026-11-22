@@ -12,7 +12,6 @@ import {
   ChevronUp,
   Clock3,
   Heart,
-  Eye,
   History,
   Loader2,
   Lock,
@@ -143,7 +142,6 @@ export default function ProblemPage() {
   const locale = useLocale();
   const isArabic = locale === "ar";
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const isPremium = user?.SubscriptionType?.toLowerCase() === 'premium';
   const problemId = Number.parseInt(params.id, 10);
   const solutionRef = useRef<HTMLDivElement>(null);
   const questionCardRef = useRef<HTMLDivElement>(null);
@@ -199,11 +197,7 @@ export default function ProblemPage() {
 
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
-  const [requestSolutionPreview, {
-    data: solutionPreviewData,
-    isFetching: previewLoading,
-    error: previewError,
-  }] = useLazyGetSolutionPreviewQuery();
+  const [, { data: solutionPreviewData }] = useLazyGetSolutionPreviewQuery();
   const solutionPreview = solutionPreviewData?.ProblemId === problemId
     ? solutionPreviewData : null;
 
@@ -829,7 +823,7 @@ export default function ProblemPage() {
           <LockedPremiumDialog>
             <button type="button" className="flex min-h-11 items-center gap-2 rounded-xl border border-primary/30 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/10">
               <Lock aria-hidden="true" className="h-4 w-4" />
-              {isArabic ? "مشاهدة الحل قبل الإجابة — Premium" : "See the solution before answering — Premium"}
+              {isArabic ? "طريقة الحل — Premium" : "Solution method — Premium"}
             </button>
           </LockedPremiumDialog>
         </section>
@@ -844,7 +838,7 @@ export default function ProblemPage() {
           >
             {isLoadingPremiumSolution
               ? (isArabic ? "جارٍ تحميل الحل..." : "Loading solution...")
-              : (isArabic ? "عرض الحل مسبقاً — Premium" : "Reveal solution early — Premium")}
+              : (isArabic ? "طريقة الحل" : "Solution method")}
           </Button>
           {premiumSolutionError && (
             <p role="alert" className="mt-3 text-sm text-destructive">
@@ -1011,30 +1005,6 @@ export default function ProblemPage() {
                     </div>
                   )}
 
-                  {isPremium && canAnswer && !solutionPreview && (
-                    <div className="mb-4 flex justify-end">
-                      <button
-                        type="button"
-                        disabled={previewLoading}
-                        onClick={() => { void requestSolutionPreview(problemId); }}
-                        className="inline-flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 disabled:opacity-50"
-                      >
-                        {previewLoading
-                          ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                          : <Eye className="h-4 w-4" aria-hidden />}
-                        {previewLoading
-                          ? isArabic ? 'جارٍ تحميل الحل...' : 'Loading solution...'
-                          : isArabic ? 'عرض الحل قبل الإجابة' : 'Preview solution before answering'}
-                      </button>
-                    </div>
-                  )}
-                  {isPremium && previewError && (
-                    <div role="alert" className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                      {isArabic
-                        ? 'لم نتمكن من عرض الحل. حاول مجدداً أو حدّث اشتراكك.'
-                        : 'Could not preview the solution. Try again or refresh your subscription.'}
-                    </div>
-                  )}
                   {canAnswer && (
                     <div className="flex justify-end">
                       <Button

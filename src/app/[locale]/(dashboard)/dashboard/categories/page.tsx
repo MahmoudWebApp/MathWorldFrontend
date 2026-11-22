@@ -8,7 +8,6 @@ import { useGetLearningStageQuery, useGetLearningJourneyQuery } from '@/store/ap
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
-import { CurriculumFrameworkNote } from '@/components/curriculum/CurriculumFrameworkNote';
 
 export default function StudentCategoriesPage() {
   const locale = useLocale();
@@ -38,7 +37,6 @@ export default function StudentCategoriesPage() {
           {stageName && <p className="mt-2 text-sm text-muted-foreground">{ar ? 'المرحلة التعليمية:' : 'Learning stage:'} {stageName}</p>}
         </div>
       </header>
-      <CurriculumFrameworkNote />
       {loading ? (
         <p role="status" className="rounded-2xl border p-8 text-center text-muted-foreground">{ar ? 'جارٍ تحميل فئات مرحلتك…' : 'Loading your stage topics…'}</p>
       ) : failed ? (

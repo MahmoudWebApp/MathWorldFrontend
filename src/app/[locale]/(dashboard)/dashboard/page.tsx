@@ -3,11 +3,12 @@
 import { useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
-import { BookOpen, Heart, Medal, NotebookTabs, Target, Trophy } from 'lucide-react';
+import { BookOpen, ChartNoAxesCombined, Heart, LockKeyhole, NotebookTabs, Target, Trophy } from 'lucide-react';
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from '@/store/api/usersApi';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { useSearchProblemsQuery } from '@/store/api/problemsApi';
 import { StudentAchievementsPanel } from '@/components/dashboard/StudentAchievementsPanel';
+import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { getStageAccent } from '@/lib/stageVisuals';
 
@@ -19,10 +20,10 @@ export default function UserDashboardPage() {
     refetchOnMountOrArgChange: true,
   });
   const stageId = dashboard?.CurrentStageId ?? 0;
-  const { data: journey, isError: progressError, refetch: reloadProgress } = useGetLearningJourneyQuery(stageId, {
+  const { data: journey, isLoading: journeyLoading, isError: progressError, refetch: reloadProgress } = useGetLearningJourneyQuery(stageId, {
     skip: stageId <= 0,
   });
-  const { data: subscription } = useGetStudentSubscriptionQuery(undefined, {
+  const { data: subscription, isLoading: planLoading } = useGetStudentSubscriptionQuery(undefined, {
     skip: dashboard?.Role !== 'Student',
   });
   const accent = getStageAccent({ Id: stageId, NameAr: journey?.NameAr, NameEn: journey?.NameEn });
@@ -55,6 +56,17 @@ export default function UserDashboardPage() {
     );
   }
 
+  // Do not show placeholder statistics or a generic stage before the actual
+  // learner stage, progress and entitlement requests have resolved.
+  if (isLoading || (dashboard?.Role === 'Student' && stageId > 0 &&
+      (journeyLoading || planLoading))) {
+    return <main className="mx-auto w-full max-w-7xl animate-pulse space-y-5 px-4 py-6 sm:px-6" aria-busy="true">
+      <div className="h-9 w-48 rounded-xl bg-muted" />
+      <div className="h-52 rounded-3xl border bg-card/75" />
+      <div className="grid gap-4 lg:grid-cols-2"><div className="h-72 rounded-3xl border bg-card/75" /><div className="h-72 rounded-3xl border bg-card/75" /></div>
+    </main>;
+  }
+
   const completion = Math.min(100, Math.max(0, journey?.CompletionPercent ?? 0));
   const stats = [
     { label: ar ? 'مسائل محلولة' : 'Solved', value: journey ? `${journey.SolvedProblems} ${ar ? 'من' : 'of'} ${journey.TotalProblems}` : '—', icon: Target },
@@ -63,7 +75,7 @@ export default function UserDashboardPage() {
   ];
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
+    <main className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 sm:px-6">
       <header>
         <h1 className="text-2xl font-extrabold sm:text-3xl">{ar ? 'الرئيسية' : 'Dashboard'}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -90,7 +102,7 @@ export default function UserDashboardPage() {
         {progressError && <button type="button" onClick={() => void reloadProgress()} className="mt-3 text-sm font-semibold text-primary">
           {ar ? 'إعادة تحميل التقدم' : 'Reload progress'}
         </button>}
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
           {stats.map(item => (
             <div key={item.label} className="min-w-0 rounded-2xl bg-muted/40 p-3 sm:p-4">
               <item.icon className="mb-2 h-5 w-5 text-primary" aria-hidden="true" />
@@ -102,7 +114,7 @@ export default function UserDashboardPage() {
         <Link href={nextProblemId
           ? `/dashboard/problems/${nextProblemId}`
           : stageId > 0 ? '/dashboard/categories' : '/learning-stage'}
-          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-extrabold text-primary-foreground hover:opacity-90">
+          className="mt-4 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-extrabold text-primary-foreground hover:opacity-90">
           <BookOpen className="h-5 w-5" aria-hidden="true" />
           {nextProblemId
             ? (ar ? 'تابع التعلم' : 'Continue learning')
@@ -119,7 +131,7 @@ export default function UserDashboardPage() {
             <Link href="/dashboard/solved" className="text-sm font-bold text-primary hover:underline">{ar ? 'عرض الكل' : 'View all'}</Link>
           </div>
           <div className="mt-4 space-y-3">
-            {dashboard?.RecentSolved?.length ? dashboard.RecentSolved.slice(0, 2).map((problem, index) => (
+            {dashboard?.RecentSolved?.some(problem => problem.StageId === stageId) ? dashboard.RecentSolved.filter(problem => problem.StageId === stageId).slice(0, 2).map((problem, index) => (
               <ProblemCard key={problem.Id ?? index} problem={problem} />
             )) : <div className="rounded-2xl bg-muted/30 p-5 text-sm text-muted-foreground">
               {ar ? 'لم تحل مسائل بعد. ابدأ بأول فئة من مرحلتك.' : 'No solved problems yet. Start with a topic in your stage.'}
@@ -130,16 +142,25 @@ export default function UserDashboardPage() {
 
       <section aria-label={ar ? 'اختصارات' : 'Quick links'} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { href: '/dashboard/favorites', label: ar ? 'المفضلة' : 'Favorites', icon: Heart },
-          { href: '/dashboard/error-notebook', label: ar ? 'دفتر الأخطاء' : 'Error notebook', icon: NotebookTabs },
-          { href: '/dashboard/leaderboard', label: ar ? 'المتفوقون' : 'Leaderboard', icon: Trophy },
-          { href: '/dashboard/achievements', label: ar ? 'الشارات' : 'Badges', icon: Medal },
-        ].map(item => (
-          <Link key={item.href} href={item.href} className="flex min-h-28 flex-col justify-center gap-3 rounded-2xl border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/5">
+          { href: '/dashboard/favorites', label: ar ? 'المفضلة' : 'Favorites', icon: Heart, premium: false },
+          { href: '/dashboard/error-notebook', label: ar ? 'دفتر الأخطاء' : 'Error notebook', icon: NotebookTabs, premium: false },
+          { href: '/dashboard/leaderboard', label: ar ? 'المتفوقون' : 'Leaderboard', icon: Trophy, premium: false },
+          { href: '/dashboard/analytics', label: ar ? 'التقارير والإحصائيات' : 'Reports & analytics', icon: ChartNoAxesCombined, premium: true },
+        ].map(item => {
+          const cardClass = "flex min-h-24 w-full flex-col justify-center gap-2 rounded-2xl border bg-card p-4 text-start transition-colors hover:border-primary/40 hover:bg-primary/5";
+          const content = <>
             <item.icon className="h-6 w-6 text-primary" aria-hidden="true" />
-            <span className="text-sm font-bold">{item.label}</span>
-          </Link>
-        ))}
+            <span className="flex items-center gap-2 text-sm font-bold">
+              {item.label}
+              {item.premium && !isPremium && <LockKeyhole className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
+            </span>
+          </>;
+          return item.premium && !isPremium
+            ? <LockedPremiumDialog key={item.href} featureName={item.label}>
+                <button type="button" className={cardClass} aria-label={item.label}>{content}</button>
+              </LockedPremiumDialog>
+            : <Link key={item.href} href={item.href} className={cardClass}>{content}</Link>;
+        })}
       </section>
 
       {!isPremium && dashboard?.Role === 'Student' && (

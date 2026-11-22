@@ -23,6 +23,7 @@ import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import {
   type ErrorNotebookProblem,
   useGetErrorNotebookQuery,
+  useGetLearningStageQuery,
   useSetErrorNotebookArchiveMutation,
 } from '@/store/api/usersApi';
 
@@ -44,7 +45,6 @@ export default function ErrorNotebookPage() {
   const isArabic = locale === 'ar';
   const [activeTab, setActiveTab] = useState<NotebookTab>('active');
   const [updatingProblemId, setUpdatingProblemId] = useState<number | null>(null);
-  const [selectedStageId, setSelectedStageId] = useState(0);
   const [dueOnly, setDueOnly] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
@@ -58,26 +58,30 @@ export default function ErrorNotebookPage() {
     { refetchOnMountOrArgChange: true },
   );
 
+  const { data: selectedStage, isLoading: stageLoading, isError: stageError, refetch: reloadStage } = useGetLearningStageQuery();
+  const stageId = selectedStage?.StageId ?? 0;
+
   const [setArchiveStatus] = useSetErrorNotebookArchiveMutation();
 
-  const stages = useMemo(() => [...new Map(problems.map(problem => [
-    problem.StageId, problem.StageName,
-  ] as const)).entries()].sort(([a], [b]) => a - b), [problems]);
+  // Past-stage history remains in the database; the workspace shows only
+  // the active stage and never offers an all-stages notebook selector.
+  const stageProblems = useMemo(() =>
+    problems.filter(problem => stageId > 0 && problem.StageId === stageId),
+  [problems, stageId]);
   const visibleProblems = useMemo(() => {
     const now = Date.now();
-    return problems.filter(problem =>
+    return stageProblems.filter(problem =>
       problem.IsArchived === (activeTab === 'archived') &&
-      (!selectedStageId || problem.StageId === selectedStageId) &&
       (!dueOnly || isReviewDue(problem, now))
     ).sort((a, b) => reviewTimestamp(a) - reviewTimestamp(b) ||
       Date.parse(b.LastAttemptAt) - Date.parse(a.LastAttemptAt) || a.Id - b.Id);
-  }, [problems, activeTab, selectedStageId, dueOnly]);
+  }, [stageProblems, activeTab, dueOnly]);
 
-  const activeCount = problems.filter(problem => !problem.IsArchived).length;
-  const archivedCount = problems.length - activeCount;
-  const dueCount = problems.filter(problem => !problem.IsArchived &&
-    (!selectedStageId || problem.StageId === selectedStageId) && isReviewDue(problem, Date.now())).length;
-  const filtersActive = selectedStageId !== 0 || dueOnly;
+  const activeCount = stageProblems.filter(problem => !problem.IsArchived).length;
+  const archivedCount = stageProblems.length - activeCount;
+  const dueCount = stageProblems.filter(problem => !problem.IsArchived &&
+    isReviewDue(problem, Date.now())).length;
+  const filtersActive = dueOnly;
 
   function getMasteryLabel(status: ErrorNotebookProblem['MasteryStatus']) {
     return t(`problem.mastery.${status}`);
@@ -176,26 +180,18 @@ export default function ErrorNotebookPage() {
       </div>
 
       <div className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4">
-        <label className="min-w-[170px] flex-1 text-sm font-semibold">
-          <span className="mb-1 block">{isArabic ? 'المرحلة التعليمية' : 'Learning stage'}</span>
-          <select className="w-full rounded-lg border bg-background px-3 py-2" value={selectedStageId}
-            onChange={event => setSelectedStageId(Number(event.target.value))}>
-            <option value={0}>{isArabic ? 'جميع المراحل' : 'All stages'}</option>
-            {stages.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
-          </select>
-        </label>
         <button type="button" aria-pressed={dueOnly} onClick={() => setDueOnly(value => !value)}
           className={`min-h-10 rounded-lg border px-4 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${dueOnly ? 'border-primary bg-primary/10 text-primary' : 'bg-background hover:bg-muted/50'}`}>
           {isArabic ? `المراجعة المستحقة (${dueCount})` : `Due for review (${dueCount})`}
         </button>
-        {filtersActive && <button type="button" onClick={() => { setSelectedStageId(0); setDueOnly(false); }}
+        {filtersActive && <button type="button" onClick={() => setDueOnly(false)}
           className="min-h-10 rounded-lg px-3 text-sm font-semibold text-primary underline">
           {isArabic ? 'إلغاء التصفية' : 'Clear filters'}
         </button>}
       </div>
       {archiveError && <p role="alert" className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">{archiveError}</p>}
 
-      {isLoading ? (
+      {isLoading || stageLoading ? (
         <div className="grid gap-4 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
@@ -204,14 +200,14 @@ export default function ErrorNotebookPage() {
             />
           ))}
         </div>
-      ) : isError ? (
+      ) : isError || stageError ? (
         <Card className="border-destructive/30">
           <CardContent className="p-10 text-center">
             <CircleAlert className="mx-auto mb-3 h-10 w-10 text-destructive" />
             <p className="mb-4 text-muted-foreground">
               {t('common.errorLoadingData')}
             </p>
-            <Button onClick={() => refetch()}>{t('common.retry')}</Button>
+            <Button onClick={() => { void refetch(); void reloadStage(); }}>{t('common.retry')}</Button>
           </CardContent>
         </Card>
       ) : visibleProblems.length === 0 ? (
@@ -228,17 +224,17 @@ export default function ErrorNotebookPage() {
                 : t('errorNotebook.emptyArchivedTitle')}
             </h2>
             <p className="mx-auto mb-5 max-w-lg text-muted-foreground">
-              {filtersActive ? (isArabic ? 'غيّر المرحلة أو ألغِ تصفية المراجعة المستحقة.' : 'Change the stage or clear the due-review filter.') : activeTab === 'active'
+              {filtersActive ? (isArabic ? 'ألغِ تصفية المراجعة المستحقة لعرض بقية أخطاء مرحلتك.' : 'Clear the due-review filter to see the other problems in your stage.') : activeTab === 'active'
                 ? t('errorNotebook.emptyActiveDescription')
                 : t('errorNotebook.emptyArchivedDescription')}
             </p>
             {filtersActive ? (
-              <Button variant="outline" onClick={() => { setSelectedStageId(0); setDueOnly(false); }}>
+              <Button variant="outline" onClick={() => setDueOnly(false)}>
                 {isArabic ? 'عرض كل المسائل' : 'Show all problems'}
               </Button>
             ) : activeTab === 'active' && (
               <Button asChild>
-                <Link href="/stages">{t('hero.browseStages')}</Link>
+                <Link href="/dashboard/categories">{t('hero.browseStages')}</Link>
               </Button>
             )}
           </CardContent>
@@ -271,7 +267,7 @@ export default function ErrorNotebookPage() {
                   </div>
 
                   <Link
-                    href={`/problems/${problem.Id}`}
+                    href={`/dashboard/problems/${problem.Id}`}
                     className="block text-lg font-semibold transition-colors hover:text-primary"
                   >
                     <RichText text={problem.Title} isArabic={isArabic} />
@@ -315,7 +311,7 @@ export default function ErrorNotebookPage() {
 
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/20 p-4">
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/problems/${problem.Id}`}>
+                    <Link href={`/dashboard/problems/${problem.Id}`}>
                       <BookOpen className="me-2 h-4 w-4" />
                       {t('errorNotebook.practiceNow')}
                     </Link>
