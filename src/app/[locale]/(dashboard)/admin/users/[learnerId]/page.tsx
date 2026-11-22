@@ -13,7 +13,7 @@ import {
 import {
   useGetAdminLearnerDetailQuery,
   useGetAdminLearnerAttemptsQuery,
-  useSetAdminLearnerSubscriptionMutation,
+  useUpdateAdminLearnerSubscriptionMutation,
 } from '@/store/api/usersApi';
 
 export default function AdminLearnerDetailPage() {
@@ -26,8 +26,10 @@ export default function AdminLearnerDetailPage() {
   const [selectedTier, setSelectedTier] = useState<'Free' | 'Premium' | null>(null);
   const [tierMessage, setTierMessage] = useState('');
   const [tierError, setTierError] = useState('');
+  const [tierReason, setTierReason] = useState('');
+  const [tierExpiresAt, setTierExpiresAt] = useState('');
   const [setSubscription, { isLoading: savingTier }] =
-    useSetAdminLearnerSubscriptionMutation();
+    useUpdateAdminLearnerSubscriptionMutation();
 
 
   const { data, isLoading, isError, refetch } = useGetAdminLearnerDetailQuery(
@@ -94,15 +96,31 @@ export default function AdminLearnerDetailPage() {
   const effectiveTier = selectedTier ?? currentTier;
   const saveTier = async () => {
     if (!validId || savingTier || effectiveTier === currentTier) return;
+    if (tierReason.trim().length < 3 || tierReason.trim().length > 500) {
+      setTierError(ar ? 'سبب التعديل مطلوب (من 3 إلى 500 حرف).' : 'A reason of 3–500 characters is required.');
+      return;
+    }
+    const expiry = effectiveTier === 'Premium' && tierExpiresAt ? new Date(tierExpiresAt) : null;
+    if (expiry && (!Number.isFinite(expiry.getTime()) || expiry.getTime() <= Date.now())) {
+      setTierError(ar ? 'تاريخ الانتهاء يجب أن يكون بالمستقبل.' : 'Expiration must be in the future.');
+      return;
+    }
     if (!window.confirm(label.tierConfirm)) return;
     setTierError('');
     setTierMessage('');
     try {
       await setSubscription({
         LearnerId: learnerId,
-        SubscriptionType: effectiveTier,
+        Change: {
+          SubscriptionType: effectiveTier,
+          Reason: tierReason.trim(),
+          PremiumExpiresAtUtc: expiry ? expiry.toISOString() : null,
+        },
       }).unwrap();
       setSelectedTier(null);
+      setTierReason('');
+      setTierExpiresAt('');
+      void refetch();
       setTierMessage(label.tierSuccess);
     } catch (error) {
       setTierError(getApiErrorMessage(error, label.tierError));
@@ -179,8 +197,22 @@ export default function AdminLearnerDetailPage() {
                   <option value="Premium">Premium</option>
                 </select>
               </label>
+              <label className="flex min-w-[180px] flex-1 flex-col gap-1 text-sm font-semibold">
+                <span>{ar ? 'سبب تغيير الاشتراك' : 'Reason for change'}</span>
+                <input value={tierReason} onChange={event => setTierReason(event.target.value)}
+                  minLength={3} maxLength={500} required
+                  placeholder={ar ? 'مثلاً: منحة تجريبية' : 'Example: introductory grant'}
+                  className="min-h-11 rounded-xl border border-border bg-card px-3 py-2" />
+              </label>
+              {effectiveTier === 'Premium' && (
+                <label className="flex min-w-[190px] flex-col gap-1 text-sm font-semibold">
+                  <span>{ar ? 'انتهاء Premium (اختياري)' : 'Premium expires (optional)'}</span>
+                  <input type="datetime-local" value={tierExpiresAt} onChange={event => setTierExpiresAt(event.target.value)}
+                    className="min-h-11 rounded-xl border border-border bg-card px-3 py-2" />
+                </label>
+              )}
               <button type="button"
-                disabled={savingTier || effectiveTier === currentTier}
+                disabled={savingTier || effectiveTier === currentTier || tierReason.trim().length < 3}
                 onClick={saveTier}
                 className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
               >
