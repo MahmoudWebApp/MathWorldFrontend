@@ -770,6 +770,7 @@
 /* MathWorld calm UI v1: fewer decorative layers, stronger readable surfaces. */
 .brand-hero-bg {
   background:
+    url('/math-pattern-light.svg') center top / 420px 285px repeat,
     radial-gradient(circle at 12% 5%, rgb(var(--sr-primary-rgb) / 0.065), transparent 40%),
     radial-gradient(circle at 88% 12%, rgb(var(--sr-secondary-rgb) / 0.045), transparent 38%),
     var(--color-background);
