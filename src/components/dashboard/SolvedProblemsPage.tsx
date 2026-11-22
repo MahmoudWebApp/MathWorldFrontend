@@ -97,7 +97,7 @@ export function SolvedProblemsPage() {
             <h3 className="text-xl font-semibold mb-2">{t('solved.empty.title')}</h3>
             <p className="text-muted-foreground mb-6">{t('solved.empty.description')}</p>
             <Button asChild>
-                <Link href="/stages">
+                <Link href="/dashboard/categories">
                   {t("hero.browseStages")}
                 <DirectionalArrow direction="forward" className="h-4 w-4 ms-2" />
               </Link>
