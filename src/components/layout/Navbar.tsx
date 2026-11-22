@@ -338,7 +338,7 @@ function NavbarContent() {
                 </Link>
               ))}
               {learnerArea && <StudentWorkspaceNavigation isPremium={hasUpgraded} onNavigate={() => setMobileMenuOpen(false)} />}
-              {adminArea && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
+              {adminArea && isAuthenticated && user?.Role === 'Admin' && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
               {(portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding} onClick={() => setMobileMenuOpen(false)}
                 className="flex min-h-11 items-center rounded-xl border border-primary/25 px-4 py-3 text-sm font-bold text-primary">
                 {portalArea ? (locale === 'ar' ? 'العودة إلى الموقع' : 'Back to website')
