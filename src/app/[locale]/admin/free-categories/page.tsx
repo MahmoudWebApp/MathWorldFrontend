@@ -1,7 +1,11 @@
-import { redirect } from '@/i18n/navigation';
+import { redirect, isAppLocale } from '@/i18n/routing';
 
-/** Legacy admin topic selection is retired. Free always opens the first two
- * categories in editorial order within each stage. */
-export default function LegacyFreeCategoriesPage() {
-  redirect({ href: '/admin/stages', locale: 'ar' });
+/** Legacy per-stage Free category customization is retired. */
+export default async function LegacyFreeCategoriesPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  redirect({ href: '/admin/stages', locale: isAppLocale(locale) ? locale : 'ar' });
 }
