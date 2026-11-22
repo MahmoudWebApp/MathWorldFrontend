@@ -184,3 +184,55 @@ export function AdminNavMobile({ onNavigate }: { onNavigate: () => void }) {
     </details>
   );
 }
+
+/** Desktop administration workspace: a single grouped navigation, using the
+ * same collapsible/icon-only language as the student workspace. */
+export function AdminWorkspaceNavigation({ collapsed = false }: { collapsed?: boolean }) {
+  const ar = useLocale() === 'ar';
+  const pathname = usePathname();
+
+  // Choose the most specific route (e.g. /admin/problems/review rather
+  // than /admin/problems) to avoid two highlighted links at once.
+  const selectedHref = [...ADMIN_NAV_ITEMS]
+    .filter(item => pathname === item.href ||
+      (item.href !== '/admin' && pathname.startsWith(item.href + '/')))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
+  const groups = [
+    { key: 'overview', ar: 'المتابعة والإحصائيات', en: 'Monitoring & insights' },
+    { key: 'management', ar: 'الطلاب والصلاحيات', en: 'Learners & access' },
+    { key: 'content', ar: 'المحتوى التعليمي', en: 'Learning content' },
+  ] as const;
+
+  return (
+    <nav aria-label={ar ? 'قائمة إدارة المنصة' : 'Administration navigation'} className="space-y-5">
+      {groups.map(group => (
+        <div key={group.key} className="space-y-1">
+          <p className={cn(
+            'px-3 pb-1 text-xs font-bold text-muted-foreground',
+            collapsed && 'sr-only',
+          )}>{ar ? group.ar : group.en}</p>
+          {ADMIN_NAV_ITEMS.filter(item => item.group === group.key).map(item => {
+            const title = ar ? item.labelAr : item.labelEn;
+            const active = selectedHref === item.href;
+            return (
+              <Link key={item.href} href={item.href}
+                title={title} aria-label={title} aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-sm font-semibold transition-colors',
+                  collapsed && 'justify-center px-2',
+                  active ? 'bg-primary/10 text-primary' :
+                    'text-muted-foreground hover:bg-muted hover:text-foreground',
+                )}>
+                <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span className={collapsed ? 'sr-only' : 'min-w-0 flex-1'}>
+                  {title}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+    </nav>
+  );
+}
