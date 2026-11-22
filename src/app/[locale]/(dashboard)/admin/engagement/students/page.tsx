@@ -118,7 +118,7 @@ export default function AdminLearnerActivityPage() {
                   {[
                     [ar ? 'مسجل منذ' : 'Registered', date(student.CreatedAt)],
                     [ar ? 'آخر دخول' : 'Last login', date(student.LastLoginAt)],
-                     [ar ? 'آخر خروج مؤكد' : 'Last explicit sign-out', date(student.LastExplicitSignOutAtUtc)],
+                     [ar ? 'آخر خروج مؤكد' : 'Last explicit sign-out', date(student.LastExplicitSignOutAtUtc ?? null)],
                     [ar ? 'آخر حل' : 'Last practice', date(student.LastPracticeAt)],
                     [ar ? 'آخر اتصال' : 'Last heartbeat', date(student.LastHeartbeatAtUtc)],
                   ].map(([label, value]) => <div key={label} className="min-w-0">
@@ -163,7 +163,7 @@ export default function AdminLearnerActivityPage() {
                 <td className="p-3">{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}</td>
                 <td className="p-3">{date(student.CreatedAt)}</td>
                 <td className="p-3">{date(student.LastLoginAt)}</td>
-                 <td className="p-3">{date(student.LastExplicitSignOutAtUtc)}</td>
+                 <td className="p-3">{date(student.LastExplicitSignOutAtUtc ?? null)}</td>
                 <td className="p-3">{date(student.LastPracticeAt)}</td>
                 <td className="p-3">{date(student.LastHeartbeatAtUtc)}</td>
                 <td className="p-3 text-end font-bold tabular-nums">{n(student.Attempts)}</td>
