@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale } from 'next-intl';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { BarChart3, Download, FileText, LockKeyhole, Printer, RefreshCw } from 'lucide-react';
@@ -110,6 +111,11 @@ export default function PremiumAnalyticsPage() {
     { label: ar ? 'الإجابات الصحيحة' : 'Correct attempts', value: report.CorrectAttempts },
     { label: ar ? 'النقاط المكتسبة' : 'Earned points', value: report.AwardedPoints },
   ] : [];
+  const categoriesForChart = report
+    ? [...report.Categories].sort((a, b) => b.SolvedProblems - a.SolvedProblems)
+        .slice(0, 10)
+    : [];
+  const maxCategorySolved = Math.max(1, ...categoriesForChart.map(c => c.SolvedProblems));
   const correctness = report && report.Attempts > 0
     ? Math.round(report.CorrectAttempts / report.Attempts * 100) : 0;
 
@@ -121,6 +127,8 @@ export default function PremiumAnalyticsPage() {
           .premium-report-actions { display: none !important; }
           .premium-report-table { overflow: visible !important; }
           .premium-report-card { break-inside: avoid; box-shadow: none !important; }
+          .premium-report-chart-bar { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .premium-report-letterhead { break-after: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
       `}</style>
       <div className="premium-report-actions">
@@ -206,6 +214,22 @@ export default function PremiumAnalyticsPage() {
         </div>
       ) : (
         <>
+          <header className="premium-report-letterhead flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-card to-pink-500/10 p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <Image src="/mathworld-logo.png" alt="MathWorld" width={58} height={58}
+                className="h-14 w-14 shrink-0 object-contain" />
+              <div>
+                <strong className="block text-xl font-extrabold text-primary">MathWorld</strong>
+                <span className="text-xs text-muted-foreground">{ar ? 'منصة الرياضيات التفاعلية' : 'Interactive mathematics learning'}</span>
+              </div>
+            </div>
+            <div className="text-sm">
+              <div className="font-bold">{ar ? 'تقرير التقدم الشخصي' : 'Personal progress report'}</div>
+              <time className="text-xs text-muted-foreground" dateTime={report.GeneratedAtUtc}>
+                {formatReportDate(report.GeneratedAtUtc, ar ? 'ar' : 'en')}
+              </time>
+            </div>
+          </header>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {tiles.map(tile => (
               <section className="premium-report-card rounded-2xl border bg-card p-4 shadow-sm sm:p-5" key={tile.label}>
@@ -224,6 +248,31 @@ export default function PremiumAnalyticsPage() {
             </div>
             <strong className="text-3xl font-extrabold text-primary">{correctness}%</strong>
           </div>
+          {categoriesForChart.length > 0 && (
+            <section className="premium-report-card space-y-4 rounded-2xl border bg-card p-4 sm:p-6">
+              <h2 className="text-xl font-bold">{ar ? 'مخطط المسائل المحلولة حسب الفئة' : 'Solved questions by topic'}</h2>
+              <div className="space-y-3" role="img" aria-label={ar ? 'مخطط عدد المسائل المحلولة في الفئات' : 'Bar chart of solved questions by topic'}>
+                {categoriesForChart.map(category => (
+                  <div key={category.CategoryId} className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-3 sm:grid-cols-[minmax(9rem,1fr)_minmax(12rem,3fr)_3rem]">
+                    <span className="min-w-0 truncate text-xs font-medium sm:text-sm">
+                      {ar ? category.CategoryNameAr : category.CategoryNameEn}
+                    </span>
+                    <div className="premium-report-chart-bar h-3 overflow-hidden rounded-full bg-primary/10">
+                      <div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500"
+                        style={{ width: `${100 * category.SolvedProblems / maxCategorySolved}%` }} />
+                    </div>
+                    <span className="col-span-2 text-end text-xs font-bold tabular-nums text-primary sm:col-span-1">
+                      {category.SolvedProblems}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {report.Categories.length > 10 && <p className="text-xs text-muted-foreground">
+                {ar ? 'أعلى 10 فئات حسب عدد المسائل المحلولة. التفاصيل الكاملة بالجدول.'
+                  : 'Top 10 topics by solved questions. All topics are listed below.'}
+              </p>}
+            </section>
+          )}
           <section className="premium-report-card space-y-4 rounded-2xl border bg-card p-4 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 text-xl font-bold">
