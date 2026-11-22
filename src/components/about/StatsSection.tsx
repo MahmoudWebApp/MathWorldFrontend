@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { CircleCheckBig, Eye, FileText, Users, RefreshCw, type LucideIcon } from 'lucide-react';
+import { Shapes, BrainCircuit, FileText, Users, RefreshCw, type LucideIcon } from 'lucide-react';
 import { motion, useMotionValueEvent, useReducedMotion, useSpring } from 'framer-motion';
 
 import { useGetStatsQuery } from '@/store/api/statsApi';
@@ -103,17 +103,17 @@ export function StatsSection() {
       tone: 'secondary',
     },
     {
-      icon: CircleCheckBig,
-      value: data?.TotalSolved,
-      labelKey: 'stats.items.solutions',
-      mathSymbol: '✓',
+      icon: Shapes,
+      value: data?.TotalCategories,
+      labelKey: 'stats.items.categories',
+      mathSymbol: '△',
       tone: 'mixed',
     },
     {
-      icon: Eye,
-      value: data?.TotalViews,
-      labelKey: 'stats.items.views',
-      mathSymbol: '∞',
+      icon: BrainCircuit,
+      value: data?.TotalSkills,
+      labelKey: 'stats.items.skills',
+      mathSymbol: '∑',
       tone: 'pink',
     },
   ];
