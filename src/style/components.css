@@ -839,3 +839,16 @@
 @media (prefers-reduced-motion: reduce) {
   .math-reference-wave::before { transition: none; }
 }
+
+/* The MathWorld math motif belongs to Light Mode too, beyond the hero.
+   It stays behind the actual page content, not over text or controls. */
+html:not(.dark) .math-global-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: url('/math-pattern-light.svg') center top / 560px 380px repeat;
+  opacity: 0.40;
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 92%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 18%, black 92%);
+}
