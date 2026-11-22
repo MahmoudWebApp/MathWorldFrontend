@@ -30,6 +30,7 @@ export default function PremiumBenefitsPage() {
     { icon: GraduationCap, ar: 'مشاهدة الحل قبل إرسال الإجابة', en: 'View solutions before answering' },
     { icon: Sparkles, ar: 'تقارير وإحصائيات شخصية مع تصدير PDF وExcel (XLSX)',
       en: 'Personal analytics with PDF and native Excel (XLSX) reports' },
+    { icon: Sparkles, ar: 'تحدٍ يومي تفاعلي حتى خمس مسائل متتالية', en: 'Sequential daily challenge with up to five questions' },
     { icon: ShieldCheck, ar: 'بدون إعلانات ضمن MathWorld', en: 'Ad-free MathWorld' },
   ];
   const freeFeatures = [
