@@ -11,54 +11,13 @@ import {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
   useExportPremiumAnalyticsXlsxMutation,
-  type StudentPremiumAnalyticsReport,
 } from '@/store/api/usersApi';
-
-function csvCell(value: unknown): string {
-  let text = String(value ?? '');
-  // Protect spreadsheet software from interpreting names as formulas.
-  if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
-  return '"' + text.replace(/"/g, '""').replace(/[\r\n]/g, ' ') + '"';
-}
 
 function formatReportDate(value: string, locale: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? ''
     : new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(date);
-}
-
-function saveCsv(report: StudentPremiumAnalyticsReport) {
-  const rows: unknown[][] = [[
-    'StageId', 'CategoryId', 'StageAr', 'StageEn', 'CategoryAr', 'CategoryEn',
-    'AttemptedProblems', 'SolvedProblems', 'ErrorNotebookProblems',
-    'Attempts', 'CorrectAttempts', 'IncorrectAttempts',
-    'FirstTryCorrect', 'Points', 'TimeSpentSeconds',
-  ]];
-  report.Categories.forEach(category => rows.push([
-    category.StageId, category.CategoryId,
-    category.StageNameAr, category.StageNameEn,
-    category.CategoryNameAr, category.CategoryNameEn,
-    category.AttemptedProblems, category.SolvedProblems,
-    category.ErrorNotebookProblems, category.Attempts,
-    category.CorrectAttempts, category.IncorrectAttempts,
-    category.FirstTryCorrect, category.AwardedPoints, category.TimeSpentSeconds,
-  ]));
-  rows.push([
-    'TOTAL', '', '', '', '', '', report.AttemptedProblems, report.SolvedProblems,
-    report.Categories.reduce((sum, c) => sum + c.ErrorNotebookProblems, 0),
-    report.Attempts, report.CorrectAttempts, report.IncorrectAttempts,
-    report.FirstTryCorrect, report.AwardedPoints, report.TimeSpentSeconds,
-  ]);
-  const contents = '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
-  const blob = new Blob([contents], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = 'mathworld-personal-report.csv';
-  anchor.click();
-  // Keep the object URL alive until the browser has started the download.
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export default function PremiumAnalyticsPage() {
@@ -148,17 +107,12 @@ export default function PremiumAnalyticsPage() {
         </div>
         {report && (
           <div className="premium-report-actions flex flex-wrap gap-2">
-            <button type="button" onClick={() => saveCsv(report)}
-              className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 font-semibold hover:bg-muted">
-              <Download className="h-4 w-4" />
-              {ar ? 'تنزيل CSV (متوافق مع Excel)' : 'Download CSV (Excel-compatible)'}
-            </button>
             <button type="button" disabled={exportingXlsx}
               onClick={() => void downloadExcel()}
               className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 font-semibold hover:bg-muted disabled:opacity-50">
               <Download className="h-4 w-4" />
               {exportingXlsx ? (ar ? 'جارٍ تجهيز Excel…' : 'Preparing Excel…') :
-                (ar ? 'تنزيل Excel حقيقي (XLSX)' : 'Download Excel workbook (XLSX)')}
+                (ar ? 'تنزيل Excel' : 'Download Excel (.xlsx)')}
             </button>
             <button type="button" onClick={() => window.print()}
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground">
@@ -321,8 +275,8 @@ export default function PremiumAnalyticsPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground print:text-black">
-              {ar ? 'يمكن حفظ التقرير بصيغة PDF من نافذة الطباعة، أو تنزيل ملف Excel حقيقي بصيغة XLSX أو CSV.'
-                : 'Use the print dialog to save a PDF, or download a native Excel XLSX or CSV file.'}
+              {ar ? 'يمكن حفظ التقرير بصيغة PDF من نافذة الطباعة أو تنزيل تقرير Excel بصيغة XLSX بتنسيقات ومخططات.'
+                : 'Use the print dialog to save a PDF, or download the formatted Excel (.xlsx) report.'}
             </p>
           </section>
         </>
