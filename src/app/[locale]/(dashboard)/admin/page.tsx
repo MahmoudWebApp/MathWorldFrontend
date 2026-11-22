@@ -134,11 +134,11 @@ export default function AdminDashboardPage() {
 
       <section aria-label={ar ? 'مراكز المتابعة' : 'Monitoring pages'} className="grid gap-3 sm:grid-cols-3">
         {[
-          { href: '/admin/engagement', icon: ChartNoAxesCombined, ar: 'نشاط المستويات والفئات', en: 'Stages & categories',
+          { href: '/admin/engagement', icon: ChartNoAxesCombined, ar: 'تفاعل الطلاب حسب المراحل والفئات', en: 'Engagement by stages and topics',
             subAr: 'الأكثر حلاً، ترتيب الطلاب، ومقارنة الفئات', subEn: 'Top solvers, rankings, category usage' },
-          { href: '/admin/engagement/students', icon: UserRoundSearch, ar: 'نشاط الطلاب ودخولهم', en: 'Learner activity',
-            subAr: 'مين سجل وآخر دخول ونشاط', subEn: 'Registration, last login and activity' },
-          { href: '/admin/analytics', icon: ChartNoAxesCombined, ar: 'إحصائيات التعلم', en: 'Learning analytics',
+          { href: '/admin/engagement/students', icon: UserRoundSearch, ar: 'التسجيل والدخول وسجل الطلاب', en: 'Student accounts and sign-in log',
+            subAr: 'تسجيل جديد ودخول وخروج صريح وسجل أحداث الطالب', subEn: 'Registrations, sign-ins, explicit sign-outs and event log' },
+          { href: '/admin/analytics', icon: ChartNoAxesCombined, ar: 'تحليل التعلّم والتحصيل', en: 'Learning outcomes analytics',
             subAr: 'الطلاب الأكثر حلاً ونسب النجاح والأخطاء', subEn: 'Top solvers, success rates and mistakes' },
         ].map(item => {
           const Icon = item.icon;
