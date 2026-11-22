@@ -42,6 +42,7 @@ export interface DailyChallenge {
   StageId: number;
   Total: number;
   Completed: number;
+  Correct: number;
   Problems: Array<{
     Id: number;
     CategoryId: number;
@@ -49,6 +50,7 @@ export interface DailyChallenge {
     TitleEn: string;
     Points: number;
     IsSolved: boolean;
+    IsAnswered: boolean;
   }>;
 }
 
