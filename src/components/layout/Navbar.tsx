@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/layout/BrandLogo';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { NotificationRealtimeSync } from '@/components/layout/NotificationRealtimeSync';
 import { StudentPresenceHeartbeat } from '@/components/layout/StudentPresenceHeartbeat';
@@ -53,8 +54,9 @@ function NavbarContent() {
   const dispatch = useDispatch<AppDispatch>();
   const { resolvedTheme, setTheme } = useTheme();
 
-  const { user, isAuthenticated, isLoading, token } = useSelector((state: RootState) => state.auth);
-   const { data: subscription } = useGetStudentSubscriptionQuery(undefined, {
+  const { user, isAuthenticated, isLoading, sessionUnavailable, token } = useSelector((state: RootState) => state.auth);
+   const { data: subscription, isLoading: planLoading, isFetching: planFetching,
+     isError: planError, refetch: retryPlan } = useGetStudentSubscriptionQuery(undefined, {
     skip: !isAuthenticated || user?.Role !== 'Student',
     refetchOnMountOrArgChange: true,
   });
@@ -225,7 +227,7 @@ function NavbarContent() {
             {mounted && isAuthenticated && <NotificationBell isAuthenticated={isAuthenticated} />}
 
             {/* Auth Section */}
-            {!mounted || isLoading ? (
+            {!mounted || isLoading || sessionUnavailable ? (
               <div className="hidden h-9 w-24 animate-pulse rounded-full bg-muted md:block" />
             ) : isAuthenticated && user?.Role === 'Student' && learnerArea ? (
               <div className="hidden items-center gap-2 rounded-full border border-border px-3 py-2 text-sm font-semibold lg:flex">
@@ -340,14 +342,28 @@ function NavbarContent() {
                   {locale === 'ar' ? item.ar : item.en}
                 </Link>
               ))}
-              {learnerArea && <StudentWorkspaceNavigation isPremium={hasUpgraded} onNavigate={() => setMobileMenuOpen(false)} />}
+              {learnerArea && isAuthenticated && user?.Role === 'Student' && (
+                 planLoading || (planFetching && !subscription) ? (
+                   <MathWorldLoading compact />
+                 ) : planError || !subscription ? (
+                   <div role="alert" className="space-y-2 rounded-xl border border-destructive/20 p-3 text-sm">
+                     <p>{locale === 'ar' ? 'تعذّر التحقق من اشتراكك.' : 'Could not verify your plan.'}</p>
+                     <button type="button" onClick={() => void retryPlan()}
+                       className="font-bold text-primary underline">
+                       {locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+                     </button>
+                   </div>
+                 ) : <StudentWorkspaceNavigation isPremium={subscription.IsPremium} onNavigate={() => setMobileMenuOpen(false)} />
+               )}
               {adminArea && isAuthenticated && user?.Role === 'Admin' && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
               {(portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding} onClick={() => setMobileMenuOpen(false)}
                 className="flex min-h-11 items-center rounded-xl border border-primary/25 px-4 py-3 text-sm font-bold text-primary">
                 {portalArea ? (locale === 'ar' ? 'العودة إلى الموقع' : 'Back to website')
                   : (locale === 'ar' ? 'الذهاب إلى لوحة التحكم' : 'Go to dashboard')}
               </Link>}
-              {isAuthenticated && user ? (
+              {!mounted || isLoading || sessionUnavailable ? (
+                <MathWorldLoading compact />
+              ) : isAuthenticated && user ? (
                 <>
                   <div className="mt-2 border-t px-4 py-3 text-xs text-muted-foreground">{user.Email}</div>
                   <button type="button" onClick={() => { setMobileMenuOpen(false); void handleLogout(); }}
