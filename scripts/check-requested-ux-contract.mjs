@@ -95,6 +95,13 @@ assert.doesNotMatch(reportPage, /downloadExcelCsv|CSV بيانات خام/,
   'Only the requested Excel, PDF and Print actions may be visible.');
 assert.match(reportPage, /<MathWorldLoading compact message=\{ar/,
   'Export progress should use the unified branded loader.');
+const navbar = read('src/components/layout/Navbar.tsx');
+assert.match(navbar, /!mounted \|\| isLoading \|\| sessionUnavailable/,
+  'Navbar must not display temporary Sign in during session verification or API outage.');
+assert.match(navbar, /planError \|\| !subscription/,
+  'Mobile navigation must not infer Free permissions when subscription API fails.');
+assert.match(navbar, /<MathWorldLoading compact \/>/,
+  'Mobile navigation should reuse the approved MathWorld loader.');
 console.log('PASS: branded sitewide loaders, authenticated API state, no fake fallbacks, bilingual export dialog.');
 
 console.log('PASS: MathWorld learner/admin UX and sitewide public-catalog request-efficiency contracts');
