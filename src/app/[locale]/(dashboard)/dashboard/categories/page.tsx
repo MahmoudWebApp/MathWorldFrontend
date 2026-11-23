@@ -172,7 +172,7 @@ export default function StudentCategoriesPage() {
                       : `${category.ProblemsCount ?? 0} ${ar ? 'مسألة' : 'problems'}`}
                   </div>
                   {!locked && (
-                    <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/60 pt-4">
+                    <div className="mt-4 grid grid-cols-1 gap-2 border-t border-border/60 pt-4 sm:grid-cols-2">
                       {empty ? (
                         <span aria-disabled="true" className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-muted px-2 py-2 text-center text-xs font-bold text-muted-foreground">
                           <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
