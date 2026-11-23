@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { DirectionalChevron } from "@/components/ui/DirectionalNavigation";
+import { MathWorldLoading } from "@/components/ui/MathWorldLoading";
 import {
   useGetAdminStagesQuery,
   useCreateStageMutation,
@@ -21,7 +22,7 @@ import { StageIconBadge } from "@/components/stages/StageIconBadge";
 export default function AdminStagesPage() {
   const t = useTranslations();
   const ar = useLocale() === "ar";
-  const { data: stages, isLoading, refetch } = useGetAdminStagesQuery();
+  const { data: stages, isLoading, isError, refetch } = useGetAdminStagesQuery();
   const [createStage] = useCreateStageMutation();
   const [updateStage] = useUpdateStageMutation();
   const [deleteStage] = useDeleteStageMutation();
@@ -112,6 +113,7 @@ export default function AdminStagesPage() {
   if (isLoading)
     return (
       <div role="status" aria-busy="true" aria-label={t("common.loading")} className="container mx-auto animate-pulse px-4 py-8 md:px-16 lg:px-24">
+        <MathWorldLoading compact />
         <div className="mb-6 h-9 w-48 rounded-xl bg-muted/70" />
         <div className="grid gap-4 sm:grid-cols-2">
           {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-56 rounded-2xl border border-border/60 bg-card/70 p-5">
@@ -121,6 +123,18 @@ export default function AdminStagesPage() {
         </div>
       </div>
     );
+
+  if (isError || !stages) return (
+    <main role="alert" className="mx-auto max-w-2xl px-4 py-12">
+      <div className="space-y-4 rounded-2xl border border-destructive/25 bg-card p-6">
+        <h1 className="text-xl font-bold">{ar ? "تعذّر تحميل المراحل" : "Could not load stages"}</h1>
+        <button type="button" onClick={() => void refetch()}
+          className="rounded-xl bg-primary px-5 py-2.5 font-semibold text-primary-foreground">
+          {ar ? "إعادة المحاولة" : "Retry"}
+        </button>
+      </div>
+    </main>
+  );
 
   return (
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">

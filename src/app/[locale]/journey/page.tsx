@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
@@ -41,7 +42,7 @@ export default function JourneyPage() {
     <main className="container mx-auto max-w-5xl px-4 py-12" dir={ar ? 'rtl' : 'ltr'}>
       <h1 className="mb-3 text-3xl font-bold">{ar ? 'رحلتي في الرياضيات' : 'My mathematics journey'}</h1>
       {!student && <p>{ar ? 'سجّل الدخول كطالب لمتابعة رحلتك.' : 'Sign in as a student to view your journey.'}</p>}
-      {student && isLoading && <p role="status">{ar ? 'جاري تحميل التقدم…' : 'Loading progress…'}</p>}
+      {student && isLoading && <MathWorldLoading compact skeleton />}
       {student && isError && <div role="alert" className="space-y-3">
         <p>{ar ? 'تعذّر تحميل الرحلة. تأكد من اختيار المرحلة التعليمية.' : 'Unable to load your journey. Choose a learning stage first.'}</p>
         <button type="button" onClick={() => void refetch()} className="rounded-lg border px-4 py-2">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
@@ -70,9 +71,7 @@ export default function JourneyPage() {
                 {daily.data.Completed} / {daily.data.Total}
               </span>}
             </div>
-            {daily.isLoading && <p role="status" className="text-sm text-muted-foreground">
-              {ar ? 'جارٍ تجهيز مسائل اليوم…' : "Loading today's practice…"}
-            </p>}
+            {daily.isLoading && <MathWorldLoading compact />}
             {daily.isError && <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
               <p>{ar ? 'تعذّر تحميل مسائل اليوم.' : "Couldn't load today's questions."}</p>
               <button type="button" onClick={() => void daily.refetch()}

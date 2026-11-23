@@ -6,6 +6,7 @@ import { ThemeProvider } from 'next-themes';
 import { NextIntlClientProvider, type AbstractIntlMessages } from 'next-intl';
 import { store } from '@/store';
 import { AuthProvider } from './AuthProvider';
+import { AuthHydrationGate } from './AuthHydrationGate';
 import { useLocale } from 'next-intl';
 import { setLocale } from '@/store/slices/localeSlice';
 import { TooltipProvider } from '@/components/ui/Tooltip';
@@ -44,7 +45,7 @@ export function Providers({ children, locale, messages, timeZone }: ProvidersPro
             <TooltipProvider delayDuration={200} skipDelayDuration={0}>
               <LocaleSync>
                 <div className="w-full">
-                  {children}
+                  <AuthHydrationGate>{children}</AuthHydrationGate>
                 </div>
               </LocaleSync>
             </TooltipProvider>

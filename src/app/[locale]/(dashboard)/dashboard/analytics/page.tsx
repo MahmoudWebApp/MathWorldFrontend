@@ -3,11 +3,11 @@
 import { useLocale } from 'next-intl';
 import { BrandLogo } from '@/components/layout/BrandLogo';
 import { useState } from 'react';
-import { flushSync } from 'react-dom';
 import { useSelector } from 'react-redux';
 import { BarChart3, FileDown, FileSpreadsheet, FileText, LockKeyhole, Printer, RefreshCw, X } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
@@ -25,14 +25,14 @@ function formatReportDate(value: string, locale: string): string {
 export default function PremiumAnalyticsPage() {
   const locale = useLocale();
   const ar = locale === 'ar';
-  const [reportLanguage, setReportLanguage] = useState<'ar' | 'en'>(ar ? 'ar' : 'en');
-  const reportAr = reportLanguage === 'ar';
+  // Export language must never alter the language or direction of this page.
+  const reportAr = ar;
   const [pendingExport, setPendingExport] = useState<'excel' | 'pdf' | 'print' | null>(null);
   const isStudent = useSelector(
     (state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
       state.auth.isAuthenticated && state.auth.user?.Role === 'Student',
   );
-  const { data: entitlement, isLoading: loadingEntitlement, isError: entitlementError,
+  const { data: entitlement, isLoading: loadingEntitlement, isFetching: fetchingEntitlement, isError: entitlementError,
     refetch: refetchEntitlement } = useGetStudentEntitlementQuery(undefined, { skip: !isStudent });
   const premium = entitlement?.IsPremium === true;
   const [exportXlsx, { isLoading: exportingXlsx }] =
@@ -40,6 +40,7 @@ export default function PremiumAnalyticsPage() {
   const [exportPdf, { isLoading: exportingPdf }] =
     useExportPremiumAnalyticsPdfMutation();
   const [downloadError, setDownloadError] = useState(false);
+  const [preparingExport, setPreparingExport] = useState(false);
 
   const saveReportFile = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
@@ -56,55 +57,100 @@ export default function PremiumAnalyticsPage() {
     }
   };
 
-  const downloadExcel = async (language: 'ar' | 'en') => {
-    setDownloadError(false);
-    try {
-      const blob = await exportXlsx(language).unwrap();
-      if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
-        !blob.type.toLowerCase().includes('spreadsheetml.sheet')) {
-        throw new Error('Invalid XLSX response');
-      }
-      // Reject an HTTP error page disguised as .xlsx before saving.
-      const signature = new Uint8Array(await blob.slice(0, 4).arrayBuffer());
-      if (signature[0] !== 0x50 || signature[1] !== 0x4b ||
-        signature[2] !== 0x03 || signature[3] !== 0x04) {
-        throw new Error('Invalid XLSX ZIP signature');
-      }
-      saveReportFile(blob, `mathworld-premium-analytics-${language}.xlsx`);
-    } catch {
-      setDownloadError(true);
+  const getExcelBlob = async (language: 'ar' | 'en'): Promise<Blob> => {
+    const blob = await exportXlsx(language).unwrap();
+    if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
+      !blob.type.toLowerCase().includes('spreadsheetml.sheet')) {
+      throw new Error('Invalid XLSX response');
     }
+    const signature = new Uint8Array(await blob.slice(0, 4).arrayBuffer());
+    if (signature[0] !== 0x50 || signature[1] !== 0x4b ||
+      signature[2] !== 0x03 || signature[3] !== 0x04) {
+      throw new Error('Invalid XLSX ZIP signature');
+    }
+    return blob;
   };
 
-  const downloadPdf = async (language: 'ar' | 'en') => {
-    setDownloadError(false);
-    try {
-      const blob = await exportPdf(language).unwrap();
-      if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
-        !blob.type.toLowerCase().includes('application/pdf')) {
-        throw new Error('Invalid PDF response');
-      }
-      const signature = new TextDecoder('ascii').decode(
-        await blob.slice(0, 5).arrayBuffer());
-      if (signature !== '%PDF-') throw new Error('Invalid PDF signature');
-      saveReportFile(blob, `mathworld-premium-analytics-${language}.pdf`);
-    } catch {
-      setDownloadError(true);
+  const getPdfBlob = async (language: 'ar' | 'en'): Promise<Blob> => {
+    const blob = await exportPdf(language).unwrap();
+    if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
+      !blob.type.toLowerCase().includes('application/pdf')) {
+      throw new Error('Invalid PDF response');
     }
+    const signature = new TextDecoder('ascii').decode(await blob.slice(0, 5).arrayBuffer());
+    if (signature !== '%PDF-') throw new Error('Invalid PDF signature');
+    return blob;
   };
 
-  // The user explicitly chooses an export language after clicking one of
-  // the three actions; never show a permanent dropdown or CSV action.
-  const confirmReportLanguage = (language: 'ar' | 'en') => {
+  // Print the actual selected-language PDF, not the onscreen page.
+  // This keeps the page language and RTL/LTR direction completely untouched.
+  const printPdfBlob = (blob: Blob): Promise<void> => new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const frame = document.createElement('iframe');
+    frame.title = 'MathWorld report print';
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText = 'position:fixed;width:1px;height:1px;left:-9999px;top:0;border:0';
+    let started = false;
+    const cleanup = () => {
+      frame.remove();
+      URL.revokeObjectURL(url);
+    };
+    const timeout = window.setTimeout(() => {
+      if (!started) { cleanup(); reject(new Error('Print preview timed out')); }
+    }, 20000);
+    frame.addEventListener('load', () => {
+      if (started) return;
+      started = true;
+      window.clearTimeout(timeout);
+      try {
+        frame.contentWindow?.focus();
+        if (!frame.contentWindow) throw new Error('Print frame unavailable');
+        frame.contentWindow.print();
+        // Keep the PDF alive while the native print dialog is open.
+        window.setTimeout(cleanup, 90000);
+        resolve();
+      } catch (error) {
+        cleanup();
+        reject(error);
+      }
+    }, { once: true });
+    frame.addEventListener('error', () => {
+      window.clearTimeout(timeout);
+      cleanup();
+      reject(new Error('Could not load print preview'));
+    }, { once: true });
+    document.body.appendChild(frame);
+    frame.src = url;
+  });
+
+  const openReportAction = (action: 'excel' | 'pdf' | 'print') => {
+    if (preparingExport) return;
+    setDownloadError(false);
+    setPendingExport(action);
+  };
+
+  const confirmReportLanguage = async (language: 'ar' | 'en') => {
     const action = pendingExport;
-    // Commit the printable report language before invoking the browser dialog.
-    flushSync(() => {
-      setReportLanguage(language);
+    if (!action || preparingExport) return;
+    setPreparingExport(true);
+    setDownloadError(false);
+    try {
+      if (action === 'excel') {
+        const blob = await getExcelBlob(language);
+        saveReportFile(blob, `mathworld-premium-analytics-${language}.xlsx`);
+      } else {
+        const blob = await getPdfBlob(language);
+        if (action === 'print') await printPdfBlob(blob);
+        else saveReportFile(blob, `mathworld-premium-analytics-${language}.pdf`);
+      }
+      // Close only after the file has been produced and download/print started.
       setPendingExport(null);
-    });
-    if (action === 'excel') void downloadExcel(language);
-    if (action === 'pdf') void downloadPdf(language);
-    if (action === 'print') window.print();
+    } catch {
+      // Preserve the modal so the user can retry another language.
+      setDownloadError(true);
+    } finally {
+      setPreparingExport(false);
+    }
   };
 
   const { data: report, isLoading, isError, refetch } = useGetPremiumAnalyticsQuery(undefined, {
@@ -158,19 +204,19 @@ export default function PremiumAnalyticsPage() {
         {report && (
           <div className="premium-report-actions flex flex-wrap items-center gap-2">
             <button type="button" disabled={exportingXlsx || exportingPdf}
-              onClick={() => setPendingExport('excel')}
+              onClick={() => openReportAction('excel')}
               className="inline-flex min-h-11 min-w-32 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50">
               <FileSpreadsheet className="h-[18px] w-[18px]" aria-hidden="true" />
               {exportingXlsx ? (ar ? 'جارٍ التحميل…' : 'Downloading…') : (ar ? 'تحميل Excel' : 'Download Excel')}
             </button>
             <button type="button" disabled={exportingXlsx || exportingPdf}
-              onClick={() => setPendingExport('pdf')}
+              onClick={() => openReportAction('pdf')}
               className="inline-flex min-h-11 min-w-32 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50">
               <FileDown className="h-[18px] w-[18px]" aria-hidden="true" />
               {exportingPdf ? (ar ? 'جارٍ التحميل…' : 'Downloading…') : (ar ? 'تحميل PDF' : 'Download PDF')}
             </button>
             <button type="button" disabled={exportingXlsx || exportingPdf}
-              onClick={() => setPendingExport('print')}
+              onClick={() => openReportAction('print')}
               className="inline-flex min-h-11 min-w-32 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50">
               <Printer className="h-[18px] w-[18px]" aria-hidden="true" />
               {ar ? 'طباعة' : 'Print'}
@@ -179,7 +225,7 @@ export default function PremiumAnalyticsPage() {
         )}
       </div>
 
-      {downloadError && (
+      {downloadError && !pendingExport && (
         <div role="alert" className="premium-report-actions rounded-xl border border-destructive/30 p-3 text-sm text-destructive">
           {ar ? 'تعذّر تنزيل التقرير. تحقق من اشتراك Premium واتصال الإنترنت.'
             : 'Download failed. Check Premium access and your connection.'}
@@ -190,9 +236,9 @@ export default function PremiumAnalyticsPage() {
           <p className="mb-3">{ar ? 'سجّل الدخول بحساب طالب لعرض التقرير.' : 'Sign in with a student account to view the report.'}</p>
           <Link href="/login" className="font-semibold text-primary underline">{ar ? 'تسجيل الدخول' : 'Sign in'}</Link>
         </div>
-      ) : loadingEntitlement ? (
-        <p role="status" className="py-10 text-center">{ar ? 'جارٍ التحقق من اشتراكك…' : 'Checking Premium access…'}</p>
-      ) : entitlementError ? (
+      ) : loadingEntitlement || (fetchingEntitlement && !entitlement) ? (
+        <MathWorldLoading compact />
+      ) : entitlementError || !entitlement ? (
         <div role="alert" className="premium-report-actions space-y-3 rounded-2xl border p-6">
           <p>{ar ? 'تعذّر التحقق من صلاحية اشتراكك.' : 'Subscription verification failed.'}</p>
           <button onClick={() => void refetchEntitlement()} className="font-semibold text-primary">
@@ -215,6 +261,7 @@ export default function PremiumAnalyticsPage() {
         </div>
       ) : isLoading ? (
         <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ إعداد التقرير' : 'Preparing report'} className="animate-pulse space-y-4">
+          <MathWorldLoading compact />
           <div className="h-28 rounded-2xl border border-border/60 bg-card/70" />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-32 rounded-2xl bg-muted/70" />)}
@@ -343,30 +390,43 @@ export default function PremiumAnalyticsPage() {
       )}
       {pendingExport && (
         <div className="premium-report-actions fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4"
-          onMouseDown={(event) => { if (event.target === event.currentTarget) setPendingExport(null); }}>
+          onMouseDown={(event) => { if (!preparingExport && event.target === event.currentTarget) setPendingExport(null); }}>
           <div role="dialog" aria-modal="true" aria-labelledby="report-language-title"
             className="w-full max-w-sm rounded-2xl border border-primary/20 bg-card p-6 shadow-2xl"
-            onKeyDown={(event) => { if (event.key === 'Escape') setPendingExport(null); }}>
+            onKeyDown={(event) => { if (!preparingExport && event.key === 'Escape') setPendingExport(null); }}>
             <div className="mb-5 flex items-center justify-between gap-3">
               <h2 id="report-language-title" className="text-lg font-bold">
                 {ar ? 'اختر لغة التقرير' : 'Choose report language'}
               </h2>
               <button type="button" aria-label={ar ? 'إغلاق' : 'Close'}
-                onClick={() => setPendingExport(null)}
+                onClick={() => setPendingExport(null)} disabled={preparingExport}
                 className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => confirmReportLanguage('ar')}
-                className="min-h-12 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90">
-                العربية
-              </button>
-              <button type="button" onClick={() => confirmReportLanguage('en')}
-                className="min-h-12 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90">
-                English
-              </button>
-            </div>
+            {preparingExport ? (
+              <MathWorldLoading compact message={ar
+                ? (pendingExport === 'print' ? 'جاري تجهيز الطباعة…' : 'جاري تجهيز الملف…')
+                : (pendingExport === 'print' ? 'Preparing print preview…' : 'Preparing your file…')} />
+            ) : (
+              <>
+                {downloadError && (
+                  <p role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                    {ar ? 'تعذّر تجهيز الملف. حاول مرة ثانية.' : 'Could not prepare the file. Please retry.'}
+                  </p>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <button type="button" onClick={() => void confirmReportLanguage('ar')}
+                    className="min-h-12 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90">
+                    العربية
+                  </button>
+                  <button type="button" onClick={() => void confirmReportLanguage('en')}
+                    className="min-h-12 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90">
+                    English
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

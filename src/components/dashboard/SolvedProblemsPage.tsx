@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetSolvedProblemsQuery } from '@/store/api/usersApi';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -20,19 +21,19 @@ export function SolvedProblemsPage() {
     setMounted(true);
   }, []);
 
-  const { data: solvedProblems, isLoading, error } = useGetSolvedProblemsQuery(locale, {
+  const { data: solvedProblems, isLoading, error, refetch } = useGetSolvedProblemsQuery(locale, {
     refetchOnMountOrArgChange: 45,
   });
 
   const totalCount = solvedProblems?.length ?? 0;
 
-  if (error) {
+  if (error || (!isLoading && !solvedProblems)) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-red-500 dark:text-red-400 py-20">
           <AlertCircle className="h-12 w-12" />
           <p className="text-lg font-medium">{t('common.errorLoadingData')}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
+          <Button onClick={() => void refetch()} variant="outline">
             {t('common.retry')}
           </Button>
         </div>
@@ -80,6 +81,7 @@ export function SolvedProblemsPage() {
       {/* Problems List */}
       {isLoading ? (
         <div className="space-y-4">
+          <MathWorldLoading compact />
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-32 bg-muted/50 animate-pulse rounded-xl" />
           ))}

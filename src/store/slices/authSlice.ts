@@ -7,13 +7,15 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  sessionUnavailable: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: true, 
+  isLoading: true,
+  sessionUnavailable: false,
 };
 
 const authSlice = createSlice({
@@ -28,6 +30,7 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.isAuthenticated = true;
       state.isLoading = false;
+      state.sessionUnavailable = false;
     },
     
     logout: (state) => {
@@ -35,10 +38,16 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.isLoading = false;
+      state.sessionUnavailable = false;
     },
     
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
+      if (action.payload) state.sessionUnavailable = false;
+    },
+    sessionConnectionFailed: (state) => {
+      state.isLoading = false;
+      state.sessionUnavailable = !state.isAuthenticated;
     },
     
     restoreSession: (state, action: PayloadAction<{ user: User; token: string }>) => {
@@ -46,9 +55,10 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.isAuthenticated = true;
       state.isLoading = false;
+      state.sessionUnavailable = false;
     },
   },
 });
 
-export const { setCredentials, logout, setLoading, restoreSession } = authSlice.actions;
+export const { setCredentials, logout, setLoading, restoreSession, sessionConnectionFailed } = authSlice.actions;
 export default authSlice.reducer;

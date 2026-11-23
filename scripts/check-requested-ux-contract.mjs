@@ -59,4 +59,42 @@ assert.match(problemList, /useGetCategoriesQuery\(locale, \{ refetchOnMountOrArg
 assert.match(problemList, /useGetStagesQuery\(locale, \{ refetchOnMountOrArgChange: 120 \}\)/,
   'Problem browsing must not re-request stages on each mount');
 
+// Global loading/auth + report export behavior regression contracts.
+const brandedLoader = read('src/components/ui/MathWorldLoading.tsx');
+const routeLoader = read('src/app/[locale]/loading.tsx');
+const sessionGate = read('src/components/providers/AuthHydrationGate.tsx');
+const providers = read('src/components/providers/Providers.tsx');
+const authState = read('src/store/slices/authSlice.ts');
+const reportPage = read('src/app/[locale]/(dashboard)/dashboard/analytics/page.tsx');
+const homePage = read('src/app/[locale]/(dashboard)/dashboard/page.tsx');
+const studentShell = read('src/components/dashboard/StudentWorkspaceShell.tsx');
+assert.match(brandedLoader, /<BrandMark/, 'Loading animation must use the approved MathWorld mark.');
+assert.match(brandedLoader, /motion-reduce:animate-none/, 'Loader must honor reduced motion.');
+assert.match(routeLoader, /<MathWorldLoading skeleton/, 'Route loading must reuse the same branded skeleton.');
+assert.match(providers, /<AuthHydrationGate>\{children\}<\/AuthHydrationGate>/,
+  'Account pages must wait for verified authentication.');
+assert.match(sessionGate, /\/dashboard/);
+assert.match(sessionGate, /\/admin/);
+assert.match(sessionGate, /\/journey/);
+assert.match(authState, /sessionUnavailable/, 'Network outage must not be treated as logout.');
+assert.match(auth, /sessionConnectionFailed\(\)/,
+  'A profile API failure must not trigger fake sign-in.');
+assert.match(studentShell, /membershipError \|\| !subscription/,
+  'Unknown subscription access cannot be silently treated as Free.');
+assert.match(homePage, /progressError \|\| !journey \|\| planError \|\| !subscription/,
+  'Home must not display invented zero progress or Free access on failed APIs.');
+assert.match(reportPage, /const reportAr = ar/,
+  'Choosing an export language must not change the current page language.');
+assert.doesNotMatch(reportPage, /setReportLanguage|flushSync/,
+  'Export language must not mutate the screen locale.');
+assert.match(reportPage, /if \(action === 'print'\) await printPdfBlob\(blob\)/,
+  'Printing must use the selected-language PDF without switching screen language.');
+assert.match(reportPage, /setPreparingExport\(true\)/,
+  'The export dialog must remain open while the file is being prepared.');
+assert.doesNotMatch(reportPage, /downloadExcelCsv|CSV بيانات خام/,
+  'Only the requested Excel, PDF and Print actions may be visible.');
+assert.match(reportPage, /<MathWorldLoading compact message=\{ar/,
+  'Export progress should use the unified branded loader.');
+console.log('PASS: branded sitewide loaders, authenticated API state, no fake fallbacks, bilingual export dialog.');
+
 console.log('PASS: MathWorld learner/admin UX and sitewide public-catalog request-efficiency contracts');

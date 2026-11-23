@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
@@ -59,12 +60,13 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      {isError ? <div role="alert" className="rounded-2xl border p-6">
+      {isError || (!isFetching && !data) ? <div role="alert" className="rounded-2xl border p-6">
         {ar ? 'تعذّر جلب نشاط المنصة.' : 'Unable to load platform activity.'}
         <button type="button" onClick={() => void refetch()} className="ms-3 font-bold text-primary underline">
           {ar ? 'إعادة المحاولة' : 'Retry'}
         </button>
       </div> : !data ? <div role="status" aria-busy="true" aria-label={ar ? 'تحميل إحصائيات الإدارة' : 'Loading admin analytics'} className="space-y-4 animate-pulse">
+        <MathWorldLoading compact />
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 4 }, (_, i) => <div key={i} className="h-36 rounded-2xl bg-muted/60" />)}</div>
         <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]"><div className="h-72 rounded-3xl bg-muted/60" /><div className="h-72 rounded-3xl bg-muted/60" /></div>
       </div> : <>

@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
 import { useState } from 'react';
 import Image from 'next/image';
@@ -94,6 +95,7 @@ export default function StudentCategoriesPage() {
       {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
       {loading ? (
         <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ تحميل فئات مرحلتك' : 'Loading your topics'} className="grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="col-span-full"><MathWorldLoading compact /></div>
           {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-52 rounded-3xl border border-border/70 bg-card/70 p-5">
             <div className="h-10 w-10 rounded-xl bg-muted/70" />
             <div className="mt-4 h-6 w-2/3 rounded bg-muted/70" />

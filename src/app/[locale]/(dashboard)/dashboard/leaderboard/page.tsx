@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
@@ -74,7 +75,7 @@ export default function StudentLeaderboardPage() {
           <Link href="/login" className="font-semibold text-primary underline">{ar ? 'تسجيل الدخول' : 'Sign in'}</Link>
         </section>
       ) : loadingStage ? (
-        <p role="status" className="py-12 text-center text-muted-foreground">{ar ? 'جارٍ جلب مرحلتك…' : 'Loading your stage…'}</p>
+        <MathWorldLoading compact />
       ) : stageError ? (
         <section role="alert" className="rounded-2xl border p-6">
           <AlertCircle className="mb-2 h-6 w-6 text-destructive" />
@@ -112,7 +113,7 @@ export default function StudentLeaderboardPage() {
           </section>
 
           {isLoading || (isFetching && !data) ? (
-            <p role="status" className="py-12 text-center text-muted-foreground">{ar ? 'جارٍ جلب الترتيب…' : 'Loading rankings…'}</p>
+            <MathWorldLoading compact />
           ) : isError || !data ? (
             <section role="alert" className="space-y-3 rounded-2xl border p-6">
               <p className="text-destructive">{ar ? 'تعذّر جلب الترتيب.' : 'Could not load rankings.'}</p>

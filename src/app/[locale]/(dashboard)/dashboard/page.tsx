@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
@@ -23,7 +24,7 @@ export default function UserDashboardPage() {
   const { data: journey, isLoading: journeyLoading, isError: progressError, refetch: reloadProgress } = useGetLearningJourneyQuery(stageId, {
     skip: stageId <= 0,
   });
-  const { data: subscription, isLoading: planLoading } = useGetStudentSubscriptionQuery(undefined, {
+  const { data: subscription, isLoading: planLoading, isError: planError, refetch: reloadPlan } = useGetStudentSubscriptionQuery(undefined, {
     skip: dashboard?.Role !== 'Student',
   });
   const accent = getStageAccent({ Id: stageId, NameAr: journey?.NameAr, NameEn: journey?.NameEn });
@@ -41,7 +42,7 @@ export default function UserDashboardPage() {
     }
   }, [dashboard, isLoading, isError, router]);
 
-  if (isError && !dashboard) {
+  if (!isLoading && (isError || !dashboard)) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-12">
         <div className="rounded-3xl border bg-card p-6">
@@ -61,10 +62,34 @@ export default function UserDashboardPage() {
   if (isLoading || (dashboard?.Role === 'Student' && stageId > 0 &&
       (journeyLoading || planLoading))) {
     return <main className="mx-auto w-full max-w-7xl animate-pulse space-y-5 px-4 py-6 sm:px-6" aria-busy="true">
+      <MathWorldLoading compact />
       <div className="h-9 w-48 rounded-xl bg-muted" />
       <div className="h-52 rounded-3xl border bg-card/75" />
       <div className="grid gap-4 lg:grid-cols-2"><div className="h-72 rounded-3xl border bg-card/75" /><div className="h-72 rounded-3xl border bg-card/75" /></div>
     </main>;
+  }
+
+  // A failed/empty API response is unknown, not a zero-progress or Free user.
+  if (dashboard?.Role === 'Student' && stageId > 0 &&
+      (progressError || !journey || planError || !subscription)) {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-12">
+        <section role="alert" className="space-y-4 rounded-3xl border border-destructive/25 bg-card p-6">
+          <h1 className="text-xl font-extrabold">
+            {ar ? 'تعذّر التحقق من التقدم أو الاشتراك' : 'Could not verify your progress or subscription'}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {ar ? 'ما رح نعرض إحصائيات أو صلاحيات افتراضية. حاول تحميل بياناتك مجدداً.'
+              : 'No placeholder statistics or account permissions are shown. Retry loading your data.'}
+          </p>
+          <button type="button" onClick={() => {
+              void reloadProgress(); void reloadPlan();
+            }} className="rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground">
+            {ar ? 'إعادة المحاولة' : 'Retry'}
+          </button>
+        </section>
+      </main>
+    );
   }
 
   const completion = Math.min(100, Math.max(0, journey?.CompletionPercent ?? 0));
@@ -89,7 +114,7 @@ export default function UserDashboardPage() {
           <div>
             <p className="text-sm font-semibold text-muted-foreground">{ar ? 'تقدّمك في المرحلة' : 'Your stage progress'}</p>
             <h2 className="mt-1 text-xl font-extrabold" style={{ color: accent }}>
-              {(ar ? journey?.NameAr : journey?.NameEn) || (ar ? 'مرحلتك التعليمية' : 'Your learning stage')}
+              {(ar ? journey?.NameAr : journey?.NameEn) || '—'}
             </h2>
           </div>
           <strong className="text-3xl font-black tabular-nums" style={{ color: accent }}>{journey ? `${completion}%` : '—'}</strong>

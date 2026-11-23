@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
@@ -57,6 +58,7 @@ export default function DailyChallengePage() {
 
       {loading && <div role="status" aria-busy="true" aria-label={ar ? 'تحميل تحدي اليوم' : 'Loading daily challenge'}
         className="animate-pulse space-y-4">
+        <MathWorldLoading compact />
         <div className="h-32 rounded-2xl bg-muted/70" />
         <div className="grid grid-cols-5 gap-2">{Array.from({ length: 5 }, (_, i) =>
           <div key={i} className="h-16 rounded-xl bg-muted/60" />)}</div>
