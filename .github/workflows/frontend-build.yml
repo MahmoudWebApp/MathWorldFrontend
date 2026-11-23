@@ -29,6 +29,14 @@ jobs:
         with:
           node-version: '20'
           cache: pnpm
+      - name: Verify single package-manager lockfile
+        shell: bash
+        run: |
+          test -f pnpm-lock.yaml
+          if test -e package-lock.json || test -e yarn.lock; then
+            echo "Only pnpm-lock.yaml may be committed" >&2
+            exit 1
+          fi
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Typecheck
