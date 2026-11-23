@@ -21,7 +21,7 @@ export default function AdminAnalyticsPage() {
   const [days, setDays] = useState<(typeof periods)[number]>(30);
   const [chosenStage, setChosenStage] = useState<number | null>(null);
   const { data: overview, isLoading, isError, refetch } =
-    useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: true });
+    useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: 60 });
   const stageId = chosenStage ?? overview?.Stages[0]?.StageId ?? 0;
   const { data: detail, isLoading: loadingDetail, isError: detailError } =
     useGetAdminAnalyticsStageQuery({ stageId, days }, {
@@ -84,7 +84,7 @@ export default function AdminAnalyticsPage() {
   const displayStage = (stage: AdminStageAnalytics) => isArabic ? stage.NameAr : stage.NameEn;
   const activity = detail?.DailyActivity.map((day) => ({
     label: new Date(day.DayUtc).toLocaleDateString(isArabic ? 'ar' : 'en', {
-      month: 'short', day: 'numeric', timeZone: 'UTC',
+      day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
     }),
     attempts: day.Attempts,
     correct: day.CorrectAttempts,
@@ -130,9 +130,14 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {isLoading ? (
-        <p role="status" className="math-card rounded-2xl border border-border p-8 text-center">
-          {labels.loading}
-        </p>
+        <div role="status" aria-busy="true" aria-label={labels.loading} className="animate-pulse space-y-5">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+            {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-28 rounded-2xl bg-muted/60" />)}
+          </div>
+          <div className="grid gap-5 xl:grid-cols-2">
+            <div className="h-80 rounded-2xl bg-muted/60" /><div className="h-80 rounded-2xl bg-muted/60" />
+          </div>
+        </div>
       ) : isError || !overview ? (
         <div role="alert" className="math-card rounded-2xl border border-destructive/30 p-8">
           <p>{labels.error}</p>
@@ -233,7 +238,9 @@ export default function AdminAnalyticsPage() {
           </section>
 
           {loadingDetail ? (
-            <div role="status" className="math-card rounded-2xl border border-border p-10 text-center">{labels.loading}</div>
+            <div role="status" aria-busy="true" aria-label={labels.loading} className="grid animate-pulse gap-4 lg:grid-cols-2">
+              <div className="h-72 rounded-2xl bg-muted/60" /><div className="h-72 rounded-2xl bg-muted/60" />
+            </div>
           ) : detailError || !detail ? (
             <p role="alert" className="math-card rounded-2xl border border-destructive/30 p-6">{labels.error}</p>
           ) : (
