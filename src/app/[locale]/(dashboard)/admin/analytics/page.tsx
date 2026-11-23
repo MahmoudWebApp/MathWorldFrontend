@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
@@ -131,6 +132,7 @@ export default function AdminAnalyticsPage() {
 
       {isLoading ? (
         <div role="status" aria-busy="true" aria-label={labels.loading} className="animate-pulse space-y-5">
+          <MathWorldLoading compact />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
             {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-28 rounded-2xl bg-muted/60" />)}
           </div>
