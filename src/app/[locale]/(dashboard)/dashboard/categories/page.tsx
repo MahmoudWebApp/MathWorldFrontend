@@ -85,7 +85,14 @@ export default function StudentCategoriesPage() {
       )}
       {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
       {loading ? (
-        <p role="status" className="rounded-2xl border p-8 text-center text-muted-foreground">{ar ? 'جارٍ تحميل فئات مرحلتك…' : 'Loading your stage topics…'}</p>
+        <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ تحميل فئات مرحلتك' : 'Loading your topics'} className="grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-52 rounded-3xl border border-border/70 bg-card/70 p-5">
+            <div className="h-10 w-10 rounded-xl bg-muted/70" />
+            <div className="mt-4 h-6 w-2/3 rounded bg-muted/70" />
+            <div className="mt-4 h-4 w-full rounded bg-muted/60" />
+            <div className="mt-2 h-4 w-3/4 rounded bg-muted/60" />
+          </div>)}
+        </div>
       ) : failed ? (
         <div role="alert" className="rounded-2xl border border-destructive/30 p-6">
           <p>{ar ? 'تعذّر تحميل الفئات أو صلاحيات الحساب.' : 'Could not load topics or subscription access.'}</p>
