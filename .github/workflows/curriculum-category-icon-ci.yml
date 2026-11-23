@@ -1,0 +1,26 @@
+name: New MathWorld curriculum category icon integrity
+on:
+  pull_request:
+    paths:
+      - 'public/category-icons/**'
+      - 'tools/check_new_curriculum_category_icons.py'
+      - '.github/workflows/curriculum-category-icon-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'public/category-icons/**'
+      - 'tools/check_new_curriculum_category_icons.py'
+      - '.github/workflows/curriculum-category-icon-ci.yml'
+permissions:
+  contents: read
+jobs:
+  curriculum-icons:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate the eleven MathWorld curriculum category SVG icons
+        run: python tools/check_new_curriculum_category_icons.py
