@@ -4,6 +4,7 @@ import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 import { useGetSocialLinkStatusQuery } from '@/store/api/authApi';
 
@@ -31,7 +32,7 @@ export default function SocialAccountsPage() {
   const withinSettings = usePathname() === '/dashboard/settings';
   const copy = locale === 'en' ? localized.en : localized.ar;
   const enabled = process.env.NEXT_PUBLIC_SOCIAL_LOGIN_ENABLED === 'true';
-  const { data: linkStatus, isLoading: checkingLink } = useGetSocialLinkStatusQuery(undefined, {
+  const { data: linkStatus, isLoading: checkingLink, isError: linkError, refetch: retryLink } = useGetSocialLinkStatusQuery(undefined, {
     skip: !enabled,
     refetchOnMountOrArgChange: true,
   });
@@ -65,13 +66,23 @@ export default function SocialAccountsPage() {
           </div>
         </div>
         {enabled ? (
-          alreadyLinked ? (
+          checkingLink ? <MathWorldLoading compact /> :
+          linkError || !linkStatus ? (
+            <div role="alert" className="mt-6 space-y-3 rounded-xl border border-destructive/25 bg-card p-4">
+              <p>{locale === 'ar' ? 'تعذّر التحقق من ربط Google. ما رح نظهر زر الربط قبل التأكد من حالة حسابك.'
+                : 'Google link status could not be verified. The connect action is hidden until verified.'}</p>
+              <button type="button" onClick={() => void retryLink()}
+                className="rounded-xl bg-primary px-4 py-2 font-semibold text-primary-foreground">
+                {locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+              </button>
+            </div>
+          ) : alreadyLinked ? (
             <p role="status" className="mt-6 text-sm text-muted-foreground">
               {locale === 'ar' ? 'حسابك مرتبط بـ Google.' : 'Your Google account is connected.'}
             </p>
           ) : (
             <div className="mt-6">
-              {!checkingLink && <h2 className="text-gradient-math text-lg font-bold">{locale === 'ar' ? 'ربط حساب Google' : 'Connect your Google account'}</h2>}
+              <h2 className="text-gradient-math text-lg font-bold">{locale === 'ar' ? 'ربط حساب Google' : 'Connect your Google account'}</h2>
               <SocialAuthButtons mode="link" />
             </div>
           )
