@@ -60,7 +60,7 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      {isError ? <div role="alert" className="rounded-2xl border p-6">
+      {isError || (!isFetching && !data) ? <div role="alert" className="rounded-2xl border p-6">
         {ar ? 'تعذّر جلب نشاط المنصة.' : 'Unable to load platform activity.'}
         <button type="button" onClick={() => void refetch()} className="ms-3 font-bold text-primary underline">
           {ar ? 'إعادة المحاولة' : 'Retry'}
