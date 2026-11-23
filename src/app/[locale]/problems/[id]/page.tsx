@@ -210,6 +210,7 @@ export default function ProblemPage() {
     useState<AnswerResult | null>(null);
   const [submissionDone, setSubmissionDone] = useState(false);
   const [retryMode, setRetryMode] = useState(false);
+  const [pauseChallengeAdvance, setPauseChallengeAdvance] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [activeTab, setActiveTab] = useState<"question" | "video">("question");
 
@@ -221,6 +222,7 @@ export default function ProblemPage() {
     setLocalAnswerResult(null);
     setSubmissionDone(false);
     setRetryMode(false);
+    setPauseChallengeAdvance(false);
     setSubmitError("");
     setActiveTab("question");
     attemptStartedAtRef.current = Date.now();
@@ -261,18 +263,30 @@ export default function ProblemPage() {
     return () => window.clearTimeout(timer);
   }, [localAnswerResult, retryMode]);
 
-  // Daily challenge is a guided flow, not five independent problem links.
-  // Show the answer briefly and advance to the next item automatically.
+  // Resume the first unanswered question after this step, never revisit
+  // already completed items from a resumed session. Questions remain fixed
+  // for the UTC day and stage.
+  const nextChallengeIndex = inDailyChallenge && dailyChallenge
+    ? dailyChallenge.Problems.findIndex((item, index) =>
+        index > challengeIndex && !item.IsAnswered)
+    : -1;
+  const nextChallengeProblem = nextChallengeIndex >= 0
+    ? dailyChallenge?.Problems[nextChallengeIndex] : undefined;
+  const nextChallengeUrl = nextChallengeProblem
+    ? '/dashboard/problems/' + nextChallengeProblem.Id +
+      '?daily=' + challengeDate + '&stageId=' + challengeStageId +
+      '&step=' + nextChallengeIndex
+    : '/dashboard/daily-challenge';
+
+  // Students must have time to read the mathematical rule and explanation.
+  // Auto-advance remains enabled by default and can be paused per question.
   useEffect(() => {
-    if (!localAnswerResult || !inDailyChallenge || !dailyChallenge) return;
-    const next = dailyChallenge.Problems[challengeIndex + 1];
-    const target = next
-      ? `/dashboard/problems/${next.Id}?daily=${challengeDate}&stageId=${challengeStageId}&step=${challengeIndex + 1}`
-      : '/dashboard/daily-challenge';
-    const timer = window.setTimeout(() => router.replace(target), 1800);
+    if (!localAnswerResult || !inDailyChallenge || !dailyChallenge ||
+        pauseChallengeAdvance) return;
+    const timer = window.setTimeout(() => router.replace(nextChallengeUrl), 8000);
     return () => window.clearTimeout(timer);
-  }, [localAnswerResult, inDailyChallenge, dailyChallenge, challengeIndex,
-    challengeDate, challengeStageId, router]);
+  }, [localAnswerResult, inDailyChallenge, dailyChallenge, pauseChallengeAdvance,
+    nextChallengeUrl, router]);
 
   const problemData = useMemo(() => {
     if (!problem) {
@@ -1091,10 +1105,35 @@ export default function ProblemPage() {
                       )}
 
                       {inDailyChallenge && (
-                        <p role="status" className="mt-4 text-sm font-semibold text-primary">
-                          {isArabic ? 'جارٍ الانتقال للمسألة التالية تلقائياً…' :
-                            'Moving to the next challenge question automatically…'}
-                        </p>
+                        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-primary">
+                              {isArabic ? 'تحدي اليوم · السؤال ' + (challengeIndex + 1) + ' من ' + dailyChallenge?.Total
+                                : 'Daily challenge · Question ' + (challengeIndex + 1) + ' of ' + dailyChallenge?.Total}
+                            </p>
+                            {localAnswerResult && (
+                              <p role="status" className="mt-1 text-xs text-muted-foreground">
+                                {pauseChallengeAdvance
+                                  ? (isArabic ? 'تم إيقاف الانتقال التلقائي حتى تنتهي من قراءة طريقة الحل.'
+                                    : 'Automatic advance paused while you review the solution.')
+                                  : (isArabic ? 'الانتقال التلقائي خلال 8 ثوانٍ لقراءة الحل والقانون المستخدم.'
+                                    : 'Advancing in 8 seconds so you can read the solution and rule first.')}
+                              </p>
+                            )}
+                          </div>
+                          {localAnswerResult && !pauseChallengeAdvance &&
+                            <button type="button" onClick={() => setPauseChallengeAdvance(true)}
+                              className="min-h-10 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold">
+                              {isArabic ? 'أحتاج وقتاً للحل' : 'Give me time to review'}
+                            </button>}
+                          <Link href={nextChallengeUrl}
+                            className="inline-flex min-h-10 items-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+                            {nextChallengeProblem
+                              ? (isArabic ? 'السؤال التالي' : 'Next question')
+                              : (isArabic ? 'إنهاء التحدي' : 'Finish challenge')}
+                            <DirectionalArrow direction="forward" className="h-4 w-4" />
+                          </Link>
+                        </div>
                       )}
                       <Link
                         href={inDailyChallenge ? '/dashboard/daily-challenge' : categoryId != null
