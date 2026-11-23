@@ -78,6 +78,8 @@ export const categoriesApi = createApi({
 
     // Public: Get all categories - returns translated names based on Accept-Language
     getCategories: builder.query<CategoryDto[], string>({
+      // Catalog metadata is public; admin edits invalidate its Category tag.
+      keepUnusedDataFor: 180,
       query: () => '/categories',
       providesTags: ['Category'],
     }),

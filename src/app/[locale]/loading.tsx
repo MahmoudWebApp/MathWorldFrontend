@@ -1,11 +1,26 @@
+/** Route-level skeleton shared by public pages and both student/admin workspaces.
+ * Client-side RTK Query loading states still render their own content skeletons.
+ */
 export default function Loading() {
   return (
-    <div className="flex min-h-[45vh] items-center justify-center" role="status" aria-live="polite">
-      <div className="flex items-center gap-3 rounded-full border border-brand-primary/15 bg-card/80 px-5 py-3 shadow-sm backdrop-blur-xl">
-        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-primary" />
-        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-secondary [animation-delay:180ms]" />
-        <span className="text-sm font-semibold text-muted-foreground">MathWorld</span>
+    <main role="status" aria-live="polite" aria-busy="true" aria-label="MathWorld loading"
+      className="mx-auto w-full max-w-7xl animate-pulse space-y-5 px-4 py-6 sm:px-6">
+      <div className="space-y-2">
+        <div className="h-8 w-52 rounded-xl bg-muted/80" />
+        <div className="h-4 w-80 max-w-full rounded-lg bg-muted/60" />
       </div>
-    </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }, (_, i) => (
+          <div key={i} className="h-28 rounded-2xl border border-border/50 bg-card/70 p-4">
+            <div className="h-4 w-3/5 rounded bg-muted/70" />
+            <div className="mt-5 h-8 w-1/3 rounded bg-muted/70" />
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+        <div className="h-72 rounded-3xl border border-border/60 bg-card/65" />
+        <div className="h-72 rounded-3xl border border-border/60 bg-card/65" />
+      </div>
+    </main>
   );
 }

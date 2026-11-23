@@ -158,7 +158,13 @@ export default function PremiumAnalyticsPage() {
           </LockedPremiumDialog>
         </div>
       ) : isLoading ? (
-        <p role="status" className="py-10 text-center">{ar ? 'جارٍ إعداد التقرير…' : 'Preparing report…'}</p>
+        <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ إعداد التقرير' : 'Preparing report'} className="animate-pulse space-y-4">
+          <div className="h-28 rounded-2xl border border-border/60 bg-card/70" />
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-32 rounded-2xl bg-muted/70" />)}
+          </div>
+          <div className="h-72 rounded-2xl border border-border/60 bg-card/70" />
+        </div>
       ) : isError || !report ? (
         <div role="alert" className="premium-report-actions space-y-3 rounded-2xl border p-6">
           <p>{ar ? 'تعذّر جلب التقرير.' : 'Could not load the report.'}</p>

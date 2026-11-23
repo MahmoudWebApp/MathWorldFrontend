@@ -71,6 +71,7 @@ export const stagesApi = createApi({
     // ✅ PUBLIC: Get all stages (no auth required)
     // Calls: GET /api/stages
     getStages: builder.query<Stage[], string>({
+      keepUnusedDataFor: 180,
       query: () => '/stages',
       providesTags: ['Stage'],
     }),
