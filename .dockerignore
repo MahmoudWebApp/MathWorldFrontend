@@ -1,0 +1,21 @@
+# Keep secrets, caches and repository metadata outside the build context.
+.git
+.github
+.next
+node_modules
+coverage
+out
+build
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.env
+.env.*
+!.env.example
+*.pem
+*.pfx
+*.p12
+.vscode
+.idea
+.DS_Store
+*.tsbuildinfo
