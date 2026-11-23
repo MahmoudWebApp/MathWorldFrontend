@@ -1,0 +1,52 @@
+name: Hostinger Next standalone container smoke test
+
+on:
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'next.config.ts'
+      - 'src/app/health/route.ts'
+      - 'src/middleware.ts'
+      - '.github/workflows/hostinger-web-container-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production web image with same-origin API
+        run: docker build --build-arg NEXT_PUBLIC_API_BASE_URL=/api --tag mathworld-web-vps:smoke .
+      - name: Start isolated web process
+        run: docker run -d --name mathworld-web-vps-smoke -p 127.0.0.1:3333:3000 mathworld-web-vps:smoke
+      - name: Verify internal health route without API or login
+        shell: bash
+        run: |
+          set -euo pipefail
+          healthy=0
+          for i in {1..35}; do
+            if curl --fail --silent --show-error http://127.0.0.1:3333/health > /tmp/web-health.json 2>/dev/null; then
+              healthy=1
+              break
+            fi
+            sleep 2
+          done
+          test "$healthy" = 1 || { docker logs mathworld-web-vps-smoke; exit 1; }
+          python3 - <<'PY'
+          import json
+          with open('/tmp/web-health.json',encoding='utf-8') as fd:
+              data=json.load(fd)
+          assert data=={'status':'ok'}, data
+          print('PASS: production standalone image serves health route')
+          PY
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs mathworld-web-vps-smoke || true
+      - name: Stop container
+        if: always()
+        run: docker rm -f mathworld-web-vps-smoke || true
