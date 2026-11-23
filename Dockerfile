@@ -2,8 +2,10 @@
 # Build with NEXT_PUBLIC_API_BASE_URL=/api so browser requests are same-origin.
 FROM node:22-alpine AS dependencies
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+# Match the existing GitHub Actions installation (pnpm 10 frozen lockfile).
+RUN npm install -g pnpm@10
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM node:22-alpine AS build
 WORKDIR /app
