@@ -18,6 +18,7 @@ import { statsApi } from '@/store/api/statsApi';
 import { usersApi } from '@/store/api/usersApi';
 import { notificationsApi } from '@/store/api/notificationsApi';
 import { StudentWorkspaceNavigation } from './StudentWorkspaceNavigation';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
 export function StudentWorkspaceShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -26,9 +27,12 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
   const locale = useLocale();
   const dispatch = useDispatch<AppDispatch>();
   const token = useSelector((state: RootState) => state.auth.token);
+  const sessionLoading = useSelector((state: RootState) => state.auth.isLoading);
+  const sessionUnavailable = useSelector((state: RootState) => state.auth.sessionUnavailable);
   const isStudent = useSelector((state: RootState) => state.auth.isAuthenticated && state.auth.user?.Role === 'Student');
   const learnerRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
     pathname === '/learning-stage' || pathname === '/social-accounts' || pathname === '/notifications';
+  const securedRoute = learnerRoute || pathname === '/admin' || pathname.startsWith('/admin/');
   const { data: subscription, isLoading: membershipLoading, isError: membershipError } = useGetStudentSubscriptionQuery(undefined, { skip: !isStudent || !learnerRoute });
 
   const signOut = async () => {
@@ -60,6 +64,25 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
     router.push('/');
   };
 
+  // AuthProvider restores the cookie session asynchronously. Until the API
+  // confirms it, never render temporary "Sign in" or fake account data.
+  if (securedRoute && sessionLoading) {
+    return <main className="mx-auto max-w-6xl px-4 py-8"><MathWorldLoading skeleton /></main>;
+  }
+  if (securedRoute && sessionUnavailable) {
+    return (
+      <main className="mx-auto max-w-3xl space-y-4 px-4 py-10 text-center">
+        <MathWorldLoading compact message={locale === 'ar'
+          ? 'تعذّر الاتصال بالخادم للتحقق من الجلسة'
+          : 'Could not verify your session with the server'} />
+        <button type="button"
+          onClick={() => window.dispatchEvent(new Event('mathworld:retry-auth'))}
+          className="min-h-11 rounded-xl bg-primary px-5 py-2 font-semibold text-primary-foreground">
+          {locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+        </button>
+      </main>
+    );
+  }
   if (!isStudent || !learnerRoute) return <>{children}</>;
 
   return (
