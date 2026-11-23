@@ -33,6 +33,22 @@ assert.match(categoryCard, /'إعادة التدريب'/, 'Category card must sh
 assert.ok(categoryCard.indexOf("'عرض المسائل'") < categoryCard.indexOf("'إعادة التدريب'"), 'Both actions belong in one category card');
 assert.match(categoryCard, /disabled=\{resetting \|\| \(progress\?\.AttemptedProblems \?\? 0\) <= 0\}/, 'Restart must be disabled before practice');
 assert.match(categories, /<Dialog open=\{!!target\}/, 'Restart must require confirmation');
+assert.match(categories, /scope: 'stage' \| 'category'/,
+  'Stage and category resets must use a scope-aware confirmation.');
+assert.match(categories, /target\?\.scope === 'category'/,
+  'Confirmation must explain category versus full-stage reset.');
+assert.match(categories, /'المفضلة بتضل محفوظة، والتصفير ما فيك تتراجع عنه.'/,
+  'Learner must know favorites are preserved and reset is irreversible.');
+assert.match(categories, /onClick=\{\(\) => setTarget\(null\)\}/,
+  'Reset dialog must have a working Cancel action.');
+assert.match(categories, /onClick=\{\(\) => void confirmReset\(\)\}/,
+  'Reset dialog must have explicit Confirm action.');
+const resetHandler = categories.slice(categories.indexOf('async function confirmReset()'), categories.indexOf('  return (', categories.indexOf('async function confirmReset()')));
+assert.match(resetHandler, /await resetPractice\(/,
+  'Only an explicit confirmation handler may submit reset to API.');
+assert.equal((categories.match(/await resetPractice\(/g) ?? []).length, 1,
+  'There must be exactly one practice-reset API call and no direct card action.');
+
 assert.match(categories, /<LockedPremiumDialog key=\{category\.Id\}/, 'Locked categories must stay gated');
 
 assert.match(challenge, /useGetStudentSubscriptionQuery/, 'Challenge must check Premium membership');
