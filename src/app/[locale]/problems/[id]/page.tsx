@@ -6,11 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useSelector } from "react-redux";
 import {
   BookOpen,
-  CalendarClock,
   CheckCircle,
-  Clock3,
   Heart,
-  History,
   Loader2,
   Lock,
   NotebookTabs,
@@ -355,25 +352,6 @@ export default function ProblemPage() {
     studentProblem?.MasteryStatus ??
     "New";
 
-  const currentAttemptCount =
-    localAnswerResult?.TotalAttempts ??
-    studentProblem?.AttemptCount ??
-    0;
-
-  const bestTime =
-    localAnswerResult?.BestTimeSeconds ??
-    studentProblem?.BestTimeSeconds ??
-    null;
-
-  const averageTime =
-    studentProblem?.AverageTimeSeconds ??
-    null;
-
-  const nextReviewAt =
-    localAnswerResult?.NextReviewAt ??
-    studentProblem?.NextReviewAt ??
-    null;
-
   const isInErrorNotebook =
     localAnswerResult?.IsInErrorNotebook ??
     studentProblem?.IsInErrorNotebook ??
@@ -442,17 +420,6 @@ export default function ProblemPage() {
 
   function getMasteryLabel(status: MasteryStatus) {
     return t(`problem.mastery.${status}`);
-  }
-
-  function formatDate(value: string | null | undefined) {
-    if (!value) {
-      return t("common.unknown");
-    }
-
-    return new Intl.DateTimeFormat(locale, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(value));
   }
 
   async function handleFavorite() {
@@ -767,57 +734,6 @@ export default function ProblemPage() {
           </Button>
         )}
       </div>
-
-      {studentProblem?.HasAttempted && (
-        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="math-equation-chip rounded-xl bg-card/80 p-4">
-            <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
-              <History className="h-4 w-4" />
-              {t("problem.totalAttempts")}
-            </div>
-            <p className="text-xl font-bold">{currentAttemptCount}</p>
-          </div>
-          <div className="math-equation-chip rounded-xl bg-card/80 p-4">
-            <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock3 className="h-4 w-4" />
-              {t("problem.bestTime")}
-            </div>
-            <p className="text-xl font-bold">
-              {formatDuration(
-                bestTime,
-                t("common.noData"),
-                t("problem.minutesShort"),
-                t("problem.secondsShort"),
-              )}
-            </p>
-          </div>
-          <div className="math-equation-chip rounded-xl bg-card/80 p-4">
-            <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock3 className="h-4 w-4" />
-              {t("problem.averageTime")}
-            </div>
-            <p className="text-xl font-bold">
-              {formatDuration(
-                averageTime,
-                t("common.noData"),
-                t("problem.minutesShort"),
-                t("problem.secondsShort"),
-              )}
-            </p>
-          </div>
-          <div className="math-equation-chip rounded-xl bg-card/80 p-4">
-            <div className="mb-1 flex items-center gap-2 text-sm text-muted-foreground">
-              <CalendarClock className="h-4 w-4" />
-              {t("problem.nextReview")}
-            </div>
-            <p className="text-sm font-semibold">
-              {nextReviewAt
-                ? formatDate(nextReviewAt)
-                : t("problem.noReviewScheduled")}
-            </p>
-          </div>
-        </div>
-      )}
 
       {retryMode && (
         <div className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
