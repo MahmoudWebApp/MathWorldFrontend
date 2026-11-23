@@ -74,14 +74,15 @@ export function FavoritesProblemsPage() {
         <p className="text-muted-foreground">{t('favorites.subtitle')}</p>
       </div>
 
-      {/* Stats */}
-      <Card className="border-0 shadow-sm mb-8">
-        <CardContent className="p-6 flex items-center gap-4">
+      {/* Compact summary: keep number and icon together; no empty full-width card. */}
+      <div className="mb-6 flex justify-end">
+      <Card className="w-fit min-w-[190px] max-w-full border shadow-sm">
+        <CardContent className="flex items-center gap-3 px-5 py-3.5">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20">
             <Heart className="h-6 w-6 text-red-500 fill-red-500" />
           </div>
           <div>
-            <div className="text-3xl font-bold">
+            <div className="text-xl font-extrabold tabular-nums sm:text-2xl">
               {isLoading || stageLoading ? (
                 <span className="inline-block w-16 h-8 bg-muted animate-pulse rounded" />
               ) : mounted ? (
@@ -90,10 +91,11 @@ export function FavoritesProblemsPage() {
                 totalCount
               )}
             </div>
-            <div className="text-sm text-muted-foreground">{t('favorites.stats.total')}</div>
+            <div className="whitespace-nowrap text-xs text-muted-foreground">{t('favorites.stats.total')}</div>
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {/* Problems List */}
       {isLoading ? (
