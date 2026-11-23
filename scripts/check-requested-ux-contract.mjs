@@ -49,7 +49,13 @@ assert.match(resetHandler, /await resetPractice\(/,
 assert.equal((categories.match(/await resetPractice\(/g) ?? []).length, 1,
   'There must be exactly one practice-reset API call and no direct card action.');
 
-assert.match(categories, /<LockedPremiumDialog key=\{category\.Id\}/, 'Locked categories must stay gated');
+assert.match(categories, /<LockedPremiumDialog topicName=\{name\}>/, 'Locked categories must stay gated');
+assert.match(categories, /<CategorySkillsDialog stageId=\{stageId\}/, 'Learner topics show API-owned category skill descriptions.');
+assert.match(categories, /onClick=\{\(\) => setSkillsCategory/, 'Category skills open separately from Premium access.');
+const publicCategories = read('src/app/[locale]/stages/[stageId]/StageCategoriesClient.tsx');
+assert.match(publicCategories, /<CategorySkillsDialog stageId=\{stageId\}/,
+  'Public topic cards must expose the same per-category skills popup.');
+assert.match(publicCategories, /color: stageAccent/, 'Public question counts use their stage color.');
 
 assert.match(challenge, /useGetStudentSubscriptionQuery/, 'Challenge must check Premium membership');
 assert.match(challenge, /data\.Problems\.map/, 'Show a progress marker for each challenge question');

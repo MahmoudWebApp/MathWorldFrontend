@@ -1,15 +1,16 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
-import { BookOpenText, Loader2 } from 'lucide-react';
+import { BookOpenText, ListChecks, Calculator, Loader2 } from 'lucide-react';
 
 import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
 import { useGetStageCategoryAccessQuery } from '@/store/api/categoriesApi';
 import { getStageAccent } from '@/lib/stageVisuals';
-import { PublishedStageSkillsPanel } from '@/components/curriculum/PublishedStageSkillsPanel';
+import { CategorySkillsDialog } from '@/components/curriculum/CategorySkillsDialog';
 
 /**
  * Public stage overview: one server-rendered heading/description, live
@@ -20,6 +21,7 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
   const ar = useLocale() === 'ar';
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const stageAccent = getStageAccent({ Id: stageId });
+  const [selectedCategory, setSelectedCategory] = useState<{ Id: number; NameAr: string; NameEn: string } | null>(null);
   const { data, isLoading, isError, refetch } = useGetStageCategoryAccessQuery(stageId, {
     skip: stageId <= 0,
     refetchOnMountOrArgChange: true,
@@ -86,31 +88,34 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
                 {description?.trim() && (
                   <p className="mt-2 text-sm leading-7 text-muted-foreground">{description}</p>
                 )}
-                <p className="mt-auto border-t border-border/70 pt-4 text-xs font-semibold text-muted-foreground">
-                  {category.ProblemsCount ?? 0} {ar ? 'مسألة' : 'problems'}
-                </p>
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/70 pt-4">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-extrabold"
+                    style={{ color: stageAccent, backgroundColor: stageAccent + '14' }}>
+                    <Calculator className="h-4 w-4" aria-hidden="true" />
+                    {category.ProblemsCount ?? 0} {ar ? 'مسألة' : 'problems'}
+                  </span>
+                  <button type="button"
+                    onClick={() => setSelectedCategory({ Id: category.Id, NameAr: category.NameAr, NameEn: category.NameEn })}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <ListChecks className="h-4 w-4" style={{ color: stageAccent }} aria-hidden="true" />
+                    {ar ? 'عرض المهارات' : 'View skills'}
+                  </button>
+                </div>
               </article>
             );
           })}
         </div>
       )}
 
-      <section className="mt-12 rounded-2xl border border-border/70 bg-card/50 p-4 sm:p-6" aria-labelledby="learning-skills-title">
-        <h2 id="learning-skills-title" className="text-xl font-extrabold sm:text-2xl">
-          {ar ? 'المهارات التعليمية' : 'Learning skills'}
-        </h2>
-        <p className="mt-2 mb-5 text-sm leading-7 text-muted-foreground">
-          {ar
-            ? 'تعرّف إلى أهداف التعلّم المرتبطة بكل فئة. تتوسع تغطية المهارات مع تطور المنهج.'
-            : 'Explore the learning objectives behind each topic. Skill coverage grows as the curriculum expands.'}
-        </p>
-        <PublishedStageSkillsPanel stageId={stageId} categories={categories} />
-        {!isAuthenticated && (
-          <Link href="/register" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
+      <CategorySkillsDialog stageId={stageId} category={selectedCategory}
+        onClose={() => setSelectedCategory(null)} />
+      {!isAuthenticated && (
+        <div className="mt-8 flex justify-center">
+          <Link href="/register" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
             {ar ? 'انضم إلينا' : 'Join us'}
           </Link>
-        )}
-      </section>
+        </div>
+      )}
     </section>
   );
 }
