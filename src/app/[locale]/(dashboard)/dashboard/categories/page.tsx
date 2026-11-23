@@ -9,6 +9,7 @@ import { useGetLearningStageQuery, useGetLearningJourneyQuery, useResetPracticeM
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 export default function StudentCategoriesPage() {
   const [target, setTarget] = useState<{ categoryId?: number; name: string } | null>(null);
@@ -64,25 +65,32 @@ export default function StudentCategoriesPage() {
           </button>
         )}
       </header>
-      {target && (
-        <section className="space-y-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5" role="group"
-          aria-label={ar ? 'تأكيد إعادة التدريب' : 'Confirm practice restart'}>
-          <p className="font-bold">{ar ? `إعادة تدريب ${target.name} من البداية؟` :
-            `Restart all practice in ${target.name}?`}</p>
-          <p className="text-sm text-muted-foreground">{ar
+      <Dialog open={!!target} onOpenChange={open => { if (!open && !resetting) setTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{ar ? 'تأكيد إعادة التدريب' : 'Confirm practice restart'}</DialogTitle>
+            <DialogDescription>
+              {ar ? 'إعادة تدريب ' + (target?.name ?? '') + ' من البداية؟'
+                : 'Restart all practice in ' + (target?.name ?? '') + '?'}
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm leading-7 text-muted-foreground">{ar
             ? 'رح تصير مسائل هذا النطاق جديدة، وينمسح تقدم دورتك الحالية وأخطاؤها. المفضلة محفوظة، وما في تراجع.'
-            : 'All questions in this scope become New; the current progress and error notebook reset. Favorites stay. This cannot be undone.'}</p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={resetting} onClick={() => void confirmReset()}
-              className="min-h-11 rounded-xl bg-amber-600 px-4 py-2 font-semibold text-white disabled:opacity-50">
-              {resetting ? (ar ? 'جارٍ التصفير…' : 'Resetting…') : (ar ? 'نعم، ابدأ دورة جديدة' : 'Yes, start a new cycle')}
-            </button>
+            : 'Questions in this scope become new. The current progress and error notebook reset, while favorites remain. This cannot be undone.'}</p>
+          {resetError && <p role="alert" className="text-sm text-destructive">{resetError}</p>}
+          <DialogFooter>
             <button type="button" disabled={resetting} onClick={() => setTarget(null)}
-              className="min-h-11 rounded-xl border px-4 py-2 font-semibold">{ar ? 'إلغاء' : 'Cancel'}</button>
-          </div>
-          {resetError && <p role="alert" className="text-destructive">{resetError}</p>}
-        </section>
-      )}
+              className="min-h-11 rounded-xl border border-border px-4 py-2.5 font-bold disabled:opacity-50">
+              {ar ? 'إلغاء' : 'Cancel'}
+            </button>
+            <button type="button" disabled={resetting} onClick={() => void confirmReset()}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 font-bold text-white disabled:opacity-50">
+              <RotateCcw className="h-4 w-4" aria-hidden="true"/>
+              {resetting ? (ar ? 'جارٍ إعادة التدريب…' : 'Restarting…') : (ar ? 'تأكيد إعادة التدريب' : 'Confirm restart')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
       {loading ? (
         <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ تحميل فئات مرحلتك' : 'Loading your topics'} className="grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-3">
