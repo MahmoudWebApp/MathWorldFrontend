@@ -6,7 +6,7 @@ import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { Link } from '@/i18n/routing';
-import { BellRing, CheckCheck, ChevronLeft, ChevronRight, LoaderCircle } from 'lucide-react';
+import { BellRing, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   type InboxNotification,
   useGetInboxPageQuery,
