@@ -162,9 +162,7 @@ export default function AdminUsersPage() {
           <h1 className="brand-display-title text-gradient-math text-3xl font-bold">{label.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{label.sub}</p>
         </div>
-        <Link href="/admin/analytics" className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2 text-sm text-primary hover:bg-primary/5">
-          <BarChart3 className="h-4 w-4" aria-hidden />{label.analytics}
-        </Link>
+
       </div>
       <section aria-label={label.search} className="math-card mb-6 rounded-2xl border border-border p-4 md:p-5">
         {stagesError && (
@@ -228,7 +226,7 @@ export default function AdminUsersPage() {
               <span className="font-medium">{label.selected}: {selectedVisible.length}</span>
             </label>
             <button type="button" disabled={!selectedVisible.length || granting}
-              onClick={() => void activateYear(selectedVisible)}
+              onClick={() => openGrant(selectedVisible)}
               className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-3 py-2 font-semibold text-primary-foreground disabled:opacity-50">
               <Crown className="h-4 w-4" aria-hidden />
               {granting ? label.loading : label.annual}
@@ -243,13 +241,29 @@ export default function AdminUsersPage() {
           </span>
           {isFetching && !isLoading && <span role="status" className="text-muted-foreground">{label.loading}</span>}
         </div>
+        {confirmedPeriods.length > 0 && (
+          <div role="status" className="border-b border-border bg-emerald-500/5 p-4 text-sm text-foreground">
+            <strong className="block">{grantMessage}</strong>
+            <ul className="mt-2 space-y-1">
+              {confirmedPeriods.map(row => <li key={row.name + row.from} className="break-words">
+                <strong>{row.name}</strong>: {label.from} {fmt(row.from)} — {label.until} {fmt(row.to)}
+              </li>)}
+            </ul>
+          </div>
+        )}
         {isError ? (
           <div role="alert" className="p-10 text-center">
             <p className="text-destructive">{label.error}</p>
             <button type="button" onClick={() => refetch()} className="mt-3 rounded-xl border border-primary/30 px-4 py-2 text-primary">{label.retry}</button>
           </div>
-        ) : isLoading ? (
-          <div role="status" className="p-10 text-center text-muted-foreground">{label.loading}</div>
+        ) : isLoading || (!data && isFetching) ? (
+          <div role="status" aria-label={label.loading} aria-busy="true" className="animate-pulse space-y-3 p-5">
+            {Array.from({ length: 6 }, (_, index) => <div key={index} className="flex items-center gap-4 rounded-xl bg-muted/20 p-4">
+              <div className="h-4 w-4 rounded bg-muted" />
+              <div className="h-5 w-1/3 rounded bg-muted" />
+              <div className="ms-auto h-5 w-1/4 rounded bg-muted" />
+            </div>)}
+          </div>
         ) : !data?.Learners.length ? (
           <div className="p-12 text-center text-muted-foreground">{label.empty}</div>
         ) : (
@@ -259,7 +273,7 @@ export default function AdminUsersPage() {
                 <article key={u.Id} className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4">
                   <div className="flex items-start gap-2">
                     <input type="checkbox" checked={selectedVisible.includes(u.Id)}
-                      disabled={!u.IsActive || granting} onChange={() => toggleId(u.Id)}
+                      disabled={!u.IsActive || granting || isFetching} onChange={() => toggleId(u.Id)}
                       aria-label={`${label.select}: ${u.FullName}`}
                       className="mt-1 h-4 w-4 accent-primary" />
                     <div className="min-w-0 flex-1">
@@ -279,13 +293,11 @@ export default function AdminUsersPage() {
                     <span className="rounded-lg bg-muted px-2 py-1">{u.SubscriptionType}</span>
                   </div>
                   <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 text-sm">
-                    <div><dt className="text-xs text-muted-foreground">{label.solved}</dt><dd className="font-semibold tabular-nums">{u.SolvedProblems}</dd></div>
-                    <div><dt className="text-xs text-muted-foreground">{label.points}</dt><dd className="font-semibold tabular-nums">{u.TotalAwardedPoints}</dd></div>
-                    <div className="col-span-2"><dt className="text-xs text-muted-foreground">{label.recent}</dt><dd>{fmt(u.LastAttemptAt)}</dd></div>
+                    <div><dt className="text-xs text-muted-foreground">{label.expires}</dt><dd className="font-semibold">{expiry(u)}</dd></div>
                   </dl>
                     </div>
                   </div>
-                  <button type="button" disabled={!u.IsActive || granting} onClick={() => void activateYear([u.Id])}
+                  <button type="button" disabled={!u.IsActive || granting || isFetching} onClick={() => openGrant([u.Id])}
                     className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/30 px-3 py-2 text-sm font-semibold text-primary disabled:opacity-40">
                     <Crown className="h-4 w-4" aria-hidden />
                     {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
@@ -297,14 +309,13 @@ export default function AdminUsersPage() {
               ))}
             </div>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[770px] text-sm">
+              <table className="w-full min-w-[680px] text-sm">
                 <thead className="bg-muted/40 text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-3 py-3">
                       <span className="sr-only">{label.selectAll}</span>
                     </th>
-                    {[label.name, label.stage, label.status, label.tier, label.solved,
-                      label.points, label.lastLogin, label.recent, label.detail].map((heading) =>
+                    {[label.name, label.stage, label.status, label.tier, label.expires, label.detail].map((heading) =>
                       <th className="px-4 py-3 text-start font-semibold" key={heading}>{heading}</th>)}
                   </tr>
                 </thead>
@@ -313,7 +324,7 @@ export default function AdminUsersPage() {
                     <tr key={u.Id} className="border-t border-border hover:bg-muted/20">
                       <td className="px-3 py-3">
                         <input type="checkbox" checked={selectedVisible.includes(u.Id)}
-                          disabled={!u.IsActive || granting} onChange={() => toggleId(u.Id)}
+                          disabled={!u.IsActive || granting || isFetching} onChange={() => toggleId(u.Id)}
                           aria-label={`${label.select}: ${u.FullName}`} className="h-4 w-4 accent-primary" />
                       </td>
                       <td className="px-4 py-3">
@@ -325,14 +336,11 @@ export default function AdminUsersPage() {
                         u.IsActive ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
                       }`}>{u.IsActive ? label.active : label.disabled}</span></td>
                       <td className="px-4 py-3">{u.SubscriptionType}</td>
-                      <td className="px-4 py-3 tabular-nums">{u.SolvedProblems}</td>
-                      <td className="px-4 py-3 tabular-nums">{u.TotalAwardedPoints}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{fmt(u.LastLoginAt, label.noLogin)}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{fmt(u.LastAttemptAt)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{expiry(u)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-2">
                           <Link href={`/admin/users/${u.Id}`} className="font-semibold text-primary hover:underline">{label.detail}</Link>
-                          <button type="button" disabled={!u.IsActive || granting} onClick={() => void activateYear([u.Id])}
+                          <button type="button" disabled={!u.IsActive || granting || isFetching} onClick={() => openGrant([u.Id])}
                             className="text-xs font-semibold text-primary underline-offset-2 hover:underline disabled:opacity-40">
                             {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
                           </button>
@@ -359,6 +367,35 @@ export default function AdminUsersPage() {
           </>
         )}
       </section>
+      <Dialog open={pendingLearners.length > 0} onOpenChange={open => { if (!open && !granting) setPendingLearners([]); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{label.confirmation}</DialogTitle>
+            <DialogDescription>{label.estimated}</DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[46vh] space-y-2 overflow-y-auto">
+            {pendingLearners.map(u => {
+              const period = projectedPeriod(u);
+              return <div key={u.Id} className="rounded-xl border bg-muted/20 p-3 text-sm">
+                <strong className="block break-words">{u.FullName}</strong>
+                <span className="block break-all text-xs text-muted-foreground" dir="ltr">{u.Email}</span>
+                <p className="mt-2">{period
+                  ? label.from + ' ' + fmt(period.start) + ' — ' + label.until + ' ' + fmt(period.end)
+                  : (ar ? 'Premium غير محدد المدة — سيبقى كما هو' : 'Indefinite Premium — unchanged')}</p>
+              </div>;
+            })}
+          </div>
+          {grantError && <p role="alert" className="text-sm text-destructive">{grantError}</p>}
+          <DialogFooter>
+            <button type="button" disabled={granting} onClick={() => setPendingLearners([])}
+              className="min-h-11 rounded-xl border px-5 py-2.5 font-semibold disabled:opacity-40">{label.cancel}</button>
+            <button type="button" disabled={granting} onClick={() => void confirmGrant()}
+              className="min-h-11 rounded-xl bg-primary px-5 py-2.5 font-bold text-primary-foreground disabled:opacity-40">
+              {granting ? label.loading : label.confirm}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
