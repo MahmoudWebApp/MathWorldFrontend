@@ -122,8 +122,8 @@ function ProblemsPageClient() {
     !access.FreeCategoryIds.includes(Number(categoryId)));
 
   // ── API queries ─────────────────────────────────────────
-  const { data: categories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: true });
-  const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: true });
+  const { data: categories } = useGetCategoriesQuery(locale, { refetchOnMountOrArgChange: 120 });
+  const { data: stages } = useGetStagesQuery(locale, { refetchOnMountOrArgChange: 120 });
 
   const {
     currentData: searchResults,
