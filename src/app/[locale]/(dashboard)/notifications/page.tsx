@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
@@ -101,10 +102,7 @@ export default function NotificationsPage() {
       {actionError && <p role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm text-destructive">{actionError}</p>}
       <section className="overflow-hidden rounded-2xl border border-border bg-card" aria-label={ar ? 'قائمة الإشعارات' : 'Notifications list'}>
         {isLoading || (isFetching && !inbox) ? (
-          <div role="status" className="flex items-center justify-center gap-3 px-4 py-20 text-muted-foreground">
-            <LoaderCircle className="h-5 w-5 animate-spin" aria-hidden="true" />
-            {ar ? 'جارٍ تحميل الإشعارات…' : 'Loading notifications…'}
-          </div>
+          <MathWorldLoading compact />
         ) : isError || !inbox ? (
           <div role="alert" className="space-y-4 px-4 py-16 text-center">
             <p className="text-destructive">{ar ? 'تعذر تحميل الإشعارات.' : 'Could not load notifications.'}</p>
