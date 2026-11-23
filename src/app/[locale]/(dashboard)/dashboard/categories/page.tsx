@@ -163,6 +163,30 @@ export default function StudentCategoriesPage() {
                       : empty ? (ar ? 'لا توجد مسائل حالياً' : 'No problems yet')
                       : `${category.ProblemsCount ?? 0} ${ar ? 'مسألة' : 'problems'}`}
                   </div>
+                  {!locked && (
+                    <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/60 pt-4">
+                      {empty ? (
+                        <span aria-disabled="true" className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-muted px-2 py-2 text-center text-xs font-bold text-muted-foreground">
+                          <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                          {ar ? 'عرض المسائل' : 'View questions'}
+                        </span>
+                      ) : (
+                        <Link href={`/dashboard/problems?categoryId=${category.Id}&stageId=${stageId}`}
+                          className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-primary px-2 py-2 text-center text-xs font-bold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                          <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                          {ar ? 'عرض المسائل' : 'View questions'}
+                        </Link>
+                      )}
+                      <button type="button" disabled={resetting || (progress?.AttemptedProblems ?? 0) <= 0}
+                        title={(progress?.AttemptedProblems ?? 0) <= 0
+                          ? (ar ? 'ابدأ بحل مسألة أولاً' : 'Solve a question first') : undefined}
+                        onClick={() => { setResetError(''); setTarget({ categoryId: category.Id, name }); }}
+                        className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-amber-500/40 px-2 py-2 text-center text-xs font-bold text-foreground transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40">
+                        <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        {ar ? 'إعادة التدريب' : 'Restart practice'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
               if (locked) return (
@@ -170,20 +194,7 @@ export default function StudentCategoriesPage() {
                   <button type="button" className="h-full w-full text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={ar ? `${name} مقفولة` : `${name} locked`}>{card}</button>
                 </LockedPremiumDialog>
               );
-              return empty ? <div key={category.Id} className="opacity-75">{card}</div> : (
-                <div key={category.Id} className="flex h-full flex-col gap-2">
-                  <Link href={`/dashboard/problems?categoryId=${category.Id}&stageId=${stageId}`}
-                    className="block flex-1 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{card}</Link>
-                  {(progress?.AttemptedProblems ?? 0) > 0 && (
-                    <button type="button" disabled={resetting} onClick={() => {
-                      setResetError(''); setTarget({ categoryId: category.Id, name });
-                    }} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-amber-500/35 px-3 py-2 text-xs font-semibold hover:bg-amber-500/10">
-                      <RotateCcw className="h-4 w-4" aria-hidden="true"/>
-                      {ar ? 'إعادة تدريب الفئة' : 'Restart topic'}
-                    </button>
-                  )}
-                </div>
-              );
+              return <div key={category.Id} className={empty ? 'h-full opacity-75' : 'h-full'}>{card}</div>;
             })}
           </div>
         </>
