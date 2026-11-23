@@ -3,8 +3,9 @@
 import { useLocale } from 'next-intl';
 import { BrandLogo } from '@/components/layout/BrandLogo';
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useSelector } from 'react-redux';
-import { BarChart3, Download, FileText, LockKeyhole, Printer, RefreshCw } from 'lucide-react';
+import { BarChart3, FileDown, FileSpreadsheet, FileText, LockKeyhole, Printer, RefreshCw, X } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import {
@@ -12,7 +13,6 @@ import {
   useGetPremiumAnalyticsQuery,
   useExportPremiumAnalyticsXlsxMutation,
   useExportPremiumAnalyticsPdfMutation,
-  useExportPremiumAnalyticsCsvMutation,
 } from '@/store/api/usersApi';
 
 function formatReportDate(value: string, locale: string): string {
@@ -27,6 +27,7 @@ export default function PremiumAnalyticsPage() {
   const ar = locale === 'ar';
   const [reportLanguage, setReportLanguage] = useState<'ar' | 'en'>(ar ? 'ar' : 'en');
   const reportAr = reportLanguage === 'ar';
+  const [pendingExport, setPendingExport] = useState<'excel' | 'pdf' | 'print' | null>(null);
   const isStudent = useSelector(
     (state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
       state.auth.isAuthenticated && state.auth.user?.Role === 'Student',
@@ -36,8 +37,6 @@ export default function PremiumAnalyticsPage() {
   const premium = entitlement?.IsPremium === true;
   const [exportXlsx, { isLoading: exportingXlsx }] =
     useExportPremiumAnalyticsXlsxMutation();
-  const [exportCsv, { isLoading: exportingCsv }] =
-    useExportPremiumAnalyticsCsvMutation();
   const [exportPdf, { isLoading: exportingPdf }] =
     useExportPremiumAnalyticsPdfMutation();
   const [downloadError, setDownloadError] = useState(false);
@@ -57,25 +56,10 @@ export default function PremiumAnalyticsPage() {
     }
   };
 
-  const downloadExcelCsv = async () => {
+  const downloadExcel = async (language: 'ar' | 'en') => {
     setDownloadError(false);
     try {
-      const blob = await exportCsv(reportLanguage).unwrap();
-      if (!(blob instanceof Blob) || blob.size < 20 || blob.size > 20_000_000 ||
-        !blob.type.toLowerCase().includes('text/csv')) {
-        throw new Error('Invalid CSV response');
-      }
-      // UTF-8 BOM is sent by the backend so Excel preserves Arabic text.
-      saveReportFile(blob, `mathworld-premium-analytics-${reportLanguage}.csv`);
-    } catch {
-      setDownloadError(true);
-    }
-  };
-
-  const downloadExcel = async () => {
-    setDownloadError(false);
-    try {
-      const blob = await exportXlsx(reportLanguage).unwrap();
+      const blob = await exportXlsx(language).unwrap();
       if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
         !blob.type.toLowerCase().includes('spreadsheetml.sheet')) {
         throw new Error('Invalid XLSX response');
@@ -86,16 +70,16 @@ export default function PremiumAnalyticsPage() {
         signature[2] !== 0x03 || signature[3] !== 0x04) {
         throw new Error('Invalid XLSX ZIP signature');
       }
-      saveReportFile(blob, `mathworld-premium-analytics-${reportLanguage}.xlsx`);
+      saveReportFile(blob, `mathworld-premium-analytics-${language}.xlsx`);
     } catch {
       setDownloadError(true);
     }
   };
 
-  const downloadPdf = async () => {
+  const downloadPdf = async (language: 'ar' | 'en') => {
     setDownloadError(false);
     try {
-      const blob = await exportPdf(reportLanguage).unwrap();
+      const blob = await exportPdf(language).unwrap();
       if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
         !blob.type.toLowerCase().includes('application/pdf')) {
         throw new Error('Invalid PDF response');
@@ -103,10 +87,24 @@ export default function PremiumAnalyticsPage() {
       const signature = new TextDecoder('ascii').decode(
         await blob.slice(0, 5).arrayBuffer());
       if (signature !== '%PDF-') throw new Error('Invalid PDF signature');
-      saveReportFile(blob, `mathworld-premium-analytics-${reportLanguage}.pdf`);
+      saveReportFile(blob, `mathworld-premium-analytics-${language}.pdf`);
     } catch {
       setDownloadError(true);
     }
+  };
+
+  // The user explicitly chooses an export language after clicking one of
+  // the three actions; never show a permanent dropdown or CSV action.
+  const confirmReportLanguage = (language: 'ar' | 'en') => {
+    const action = pendingExport;
+    // Commit the printable report language before invoking the browser dialog.
+    flushSync(() => {
+      setReportLanguage(language);
+      setPendingExport(null);
+    });
+    if (action === 'excel') void downloadExcel(language);
+    if (action === 'pdf') void downloadPdf(language);
+    if (action === 'print') window.print();
   };
 
   const { data: report, isLoading, isError, refetch } = useGetPremiumAnalyticsQuery(undefined, {
@@ -159,41 +157,23 @@ export default function PremiumAnalyticsPage() {
         </div>
         {report && (
           <div className="premium-report-actions flex flex-wrap items-center gap-2">
-            <label htmlFor="report-export-language" className="text-sm font-semibold">
-              {ar ? 'لغة التقرير' : 'Report language'}
-            </label>
-            <select
-              id="report-export-language"
-              value={reportLanguage}
-              onChange={(event) => setReportLanguage(event.target.value as 'ar' | 'en')}
-              className="min-h-11 rounded-xl border border-border bg-card px-3 py-2 text-sm"
-            >
-              <option value="ar">العربية</option>
-              <option value="en">English</option>
-            </select>
             <button type="button" disabled={exportingXlsx || exportingPdf}
-              onClick={() => void downloadExcel()}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground disabled:opacity-50">
-              <Download className="h-4 w-4" />
-              {exportingXlsx ? (ar ? 'جارٍ تجهيز Excel…' : 'Preparing Excel…') :
-                (ar ? 'تحميل Excel المنسّق' : 'Download formatted Excel')}
+              onClick={() => setPendingExport('excel')}
+              className="inline-flex min-h-11 min-w-32 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50">
+              <FileSpreadsheet className="h-[18px] w-[18px]" aria-hidden="true" />
+              {exportingXlsx ? (ar ? 'جارٍ التحميل…' : 'Downloading…') : (ar ? 'تحميل Excel' : 'Download Excel')}
             </button>
-            <button type="button" disabled={exportingPdf || exportingXlsx}
-              onClick={() => void downloadPdf()}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/40 px-4 py-2.5 font-semibold text-primary disabled:opacity-50">
-              <Download className="h-4 w-4" />
-              {exportingPdf ? (ar ? 'جارٍ تجهيز PDF…' : 'Preparing PDF…') :
-                (ar ? 'تحميل PDF' : 'Download PDF')}
+            <button type="button" disabled={exportingXlsx || exportingPdf}
+              onClick={() => setPendingExport('pdf')}
+              className="inline-flex min-h-11 min-w-32 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50">
+              <FileDown className="h-[18px] w-[18px]" aria-hidden="true" />
+              {exportingPdf ? (ar ? 'جارٍ التحميل…' : 'Downloading…') : (ar ? 'تحميل PDF' : 'Download PDF')}
             </button>
-            <button type="button" onClick={() => window.print()}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border px-4 py-2.5 font-semibold hover:bg-muted">
-              <Printer className="h-4 w-4" />
-              {ar ? 'طباعة التقرير' : 'Print report'}
-            </button>
-            <button type="button" disabled={exportingCsv || exportingXlsx}
-              onClick={() => void downloadExcelCsv()}
-              className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 py-2 text-xs text-muted-foreground underline disabled:opacity-50">
-              {ar ? 'CSV بيانات خام' : 'Raw CSV data'}
+            <button type="button" disabled={exportingXlsx || exportingPdf}
+              onClick={() => setPendingExport('print')}
+              className="inline-flex min-h-11 min-w-32 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50">
+              <Printer className="h-[18px] w-[18px]" aria-hidden="true" />
+              {ar ? 'طباعة' : 'Print'}
             </button>
           </div>
         )}
@@ -201,8 +181,8 @@ export default function PremiumAnalyticsPage() {
 
       {downloadError && (
         <div role="alert" className="premium-report-actions rounded-xl border border-destructive/30 p-3 text-sm text-destructive">
-          {ar ? 'تعذّر تنزيل الملف. تحقق من صلاحية Premium واتصال الإنترنت أو جرّب صيغة CSV.'
-            : 'Download failed. Check Premium access and your connection, or try CSV.'}
+          {ar ? 'تعذّر تنزيل التقرير. تحقق من اشتراك Premium واتصال الإنترنت.'
+            : 'Download failed. Check Premium access and your connection.'}
         </div>
       )}
       {!isStudent ? (
@@ -355,11 +335,40 @@ export default function PremiumAnalyticsPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground print:text-black">
-              {reportAr ? 'التقرير المنسق متاح مباشرة بصيغتي PDF وExcel مع إحصائيات ومخططات. ملف CSV بيانات خام فقط.'
-                : 'Download the formatted PDF or Excel report with real statistics and charts. CSV is for raw data only.'}
+              {reportAr ? 'حمّل التقرير بصيغة Excel أو PDF، أو اطبعه مباشرة.'
+                : 'Download the Excel or PDF report, or print it directly.'}
             </p>
           </section>
         </>
+      )}
+      {pendingExport && (
+        <div className="premium-report-actions fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setPendingExport(null); }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="report-language-title"
+            className="w-full max-w-sm rounded-2xl border border-primary/20 bg-card p-6 shadow-2xl"
+            onKeyDown={(event) => { if (event.key === 'Escape') setPendingExport(null); }}>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 id="report-language-title" className="text-lg font-bold">
+                {ar ? 'اختر لغة التقرير' : 'Choose report language'}
+              </h2>
+              <button type="button" aria-label={ar ? 'إغلاق' : 'Close'}
+                onClick={() => setPendingExport(null)}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button" onClick={() => confirmReportLanguage('ar')}
+                className="min-h-12 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90">
+                العربية
+              </button>
+              <button type="button" onClick={() => confirmReportLanguage('en')}
+                className="min-h-12 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90">
+                English
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
