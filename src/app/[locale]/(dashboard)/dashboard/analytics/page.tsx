@@ -11,6 +11,7 @@ import {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
   useExportPremiumAnalyticsXlsxMutation,
+  useExportPremiumAnalyticsPdfMutation,
   useExportPremiumAnalyticsCsvMutation,
 } from '@/store/api/usersApi';
 
@@ -24,6 +25,8 @@ function formatReportDate(value: string, locale: string): string {
 export default function PremiumAnalyticsPage() {
   const locale = useLocale();
   const ar = locale === 'ar';
+  const [reportLanguage, setReportLanguage] = useState<'ar' | 'en'>(ar ? 'ar' : 'en');
+  const reportAr = reportLanguage === 'ar';
   const isStudent = useSelector(
     (state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
       state.auth.isAuthenticated && state.auth.user?.Role === 'Student',
@@ -35,6 +38,8 @@ export default function PremiumAnalyticsPage() {
     useExportPremiumAnalyticsXlsxMutation();
   const [exportCsv, { isLoading: exportingCsv }] =
     useExportPremiumAnalyticsCsvMutation();
+  const [exportPdf, { isLoading: exportingPdf }] =
+    useExportPremiumAnalyticsPdfMutation();
   const [downloadError, setDownloadError] = useState(false);
 
   const saveReportFile = (blob: Blob, filename: string) => {
@@ -55,13 +60,13 @@ export default function PremiumAnalyticsPage() {
   const downloadExcelCsv = async () => {
     setDownloadError(false);
     try {
-      const blob = await exportCsv().unwrap();
+      const blob = await exportCsv(reportLanguage).unwrap();
       if (!(blob instanceof Blob) || blob.size < 20 || blob.size > 20_000_000 ||
         !blob.type.toLowerCase().includes('text/csv')) {
         throw new Error('Invalid CSV response');
       }
       // UTF-8 BOM is sent by the backend so Excel preserves Arabic text.
-      saveReportFile(blob, 'mathworld-premium-analytics.csv');
+      saveReportFile(blob, `mathworld-premium-analytics-${reportLanguage}.csv`);
     } catch {
       setDownloadError(true);
     }
@@ -70,7 +75,7 @@ export default function PremiumAnalyticsPage() {
   const downloadExcel = async () => {
     setDownloadError(false);
     try {
-      const blob = await exportXlsx(ar ? 'ar' : 'en').unwrap();
+      const blob = await exportXlsx(reportLanguage).unwrap();
       if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
         !blob.type.toLowerCase().includes('spreadsheetml.sheet')) {
         throw new Error('Invalid XLSX response');
@@ -81,7 +86,24 @@ export default function PremiumAnalyticsPage() {
         signature[2] !== 0x03 || signature[3] !== 0x04) {
         throw new Error('Invalid XLSX ZIP signature');
       }
-      saveReportFile(blob, 'mathworld-premium-analytics.xlsx');
+      saveReportFile(blob, `mathworld-premium-analytics-${reportLanguage}.xlsx`);
+    } catch {
+      setDownloadError(true);
+    }
+  };
+
+  const downloadPdf = async () => {
+    setDownloadError(false);
+    try {
+      const blob = await exportPdf(reportLanguage).unwrap();
+      if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
+        !blob.type.toLowerCase().includes('application/pdf')) {
+        throw new Error('Invalid PDF response');
+      }
+      const signature = new TextDecoder('ascii').decode(
+        await blob.slice(0, 5).arrayBuffer());
+      if (signature !== '%PDF-') throw new Error('Invalid PDF signature');
+      saveReportFile(blob, `mathworld-premium-analytics-${reportLanguage}.pdf`);
     } catch {
       setDownloadError(true);
     }
@@ -93,10 +115,10 @@ export default function PremiumAnalyticsPage() {
   });
 
   const tiles = report ? [
-    { label: ar ? 'المسائل المحلولة' : 'Unique solved', value: report.SolvedProblems },
-    { label: ar ? 'عدد المحاولات' : 'Total attempts', value: report.Attempts },
-    { label: ar ? 'الإجابات الصحيحة' : 'Correct attempts', value: report.CorrectAttempts },
-    { label: ar ? 'النقاط المكتسبة' : 'Earned points', value: report.AwardedPoints },
+    { label: reportAr ? 'المسائل المحلولة' : 'Unique solved', value: report.SolvedProblems },
+    { label: reportAr ? 'عدد المحاولات' : 'Total attempts', value: report.Attempts },
+    { label: reportAr ? 'الإجابات الصحيحة' : 'Correct attempts', value: report.CorrectAttempts },
+    { label: reportAr ? 'النقاط المكتسبة' : 'Earned points', value: report.AwardedPoints },
   ] : [];
   const categoriesForChart = report
     ? [...report.Categories].sort((a, b) => b.SolvedProblems - a.SolvedProblems)
@@ -107,9 +129,10 @@ export default function PremiumAnalyticsPage() {
     ? Math.round(report.CorrectAttempts / report.Attempts * 100) : 0;
 
   return (
-    <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-7 px-4 py-8 print:max-w-none print:p-0">
+    <main dir={reportAr ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-7 px-4 py-8 print:max-w-none print:p-0">
       <style jsx global>{`
         @media print {
+          @page { size: A4 landscape; margin: 12mm; }
           body > div header.sticky, body > div footer { display: none !important; }
           .premium-report-actions { display: none !important; }
           .premium-report-table { overflow: visible !important; }
@@ -128,32 +151,49 @@ export default function PremiumAnalyticsPage() {
         <div className="space-y-2">
           <h1 className="flex items-center gap-2 text-3xl font-extrabold">
             <BarChart3 className="h-7 w-7 text-primary" />
-            {ar ? 'تقرير تقدمي في الرياضيات' : 'My mathematics progress report'}
+            {reportAr ? 'تقرير تقدمي في الرياضيات' : 'My mathematics progress report'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {ar ? 'بيانات حقيقية من المحاولات المحفوظة في حسابك.' : 'Verified aggregates from your saved answer attempts.'}
+            {reportAr ? 'بيانات حقيقية من المحاولات المحفوظة في حسابك.' : 'Verified aggregates from your saved answer attempts.'}
           </p>
         </div>
         {report && (
-          <div className="premium-report-actions flex flex-wrap gap-2">
-            <button type="button" disabled={exportingCsv || exportingXlsx}
-              onClick={() => void downloadExcelCsv()}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground disabled:opacity-50">
-              <Download className="h-4 w-4" />
-              {exportingCsv ? (ar ? 'جارٍ تجهيز الملف…' : 'Preparing file…') :
-                (ar ? 'تنزيل Excel متوافق (CSV)' : 'Excel-compatible CSV')}
-            </button>
-            <button type="button" disabled={exportingXlsx || exportingCsv}
+          <div className="premium-report-actions flex flex-wrap items-center gap-2">
+            <label htmlFor="report-export-language" className="text-sm font-semibold">
+              {ar ? 'لغة التقرير' : 'Report language'}
+            </label>
+            <select
+              id="report-export-language"
+              value={reportLanguage}
+              onChange={(event) => setReportLanguage(event.target.value as 'ar' | 'en')}
+              className="min-h-11 rounded-xl border border-border bg-card px-3 py-2 text-sm"
+            >
+              <option value="ar">العربية</option>
+              <option value="en">English</option>
+            </select>
+            <button type="button" disabled={exportingXlsx || exportingPdf}
               onClick={() => void downloadExcel()}
-              className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 font-semibold hover:bg-muted disabled:opacity-50">
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground disabled:opacity-50">
               <Download className="h-4 w-4" />
-              {exportingXlsx ? (ar ? 'جارٍ تجهيز XLSX…' : 'Preparing XLSX…') :
-                (ar ? 'Excel بتنسيق ومخططات (XLSX)' : 'Formatted Excel (.xlsx)')}
+              {exportingXlsx ? (ar ? 'جارٍ تجهيز Excel…' : 'Preparing Excel…') :
+                (ar ? 'تحميل Excel المنسّق' : 'Download formatted Excel')}
+            </button>
+            <button type="button" disabled={exportingPdf || exportingXlsx}
+              onClick={() => void downloadPdf()}
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/40 px-4 py-2.5 font-semibold text-primary disabled:opacity-50">
+              <Download className="h-4 w-4" />
+              {exportingPdf ? (ar ? 'جارٍ تجهيز PDF…' : 'Preparing PDF…') :
+                (ar ? 'تحميل PDF' : 'Download PDF')}
             </button>
             <button type="button" onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground">
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border px-4 py-2.5 font-semibold hover:bg-muted">
               <Printer className="h-4 w-4" />
-              {ar ? 'طباعة / حفظ PDF' : 'Print / save as PDF'}
+              {ar ? 'طباعة التقرير' : 'Print report'}
+            </button>
+            <button type="button" disabled={exportingCsv || exportingXlsx}
+              onClick={() => void downloadExcelCsv()}
+              className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 py-2 text-xs text-muted-foreground underline disabled:opacity-50">
+              {ar ? 'CSV بيانات خام' : 'Raw CSV data'}
             </button>
           </div>
         )}
@@ -214,13 +254,13 @@ export default function PremiumAnalyticsPage() {
             <div className="flex flex-wrap items-center gap-3">
               <BrandLogo compact className="shrink-0" />
               <span className="text-xs text-muted-foreground">
-                {ar ? 'منصة الرياضيات التفاعلية' : 'Interactive mathematics learning'}
+                {reportAr ? 'منصة الرياضيات التفاعلية' : 'Interactive mathematics learning'}
               </span>
             </div>
             <div className="text-sm">
-              <div className="font-bold">{ar ? 'تقرير التقدم الشخصي' : 'Personal progress report'}</div>
+              <div className="font-bold">{reportAr ? 'تقرير التقدم الشخصي' : 'Personal progress report'}</div>
               <time className="text-xs text-muted-foreground" dateTime={report.GeneratedAtUtc}>
-                {formatReportDate(report.GeneratedAtUtc, ar ? 'ar' : 'en')}
+                {formatReportDate(report.GeneratedAtUtc, reportAr ? 'ar' : 'en')}
               </time>
             </div>
           </header>
@@ -234,9 +274,9 @@ export default function PremiumAnalyticsPage() {
           </div>
           <div className="premium-report-card flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-5">
             <div>
-              <h2 className="font-bold">{ar ? 'دقة جميع المحاولات' : 'Overall attempt accuracy'}</h2>
+              <h2 className="font-bold">{reportAr ? 'دقة جميع المحاولات' : 'Overall attempt accuracy'}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {ar ? 'عدد الإجابات الصحيحة مقسوماً على إجمالي المحاولات.'
+                {reportAr ? 'عدد الإجابات الصحيحة مقسوماً على إجمالي المحاولات.'
                   : 'Correct answers divided by all recorded attempts.'}
               </p>
             </div>
@@ -244,12 +284,12 @@ export default function PremiumAnalyticsPage() {
           </div>
           {categoriesForChart.length > 0 && (
             <section className="premium-report-card space-y-4 rounded-2xl border bg-card p-4 sm:p-6">
-              <h2 className="text-xl font-bold">{ar ? 'مخطط المسائل المحلولة حسب الفئة' : 'Solved questions by topic'}</h2>
-              <div className="space-y-3" role="img" aria-label={ar ? 'مخطط عدد المسائل المحلولة في الفئات' : 'Bar chart of solved questions by topic'}>
+              <h2 className="text-xl font-bold">{reportAr ? 'مخطط المسائل المحلولة حسب الفئة' : 'Solved questions by topic'}</h2>
+              <div className="space-y-3" role="img" aria-label={reportAr ? 'مخطط عدد المسائل المحلولة في الفئات' : 'Bar chart of solved questions by topic'}>
                 {categoriesForChart.map(category => (
                   <div key={category.CategoryId} className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-3 sm:grid-cols-[minmax(9rem,1fr)_minmax(12rem,3fr)_3rem]">
                     <span className="min-w-0 truncate text-xs font-medium sm:text-sm">
-                      {ar ? category.CategoryNameAr : category.CategoryNameEn}
+                      {reportAr ? category.CategoryNameAr : category.CategoryNameEn}
                     </span>
                     <div className="premium-report-chart-bar h-3 overflow-hidden rounded-full bg-primary/10">
                       <div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500"
@@ -262,7 +302,7 @@ export default function PremiumAnalyticsPage() {
                 ))}
               </div>
               {report.Categories.length > 10 && <p className="text-xs text-muted-foreground">
-                {ar ? 'أعلى 10 فئات حسب عدد المسائل المحلولة. التفاصيل الكاملة بالجدول.'
+                {reportAr ? 'أعلى 10 فئات حسب عدد المسائل المحلولة. التفاصيل الكاملة بالجدول.'
                   : 'Top 10 topics by solved questions. All topics are listed below.'}
               </p>}
             </section>
@@ -271,17 +311,17 @@ export default function PremiumAnalyticsPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 text-xl font-bold">
                 <FileText className="h-5 w-5 text-primary" />
-                {ar ? 'التقدم حسب المرحلة والفئة' : 'Progress by stage and category'}
+                {reportAr ? 'التقدم حسب المرحلة والفئة' : 'Progress by stage and category'}
               </h2>
-              {formatReportDate(report.GeneratedAtUtc, ar ? 'ar' : 'en') && (
+              {formatReportDate(report.GeneratedAtUtc, reportAr ? 'ar' : 'en') && (
                 <time dateTime={report.GeneratedAtUtc} className="text-xs text-muted-foreground">
-                  {formatReportDate(report.GeneratedAtUtc, ar ? 'ar' : 'en')}
+                  {formatReportDate(report.GeneratedAtUtc, reportAr ? 'ar' : 'en')}
                 </time>
               )}
             </div>
             {report.Categories.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
-                {ar ? 'ما عندك محاولات بعد. ابدأ الحل حتى تظهر إحصائياتك.'
+                {reportAr ? 'ما عندك محاولات بعد. ابدأ الحل حتى تظهر إحصائياتك.'
                   : 'No attempts recorded yet. Start solving to populate your report.'}
               </p>
             ) : (
@@ -289,20 +329,20 @@ export default function PremiumAnalyticsPage() {
                 <table className="w-full min-w-[660px] border-collapse text-sm">
                   <thead className="bg-muted/60 text-muted-foreground">
                     <tr>
-                      <th className="p-3 text-start">{ar ? 'المرحلة' : 'Stage'}</th>
-                      <th className="p-3 text-start">{ar ? 'الفئة' : 'Category'}</th>
-                      <th className="p-3 text-end">{ar ? 'المحلولة' : 'Solved'}</th>
-                      <th className="p-3 text-end">{ar ? 'المحاولات' : 'Attempts'}</th>
-                      <th className="p-3 text-end">{ar ? 'الصحيحة' : 'Correct'}</th>
-                      <th className="p-3 text-end">{ar ? 'دفتر الأخطاء' : 'Error notebook'}</th>
-                      <th className="p-3 text-end">{ar ? 'النقاط' : 'Points'}</th>
+                      <th className="p-3 text-start">{reportAr ? 'المرحلة' : 'Stage'}</th>
+                      <th className="p-3 text-start">{reportAr ? 'الفئة' : 'Category'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'المحلولة' : 'Solved'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'المحاولات' : 'Attempts'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'الصحيحة' : 'Correct'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'دفتر الأخطاء' : 'Error notebook'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'النقاط' : 'Points'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.Categories.map(category => (
                       <tr key={category.CategoryId} className="border-t">
-                        <td className="p-3">{ar ? category.StageNameAr : category.StageNameEn}</td>
-                        <td className="p-3 font-medium">{ar ? category.CategoryNameAr : category.CategoryNameEn}</td>
+                        <td className="p-3">{reportAr ? category.StageNameAr : category.StageNameEn}</td>
+                        <td className="p-3 font-medium">{reportAr ? category.CategoryNameAr : category.CategoryNameEn}</td>
                         <td className="p-3 text-end tabular-nums">{category.SolvedProblems}</td>
                         <td className="p-3 text-end tabular-nums">{category.Attempts}</td>
                         <td className="p-3 text-end tabular-nums">{category.CorrectAttempts}</td>
@@ -315,8 +355,8 @@ export default function PremiumAnalyticsPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground print:text-black">
-              {ar ? 'احفظ التقرير PDF من الطباعة. للتوافق مع إصدارات Excel المختلفة استخدم CSV، أو نزّل XLSX للتنسيقات والمخططات.'
-                : 'Print to PDF, download CSV for wider Excel compatibility, or use XLSX for formatting and charts.'}
+              {reportAr ? 'التقرير المنسق متاح مباشرة بصيغتي PDF وExcel مع إحصائيات ومخططات. ملف CSV بيانات خام فقط.'
+                : 'Download the formatted PDF or Excel report with real statistics and charts. CSV is for raw data only.'}
             </p>
           </section>
         </>
