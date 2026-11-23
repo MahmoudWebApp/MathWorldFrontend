@@ -69,4 +69,4 @@ pnpm qa:dev
 
 Open `http://localhost:3000/ar` or `http://localhost:3000/en`. `pnpm qa:dev` rejects missing or known production API endpoints.
 
-The existing public Vercel/Netlify site is **not** a verified preview of this branch; its Vercel commit status currently says the build was ignored. For Android staging-only APK, a bilingual test matrix and safe backend prerequisites, see [START_TESTING_WEB_AND_ANDROID.md](docs/START_TESTING_WEB_AND_ANDROID.md). No payment, ads, content publication or production migration is enabled by this process.
+The official web site is deployed through Vercel. A successful production deployment only proves that a particular commit was published; **it does not validate a local or feature branch**. Check the deployed commit and use the safe QA prerequisites in [START_TESTING_WEB_AND_ANDROID.md](docs/START_TESTING_WEB_AND_ANDROID.md) before testing any write flows. Do not connect a QA session to the live API, change live data, or assume a successful build verifies learner UX.
