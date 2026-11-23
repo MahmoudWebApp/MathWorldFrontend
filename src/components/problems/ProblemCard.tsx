@@ -27,61 +27,69 @@ export function ProblemCard({ problem }: ProblemCardProps) {
 
   return (
     <Link
-      href={`${inStudentWorkspace ? "/dashboard" : ""}/problems/${problem.Id}`}
-      className="group block rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      href={'' + (inStudentWorkspace ? "/dashboard" : "") + '/problems/' + problem.Id}
+      className="group mx-auto block w-full max-w-5xl rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
-      <article className="brand-surface rounded-3xl p-5 transition-[border-color,box-shadow] hover:shadow-md sm:p-6" style={{ borderColor: `${stageAccent}30` }}>
-        <div className="flex gap-4">
-          <div aria-hidden="true" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style={{ color: stageAccent, backgroundColor: `${stageAccent}17` }}>
-            <Calculator className="h-6 w-6" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <RichText
-              text={problem.Title}
-              isArabic={locale === "ar"}
-              className="text-lg font-bold leading-7 text-foreground transition-colors"
-            />
-            <div className="mt-3 flex flex-wrap gap-2">
-              {typeof problem.IsSolved === "boolean" && typeof problem.HasAttempted === "boolean" && (problem.IsSolved === true ? (
-                <Badge variant="secondary" className="gap-1 border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {locale === "ar" ? "محلولة" : "Solved"}
-                </Badge>
-              ) : problem.HasAttempted === true ? (
-                <Badge variant="secondary" className="gap-1 border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  {locale === "ar" ? "تحتاج مراجعة" : "Needs review"}
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="gap-1 border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-300">
-                  <CircleDot className="h-3.5 w-3.5" />
-                  {locale === "ar" ? "جديدة" : "New"}
-                </Badge>
-              ))}
-              {problem.StageName && (
-                <Badge variant="secondary" className="gap-1.5 border bg-background/80 text-foreground" style={{ borderColor: `${stageAccent}34` }}>
-                  <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-transparent shadow-none" />
-                  {problem.StageName}
-                </Badge>
-              )}
-              {problem.CategoryName && (
-                <Badge variant="outline" className="border-border bg-background/80 text-muted-foreground">
-                  {problem.CategoryName}
-                </Badge>
-              )}
-            </div>
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                {typeof problem.Points === "number" && (
-                  <span className="inline-flex items-center gap-1.5"><Star aria-hidden="true" className="h-4 w-4 text-amber-500" />{problem.Points}</span>
+      <article className="brand-surface rounded-3xl p-4 transition-[border-color,box-shadow] hover:shadow-md sm:p-5"
+        style={{ borderColor: stageAccent + '30' }}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+            <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12"
+              style={{ color: stageAccent, backgroundColor: stageAccent + '17' }}>
+              <Calculator className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <RichText
+                text={problem.Title}
+                isArabic={locale === "ar"}
+                className="text-base font-bold leading-7 text-foreground transition-colors sm:text-lg"
+              />
+              <div className="mt-3 flex flex-wrap gap-2">
+                {typeof problem.IsSolved === "boolean" && typeof problem.HasAttempted === "boolean" &&
+                  (problem.IsSolved ? (
+                    <Badge variant="secondary" className="gap-1 border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      {locale === "ar" ? "محلولة" : "Solved"}
+                    </Badge>
+                  ) : problem.HasAttempted ? (
+                    <Badge variant="secondary" className="gap-1 border-amber-500/25 bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                      <AlertCircle className="h-3.5 w-3.5" />
+                      {locale === "ar" ? "تحتاج مراجعة" : "Needs review"}
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1 border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-300">
+                      <CircleDot className="h-3.5 w-3.5" />
+                      {locale === "ar" ? "جديدة" : "New"}
+                    </Badge>
+                  ))}
+                {problem.StageName && (
+                  <Badge variant="secondary" className="gap-1.5 border bg-background/80 text-foreground" style={{ borderColor: stageAccent + '34' }}>
+                    <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-transparent shadow-none" />
+                    {problem.StageName}
+                  </Badge>
+                )}
+                {problem.CategoryName && (
+                  <Badge variant="outline" className="border-border bg-background/80 text-muted-foreground">
+                    {problem.CategoryName}
+                  </Badge>
                 )}
               </div>
-              <span className="inline-flex items-center gap-2 text-sm font-bold" style={{ color: stageAccent }}>
-                {problem.IsSolved ? (locale === "ar" ? "عرض المسألة" : "View question") :
-                  problem.HasAttempted ? (locale === "ar" ? "راجع الخطأ" : "Review mistake") : t("common.solveNow")}
-                <DirectionalArrow direction="forward" />
-              </span>
             </div>
+          </div>
+          <div className="flex shrink-0 items-center justify-between gap-4 border-t border-border/60 pt-3 sm:flex-col sm:items-end sm:gap-4 sm:border-t-0 sm:pt-0">
+            {typeof problem.Points === "number" ? (
+              <span className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-300"
+                aria-label={(locale === "ar" ? "النقاط: " : "Points: ") + problem.Points}>
+                <Star aria-hidden="true" className="h-4 w-4 fill-amber-400/15" />
+                <span className="tabular-nums">{problem.Points}</span>
+              </span>
+            ) : <span aria-hidden="true" />}
+            <span className="inline-flex items-center gap-2 whitespace-nowrap text-sm font-bold transition-colors group-hover:underline"
+              style={{ color: stageAccent }}>
+              {problem.IsSolved ? (locale === "ar" ? "عرض المسألة" : "View question") :
+                problem.HasAttempted ? (locale === "ar" ? "راجع الخطأ" : "Review mistake") : t("common.solveNow")}
+              <DirectionalArrow direction="forward" className="h-4 w-4" />
+            </span>
           </div>
         </div>
       </article>
