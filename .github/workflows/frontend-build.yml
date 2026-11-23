@@ -8,6 +8,7 @@ on:
     paths:
       - '**/*.ts'
       - '**/*.tsx'
+      - 'scripts/check-requested-ux-contract.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/frontend-build.yml'
@@ -43,5 +44,7 @@ jobs:
           printf 'NEXT_PUBLIC_API_BASE_URL=https://mathworld-staging.example.org/api\n' > .env.local
           node scripts/check-qa-api.mjs
           rm .env.local
+      - name: Check requested student/admin UX regression contract
+        run: node scripts/check-requested-ux-contract.mjs
       - name: Production build
         run: pnpm build
