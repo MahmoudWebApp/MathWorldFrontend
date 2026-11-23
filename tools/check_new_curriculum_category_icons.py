@@ -20,5 +20,5 @@ for slug in sorted(EXPECTED):
     assert 'fill="url(#mw)"' in src
     assert '#125142' in src and '#21785F' in src and '#3FA784' in src
     assert "<script" not in src and "<image" not in src and "href=" not in src
-    assert len(svg.findall(".//{http://www.w3.org/2000/svg}path"))>=2
+    assert sum(len(svg.findall(f".//{{http://www.w3.org/2000/svg}}{tag}")) for tag in ("path","circle","rect","line","polyline","polygon"))>=4
 print(f"PASS: {len(EXPECTED)} original SVG category icons with aligned branding and valid XML")
