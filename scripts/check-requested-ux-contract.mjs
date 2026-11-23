@@ -15,6 +15,10 @@ const challenge = read('src/app/[locale]/daily-challenge/page.tsx');
 const solver = read('src/app/[locale]/problems/[id]/page.tsx');
 const admin = read('src/app/[locale]/(dashboard)/admin/page.tsx');
 const nav = read('src/components/dashboard/StudentWorkspaceNavigation.tsx');
+const auth = read('src/components/providers/AuthProvider.tsx');
+const categoryApi = read('src/store/api/categoriesApi.ts');
+const stageApi = read('src/store/api/stagesApi.ts');
+const problemList = read('src/app/[locale]/problems/ProblemsPageClient.tsx');
 
 assert.match(card, /max-w-5xl/, 'Problem preview cards must stay reasonably narrow');
 assert.match(card, /flex flex-row items-start justify-between/, 'Mobile and desktop should keep the score and action in the top corner');
@@ -42,4 +46,13 @@ assert.match(nav, /href: '\/dashboard\/daily-challenge'.*premium: true/, 'Challe
 const shortcuts = admin.match(/\{ href: '\/admin\/(users|stages|engagement\/students)'/g) ?? [];
 assert.equal(shortcuts.length, 3, 'Admin dashboard must have exactly three requested management shortcuts');
 
-console.log('PASS: problem cards, category buttons, Premium challenge, and three admin shortcuts source contracts');
+assert.match(auth, /PROFILE_REVALIDATE_MS = 45_000/, 'Global account refresh must be throttled');
+assert.match(auth, /inFlightToken\.current === token/, 'Overlapping account refresh calls must be deduplicated');
+assert.match(categoryApi, /keepUnusedDataFor: 180/, 'Category cache must be reused across navigation');
+assert.match(stageApi, /keepUnusedDataFor: 180/, 'Stage cache must be reused across navigation');
+assert.match(problemList, /useGetCategoriesQuery\(locale, \{ refetchOnMountOrArgChange: 120 \}\)/,
+  'Problem browsing must not re-request categories on each mount');
+assert.match(problemList, /useGetStagesQuery\(locale, \{ refetchOnMountOrArgChange: 120 \}\)/,
+  'Problem browsing must not re-request stages on each mount');
+
+console.log('PASS: MathWorld learner/admin UX and sitewide public-catalog request-efficiency contracts');
