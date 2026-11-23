@@ -27,12 +27,12 @@ export function ProblemCard({ problem }: ProblemCardProps) {
 
   return (
     <Link
-      href={'' + (inStudentWorkspace ? "/dashboard" : "") + '/problems/' + problem.Id}
+      href={`${inStudentWorkspace ? "/dashboard" : ""}/problems/${problem.Id}`}
       className="group mx-auto block w-full max-w-5xl rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <article className="brand-surface rounded-3xl p-4 transition-[border-color,box-shadow] hover:shadow-md sm:p-5"
         style={{ borderColor: stageAccent + '30' }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-row items-start justify-between gap-3 sm:gap-4">
           <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
             <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12"
               style={{ color: stageAccent, backgroundColor: stageAccent + '17' }}>
@@ -76,7 +76,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
               </div>
             </div>
           </div>
-          <div className="flex shrink-0 items-center justify-between gap-4 border-t border-border/60 pt-3 sm:flex-col sm:items-end sm:gap-4 sm:border-t-0 sm:pt-0">
+          <div className="flex shrink-0 flex-col items-end gap-3 pt-0 sm:gap-4">
             {typeof problem.Points === "number" ? (
               <span className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-300"
                 aria-label={(locale === "ar" ? "النقاط: " : "Points: ") + problem.Points}>
