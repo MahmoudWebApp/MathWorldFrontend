@@ -60,13 +60,13 @@ export default function PremiumAnalyticsPage() {
   const downloadExcelCsv = async () => {
     setDownloadError(false);
     try {
-      const blob = await exportCsv().unwrap();
+      const blob = await exportCsv(reportLanguage).unwrap();
       if (!(blob instanceof Blob) || blob.size < 20 || blob.size > 20_000_000 ||
         !blob.type.toLowerCase().includes('text/csv')) {
         throw new Error('Invalid CSV response');
       }
       // UTF-8 BOM is sent by the backend so Excel preserves Arabic text.
-      saveReportFile(blob, 'mathworld-premium-analytics.csv');
+      saveReportFile(blob, `mathworld-premium-analytics-${reportLanguage}.csv`);
     } catch {
       setDownloadError(true);
     }
