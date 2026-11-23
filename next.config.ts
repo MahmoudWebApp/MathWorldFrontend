@@ -11,6 +11,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Hostinger VPS Docker images run Next.js from its minimal standalone
+  // server bundle. Vercel deployments still use the same Next application.
+  output: 'standalone',
   async headers() {
     return [
       {
