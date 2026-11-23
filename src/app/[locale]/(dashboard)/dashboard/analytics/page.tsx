@@ -237,7 +237,7 @@ export default function PremiumAnalyticsPage() {
           <Link href="/login" className="font-semibold text-primary underline">{ar ? 'تسجيل الدخول' : 'Sign in'}</Link>
         </div>
       ) : loadingEntitlement ? (
-        <p role="status" className="py-10 text-center">{ar ? 'جارٍ التحقق من اشتراكك…' : 'Checking Premium access…'}</p>
+        <MathWorldLoading compact />
       ) : entitlementError ? (
         <div role="alert" className="premium-report-actions space-y-3 rounded-2xl border p-6">
           <p>{ar ? 'تعذّر التحقق من صلاحية اشتراكك.' : 'Subscription verification failed.'}</p>
@@ -261,6 +261,7 @@ export default function PremiumAnalyticsPage() {
         </div>
       ) : isLoading ? (
         <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ إعداد التقرير' : 'Preparing report'} className="animate-pulse space-y-4">
+          <MathWorldLoading compact />
           <div className="h-28 rounded-2xl border border-border/60 bg-card/70" />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-32 rounded-2xl bg-muted/70" />)}
