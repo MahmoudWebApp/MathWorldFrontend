@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
@@ -61,6 +62,7 @@ export default function UserDashboardPage() {
   if (isLoading || (dashboard?.Role === 'Student' && stageId > 0 &&
       (journeyLoading || planLoading))) {
     return <main className="mx-auto w-full max-w-7xl animate-pulse space-y-5 px-4 py-6 sm:px-6" aria-busy="true">
+      <MathWorldLoading compact />
       <div className="h-9 w-48 rounded-xl bg-muted" />
       <div className="h-52 rounded-3xl border bg-card/75" />
       <div className="grid gap-4 lg:grid-cols-2"><div className="h-72 rounded-3xl border bg-card/75" /><div className="h-72 rounded-3xl border bg-card/75" /></div>
