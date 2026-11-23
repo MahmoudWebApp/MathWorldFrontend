@@ -37,7 +37,7 @@ import { getApiErrorMessage } from "@/lib/authSession";
 
 export default function AdminCategoriesPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
+    <Suspense fallback={<div role="status" aria-busy="true" className="animate-pulse grid gap-4 p-8 md:grid-cols-2">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-44 rounded-xl bg-muted/70" />)}</div>}>
       <AdminCategoriesPageContent />
     </Suspense>
   );
@@ -247,8 +247,8 @@ function AdminCategoriesPageContent() {
 
   if (isLoading || isLoadingStages)
     return (
-      <div role="status" className="p-8 text-center lg:px-24 md:px-16 px-4">
-        {t("common.loading")}
+      <div role="status" aria-busy="true" aria-label={t("common.loading")} className="animate-pulse grid gap-4 px-4 py-8 md:grid-cols-2 md:px-16 lg:px-24">
+        {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-44 rounded-xl border border-border/60 bg-card/70" />)}
       </div>
     );
 
