@@ -6,7 +6,7 @@ import { useDispatch } from 'react-redux';
 
 import type { AppDispatch } from '@/store';
 import { authApi } from '@/store/api/authApi';
-import { logout, setCredentials, setLoading } from '@/store/slices/authSlice';
+import { logout, setCredentials, setLoading, sessionConnectionFailed } from '@/store/slices/authSlice';
 import { clearAuthSession, getClientCookie } from '@/lib/authSession';
 
 function isUnauthorized(error: unknown): boolean {
@@ -58,8 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearAuthSession();
         dispatch(logout());
       } else {
-        // Network failures must not destroy a valid login cookie.
-        dispatch(setLoading(false));
+        // The API may be temporarily unavailable while the user is still logged in.
+        // Never turn this into a false sign-in prompt during an active session.
+        dispatch(sessionConnectionFailed());
       }
     } finally {
       if (inFlightToken.current === token) inFlightToken.current = null;
@@ -81,9 +82,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const onFocus = () => { void refreshProfile(); };
+    const onRetry = () => {
+      dispatch(setLoading(true));
+      void refreshProfile();
+    };
     window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [refreshProfile]);
+    window.addEventListener('mathworld:retry-auth', onRetry);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('mathworld:retry-auth', onRetry);
+    };
+  }, [dispatch, refreshProfile]);
 
   useEffect(() => {
     if (lastPath.current === pathname) return;
