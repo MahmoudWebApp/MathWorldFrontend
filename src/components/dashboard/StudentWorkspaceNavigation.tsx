@@ -29,7 +29,7 @@ export function StudentWorkspaceNavigation({ onNavigate, isPremium = false, coll
   const ar = locale === 'ar';
   return (
     <nav aria-label={ar ? 'قائمة الطالب' : 'Student navigation'} className="space-y-1">
-      {STUDENT_NAV_ITEMS.map(item => {
+      {STUDENT_NAV_ITEMS.filter(item => isPremium || item.href !== '/dashboard/daily-challenge').map(item => {
         const active = pathname === item.href ||
           (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'));
         const locked = 'premium' in item && item.premium && !isPremium;
