@@ -104,7 +104,7 @@ export function AdminPremiumManager({ learnerId, locale }: Props) {
             <div className="font-semibold">{record.PreviousType} → {record.NewType}</div>
             <div>{record.Reason}</div>
             <time className="text-xs opacity-70" dateTime={record.ChangedAtUtc}>
-              {new Date(record.ChangedAtUtc).toLocaleString(ar ? 'ar' : 'en')}
+              {new Date(record.ChangedAtUtc).toLocaleString(ar ? 'ar-SY-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </time>
           </li>
         ))}

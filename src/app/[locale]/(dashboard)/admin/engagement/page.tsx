@@ -34,14 +34,14 @@ export default function AdminEngagementPage() {
   }, []);
 
   const overview = useGetAdminEngagementOverviewQuery(days, {
-    refetchOnMountOrArgChange: true, refetchOnFocus: true,
-    refetchOnReconnect: true, pollingInterval: 60_000,
+    refetchOnMountOrArgChange: 90, refetchOnFocus: false,
+    refetchOnReconnect: true, pollingInterval: 120_000,
     skipPollingIfUnfocused: true,
   });
   const resolvedId = stageId && overview.data?.Stages.some(s => s.StageId === stageId)
     ? stageId : (overview.data?.Stages[0]?.StageId ?? 0);
   const stage = useGetAdminEngagementStageQuery({stageId: resolvedId, days}, {
-    skip: resolvedId <= 0, refetchOnMountOrArgChange: true,
+    skip: resolvedId <= 0, refetchOnMountOrArgChange: 90,
     refetchOnFocus: true, refetchOnReconnect: true,
   });
   const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
@@ -107,7 +107,9 @@ export default function AdminEngagementPage() {
         {ar ? 'إعادة المحاولة' : 'Retry'}
       </button>
     </div>}
-    {!overview.data && !overview.isError && <p role="status">{ar ? 'جارٍ التحميل…' : 'Loading…'}</p>}
+    {!overview.data && !overview.isError && <div role="status" aria-busy="true" aria-label={ar ? 'تحميل مستويات الإدارة' : 'Loading stages'} className="animate-pulse space-y-3">
+      {Array.from({ length: 4 }, (_, i) => <div key={i} className="h-16 rounded-xl bg-muted/60" />)}
+    </div>}
 
     {overview.data && overview.data.Stages.length === 0 && (
       <section role="status" className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">
@@ -159,10 +161,10 @@ export default function AdminEngagementPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={categoryChart} layout="vertical" margin={{ top: 4, right: 6, bottom: 4, left: 12 }}>
                   <CartesianGrid strokeDasharray="3 5" horizontal={false} opacity={0.18} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }}/>
-                  <YAxis dataKey="name" type="category" width={ar ? 108 : 116} tick={{ fontSize: 10 }}
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }} />
+                  <YAxis dataKey="name" type="category" width={ar ? 108 : 116} tick={{ fontSize: 10, fill: 'var(--color-muted-foreground)' }}
                     tickFormatter={label => String(label).length > 14 ? String(label).slice(0, 13) + '…' : String(label)} />
-                  <Tooltip />
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)', border: '1px solid var(--color-border)', borderRadius: 12 }} labelStyle={{ color: 'var(--color-foreground)' }} itemStyle={{ color: 'var(--color-foreground)' }} />
                   <Bar name={ar ? 'طلاب نشطون' : 'Active learners'} dataKey="learners" fill={chartColor} radius={[0,6,6,0]} />
                 </BarChart>
               </ResponsiveContainer>

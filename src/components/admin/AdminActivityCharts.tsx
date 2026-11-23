@@ -9,10 +9,10 @@ import type {
   AdminActivityDay, AdminStageAnalytics, AdminWeakCategory,
 } from '@/store/api/statsApi';
 
-const primary = 'var(--color-brand-primary-strong)';
+const primary = 'var(--color-primary)';
 const secondary = 'var(--color-brand-secondary)';
-const subdued = 'var(--muted-foreground)';
-const grid = 'var(--border)';
+const subdued = 'var(--color-muted-foreground)';
+const grid = 'var(--color-border)';
 
 function EmptyChart({ text }: { text: string }) {
   return (
@@ -24,7 +24,7 @@ function EmptyChart({ text }: { text: string }) {
 
 function formatDay(value: string, arabic: boolean): string {
   return new Date(value).toLocaleDateString(arabic ? 'ar' : 'en', {
-    month: 'short', day: 'numeric', timeZone: 'UTC',
+    day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
   });
 }
 
@@ -55,9 +55,9 @@ export function AdminActivityChart({
             tick={{ fontSize: 11, fill: subdued }} minTickGap={24} />
           <YAxis allowDecimals={false} tickLine={false} axisLine={false}
             tick={{ fontSize: 11, fill: subdued }} />
-          <Tooltip contentStyle={{ borderRadius: 12, background: 'var(--card)', borderColor: grid }}
-            labelStyle={{ color: 'var(--foreground)' }} />
-          <Legend verticalAlign="bottom" iconType="circle" />
+          <Tooltip itemStyle={{ color: "var(--color-foreground)" }} contentStyle={{ borderRadius: 12, backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)', borderColor: grid }}
+            labelStyle={{ color: 'var(--color-foreground)' }} />
+          <Legend verticalAlign="bottom" iconType="circle" wrapperStyle={{ color: subdued }} />
           <Area type="monotone" name={labels.attempts} dataKey="attempts" stroke={primary}
             strokeWidth={2.5} fill={primary} fillOpacity={0.13} dot={false} />
           <Area type="monotone" name={labels.correct} dataKey="correct" stroke={secondary}
@@ -96,8 +96,8 @@ export function AdminStagePerformanceChart({
             tick={{ fontSize: 10, fill: subdued }} />
           <YAxis allowDecimals={false} tickLine={false} axisLine={false}
             tick={{ fontSize: 11, fill: subdued }} />
-          <Tooltip contentStyle={{ borderRadius: 12, background: 'var(--card)', borderColor: grid }} />
-          <Legend iconType="circle" />
+          <Tooltip itemStyle={{ color: "var(--color-foreground)" }} contentStyle={{ borderRadius: 12, backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)', borderColor: grid }} />
+          <Legend iconType="circle" wrapperStyle={{ color: subdued }} />
           <Bar name={labels.correct} dataKey="correct" stackId="answers" fill={primary} radius={[0, 0, 0, 0]} maxBarSize={44} />
           <Bar name={labels.wrong} dataKey="wrong" stackId="answers" fill={secondary} radius={[6, 6, 0, 0]} maxBarSize={44} />
         </BarChart>
@@ -137,7 +137,7 @@ export function AdminCategoryMistakesChart({
             tick={{ fontSize: 11, fill: subdued }} />
           <YAxis type="category" dataKey="name" width={112} tickLine={false} axisLine={false}
             tick={{ fontSize: 11, fill: subdued }} />
-          <Tooltip contentStyle={{ borderRadius: 12, background: 'var(--card)', borderColor: grid }}
+          <Tooltip itemStyle={{ color: "var(--color-foreground)" }} contentStyle={{ borderRadius: 12, backgroundColor: 'var(--color-card)', color: 'var(--color-foreground)', borderColor: grid }}
             labelFormatter={(_, payload) => (payload?.[0]?.payload?.fullName as string) ?? ''} />
           <Bar name={labels.wrong} dataKey="wrong" fill={secondary} radius={[0, 6, 6, 0]} maxBarSize={27} />
         </BarChart>

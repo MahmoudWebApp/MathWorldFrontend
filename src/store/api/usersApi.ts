@@ -182,6 +182,8 @@ export interface AdminLearnerDirectory {
 }
 
 export interface AdminLearnerFilters {
+  /** The compact directory skips expensive attempt/progress aggregation. */
+  IncludeActivity?: boolean;
   Search?: string;
   StageId?: number;
   IsActive?: boolean;
@@ -288,6 +290,7 @@ export interface AnnualPremiumGrantResult {
   UpdatedIds: number[];
   SkippedIndefiniteIds: number[];
   DurationMonths: number;
+  Periods: Array<{ LearnerId: number; StartAtUtc: string; EndAtUtc: string }>;
 }
 
 export interface AdminSubscriptionStatus {
@@ -933,9 +936,10 @@ export const usersApi = createApi({
     }),
 
     getAdminLearners: builder.query<AdminLearnerDirectory, AdminLearnerFilters>({
-      query: ({ Search, StageId, IsActive, Subscription, Page = 1, PageSize = 10 }) => ({
+      query: ({ Search, StageId, IsActive, Subscription, IncludeActivity = true, Page = 1, PageSize = 10 }) => ({
         url: '/admin/learners',
         params: {
+          ...(!IncludeActivity ? { includeActivity: false } : {}),
           ...(Search ? { search: Search } : {}),
           ...(StageId ? { stageId: StageId } : {}),
           ...(IsActive === undefined ? {} : { isActive: IsActive }),

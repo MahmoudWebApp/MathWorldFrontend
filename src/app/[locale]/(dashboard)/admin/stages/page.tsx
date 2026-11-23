@@ -111,8 +111,14 @@ export default function AdminStagesPage() {
 
   if (isLoading)
     return (
-      <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
-        <div className="text-center">{t("common.loading")}</div>
+      <div role="status" aria-busy="true" aria-label={t("common.loading")} className="container mx-auto animate-pulse px-4 py-8 md:px-16 lg:px-24">
+        <div className="mb-6 h-9 w-48 rounded-xl bg-muted/70" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-56 rounded-2xl border border-border/60 bg-card/70 p-5">
+            <div className="h-5 w-1/2 rounded bg-muted/70" />
+            <div className="mt-4 h-4 w-3/4 rounded bg-muted/60" />
+          </div>)}
+        </div>
       </div>
     );
 

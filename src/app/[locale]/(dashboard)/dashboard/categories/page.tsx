@@ -9,6 +9,7 @@ import { useGetLearningStageQuery, useGetLearningJourneyQuery, useResetPracticeM
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 export default function StudentCategoriesPage() {
   const [target, setTarget] = useState<{ categoryId?: number; name: string } | null>(null);
@@ -64,28 +65,42 @@ export default function StudentCategoriesPage() {
           </button>
         )}
       </header>
-      {target && (
-        <section className="space-y-3 rounded-2xl border border-amber-500/40 bg-amber-500/5 p-5" role="group"
-          aria-label={ar ? 'تأكيد إعادة التدريب' : 'Confirm practice restart'}>
-          <p className="font-bold">{ar ? `إعادة تدريب ${target.name} من البداية؟` :
-            `Restart all practice in ${target.name}?`}</p>
-          <p className="text-sm text-muted-foreground">{ar
+      <Dialog open={!!target} onOpenChange={open => { if (!open && !resetting) setTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{ar ? 'تأكيد إعادة التدريب' : 'Confirm practice restart'}</DialogTitle>
+            <DialogDescription>
+              {ar ? 'إعادة تدريب ' + (target?.name ?? '') + ' من البداية؟'
+                : 'Restart all practice in ' + (target?.name ?? '') + '?'}
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm leading-7 text-muted-foreground">{ar
             ? 'رح تصير مسائل هذا النطاق جديدة، وينمسح تقدم دورتك الحالية وأخطاؤها. المفضلة محفوظة، وما في تراجع.'
-            : 'All questions in this scope become New; the current progress and error notebook reset. Favorites stay. This cannot be undone.'}</p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={resetting} onClick={() => void confirmReset()}
-              className="min-h-11 rounded-xl bg-amber-600 px-4 py-2 font-semibold text-white disabled:opacity-50">
-              {resetting ? (ar ? 'جارٍ التصفير…' : 'Resetting…') : (ar ? 'نعم، ابدأ دورة جديدة' : 'Yes, start a new cycle')}
-            </button>
+            : 'Questions in this scope become new. The current progress and error notebook reset, while favorites remain. This cannot be undone.'}</p>
+          {resetError && <p role="alert" className="text-sm text-destructive">{resetError}</p>}
+          <DialogFooter>
             <button type="button" disabled={resetting} onClick={() => setTarget(null)}
-              className="min-h-11 rounded-xl border px-4 py-2 font-semibold">{ar ? 'إلغاء' : 'Cancel'}</button>
-          </div>
-          {resetError && <p role="alert" className="text-destructive">{resetError}</p>}
-        </section>
-      )}
+              className="min-h-11 rounded-xl border border-border px-4 py-2.5 font-bold disabled:opacity-50">
+              {ar ? 'إلغاء' : 'Cancel'}
+            </button>
+            <button type="button" disabled={resetting} onClick={() => void confirmReset()}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 font-bold text-white disabled:opacity-50">
+              <RotateCcw className="h-4 w-4" aria-hidden="true"/>
+              {resetting ? (ar ? 'جارٍ إعادة التدريب…' : 'Restarting…') : (ar ? 'تأكيد إعادة التدريب' : 'Confirm restart')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
       {loading ? (
-        <p role="status" className="rounded-2xl border p-8 text-center text-muted-foreground">{ar ? 'جارٍ تحميل فئات مرحلتك…' : 'Loading your stage topics…'}</p>
+        <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ تحميل فئات مرحلتك' : 'Loading your topics'} className="grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-52 rounded-3xl border border-border/70 bg-card/70 p-5">
+            <div className="h-10 w-10 rounded-xl bg-muted/70" />
+            <div className="mt-4 h-6 w-2/3 rounded bg-muted/70" />
+            <div className="mt-4 h-4 w-full rounded bg-muted/60" />
+            <div className="mt-2 h-4 w-3/4 rounded bg-muted/60" />
+          </div>)}
+        </div>
       ) : failed ? (
         <div role="alert" className="rounded-2xl border border-destructive/30 p-6">
           <p>{ar ? 'تعذّر تحميل الفئات أو صلاحيات الحساب.' : 'Could not load topics or subscription access.'}</p>
@@ -156,6 +171,30 @@ export default function StudentCategoriesPage() {
                       : empty ? (ar ? 'لا توجد مسائل حالياً' : 'No problems yet')
                       : `${category.ProblemsCount ?? 0} ${ar ? 'مسألة' : 'problems'}`}
                   </div>
+                  {!locked && (
+                    <div className="mt-4 grid grid-cols-1 gap-2 border-t border-border/60 pt-4 sm:grid-cols-2">
+                      {empty ? (
+                        <span aria-disabled="true" className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-muted px-2 py-2 text-center text-xs font-bold text-muted-foreground">
+                          <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                          {ar ? 'عرض المسائل' : 'View questions'}
+                        </span>
+                      ) : (
+                        <Link href={`/dashboard/problems?categoryId=${category.Id}&stageId=${stageId}`}
+                          className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-primary px-2 py-2 text-center text-xs font-bold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                          <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
+                          {ar ? 'عرض المسائل' : 'View questions'}
+                        </Link>
+                      )}
+                      <button type="button" disabled={resetting || (progress?.AttemptedProblems ?? 0) <= 0}
+                        title={(progress?.AttemptedProblems ?? 0) <= 0
+                          ? (ar ? 'ابدأ بحل مسألة أولاً' : 'Solve a question first') : undefined}
+                        onClick={() => { setResetError(''); setTarget({ categoryId: category.Id, name }); }}
+                        className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-amber-500/40 px-2 py-2 text-center text-xs font-bold text-foreground transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40">
+                        <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        {ar ? 'إعادة التدريب' : 'Restart practice'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
               if (locked) return (
@@ -163,20 +202,7 @@ export default function StudentCategoriesPage() {
                   <button type="button" className="h-full w-full text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={ar ? `${name} مقفولة` : `${name} locked`}>{card}</button>
                 </LockedPremiumDialog>
               );
-              return empty ? <div key={category.Id} className="opacity-75">{card}</div> : (
-                <div key={category.Id} className="flex h-full flex-col gap-2">
-                  <Link href={`/dashboard/problems?categoryId=${category.Id}&stageId=${stageId}`}
-                    className="block flex-1 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{card}</Link>
-                  {(progress?.AttemptedProblems ?? 0) > 0 && (
-                    <button type="button" disabled={resetting} onClick={() => {
-                      setResetError(''); setTarget({ categoryId: category.Id, name });
-                    }} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-amber-500/35 px-3 py-2 text-xs font-semibold hover:bg-amber-500/10">
-                      <RotateCcw className="h-4 w-4" aria-hidden="true"/>
-                      {ar ? 'إعادة تدريب الفئة' : 'Restart topic'}
-                    </button>
-                  )}
-                </div>
-              );
+              return <div key={category.Id} className={empty ? 'h-full opacity-75' : 'h-full'}>{card}</div>;
             })}
           </div>
         </>

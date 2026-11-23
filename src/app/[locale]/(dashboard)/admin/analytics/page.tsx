@@ -21,7 +21,7 @@ export default function AdminAnalyticsPage() {
   const [days, setDays] = useState<(typeof periods)[number]>(30);
   const [chosenStage, setChosenStage] = useState<number | null>(null);
   const { data: overview, isLoading, isError, refetch } =
-    useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: true });
+    useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: 60 });
   const stageId = chosenStage ?? overview?.Stages[0]?.StageId ?? 0;
   const { data: detail, isLoading: loadingDetail, isError: detailError } =
     useGetAdminAnalyticsStageQuery({ stageId, days }, {
@@ -84,7 +84,7 @@ export default function AdminAnalyticsPage() {
   const displayStage = (stage: AdminStageAnalytics) => isArabic ? stage.NameAr : stage.NameEn;
   const activity = detail?.DailyActivity.map((day) => ({
     label: new Date(day.DayUtc).toLocaleDateString(isArabic ? 'ar' : 'en', {
-      month: 'short', day: 'numeric', timeZone: 'UTC',
+      day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
     }),
     attempts: day.Attempts,
     correct: day.CorrectAttempts,
@@ -130,9 +130,14 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {isLoading ? (
-        <p role="status" className="math-card rounded-2xl border border-border p-8 text-center">
-          {labels.loading}
-        </p>
+        <div role="status" aria-busy="true" aria-label={labels.loading} className="animate-pulse space-y-5">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+            {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-28 rounded-2xl bg-muted/60" />)}
+          </div>
+          <div className="grid gap-5 xl:grid-cols-2">
+            <div className="h-80 rounded-2xl bg-muted/60" /><div className="h-80 rounded-2xl bg-muted/60" />
+          </div>
+        </div>
       ) : isError || !overview ? (
         <div role="alert" className="math-card rounded-2xl border border-destructive/30 p-8">
           <p>{labels.error}</p>
@@ -220,9 +225,9 @@ export default function AdminAnalyticsPage() {
                   <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={stageComparison} margin={{top: 8,right: 12,bottom: 12,left: -15}}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2}/>
-                    <XAxis dataKey="stage" tick={{fontSize: 11}} interval={0} />
-                    <YAxis allowDecimals={false} tick={{fontSize: 11}} />
-                    <Tooltip/><Legend/>
+                    <XAxis dataKey="stage" tick={{fontSize: 11, fill: 'var(--color-muted-foreground)'}} interval={0} />
+                    <YAxis allowDecimals={false} tick={{fontSize: 11, fill: 'var(--color-muted-foreground)'}} />
+                    <Tooltip contentStyle={{ backgroundColor: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)", borderRadius: 12 }} labelStyle={{ color: "var(--color-foreground)" }} itemStyle={{ color: "var(--color-foreground)" }} /><Legend wrapperStyle={{ color: "var(--color-muted-foreground)" }} />
                     <Bar dataKey="attempts" name={labels.attempts} fill="var(--color-brand-primary)" radius={[6,6,0,0]} maxBarSize={50}/>
                     <Bar dataKey="correct" name={labels.correct} fill="var(--color-brand-secondary)" radius={[6,6,0,0]} maxBarSize={50}/>
                   </BarChart>
@@ -233,7 +238,9 @@ export default function AdminAnalyticsPage() {
           </section>
 
           {loadingDetail ? (
-            <div role="status" className="math-card rounded-2xl border border-border p-10 text-center">{labels.loading}</div>
+            <div role="status" aria-busy="true" aria-label={labels.loading} className="grid animate-pulse gap-4 lg:grid-cols-2">
+              <div className="h-72 rounded-2xl bg-muted/60" /><div className="h-72 rounded-2xl bg-muted/60" />
+            </div>
           ) : detailError || !detail ? (
             <p role="alert" className="math-card rounded-2xl border border-destructive/30 p-6">{labels.error}</p>
           ) : (
@@ -247,9 +254,9 @@ export default function AdminAnalyticsPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={activity} margin={{ top: 10, right: 10, left: -20, bottom: 10 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                        <XAxis dataKey="label" minTickGap={20} tick={{ fontSize: 11 }} />
-                        <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                        <Tooltip />
+                        <XAxis dataKey="label" minTickGap={20} tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }} />
+                        <Tooltip contentStyle={{ backgroundColor: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)", borderRadius: 12 }} labelStyle={{ color: "var(--color-foreground)" }} itemStyle={{ color: "var(--color-foreground)" }} />
                         <Area type="monotone" dataKey="attempts" name={labels.attempt} stroke="var(--color-brand-primary-strong)" fill="var(--color-brand-primary-strong)" fillOpacity={0.15} />
                         <Area type="monotone" dataKey="correct" name={labels.correct} stroke="var(--color-brand-secondary)" fill="var(--color-brand-secondary)" fillOpacity={0.1} />
                       </AreaChart>
@@ -268,9 +275,9 @@ export default function AdminAnalyticsPage() {
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={weakCategories} layout="vertical" margin={{left: 8,right: 12}}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.2}/>
-                        <XAxis type="number" allowDecimals={false}/>
-                        <YAxis type="category" dataKey="category" width={100} tick={{fontSize: 11}}/>
-                        <Tooltip/>
+                        <XAxis type="number" allowDecimals={false} tick={{ fill: "var(--color-muted-foreground)" }} />
+                        <YAxis type="category" dataKey="category" width={100} tick={{fontSize: 11, fill: 'var(--color-muted-foreground)'}}/>
+                        <Tooltip contentStyle={{ backgroundColor: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)", borderRadius: 12 }} labelStyle={{ color: "var(--color-foreground)" }} itemStyle={{ color: "var(--color-foreground)" }} />
                         <Bar dataKey="wrong" name={isArabic ? 'إجابات خاطئة' : 'Wrong attempts'} fill="var(--color-brand-secondary)" radius={[0,6,6,0]} maxBarSize={22}/>
                       </BarChart>
                     </ResponsiveContainer>
