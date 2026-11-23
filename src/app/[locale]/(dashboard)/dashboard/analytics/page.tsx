@@ -32,7 +32,7 @@ export default function PremiumAnalyticsPage() {
     (state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
       state.auth.isAuthenticated && state.auth.user?.Role === 'Student',
   );
-  const { data: entitlement, isLoading: loadingEntitlement, isError: entitlementError,
+  const { data: entitlement, isLoading: loadingEntitlement, isFetching: fetchingEntitlement, isError: entitlementError,
     refetch: refetchEntitlement } = useGetStudentEntitlementQuery(undefined, { skip: !isStudent });
   const premium = entitlement?.IsPremium === true;
   const [exportXlsx, { isLoading: exportingXlsx }] =
@@ -236,9 +236,9 @@ export default function PremiumAnalyticsPage() {
           <p className="mb-3">{ar ? 'سجّل الدخول بحساب طالب لعرض التقرير.' : 'Sign in with a student account to view the report.'}</p>
           <Link href="/login" className="font-semibold text-primary underline">{ar ? 'تسجيل الدخول' : 'Sign in'}</Link>
         </div>
-      ) : loadingEntitlement ? (
+      ) : loadingEntitlement || (fetchingEntitlement && !entitlement) ? (
         <MathWorldLoading compact />
-      ) : entitlementError ? (
+      ) : entitlementError || !entitlement ? (
         <div role="alert" className="premium-report-actions space-y-3 rounded-2xl border p-6">
           <p>{ar ? 'تعذّر التحقق من صلاحية اشتراكك.' : 'Subscription verification failed.'}</p>
           <button onClick={() => void refetchEntitlement()} className="font-semibold text-primary">
