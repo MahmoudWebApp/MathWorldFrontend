@@ -151,10 +151,10 @@ export default function PremiumAnalyticsPage() {
         <div className="space-y-2">
           <h1 className="flex items-center gap-2 text-3xl font-extrabold">
             <BarChart3 className="h-7 w-7 text-primary" />
-            {ar ? 'تقرير تقدمي في الرياضيات' : 'My mathematics progress report'}
+            {reportAr ? 'تقرير تقدمي في الرياضيات' : 'My mathematics progress report'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {ar ? 'بيانات حقيقية من المحاولات المحفوظة في حسابك.' : 'Verified aggregates from your saved answer attempts.'}
+            {reportAr ? 'بيانات حقيقية من المحاولات المحفوظة في حسابك.' : 'Verified aggregates from your saved answer attempts.'}
           </p>
         </div>
         {report && (
