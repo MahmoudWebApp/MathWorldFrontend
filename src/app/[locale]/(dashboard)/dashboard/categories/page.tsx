@@ -114,7 +114,7 @@ export default function StudentCategoriesPage() {
       </Dialog>
       <CategorySkillsDialog stageId={stageId} category={skillsCategory}
         onClose={() => setSkillsCategory(null)} />
-      {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>
+      {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
       {loading ? (
         <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ تحميل فئات مرحلتك' : 'Loading your topics'} className="grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="col-span-full"><MathWorldLoading compact /></div>
