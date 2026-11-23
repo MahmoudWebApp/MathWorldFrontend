@@ -788,6 +788,14 @@ export const usersApi = createApi({
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
+    exportPremiumAnalyticsPdf: builder.mutation<Blob, 'ar' | 'en'>({
+      query: (lang) => ({
+        url: '/users/premium-analytics/export.pdf',
+        method: 'GET',
+        params: { lang },
+        responseHandler: (response: Response) => response.blob(),
+      }),
+    }),
     exportPremiumAnalyticsCsv: builder.mutation<Blob, void>({
       query: () => ({
         url: '/users/premium-analytics/export.csv',
@@ -1015,6 +1023,7 @@ export const {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
   useExportPremiumAnalyticsXlsxMutation,
+  useExportPremiumAnalyticsPdfMutation,
   useExportPremiumAnalyticsCsvMutation,
   useGetAdminPremiumCodesQuery,
   useQuotePremiumDiscountMutation,
