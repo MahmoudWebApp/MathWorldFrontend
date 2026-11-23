@@ -5,10 +5,11 @@ import { useLocale } from 'next-intl';
 import { useState } from 'react';
 import Image from 'next/image';
 import { Link } from '@/i18n/routing';
-import { BookOpen, LockKeyhole, RefreshCw, RotateCcw } from 'lucide-react';
+import { BookOpen, ListChecks, Calculator, LockKeyhole, RefreshCw, RotateCcw } from 'lucide-react';
 import { useGetLearningStageQuery, useGetLearningJourneyQuery, useResetPracticeMutation } from '@/store/api/usersApi';
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
+import { CategorySkillsDialog } from '@/components/curriculum/CategorySkillsDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
@@ -17,6 +18,7 @@ export default function StudentCategoriesPage() {
   const [target, setTarget] = useState<{ scope: 'stage' | 'category'; categoryId?: number; name: string; attempted: number } | null>(null);
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
+  const [skillsCategory, setSkillsCategory] = useState<{ Id: number; NameAr: string; NameEn: string } | null>(null);
   const [resetPractice, { isLoading: resetting }] = useResetPracticeMutation();
   const locale = useLocale();
   const ar = locale === 'ar';
@@ -110,7 +112,9 @@ export default function StudentCategoriesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
+      <CategorySkillsDialog stageId={stageId} category={skillsCategory}
+        onClose={() => setSkillsCategory(null)} />
+      {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>
       {loading ? (
         <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ تحميل فئات مرحلتك' : 'Loading your topics'} className="grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div className="col-span-full"><MathWorldLoading compact /></div>
@@ -186,10 +190,14 @@ export default function StudentCategoriesPage() {
                       </div>
                     </div>
                   )}
-                  <div className="mt-auto pt-4 text-xs font-semibold text-muted-foreground">
-                    {locked ? (ar ? 'Premium · مقفولة' : 'Premium · Locked')
-                      : empty ? (ar ? 'لا توجد مسائل حالياً' : 'No problems yet')
-                      : `${category.ProblemsCount ?? 0} ${ar ? 'مسألة' : 'problems'}`}
+                  <div className="mt-auto pt-4 text-xs font-extrabold">
+                    {locked ? <span className="text-muted-foreground">{ar ? 'Premium · مقفولة' : 'Premium · Locked'}</span> :
+                      empty ? <span className="text-muted-foreground">{ar ? 'لا توجد مسائل حالياً' : 'No problems yet'}</span> :
+                      <span className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
+                        style={{ color: accent, backgroundColor: accent + '15' }}>
+                        <Calculator className="h-4 w-4" aria-hidden="true" />
+                        {category.ProblemsCount ?? '—'} {ar ? 'مسألة' : 'problems'}
+                      </span>}
                   </div>
                   {!locked && (
                     <div className="mt-4 grid grid-cols-1 gap-2 border-t border-border/60 pt-4 sm:grid-cols-2">
@@ -217,12 +225,25 @@ export default function StudentCategoriesPage() {
                   )}
                 </div>
               );
-              if (locked) return (
-                <LockedPremiumDialog key={category.Id} topicName={name}>
-                  <button type="button" className="h-full w-full text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={ar ? `${name} مقفولة` : `${name} locked`}>{card}</button>
-                </LockedPremiumDialog>
+              // Skills stay public even when actual problems are Premium
+              // locked. Keep this button outside the paywall trigger.
+              const skillsButton = (
+                <button type="button" onClick={() => setSkillsCategory({
+                  Id: category.Id, NameAr: category.NameAr, NameEn: category.NameEn,
+                })} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card/90 px-3 py-2 text-xs font-bold hover:bg-muted">
+                  <ListChecks className="h-4 w-4" style={{ color: accent }} aria-hidden="true" />
+                  {ar ? 'عرض المهارات' : 'View skills'}
+                </button>
               );
-              return <div key={category.Id} className={empty ? 'h-full opacity-75' : 'h-full'}>{card}</div>;
+              if (locked) return (
+                <div key={category.Id} className="flex h-full flex-col gap-2">
+                  <LockedPremiumDialog topicName={name}>
+                    <button type="button" className="w-full flex-1 text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={ar ? `${name} مقفولة` : `${name} locked`}>{card}</button>
+                  </LockedPremiumDialog>
+                  {skillsButton}
+                </div>
+              );
+              return <div key={category.Id} className={empty ? 'flex h-full flex-col gap-2 opacity-75' : 'flex h-full flex-col gap-2'}>{card}{skillsButton}</div>;
             })}
           </div>
         </>
