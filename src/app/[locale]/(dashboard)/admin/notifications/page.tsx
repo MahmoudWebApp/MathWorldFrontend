@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { BellRing, Send } from 'lucide-react';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useGetAdminEmailStatusQuery, useSendAdminEmailMutation, useSendAdminNotificationMutation } from '@/store/api/notificationsApi';
 
 export default function AdminNotificationsPage() {
@@ -18,7 +19,7 @@ export default function AdminNotificationsPage() {
   const [error, setError] = useState('');
   const [send, { isLoading }] = useSendAdminNotificationMutation();
   const [sendEmail, { isLoading: sendingEmail }] = useSendAdminEmailMutation();
-  const { data: emailStatus, isLoading: checkingEmail } = useGetAdminEmailStatusQuery();
+  const { data: emailStatus, isLoading: checkingEmail, isError: emailError, refetch: retryEmail } = useGetAdminEmailStatusQuery();
   const emailReady = emailStatus?.IsConfigured === true;
   const sending = isLoading || sendingEmail;
 
@@ -81,13 +82,24 @@ export default function AdminNotificationsPage() {
           {ar ? 'إشعار داخل التطبيق أو رسالة بريد إلكتروني إلى طالب واحد، بالعربية والإنجليزية.'
             : 'Send a bilingual in-app notice or email to one student.'}
         </p>
-        <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
-          {ar
-            ? (emailReady ? 'إرسال البريد مهيأ. SMS والإرسال الجماعي غير مفعّلين.'
-              : 'البريد الإلكتروني يحتاج إعداد SMTP على السيرفر. الإشعارات داخل التطبيق متاحة؛ SMS والإرسال الجماعي غير مفعّلين.')
-            : (emailReady ? 'Email is configured. SMS and bulk sending remain disabled.'
-              : 'SMTP must be configured before email is available. In-app notices work; SMS and bulk sending remain disabled.')}
-        </p>
+        {checkingEmail ? (
+          <MathWorldLoading compact />
+        ) : emailError || !emailStatus ? (
+          <div role="alert" className="space-y-2 rounded-xl border border-destructive/25 bg-card p-3 text-sm">
+            <p>{ar ? 'تعذّر جلب حالة خدمة البريد. لا يمكن افتراض أن البريد غير مهيأ.'
+              : 'Email service status could not be verified. No configuration status is assumed.'}</p>
+            <button type="button" onClick={() => void retryEmail()}
+              className="font-bold text-primary underline">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
+          </div>
+        ) : (
+          <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
+            {ar
+              ? (emailReady ? 'إرسال البريد مهيأ. SMS والإرسال الجماعي غير مفعّلين.'
+                : 'البريد الإلكتروني يحتاج إعداد SMTP على السيرفر. الإشعارات داخل التطبيق متاحة؛ SMS والإرسال الجماعي غير مفعّلين.')
+              : (emailReady ? 'Email is configured. SMS and bulk sending remain disabled.'
+                : 'SMTP must be configured before email is available. In-app notices work; SMS and bulk sending remain disabled.')}
+          </p>
+        )}
       </div>
       <form onSubmit={(event) => void onSubmit(event)}
         className="space-y-5 rounded-2xl border bg-card p-5 sm:p-6">
@@ -105,7 +117,8 @@ export default function AdminNotificationsPage() {
                 onChange={() => setChannel('email')} />
               {ar ? 'بريد إلكتروني' : 'Email'}
               {!emailReady && <span className="text-xs text-muted-foreground">
-                {checkingEmail ? (ar ? 'جارٍ الفحص' : 'Checking') : (ar ? 'غير مهيّأ' : 'Not configured')}
+                {checkingEmail ? (ar ? 'جارٍ الفحص' : 'Checking') : emailError || !emailStatus
+                    ? (ar ? 'تعذّر التحقق' : 'Unavailable') : (ar ? 'غير مهيّأ' : 'Not configured')}
               </span>}
             </label>
           </div>
