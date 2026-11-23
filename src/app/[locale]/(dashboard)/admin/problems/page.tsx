@@ -112,7 +112,9 @@ const defaultFilters = {
 
 export default function AdminProblemsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
+    <Suspense fallback={<div role="status" aria-busy="true" className="animate-pulse space-y-4 p-8">
+      <div className="h-9 w-44 rounded-xl bg-muted/70" /><div className="h-72 rounded-2xl bg-muted/60" />
+    </div>}>
       <AdminProblemsPageContent />
     </Suspense>
   );
@@ -467,8 +469,10 @@ function AdminProblemsPageContent() {
     </main>;
   }
   if (!stages || !allCategories) {
-    return <div role="status" aria-busy="true" className="mx-auto max-w-4xl p-8 text-muted-foreground">
-      {locale === 'ar' ? 'جارٍ تحميل المرحلة والفئة…' : 'Loading stage and topic…'}
+    return <div role="status" aria-busy="true" aria-label={locale === 'ar' ? 'تحميل المرحلة والفئة' : 'Loading stage and topic'}
+      className="mx-auto max-w-4xl animate-pulse space-y-4 p-8">
+      <div className="h-9 w-48 rounded-xl bg-muted/70" /><div className="h-20 rounded-xl bg-muted/60" />
+      <div className="h-64 rounded-2xl bg-muted/60" />
     </div>;
   }
   if (!validContext) {
@@ -1081,19 +1085,9 @@ function AdminProblemsPageContent() {
               </thead>
               <tbody>
                 {isSearching ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="p-12 text-center text-muted-foreground"
-                    >
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                        <span className="font-medium">
-                          {t("common.loading")}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
+                  Array.from({ length: 6 }, (_, index) => <tr key={index} className="animate-pulse border-b">
+                    <td className="p-5" colSpan={6}><div className="h-8 rounded-lg bg-muted/70" /></td>
+                  </tr>)
                 ) : searchError ? (
                   <tr><td colSpan={6} className="p-12 text-center">
                     <div role="alert" className="flex flex-col items-center gap-3 text-destructive">
