@@ -57,7 +57,9 @@ export function CategorySkillsDialog({
                   </span>
                   <div className="min-w-0">
                     <h3 className="font-bold text-foreground">{ar ? skill.NameAr : skill.NameEn}</h3>
-                    {(ar ? skill.DescriptionAr : skill.DescriptionEn)?.trim() && (
+                    {(ar ? skill.DescriptionAr : skill.DescriptionEn)?.trim() &&
+                      (ar ? skill.DescriptionAr : skill.DescriptionEn).trim() !==
+                        (ar ? skill.NameAr : skill.NameEn).trim() && (
                       <p className="mt-1 text-sm leading-7 text-muted-foreground">
                         {ar ? skill.DescriptionAr : skill.DescriptionEn}
                       </p>
