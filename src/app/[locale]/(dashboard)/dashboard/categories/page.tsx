@@ -13,7 +13,8 @@ import { getStageAccent } from '@/lib/stageVisuals';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
 export default function StudentCategoriesPage() {
-  const [target, setTarget] = useState<{ categoryId?: number; name: string } | null>(null);
+  // Every reset requires a deliberate confirmation; only confirmReset posts to API.
+  const [target, setTarget] = useState<{ scope: 'stage' | 'category'; categoryId?: number; name: string; attempted: number } | null>(null);
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
   const [resetPractice, { isLoading: resetting }] = useResetPracticeMutation();
@@ -58,6 +59,7 @@ export default function StudentCategoriesPage() {
         </div>
         {(journey?.AttemptedProblems ?? 0) > 0 && stageId > 0 && (
           <button type="button" disabled={resetting} onClick={() => { setResetError(''); setTarget({
+            scope: 'stage', attempted: journey?.AttemptedProblems ?? 0,
             name: stageName || (ar ? 'المرحلة الحالية' : 'current stage'),
           }); }}
             className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-500/40 px-4 py-2 text-sm font-semibold">
@@ -69,25 +71,41 @@ export default function StudentCategoriesPage() {
       <Dialog open={!!target} onOpenChange={open => { if (!open && !resetting) setTarget(null); }}>
         <DialogContent>
           <DialogHeader>
+            <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-600">
+              <RotateCcw className="h-6 w-6" aria-hidden="true" />
+            </div>
             <DialogTitle>{ar ? 'تأكيد إعادة التدريب' : 'Confirm practice restart'}</DialogTitle>
             <DialogDescription>
-              {ar ? 'إعادة تدريب ' + (target?.name ?? '') + ' من البداية؟'
-                : 'Restart all practice in ' + (target?.name ?? '') + '?'}
+              {target?.scope === 'category'
+                ? (ar ? 'رح تعيد تدريب الفئة التالية:' : 'You are restarting this category:')
+                : (ar ? 'رح تعيد تدريب المرحلة كاملة:' : 'You are restarting the entire stage:')}
             </DialogDescription>
           </DialogHeader>
-          <p className="text-sm leading-7 text-muted-foreground">{ar
-            ? 'رح تصير مسائل هذا النطاق جديدة، وينمسح تقدم دورتك الحالية وأخطاؤها. المفضلة محفوظة، وما في تراجع.'
-            : 'Questions in this scope become new. The current progress and error notebook reset, while favorites remain. This cannot be undone.'}</p>
+          <div className="rounded-xl border border-border/70 bg-muted/40 px-4 py-3">
+            <p className="font-bold text-foreground">{target?.name}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {target?.attempted} {ar ? 'مسألة مجرّبة ضمن نطاق الإعادة' : 'attempted problems in this reset scope'}
+            </p>
+          </div>
+          <div className="space-y-2 text-sm leading-7 text-foreground">
+            <p className="font-semibold">{ar ? 'شو رح يصير بعد الموافقة؟' : 'What happens after confirming?'}</p>
+            <ul className="list-inside list-disc space-y-1 text-muted-foreground">
+              <li>{ar ? 'المسائل اللي جربتها بهذا النطاق رح ترجع جديدة وغير محلولة.' : 'Attempted questions in this scope become new and unsolved.'}</li>
+              <li>{ar ? 'تقدم التدريب الحالي ودفتر أخطائه لهذا النطاق رح يتصفّروا.' : 'Current practice progress and error-notebook entries for this scope are reset.'}</li>
+              <li>{ar ? 'المراحل والفئات خارج نطاق الإعادة ما رح تتأثر.' : 'Other stages and categories outside this scope are not affected.'}</li>
+              <li>{ar ? 'المفضلة بتضل محفوظة، والتصفير ما فيك تتراجع عنه.' : 'Favorites stay saved, and this reset cannot be undone.'}</li>
+            </ul>
+          </div>
           {resetError && <p role="alert" className="text-sm text-destructive">{resetError}</p>}
           <DialogFooter>
             <button type="button" disabled={resetting} onClick={() => setTarget(null)}
-              className="min-h-11 rounded-xl border border-border px-4 py-2.5 font-bold disabled:opacity-50">
+              className="min-h-11 rounded-xl border border-border px-5 py-2.5 font-bold disabled:opacity-50">
               {ar ? 'إلغاء' : 'Cancel'}
             </button>
             <button type="button" disabled={resetting} onClick={() => void confirmReset()}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 font-bold text-white disabled:opacity-50">
-              <RotateCcw className="h-4 w-4" aria-hidden="true"/>
-              {resetting ? (ar ? 'جارٍ إعادة التدريب…' : 'Restarting…') : (ar ? 'تأكيد إعادة التدريب' : 'Confirm restart')}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 font-bold text-white transition-colors hover:bg-amber-700 disabled:opacity-50">
+              <RotateCcw className={`h-4 w-4 ${resetting ? 'animate-spin' : ''}`} aria-hidden="true" />
+              {resetting ? (ar ? 'جارٍ إعادة التدريب…' : 'Restarting…') : (ar ? 'موافق' : 'Confirm')}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -190,7 +208,7 @@ export default function StudentCategoriesPage() {
                       <button type="button" disabled={resetting || (progress?.AttemptedProblems ?? 0) <= 0}
                         title={(progress?.AttemptedProblems ?? 0) <= 0
                           ? (ar ? 'ابدأ بحل مسألة أولاً' : 'Solve a question first') : undefined}
-                        onClick={() => { setResetError(''); setTarget({ categoryId: category.Id, name }); }}
+                        onClick={() => { setResetError(''); setTarget({ scope: 'category', categoryId: category.Id, name, attempted: progress?.AttemptedProblems ?? 0 }); }}
                         className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-amber-500/40 px-2 py-2 text-center text-xs font-bold text-foreground transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40">
                         <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {ar ? 'إعادة التدريب' : 'Restart practice'}
