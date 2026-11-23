@@ -1,0 +1,83 @@
+'use client';
+
+import { BookOpenCheck, RefreshCw } from 'lucide-react';
+import { useLocale } from 'next-intl';
+
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
+import { useGetPublishedStageSkillsQuery } from '@/store/api/curriculumApi';
+
+/**
+ * Same API-owned, published-only learning outcomes in public and learner pages.
+ * CurriculumSkills already has CategoryId and both languages; duplicating the
+ * relationship in a string field on Categories would create two sources of truth.
+ */
+export function CategorySkillsDialog({
+  stageId, category, onClose,
+}: {
+  stageId: number;
+  category: { Id: number; NameAr: string; NameEn: string } | null;
+  onClose: () => void;
+}) {
+  const ar = useLocale() === 'ar';
+  const { data: skills, isLoading, isFetching, isError, refetch } =
+    useGetPublishedStageSkillsQuery(stageId, { skip: !category || stageId <= 0 });
+  const published = (skills ?? []).filter(skill => skill.CategoryId === category?.Id);
+
+  return (
+    <Dialog open={!!category} onOpenChange={open => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <div className="mb-1 flex items-center gap-2 text-primary">
+            <BookOpenCheck className="h-6 w-6" aria-hidden="true" />
+            <DialogTitle>{ar ? 'المهارات التعليمية' : 'Learning skills'}</DialogTitle>
+          </div>
+          <DialogDescription>
+            {ar ? category?.NameAr : category?.NameEn}
+          </DialogDescription>
+        </DialogHeader>
+        {isLoading || (isFetching && !skills) ? (
+          <MathWorldLoading compact />
+        ) : isError || !skills ? (
+          <div role="alert" className="space-y-3 text-sm">
+            <p>{ar ? 'تعذّر تحميل مهارات هذه الفئة من الخادم.' : 'Could not load skills for this topic.'}</p>
+            <button type="button" onClick={() => void refetch()}
+              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-4 font-bold text-primary-foreground">
+              <RefreshCw className="h-4 w-4" />
+              {ar ? 'إعادة المحاولة' : 'Retry'}
+            </button>
+          </div>
+        ) : published.length ? (
+          <div className="max-h-[55vh] space-y-3 overflow-y-auto">
+            {published.map((skill, index) => (
+              <div key={skill.StableKey} className="rounded-xl border border-border/80 bg-muted/25 px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-foreground">{ar ? skill.NameAr : skill.NameEn}</h3>
+                    {(ar ? skill.DescriptionAr : skill.DescriptionEn)?.trim() && (
+                      <p className="mt-1 text-sm leading-7 text-muted-foreground">
+                        {ar ? skill.DescriptionAr : skill.DescriptionEn}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+            {ar ? 'مهارات هذه الفئة قيد المراجعة التعليمية، وما منشورة للعرض بعد.' :
+              'The learning objectives for this topic are under editorial review and are not published yet.'}
+          </p>
+        )}
+        <p className="text-xs leading-6 text-muted-foreground">
+          {ar ? 'المهارات أهداف تعلّم، مو نسب إتقان أو شهادات اعتماد. تقدّمك بينحسب من محاولاتك الفعلية.' :
+            'These are learning objectives, not mastery claims or accreditation. Progress uses actual attempts.'}
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
