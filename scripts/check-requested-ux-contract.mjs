@@ -41,6 +41,10 @@ assert.match(challenge, /findIndex\(problem => !problem\.IsAnswered\)/, 'Challen
 assert.match(challenge, /'دفتر الأخطاء'/, 'Challenge must guide students to their error notebook');
 assert.match(solver, /pauseChallengeAdvance/, 'Student must be able to pause auto-advance to read the solution');
 assert.match(solver, /nextChallengeUrl/, 'Guided solver must support the next question');
+assert.doesNotMatch(solver, /currentAttemptCount|problem\.totalAttempts|<History\b/,
+  'Student solver must not render historical attempt counts or timelines');
+assert.doesNotMatch(solver, /problem\.bestTime|problem\.averageTime/,
+  'Student solver must not render legacy attempt-history timing dashboard');
 assert.match(nav, /href: '\/dashboard\/daily-challenge'.*premium: true/, 'Challenge must remain Premium gated');
 
 const shortcuts = admin.match(/\{ href: '\/admin\/(users|stages|engagement\/students)'/g) ?? [];
