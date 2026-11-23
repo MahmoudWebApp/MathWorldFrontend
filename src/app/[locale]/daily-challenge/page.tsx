@@ -1,10 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useLocale } from 'next-intl';
+import { useRouter } from '@/i18n/routing';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
-import { CheckCircle2, CircleAlert, LockKeyhole, Target } from 'lucide-react';
-import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
+import { CheckCircle2, CircleAlert, Target } from 'lucide-react';
 import { useGetDailyChallengeQuery } from '@/store/api/stagesApi';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { useGetLearningStageQuery } from '@/store/api/usersApi';
@@ -13,11 +14,16 @@ import { useGetLearningStageQuery } from '@/store/api/usersApi';
  * Completing an answer (right OR wrong) advances the workflow. */
 export default function DailyChallengePage() {
   const ar = useLocale() === 'ar';
+  const router = useRouter();
   const student = useSelector((state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
     state.auth.isAuthenticated && state.auth.user?.Role === 'Student');
   const { data: membership, isLoading: checking, isError: membershipError, refetch: retryMembership } =
     useGetStudentSubscriptionQuery(undefined, { skip: !student, refetchOnMountOrArgChange: true });
   const upgraded = membership?.IsPremium === true;
+  useEffect(() => {
+    // The Free journey should not feature the daily challenge or an upsell for it.
+    if (student && membership && !membership.IsPremium) router.replace('/dashboard');
+  }, [student, membership, router]);
   const { data: selectedStage, isLoading: stageLoading } =
     useGetLearningStageQuery(undefined, { skip: !student });
   const stageId = selectedStage?.StageId ?? 0;
@@ -30,6 +36,12 @@ export default function DailyChallengePage() {
   const correct = data?.Correct ?? 0;
   const total = data?.Total ?? 0;
   const completed = data?.Completed ?? 0;
+
+  if (student && membership && !upgraded) {
+    return <main role="status" aria-live="polite" className="mx-auto max-w-3xl p-8 text-center text-muted-foreground">
+      {ar ? 'جارٍ فتح الرئيسية…' : 'Opening your dashboard…'}
+    </main>;
+  }
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-5 px-4 py-6 sm:px-6" dir={ar ? 'rtl' : 'ltr'}>
@@ -51,18 +63,6 @@ export default function DailyChallengePage() {
           <button type="button" onClick={() => void retryMembership()} className="rounded-xl border px-4 py-2">
             {ar ? 'إعادة المحاولة' : 'Retry'}
           </button>
-        </div>
-      )}
-      {student && membership && !upgraded && (
-        <div className="rounded-2xl border border-fuchsia-400/20 bg-fuchsia-500/5 p-6">
-          <LockKeyhole className="mb-3 h-7 w-7 text-primary" aria-hidden="true" />
-          <p className="mb-4 font-semibold">{ar ? 'تحدي اليوم ميزة Premium. فئات Free المفتوحة تبقى متاحة للتدريب.'
-            : 'The daily challenge is a Premium benefit. Free topics remain available for practice.'}</p>
-          <LockedPremiumDialog>
-            <button type="button" className="min-h-11 rounded-xl bg-primary px-5 py-2 font-bold text-primary-foreground">
-              {ar ? 'عرض المميزات' : 'View benefits'}
-            </button>
-          </LockedPremiumDialog>
         </div>
       )}
       {upgraded && stageLoading && <p role="status">{ar ? 'جارٍ تحميل مرحلتك…' : 'Loading your stage…'}</p>}
