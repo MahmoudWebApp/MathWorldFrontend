@@ -33,20 +33,20 @@ export default function AdminLearnerActivityPage() {
     }
   }, []);
   const stages = useGetAdminEngagementOverviewQuery(30, {
-    refetchOnMountOrArgChange: true,
-    refetchOnFocus: true,
+    refetchOnMountOrArgChange: 60,
+    refetchOnFocus: false,
     skipPollingIfUnfocused: true,
-    pollingInterval: 60_000,
+    pollingInterval: 120_000,
   });
   const result = useGetAdminEngagementStudentsQuery({
     page, ...(stageId ? { stageId } : {}), ...(term ? { search: term } : {}),
     ...(onlineOnly ? { onlineOnly: true } : {}),
-  }, { refetchOnMountOrArgChange: true, pollingInterval: 60_000, skipPollingIfUnfocused: true });
+  }, { refetchOnMountOrArgChange: 60, pollingInterval: 120_000, skipPollingIfUnfocused: true });
   const events = useGetAdminAuditEventsQuery({
     page: activityPage, days, role: 'Student',
     ...(selectedStudentId ? { actorId: selectedStudentId } : {}),
     ...(action ? { action } : {}),
-  }, { refetchOnMountOrArgChange: true });
+  }, { refetchOnMountOrArgChange: 60 });
 
   const downloadStudentEvents = async () => {
     if (!token || exporting) return;
@@ -118,8 +118,8 @@ export default function AdminLearnerActivityPage() {
   const date = (value: string | null) => {
     if (!value) return ar ? 'غير مسجّل' : 'Not recorded';
     const parsed = new Date(value);
-    return Number.isFinite(parsed.getTime()) ? new Intl.DateTimeFormat(ar ? 'ar' : 'en', {
-      dateStyle: 'medium', timeStyle: 'short',
+    return Number.isFinite(parsed.getTime()) ? new Intl.DateTimeFormat(ar ? 'ar-SY-u-nu-latn' : 'en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
     }).format(parsed) : '—';
   };
   const names = new Map(stages.data?.Stages.map(stage => [
@@ -180,7 +180,11 @@ export default function AdminLearnerActivityPage() {
         <strong>{ar ? 'الطلاب' : 'Students'}: {result.data ? n(result.data.Total) : '—'}</strong>
         <span className="text-muted-foreground">{ar ? 'الترتيب حسب تاريخ التسجيل' : 'Newest registrations first'}</span>
       </div>
-      {result.isLoading ? <p role="status" className="p-8">{ar ? 'جارٍ تحميل الطلاب…' : 'Loading learners…'}</p>
+      {result.isLoading ? <div role="status" aria-busy="true" aria-label={ar ? 'تحميل الطلاب' : 'Loading learners'} className="animate-pulse space-y-3 p-5">
+        {Array.from({ length: 6 }, (_, i) => <div key={i} className="flex gap-4 rounded-xl border p-4">
+          <div className="h-5 w-1/3 rounded bg-muted" /><div className="ms-auto h-5 w-1/4 rounded bg-muted" />
+        </div>)}
+      </div>
         : result.isError ? <p role="alert" className="p-8">
           {ar ? 'تعذّر جلب البيانات.' : 'Could not load learner activity.'}
         </p> : !result.data?.Students.length ? <p className="p-8 text-center text-muted-foreground">
@@ -332,7 +336,9 @@ export default function AdminLearnerActivityPage() {
         </label>
       </div>
       {exportError && <p role="alert" className="text-sm text-destructive">{exportError}</p>}
-      {events.isLoading ? <p role="status" className="py-8 text-center text-muted-foreground">{ar ? 'جارٍ تحميل سجل الطلاب…' : 'Loading student events…'}</p>
+      {events.isLoading ? <div role="status" aria-busy="true" aria-label={ar ? 'تحميل سجل الطلاب' : 'Loading student events'} className="animate-pulse space-y-3 p-5">
+        {Array.from({ length: 5 }, (_, i) => <div key={i} className="h-16 rounded-xl bg-muted/60" />)}
+      </div>
         : events.isError ? <div role="alert" className="space-y-2 rounded-xl border p-4">
             <p>{ar ? 'تعذر تحميل سجل النشاط.' : 'Could not load student event log.'}</p>
             <button type="button" onClick={() => void events.refetch()} className="text-primary underline">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
