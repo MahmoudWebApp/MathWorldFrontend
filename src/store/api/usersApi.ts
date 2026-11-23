@@ -784,8 +784,15 @@ export const usersApi = createApi({
         url: '/users/premium-analytics/export.xlsx',
         method: 'GET',
         params: { lang },
-        // Keep the authenticated baseQuery pipeline (JWT, locale, 401
-        // handling) while receiving real XLSX bytes, not JSON.
+        // Keep the authenticated baseQuery pipeline for private exports.
+        responseHandler: (response: Response) => response.blob(),
+      }),
+    }),
+    exportPremiumAnalyticsCsv: builder.mutation<Blob, void>({
+      query: () => ({
+        url: '/users/premium-analytics/export.csv',
+        method: 'GET',
+        // UTF-8 with BOM is the compatibility alternative to native XLSX.
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
@@ -1008,6 +1015,7 @@ export const {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
   useExportPremiumAnalyticsXlsxMutation,
+  useExportPremiumAnalyticsCsvMutation,
   useGetAdminPremiumCodesQuery,
   useQuotePremiumDiscountMutation,
   useGetPremiumCheckoutOrdersQuery,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import Image from 'next/image';
+import { BrandLogo } from '@/components/layout/BrandLogo';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { BarChart3, Download, FileText, LockKeyhole, Printer, RefreshCw } from 'lucide-react';
@@ -11,6 +11,7 @@ import {
   useGetStudentEntitlementQuery,
   useGetPremiumAnalyticsQuery,
   useExportPremiumAnalyticsXlsxMutation,
+  useExportPremiumAnalyticsCsvMutation,
 } from '@/store/api/usersApi';
 
 function formatReportDate(value: string, locale: string): string {
@@ -32,30 +33,57 @@ export default function PremiumAnalyticsPage() {
   const premium = entitlement?.IsPremium === true;
   const [exportXlsx, { isLoading: exportingXlsx }] =
     useExportPremiumAnalyticsXlsxMutation();
-  const [xlsxError, setXlsxError] = useState(false);
+  const [exportCsv, { isLoading: exportingCsv }] =
+    useExportPremiumAnalyticsCsvMutation();
+  const [downloadError, setDownloadError] = useState(false);
+
+  const saveReportFile = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } finally {
+      // Firefox may need the object URL after the synthetic click returns.
+      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    }
+  };
+
+  const downloadExcelCsv = async () => {
+    setDownloadError(false);
+    try {
+      const blob = await exportCsv().unwrap();
+      if (!(blob instanceof Blob) || blob.size < 20 || blob.size > 20_000_000 ||
+        !blob.type.toLowerCase().includes('text/csv')) {
+        throw new Error('Invalid CSV response');
+      }
+      // UTF-8 BOM is sent by the backend so Excel preserves Arabic text.
+      saveReportFile(blob, 'mathworld-premium-analytics.csv');
+    } catch {
+      setDownloadError(true);
+    }
+  };
+
   const downloadExcel = async () => {
-    setXlsxError(false);
+    setDownloadError(false);
     try {
       const blob = await exportXlsx(ar ? 'ar' : 'en').unwrap();
-      // Only a valid XLSX binary is downloadable. A 401/403 is handled
-      // by the same authenticated base query as normal report requests.
       if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
-        !blob.type.includes('spreadsheetml.sheet')) {
+        !blob.type.toLowerCase().includes('spreadsheetml.sheet')) {
         throw new Error('Invalid XLSX response');
       }
-      const url = URL.createObjectURL(blob);
-      try {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'mathworld-premium-analytics.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      } finally {
-        window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+      // Reject an HTTP error page disguised as .xlsx before saving.
+      const signature = new Uint8Array(await blob.slice(0, 4).arrayBuffer());
+      if (signature[0] !== 0x50 || signature[1] !== 0x4b ||
+        signature[2] !== 0x03 || signature[3] !== 0x04) {
+        throw new Error('Invalid XLSX ZIP signature');
       }
+      saveReportFile(blob, 'mathworld-premium-analytics.xlsx');
     } catch {
-      setXlsxError(true);
+      setDownloadError(true);
     }
   };
 
@@ -87,7 +115,8 @@ export default function PremiumAnalyticsPage() {
           .premium-report-table { overflow: visible !important; }
           .premium-report-card { break-inside: avoid; box-shadow: none !important; }
           .premium-report-chart-bar { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-          .premium-report-letterhead { break-after: avoid; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .premium-report-letterhead { break-after: avoid; background: #FAF8FF !important; color: #110C1E !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          .premium-report-letterhead .brand-wordmark { color: #6D28D9 !important; -webkit-text-fill-color: #6D28D9 !important; }
         }
       `}</style>
       <div className="premium-report-actions">
@@ -107,12 +136,19 @@ export default function PremiumAnalyticsPage() {
         </div>
         {report && (
           <div className="premium-report-actions flex flex-wrap gap-2">
-            <button type="button" disabled={exportingXlsx}
+            <button type="button" disabled={exportingCsv || exportingXlsx}
+              onClick={() => void downloadExcelCsv()}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground disabled:opacity-50">
+              <Download className="h-4 w-4" />
+              {exportingCsv ? (ar ? 'جارٍ تجهيز الملف…' : 'Preparing file…') :
+                (ar ? 'تنزيل Excel متوافق (CSV)' : 'Excel-compatible CSV')}
+            </button>
+            <button type="button" disabled={exportingXlsx || exportingCsv}
               onClick={() => void downloadExcel()}
               className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 font-semibold hover:bg-muted disabled:opacity-50">
               <Download className="h-4 w-4" />
-              {exportingXlsx ? (ar ? 'جارٍ تجهيز Excel…' : 'Preparing Excel…') :
-                (ar ? 'تنزيل Excel' : 'Download Excel (.xlsx)')}
+              {exportingXlsx ? (ar ? 'جارٍ تجهيز XLSX…' : 'Preparing XLSX…') :
+                (ar ? 'Excel بتنسيق ومخططات (XLSX)' : 'Formatted Excel (.xlsx)')}
             </button>
             <button type="button" onClick={() => window.print()}
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground">
@@ -123,10 +159,10 @@ export default function PremiumAnalyticsPage() {
         )}
       </div>
 
-      {xlsxError && (
+      {downloadError && (
         <div role="alert" className="premium-report-actions rounded-xl border border-destructive/30 p-3 text-sm text-destructive">
-          {ar ? 'تعذّر تنزيل ملف Excel. تحقق من صلاحية Premium واتصال الإنترنت.'
-            : 'Unable to export Excel. Check Premium access and your connection.'}
+          {ar ? 'تعذّر تنزيل الملف. تحقق من صلاحية Premium واتصال الإنترنت أو جرّب صيغة CSV.'
+            : 'Download failed. Check Premium access and your connection, or try CSV.'}
         </div>
       )}
       {!isStudent ? (
@@ -175,13 +211,11 @@ export default function PremiumAnalyticsPage() {
       ) : (
         <>
           <header className="premium-report-letterhead flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-card to-pink-500/10 p-4 sm:p-5">
-            <div className="flex items-center gap-3">
-              <Image src="/mathworld-logo.png" alt="MathWorld" width={58} height={58}
-                className="h-14 w-14 shrink-0 object-contain" />
-              <div>
-                <strong className="block text-xl font-extrabold text-primary">MathWorld</strong>
-                <span className="text-xs text-muted-foreground">{ar ? 'منصة الرياضيات التفاعلية' : 'Interactive mathematics learning'}</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <BrandLogo compact className="shrink-0" />
+              <span className="text-xs text-muted-foreground">
+                {ar ? 'منصة الرياضيات التفاعلية' : 'Interactive mathematics learning'}
+              </span>
             </div>
             <div className="text-sm">
               <div className="font-bold">{ar ? 'تقرير التقدم الشخصي' : 'Personal progress report'}</div>
@@ -281,8 +315,8 @@ export default function PremiumAnalyticsPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground print:text-black">
-              {ar ? 'يمكن حفظ التقرير بصيغة PDF من نافذة الطباعة أو تنزيل تقرير Excel بصيغة XLSX بتنسيقات ومخططات.'
-                : 'Use the print dialog to save a PDF, or download the formatted Excel (.xlsx) report.'}
+              {ar ? 'احفظ التقرير PDF من الطباعة. للتوافق مع إصدارات Excel المختلفة استخدم CSV، أو نزّل XLSX للتنسيقات والمخططات.'
+                : 'Print to PDF, download CSV for wider Excel compatibility, or use XLSX for formatting and charts.'}
             </p>
           </section>
         </>
