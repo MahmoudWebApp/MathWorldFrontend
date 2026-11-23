@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Search, SlidersHorizontal, Users, BarChart3, Crown } from 'lucide-react';
-import { useGetAdminLearnersQuery, useGrantAnnualPremiumMutation, type AdminLearnerFilters } from '@/store/api/usersApi';
+import { Search, SlidersHorizontal, Users, Crown } from 'lucide-react';
+import { useGetAdminLearnersQuery, useGrantAnnualPremiumMutation, type AdminLearnerFilters, type AdminLearnerSummary } from '@/store/api/usersApi';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 export default function AdminUsersPage() {
   const ar = useLocale() === 'ar';
@@ -19,6 +20,9 @@ export default function AdminUsersPage() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [grantMessage, setGrantMessage] = useState('');
   const [grantError, setGrantError] = useState('');
+  const [pendingLearners, setPendingLearners] = useState<AdminLearnerSummary[]>([]);
+  const [confirmedPeriods, setConfirmedPeriods] = useState<Array<{ name: string; from: string; to: string }>>([]);
+  const [previewNow, setPreviewNow] = useState<Date>(new Date());
   const [grantAnnualPremium, { isLoading: granting }] = useGrantAnnualPremiumMutation();
 
   // Selection is limited to the visible page, never silently grant hidden
@@ -34,6 +38,7 @@ export default function AdminUsersPage() {
   }, [searchInput]);
 
   const filters: AdminLearnerFilters = {
+    IncludeActivity: false,
     Search: search || undefined,
     StageId: stageId,
     IsActive: status === 'all' ? undefined : status === 'active',
@@ -41,15 +46,15 @@ export default function AdminUsersPage() {
     Page: page, PageSize: 10,
   };
   const { currentData: data, isLoading, isFetching, isError, refetch } = useGetAdminLearnersQuery(filters, {
-    refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: 60,
   });
   const { data: stages, isError: stagesError, refetch: retryStages } = useGetAdminStagesQuery();
   const label = ar ? {
-    title: 'إدارة الطلاب', sub: 'ملفات المتعلمين وتقدمهم ونشاطهم حسب المرحلة',
+    title: 'إدارة الطلاب والاشتراكات', sub: 'الحسابات والمراحل والاشتراكات وتواريخ انتهاء Premium',
     search: 'بحث باسم الطالب أو البريد الإلكتروني', allStages: 'كل المراحل',
     allStatus: 'كل الحالات', active: 'نشط', disabled: 'معطّل',
     allTiers: 'كل الاشتراكات', stage: 'المرحلة', status: 'الحالة',
-    tier: 'الاشتراك', name: 'الطالب', solved: 'محلولة', points: 'نقاط',
+    tier: 'الاشتراك', name: 'الطالب', expires: 'انتهاء Premium', indefinite: 'غير محدد', notSubscribed: 'لا يوجد اشتراك', expired: 'انتهى',
     recent: 'آخر محاولة', lastLogin: 'آخر دخول', noActivity: 'لا توجد محاولات', noLogin: 'لم يسجّل دخولاً',
     noStage: 'لم يحدد المرحلة', detail: 'ملف الطالب', total: 'طالب',
     empty: 'ما في طلاب مطابقين للبحث الحالي.', error: 'تعذر تحميل الطلاب.',
@@ -60,12 +65,15 @@ export default function AdminUsersPage() {
     annual: 'تفعيل Premium سنة', renew: 'تجديد سنة', selected: 'محدد',
     grantSuccess: 'تم تفعيل أو تجديد Premium للطلاب المحددين لمدة سنة.',
     grantError: 'تعذر تفعيل Premium. لم يتم تطبيق أي تغيير جزئي.',
+    confirmation: 'هل تريد تفعيل Premium للطلاب التاليين لمدة سنة؟',
+    estimated: 'تواريخ متوقعة. سيعرض النظام التواريخ الفعلية بعد نجاح التفعيل.',
+    from: 'من', until: 'حتى', cancel: 'إلغاء', confirm: 'تأكيد التفعيل',
   } : {
-    title: 'Student management', sub: 'Learner profiles, progress and activity by stage',
+    title: 'Learners & subscriptions', sub: 'Learner accounts, stages, subscriptions and Premium expiry',
     search: 'Search by name or email', allStages: 'All stages',
     allStatus: 'All statuses', active: 'Active', disabled: 'Disabled',
     allTiers: 'All subscriptions', stage: 'Stage', status: 'Status',
-    tier: 'Plan', name: 'Learner', solved: 'Solved', points: 'Points',
+    tier: 'Plan', name: 'Learner', expires: 'Premium expires', indefinite: 'No expiration', notSubscribed: 'Not subscribed', expired: 'Expired',
     recent: 'Last attempt', lastLogin: 'Last login', noActivity: 'No attempts', noLogin: 'Never logged in',
     noStage: 'No stage selected', detail: 'View learner', total: 'students',
     empty: 'No learners match these filters.', error: 'Could not load learners.',
@@ -76,6 +84,9 @@ export default function AdminUsersPage() {
     annual: 'Activate 1-year Premium', renew: 'Renew 1 year', selected: 'selected',
     grantSuccess: 'One year of Premium granted or renewed for selected learners.',
     grantError: 'Could not activate Premium. No partial batch changes were made.',
+    confirmation: 'Activate annual Premium for these learners?',
+    estimated: 'Estimated dates. The actual periods will appear after activation.',
+    from: 'From', until: 'Until', cancel: 'Cancel', confirm: 'Confirm activation',
   };
   const eligibleIds = (data?.Learners ?? []).filter(u => u.IsActive).map(u => u.Id);
   const selectedVisible = selectedIds.filter(id => eligibleIds.includes(id));
@@ -85,30 +96,64 @@ export default function AdminUsersPage() {
   const toggleAllVisible = () =>
     setSelectedIds(allVisibleSelected ? [] : eligibleIds);
 
-  const activateYear = async (ids: number[]) => {
-    if (granting || !ids.length) return;
+  const fmt = (value: string | Date | null | undefined) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '—' :
+      date.toLocaleDateString(ar ? 'ar-SY-u-nu-latn' : 'en-GB', {
+        year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
+      });
+  };
+  const expiry = (learner: AdminLearnerSummary) => {
+    if (!learner.PremiumExpiresAtUtc)
+      return learner.SubscriptionType === 'Premium' ? label.indefinite : label.notSubscribed;
+    const when = new Date(learner.PremiumExpiresAtUtc);
+    return when.getTime() <= Date.now() ? label.expired + ': ' + fmt(when) : fmt(when);
+  };
+  const projectedPeriod = (learner: AdminLearnerSummary) => {
+    if (learner.SubscriptionType === 'Premium' && !learner.PremiumExpiresAtUtc) return null;
+    const currentExpiry = learner.PremiumExpiresAtUtc ? new Date(learner.PremiumExpiresAtUtc) : null;
+    const start = learner.SubscriptionType === 'Premium' && currentExpiry &&
+      !Number.isNaN(currentExpiry.getTime()) && currentExpiry > previewNow ? currentExpiry : previewNow;
+    const end = new Date(start);
+    end.setUTCFullYear(start.getUTCFullYear() + 1);
+    if (end.getUTCMonth() !== start.getUTCMonth()) end.setUTCDate(0);
+    return { start, end };
+  };
+  const openGrant = (ids: number[]) => {
+    if (granting || isFetching || !data) return;
+    const currentRows = data.Learners.filter(u => u.IsActive && ids.includes(u.Id));
+    if (!currentRows.length) return;
     setGrantMessage('');
     setGrantError('');
+    setConfirmedPeriods([]);
+    setPreviewNow(new Date());
+    setPendingLearners(currentRows);
+  };
+  const confirmGrant = async () => {
+    if (granting || !pendingLearners.length) return;
+    const rows = [...pendingLearners];
+    setGrantError('');
     try {
-      const result = await grantAnnualPremium(ids).unwrap();
+      const result = await grantAnnualPremium(rows.map(u => u.Id)).unwrap();
+      const actual = (result.Periods ?? []).map(period => ({
+        name: rows.find(u => u.Id === period.LearnerId)?.FullName ?? String(period.LearnerId),
+        from: period.StartAtUtc,
+        to: period.EndAtUtc,
+      }));
+      setConfirmedPeriods(actual);
+      setGrantMessage(ar ?
+        'تم تفعيل Premium لـ ' + result.Updated + ' طالب' +
+          (result.SkippedIndefiniteIds.length ? '، دون تغيير الاشتراكات غير محددة المدة: ' + result.SkippedIndefiniteIds.length : '') :
+        'Premium updated for ' + result.Updated + ' learners' +
+          (result.SkippedIndefiniteIds.length ? '; indefinite memberships unchanged: ' + result.SkippedIndefiniteIds.length : ''));
+      setPendingLearners([]);
       setSelectedIds([]);
-      await refetch().unwrap();
-      const done = result.Updated;
-      const skipped = result.SkippedIndefiniteIds.length;
-      setGrantMessage(ar
-        ? `تم تفعيل أو تجديد Premium لمدة سنة لـ ${done} طالب${skipped ? `، و${skipped} لديهم Premium بلا انتهاء ولم تتغير صلاحياتهم` : ''}.`
-        : `One-year Premium updated for ${done} learners${skipped ? `; ${skipped} indefinite accounts unchanged` : ''}.`);
+      void refetch();
     } catch {
       setGrantError(label.grantError);
     }
   };
-
-  // Actual timestamps from server, not guessed log-out or session duration.
-  const fmt = (value: string | null | undefined, absent = label.noActivity) =>
-    value ? new Date(value).toLocaleString(ar ? 'ar' : 'en', {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    }) : absent;
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
