@@ -796,10 +796,11 @@ export const usersApi = createApi({
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
-    exportPremiumAnalyticsCsv: builder.mutation<Blob, void>({
-      query: () => ({
+    exportPremiumAnalyticsCsv: builder.mutation<Blob, 'ar' | 'en'>({
+      query: (lang) => ({
         url: '/users/premium-analytics/export.csv',
         method: 'GET',
+        params: { lang },
         // UTF-8 with BOM is the compatibility alternative to native XLSX.
         responseHandler: (response: Response) => response.blob(),
       }),
