@@ -37,16 +37,30 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// Wrapper to provide Suspense boundary for useSearchParams
+// Reuse the same shape on route transitions and API requests. The previous
+// spinner left a nearly empty page during slow category/problem fetches.
+function ProblemsCardsSkeleton({ label }: { label: string }) {
+  return (
+    <section role="status" aria-busy="true" aria-label={label} className="mx-auto w-full max-w-5xl animate-pulse space-y-4 px-4 py-6 sm:px-6">
+      <div className="h-9 w-52 rounded-xl bg-muted/70" />
+      <div className="h-12 rounded-2xl border border-border/60 bg-card/70" />
+      {Array.from({ length: 5 }, (_, index) => (
+        <div key={index} className="flex min-h-28 items-start gap-4 rounded-3xl border border-border/60 bg-card/70 p-5">
+          <div className="h-12 w-12 shrink-0 rounded-xl bg-muted/70" />
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="h-5 w-4/5 rounded-lg bg-muted/70" />
+            <div className="h-4 w-2/3 rounded-lg bg-muted/60" />
+          </div>
+          <div className="h-5 w-20 rounded-lg bg-muted/60" />
+        </div>
+      ))}
+    </section>
+  );
+}
+
 function ProblemsLoadingFallback() {
   const t = useTranslations();
-
-  return (
-    <div className="mx-auto flex flex-col items-center justify-center gap-4 px-4 py-20 md:px-16 lg:px-24">
-      <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      <p className="animate-pulse text-muted-foreground">{t('common.loading')}</p>
-    </div>
-  );
+  return <ProblemsCardsSkeleton label={t('common.loading')} />;
 }
 
 export default function ProblemsPageClientWrapper() {
@@ -244,14 +258,7 @@ function ProblemsPageClient() {
   // Never expose a previously cached category result while access or
   // subscription status for the newly selected topic is unresolved.
   if (accessPending || isLoading) {
-    return (
-      <div className="container mx-auto lg:px-24 md:px-16 px-4 py-20 flex flex-col justify-center items-center gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">
-          {t("common.loading") || "Loading..."}
-        </p>
-      </div>
-    );
+    return <ProblemsCardsSkeleton label={t('common.loading')} />;
   }
 
   // ── Main render ─────────────────────────────────────────
