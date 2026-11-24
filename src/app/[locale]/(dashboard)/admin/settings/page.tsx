@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm';
+import { EmailOutboxPanel } from '@/components/admin/EmailOutboxPanel';
 import { getApiErrorMessage } from '@/lib/authSession';
 import { useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, type BrandView, type BrandProfile, type PlatformSocialLink } from '@/store/api/platformBrandApi';
 
@@ -64,5 +65,5 @@ export default function AdminSettingsPage(){
   const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
   const {data,isLoading,isError,refetch}=useGetAdminBrandQuery(undefined,{skip:!admin});
   if(!admin)return null;
-  return <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6"><h1 className="text-2xl font-bold">{ar?'إعدادات المنصة':'Platform settings'}</h1><ChangePasswordForm/>{isLoading&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<div role="alert">{ar?'تعذّر تحميل الإعدادات.':'Could not load settings.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}{data&&!isError&&<BrandEditor initial={data} ar={ar}/>}<EmailPreview ar={ar}/></main>;
+  return <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6"><h1 className="text-2xl font-bold">{ar?'إعدادات المنصة':'Platform settings'}</h1><ChangePasswordForm/>{isLoading&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<div role="alert">{ar?'تعذّر تحميل الإعدادات.':'Could not load settings.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}{data&&!isError&&<BrandEditor initial={data} ar={ar}/>}<EmailPreview ar={ar}/><EmailOutboxPanel/></main>;
 }
