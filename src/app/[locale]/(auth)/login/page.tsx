@@ -130,6 +130,11 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div className="flex justify-end">
+              <Link href="/forgot-password" className="text-sm font-semibold text-primary hover:underline">
+                {locale === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+              </Link>
+            </div>
             <Button
               type="submit"
               className="w-full gap-2 rounded-xl py-2.5"
