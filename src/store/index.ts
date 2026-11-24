@@ -10,6 +10,7 @@ import localeReducer from './slices/localeSlice';
 import { stagesApi } from './api/stagesApi';
 import { curriculumApi } from './api/curriculumApi';
 import { notificationsApi } from './api/notificationsApi';
+import { platformBrandApi } from './api/platformBrandApi';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -22,6 +23,7 @@ export const store = configureStore({
     [stagesApi.reducerPath]: stagesApi.reducer,
     [curriculumApi.reducerPath]: curriculumApi.reducer,
     [notificationsApi.reducerPath]: notificationsApi.reducer,
+    [platformBrandApi.reducerPath]: platformBrandApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -33,6 +35,7 @@ export const store = configureStore({
       stagesApi.middleware,
       curriculumApi.middleware,
       notificationsApi.middleware,
+      platformBrandApi.middleware,
     ),
 });
 

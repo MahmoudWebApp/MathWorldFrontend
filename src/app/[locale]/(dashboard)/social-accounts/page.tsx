@@ -6,6 +6,7 @@ import { LockKeyhole, ShieldCheck } from 'lucide-react';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
+import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm';
 import { useGetSocialLinkStatusQuery } from '@/store/api/authApi';
 
 const localized = {
@@ -89,6 +90,7 @@ export default function SocialAccountsPage() {
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">{copy.inactive}</p>
         )}
+        {withinSettings && <div className="mt-8"><ChangePasswordForm /></div>}
         <Link
           href="/dashboard"
           className="mt-9 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"

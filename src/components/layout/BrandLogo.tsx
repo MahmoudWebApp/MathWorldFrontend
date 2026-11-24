@@ -1,3 +1,8 @@
+'use client';
+
+import { useState } from 'react';
+import { useLocale } from 'next-intl';
+import { useGetPublicBrandQuery, isSafeBrandLogo } from '@/store/api/platformBrandApi';
 import { cn } from '@/lib/utils';
 import { BrandMark } from '@/components/layout/BrandMark';
 
@@ -7,13 +12,22 @@ interface BrandLogoProps {
 }
 
 export function BrandLogo({ compact = false, className }: BrandLogoProps) {
+  const ar = useLocale() === 'ar';
+  const { data } = useGetPublicBrandQuery(undefined, { refetchOnMountOrArgChange: 60 });
+  const [failedLogo, setFailedLogo] = useState('');
+  const logo = data?.Profile.LogoUrl;
+  const customLogo = logo && data && !logo.endsWith('/mathworld-mark-transparent-v3.png') && logo !== failedLogo && isSafeBrandLogo(logo, data.WebsiteUrl) ? logo : null;
+  const name = (ar ? data?.Profile.NameAr : data?.Profile.NameEn) || 'MathWorld';
   return (
     <div className={cn(compact ? 'brand-logo-lockup' : 'brand-logo-lockup brand-logo-lockup-large', className)}>
       <span className={cn('brand-mark-shell', !compact && 'brand-mark-shell-large')}>
-        <BrandMark className={compact ? 'h-11 w-11' : 'h-16 w-16'} />
+        {customLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={customLogo} alt={name} onError={() => setFailedLogo(customLogo)} className={cn('object-contain', compact ? 'h-11 w-11' : 'h-16 w-16')} />
+        ) : <BrandMark className={compact ? 'h-11 w-11' : 'h-16 w-16'} />}
       </span>
-      <span className={cn('brand-wordmark text-gradient-math font-extrabold tracking-tight', compact ? 'hidden text-[1.08rem] min-[430px]:inline' : 'text-2xl')} dir="ltr">
-        MathWorld
+      <span className={cn('brand-wordmark text-gradient-math font-extrabold tracking-tight', compact ? 'hidden text-[1.08rem] min-[430px]:inline' : 'text-2xl')} dir="auto">
+        {name}
       </span>
     </div>
   );

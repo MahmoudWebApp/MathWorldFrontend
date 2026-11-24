@@ -4,7 +4,7 @@ import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
   ChartNoAxesCombined, ChevronDown,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, Gift,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, Gift, Settings,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -63,6 +63,15 @@ export const ADMIN_NAV_ITEMS = [
     labelEn: 'Student notifications',
     descriptionAr: 'إشعارات الطلاب فقط',
     descriptionEn: 'Learner-only notifications',
+    group: 'management',
+  },
+  {
+    href: '/admin/settings',
+    icon: Settings,
+    labelAr: 'إعدادات المنصة',
+    labelEn: 'Platform settings',
+    descriptionAr: 'أمان الحساب والهوية والتواصل وقوالب البريد',
+    descriptionEn: 'Account security, branding, contact and email templates',
     group: 'management',
   },
   {
