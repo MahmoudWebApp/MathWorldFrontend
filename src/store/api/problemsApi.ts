@@ -6,6 +6,8 @@ import { usersApi } from './usersApi';
 import { stagesApi } from './stagesApi';
 import type { PagedProblemsResponse, ProblemPreview } from './types';
 
+export interface ProblemHints {ProblemId:number;Available:boolean;RevealedCount:number;Hints:{Level:number;Text:string}[]}
+
 export interface OptionForStudent {
   Id: number;
   LatexCode: string;
@@ -330,6 +332,14 @@ export const problemsApi = createApi({
       invalidatesTags: (_result, _error, problemId) => [{ type: 'Problem', id: problemId }],
     }),
 
+    getProblemHints: builder.query<ProblemHints,{problemId:number;locale:string}>({
+      query:({problemId,locale})=>({url:`/problems/${problemId}/hints`,headers:{'Accept-Language':locale}}),
+      providesTags:(_r,_e,{problemId})=>[{type:'Problem',id:problemId}],
+    }),
+    revealProblemHint: builder.mutation<ProblemHints,{problemId:number;Level:number;locale:string}>({
+      query:({problemId,Level,locale})=>({url:`/problems/${problemId}/hints`,method:'POST',body:{Level},headers:{'Accept-Language':locale}}),
+      invalidatesTags:(_r,e,{problemId})=>e?[]:[{type:'Problem',id:problemId}],
+    }),
     getPremiumSolution: builder.query<PremiumSolution, number>({
       query: (problemId) => `/problems/${problemId}/premium-solution`,
     }),
@@ -373,6 +383,8 @@ export const {
   useUpsertAdminProblemDiagramMutation,
   useDeleteAdminProblemDiagramMutation,
   useGetProblemQuery,
+  useGetProblemHintsQuery,
+  useRevealProblemHintMutation,
   useLazyGetPremiumSolutionQuery,
   useLazyGetSolutionPreviewQuery,
   useGetProblemAttemptsQuery,

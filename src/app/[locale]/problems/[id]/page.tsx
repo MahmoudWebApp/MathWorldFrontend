@@ -33,8 +33,8 @@ import {
   type ProblemForStudent,
   useGetProblemDiagramQuery,
   useGetProblemQuery,
-  useLazyGetPremiumSolutionQuery,
-  useLazyGetSolutionPreviewQuery,
+  useGetProblemHintsQuery,
+  useRevealProblemHintMutation,
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
@@ -196,13 +196,12 @@ export default function ProblemPage() {
   const { data: entitlement } = useGetStudentEntitlementQuery(undefined, {
     skip: !isAuthenticated || !studentProblem,
   });
-  const [loadPremiumSolution, { data: premiumSolution, isFetching: isLoadingPremiumSolution, isError: premiumSolutionError }] = useLazyGetPremiumSolutionQuery();
+  const [revealHint,{isLoading:hintBusy}]=useRevealProblemHintMutation();
+  const [hintError,setHintError]=useState(false);
 
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
-  const [, { data: solutionPreviewData }] = useLazyGetSolutionPreviewQuery();
-  const solutionPreview = solutionPreviewData?.ProblemId === problemId
-    ? solutionPreviewData : null;
+
 
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [localAnswerResult, setLocalAnswerResult] =
@@ -342,8 +341,8 @@ export default function ProblemPage() {
         null)
       : null;
 
-  const canRetry = searchParams.get('review') === '1' &&
-    (localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false);
+  const canRetry = localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
+  const hints=useGetProblemHintsQuery({problemId,locale},{skip:!studentProblem||!entitlement?.IsPremium||isCorrect||!!studentProblem.IsSolved,refetchOnMountOrArgChange:true});
   const canAnswer =
     isAuthenticated &&
     !!studentProblem &&
@@ -360,9 +359,6 @@ export default function ProblemPage() {
     false;
 
   const solutionText = useMemo(() => {
-    if (solutionPreview?.DetailedSolution?.trim()) {
-      return solutionPreview.DetailedSolution;
-    }
     if (retryMode) {
       return null;
     }
@@ -389,14 +385,9 @@ export default function ProblemPage() {
     locale,
     retryMode,
     isCorrect,
-    solutionPreview,
   ]);
 
   const youtubeUrl = useMemo(() => {
-    if (solutionPreview?.YoutubeSolutionUrl &&
-        getYouTubeVideoId(solutionPreview.YoutubeSolutionUrl)) {
-      return solutionPreview.YoutubeSolutionUrl;
-    }
     if (retryMode || (!adminProblem && !isCorrect)) {
       return null;
     }
@@ -411,12 +402,12 @@ export default function ProblemPage() {
     }
 
     return value;
-  }, [localAnswerResult, studentProblem, adminProblem, retryMode, isCorrect, solutionPreview]);
+  }, [localAnswerResult, studentProblem, adminProblem, retryMode, isCorrect]);
 
   const showSolutionSection = !!solutionText &&
-    (showResult || !!adminProblem || !!solutionPreview);
+    (showResult || !!adminProblem);
   const showVideoTab = !!youtubeUrl &&
-    (showResult || !!adminProblem || !!solutionPreview);
+    (showResult || !!adminProblem);
   const isFavorite =
     favoriteData?.IsFavorite ?? studentProblem?.IsFavorite ?? false;
 
@@ -753,56 +744,20 @@ export default function ProblemPage() {
         </div>
       )}
 
-      {studentProblem && entitlement && !entitlement.CanRevealSolutionBeforeAnswer && (
-        <section className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-          <LockedPremiumDialog>
-            <button type="button" className="flex min-h-11 items-center gap-2 rounded-xl border border-primary/30 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/10">
-              <Lock aria-hidden="true" className="h-4 w-4" />
-              {isArabic ? "طريقة الحل — Premium" : "Solution method — Premium"}
-            </button>
-          </LockedPremiumDialog>
-        </section>
-      )}
-
-      {studentProblem && entitlement?.CanRevealSolutionBeforeAnswer && (
-        <section className="mb-5 rounded-2xl border border-primary/25 bg-primary/5 p-4">
-          <Button
-            variant="outline"
-            disabled={isLoadingPremiumSolution}
-            onClick={() => void loadPremiumSolution(problemId)}
-          >
-            {isLoadingPremiumSolution
-              ? (isArabic ? "جارٍ تحميل الحل..." : "Loading solution...")
-              : (isArabic ? "طريقة الحل" : "Solution method")}
-          </Button>
-          {premiumSolutionError && (
-            <p role="alert" className="mt-3 text-sm text-destructive">
-              {isArabic ? "تعذّر عرض الحل. حاول مجدداً." : "Could not load the solution. Please retry."}
-            </p>
-          )}
-          {premiumSolution?.ProblemId === problemId && (
-            <div className="mt-4 space-y-3">
-              {premiumSolution.DetailedSolution && (
-                <RichText text={premiumSolution.DetailedSolution} isArabic={isArabic} />
-              )}
-              {premiumSolution.CorrectOptionId !== null &&
-                studentProblem.Options.some(option => option.Id === premiumSolution.CorrectOptionId) && (
-                  <div className="rounded-xl border border-primary/15 bg-background p-3">
-                    <p className="mb-2 text-sm font-bold">
-                      {isArabic ? "الإجابة الصحيحة:" : "Correct answer:"}
-                    </p>
-                    <LatexPreview
-                      latex={studentProblem.Options.find(
-                        option => option.Id === premiumSolution.CorrectOptionId,
-                      )?.LatexCode ?? ""}
-                    />
-                  </div>
-                )}
-              {premiumSolution.YoutubeSolutionUrl && getYouTubeVideoId(premiumSolution.YoutubeSolutionUrl) && (
-                <YoutubeEmbed url={premiumSolution.YoutubeSolutionUrl} />
-              )}
-            </div>
-          )}
+      {studentProblem && !isCorrect && !studentProblem.IsSolved && entitlement && (
+        <section className="mb-5 space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <h2 className="font-semibold">{isArabic ? 'تلميحات تساعدك على الحل' : 'Hints to help you solve'}</h2>
+          {!entitlement.IsPremium ? <LockedPremiumDialog><button type="button" className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"><Lock className="h-4 w-4"/>{isArabic?'تلميحات Premium':'Premium hints'}</button></LockedPremiumDialog> : <>
+            {hints.isLoading&&<p role="status">{isArabic?'جارٍ التحميل…':'Loading…'}</p>}
+            {hints.isError&&<button className="text-sm underline" onClick={()=>void hints.refetch()}>{isArabic?'تعذّر تحميل التلميحات. إعادة المحاولة':'Could not load hints. Retry'}</button>}
+            {hints.currentData?.Available===false&&<p className="text-sm text-muted-foreground">{isArabic?'لا توجد تلميحات لهذه المسألة بعد.':'Hints are not yet available for this problem.'}</p>}
+            {hints.currentData?.Available&&<>
+              {hints.currentData.Hints.map(h=><div key={h.Level} className="rounded-xl border bg-background p-3"><p className="mb-1 text-sm font-semibold">{isArabic?'التلميح':'Hint'} {h.Level}</p><RichText text={h.Text} isArabic={isArabic}/></div>)}
+              {hints.currentData.RevealedCount<2&&<Button variant="outline" disabled={hintBusy||isSubmitting} onClick={async()=>{setHintError(false);try{await revealHint({problemId,Level:(hints.currentData?.RevealedCount??0)+1,locale}).unwrap();}catch{setHintError(true);}}}>{hintBusy?(isArabic?'جارٍ التحميل…':'Loading…'):(isArabic?'عرض التلميح':'Reveal hint')+' '+(hints.currentData.RevealedCount+1)}</Button>}
+            </>}
+            {hintError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر عرض التلميح. حاول مجدداً.':'Could not reveal hint. Please retry.'}</p>}
+          </>}
+          <p className="text-xs text-muted-foreground">{isArabic?'الإجابة وطريقة الحل تظهران بعد الحل الصحيح لجميع الطلاب.':'The answer and solution appear after a correct solve for all learners.'}</p>
         </section>
       )}
       <div className="grid grid-cols-1 gap-8">
