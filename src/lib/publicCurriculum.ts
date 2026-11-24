@@ -6,7 +6,7 @@ const API = (process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
   || 'https://mathwordbackend.onrender.com/api').replace(/\/$/, '');
 
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL?.trim()
-  || 'https://math-world-frontend.vercel.app').replace(/\/$/, '');
+  || 'https://mathworld-qa-preview.vercel.app').replace(/\/$/, '');
 
 export interface PublicStage {
   Id: number;
