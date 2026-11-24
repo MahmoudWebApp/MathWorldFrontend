@@ -31,6 +31,7 @@ export type MasteryStatus = 'New' | 'NeedsReview' | 'Practicing' | 'Mastered';
 
 export interface SolutionStructure {Idea:string;FormulaLatex:string;Steps:string[];Substitution:string;Result:string;Unit:string;Verification:string;CommonError:string}
 export interface ProblemForStudent {
+  PracticeScopeId?: number|null;
   SolutionStructure?:SolutionStructure|null;
   Id: number;
   Title: string;
@@ -138,6 +139,7 @@ export interface SearchProblemsParams {
 }
 
 export interface SubmitAnswerRequest {
+  PracticeScopeId?: number|null;
   ProblemId: number;
   SelectedOptionId: number;
   TimeSpentSeconds: number;
@@ -336,12 +338,12 @@ export const problemsApi = createApi({
       invalidatesTags: (_result, _error, problemId) => [{ type: 'Problem', id: problemId }],
     }),
 
-    getProblemHints: builder.query<ProblemHints,{problemId:number;locale:string}>({
-      query:({problemId,locale})=>({url:`/problems/${problemId}/hints`,headers:{'Accept-Language':locale}}),
+    getProblemHints: builder.query<ProblemHints,{problemId:number;locale:string;scope?:number|null}>({
+      query:({problemId,locale,scope})=>({url:`/problems/${problemId}/hints`,params:scope==null?{}:{practiceScopeId:scope},headers:{'Accept-Language':locale}}),
       providesTags:(_r,_e,{problemId})=>[{type:'Problem',id:problemId}],
     }),
-    revealProblemHint: builder.mutation<ProblemHints,{problemId:number;Level:number;locale:string}>({
-      query:({problemId,Level,locale})=>({url:`/problems/${problemId}/hints`,method:'POST',body:{Level},headers:{'Accept-Language':locale}}),
+    revealProblemHint: builder.mutation<ProblemHints,{problemId:number;Level:number;locale:string;scope?:number|null}>({
+      query:({problemId,Level,locale,scope})=>({url:`/problems/${problemId}/hints`,method:'POST',body:{Level,...(scope==null?{}:{PracticeScopeId:scope})},headers:{'Accept-Language':locale}}),
       invalidatesTags:(_r,e,{problemId})=>e?[]:[{type:'Problem',id:problemId}],
     }),
     getPremiumSolution: builder.query<PremiumSolution, number>({
