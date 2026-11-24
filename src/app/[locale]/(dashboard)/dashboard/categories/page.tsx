@@ -1,5 +1,7 @@
 'use client';
 
+import { StudentTrackWorkspace } from '@/components/curriculum/TrackViews';
+import { useGetTrackSelectionQuery,useGetPublishedTracksQuery } from '@/store/api/stagesApi';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
 import { useState } from 'react';
@@ -24,6 +26,8 @@ export default function StudentCategoriesPage() {
   const ar = locale === 'ar';
   const { data: selected, isLoading: selecting, isError: selectedError, refetch: reloadSelected } = useGetLearningStageQuery();
   const stageId = selected?.StageId ?? 0;
+  const trackSelection=useGetTrackSelectionQuery(undefined,{refetchOnMountOrArgChange:true});
+  const trackCatalog=useGetPublishedTracksQuery(stageId,{skip:stageId<=0,refetchOnMountOrArgChange:true});
   const { data: journey } = useGetLearningJourneyQuery(stageId, {
     skip: stageId <= 0,
     refetchOnMountOrArgChange: 45,
@@ -52,6 +56,10 @@ export default function StudentCategoriesPage() {
     }
   }
 
+  if(trackSelection.data?.Enabled&&trackSelection.data.TrackId&&trackSelection.data.StageId===stageId)
+    return <StudentTrackWorkspace key={trackSelection.data.TrackId} trackId={trackSelection.data.TrackId}/>;
+  if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&!trackSelection.data?.TrackId)
+    return <main className="mx-auto max-w-xl p-6"><h1 className="text-xl font-bold">{ar?'اختر صفك أو مساقك':'Choose your grade or course'}</h1><Link className="mt-4 inline-block rounded-xl bg-primary px-4 py-3 text-primary-foreground" href="/learning-stage">{ar?'اختيار المسار':'Choose learning track'}</Link></main>;
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
       <header className="flex flex-wrap items-center justify-between gap-3">

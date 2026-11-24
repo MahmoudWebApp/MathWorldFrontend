@@ -28,6 +28,17 @@ export interface TrackInventory {
 }
 export interface TrackListRow {Track:LearningTrack;CategoryCount:number;SkillCount:number;ProblemCount:number}
 export type CreateTrackInput=Omit<LearningTrack,'Id'|'Revision'|'IsPublished'>;
+export type PublishedTrack = Pick<LearningTrack,'Id'|'StageId'|'Code'|'Kind'|'NameAr'|'NameEn'|'DescriptionAr'|'DescriptionEn'>;
+export interface TrackCatalog {Enabled:boolean;Items:(PublishedTrack&{ProblemsCount:number;CategoriesCount:number;SkillsCount:number;FreeProblemsCount:number})[]}
+export interface PublishedTrackDetail {
+  Track:PublishedTrack;
+  Categories:{Id:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string;Icon:string;IsFree:boolean;ProblemsCount:number}[];
+  Skills:{Id:number;CategoryId:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string}[];
+  Examples:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}[];
+}
+export interface TrackSelection {Enabled:boolean;StageId:number|null;TrackId:number|null;Track?:PublishedTrack|null}
+export interface TrackProgress {TrackId:number;StageId:number;ProblemsCount:number;Solved:number;CompletionPercent:number;Categories:{CategoryId:number;ProblemsCount:number;IsLocked:boolean;Solved:number;Attempted:number;Mastered:number}[]}
+export interface TrackPractice {TrackId:number;CategoryId:number;Total:number;Page:number;PageSize:number;Items:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;Points:number;IsSolved:boolean}[]}
 export interface JourneyCategoryProgress {
   CategoryId: number;
   NameAr: string;
@@ -83,6 +94,24 @@ export const stagesApi = createApi({
   baseQuery,
   tagTypes: ['Stage', 'LearningJourney', 'DailyChallenge','LearningTrack'],
   endpoints: (builder) => ({
+    getPublishedTracks:builder.query<TrackCatalog,number>({
+      query:id=>'/stages/'+id+'/tracks',providesTags:['LearningTrack'],
+    }),
+    getPublishedTrack:builder.query<PublishedTrackDetail,number>({
+      query:id=>'/learning-tracks/'+id,providesTags:['LearningTrack'],
+    }),
+    getTrackSelection:builder.query<TrackSelection,void>({
+      query:()=>'/users/learning-track',providesTags:['LearningTrack'],
+    }),
+    selectTrack:builder.mutation<TrackSelection,{TrackId:number}>({
+      query:body=>({url:'/users/learning-track',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack','LearningJourney','DailyChallenge'],
+    }),
+    getTrackProgress:builder.query<TrackProgress,number>({
+      query:id=>'/users/learning-tracks/'+id+'/progress',providesTags:['LearningTrack'],
+    }),
+    getTrackPractice:builder.query<TrackPractice,{id:number;categoryId:number;page:number}>({
+      query:({id,categoryId,page})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page}}),providesTags:['LearningTrack'],
+    }),
     getAdminTracks:builder.query<{Enabled:boolean;Items:TrackListRow[]},void>({
       query:()=>'/admin/learning-tracks',providesTags:['LearningTrack'],
     }),
@@ -166,6 +195,7 @@ export const stagesApi = createApi({
 });
 
 export const {
+  useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackSelectionQuery,useSelectTrackMutation,useGetTrackProgressQuery,useGetTrackPracticeQuery,
   useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,
   useGetStagesQuery,
   useGetLearningJourneyQuery,
