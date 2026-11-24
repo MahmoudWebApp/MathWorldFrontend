@@ -1003,7 +1003,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                               {isArabic ? 'تحدي اليوم · السؤال ' + (challengeIndex + 1) + ' من ' + dailyChallenge?.Total
                                 : 'Daily challenge · Question ' + (challengeIndex + 1) + ' of ' + dailyChallenge?.Total}
                             </p>
-                            {localAnswerResult && (
+                            {localAnswerResult?.IsCorrect && (
                               <p role="status" className="mt-1 text-xs text-muted-foreground">
                                 {pauseChallengeAdvance
                                   ? (isArabic ? 'تم إيقاف الانتقال التلقائي حتى تنتهي من قراءة طريقة الحل.'
@@ -1018,13 +1018,13 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                               className="min-h-10 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold">
                               {isArabic ? 'أحتاج وقتاً للحل' : 'Give me time to review'}
                             </button>}
-                          <Link href={nextChallengeUrl}
+                          {isCorrect && <Link href={nextChallengeUrl}
                             className="inline-flex min-h-10 items-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
                             {nextChallengeProblem
                               ? (isArabic ? 'السؤال التالي' : 'Next question')
                               : (isArabic ? 'إنهاء التحدي' : 'Finish challenge')}
                             <DirectionalArrow direction="forward" className="h-4 w-4" />
-                          </Link>
+                          </Link>}
                         </div>
                       )}
                       <Link
