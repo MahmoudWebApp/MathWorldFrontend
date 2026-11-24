@@ -37,7 +37,7 @@ assert.match(categories, /scope: 'stage' \| 'category'/,
   'Stage and category resets must use a scope-aware confirmation.');
 assert.match(categories, /target\?\.scope === 'category'/,
   'Confirmation must explain category versus full-stage reset.');
-assert.match(categories, /'المفضلة بتضل محفوظة، والتصفير ما فيك تتراجع عنه.'/,
+assert.match(categories, /'المفضلة والنقاط الدائمة والشهادات بتضل محفوظة، والتصفير ما فيك تتراجع عنه.'/,
   'Learner must know favorites are preserved and reset is irreversible.');
 assert.match(categories, /onClick=\{\(\) => setTarget\(null\)\}/,
   'Reset dialog must have a working Cancel action.');
