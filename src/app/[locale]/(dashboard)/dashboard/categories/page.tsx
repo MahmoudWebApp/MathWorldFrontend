@@ -56,9 +56,11 @@ export default function StudentCategoriesPage() {
     }
   }
 
-  if(trackSelection.data?.Enabled&&trackSelection.data.TrackId&&trackSelection.data.StageId===stageId)
+  if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&(trackSelection.isLoading||trackSelection.isError))
+    return <main className="p-6">{trackSelection.isError?<button className="underline" onClick={()=>void trackSelection.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>:<MathWorldLoading compact/>}</main>;
+  if(trackCatalog.currentData?.Enabled&&trackSelection.data?.Enabled&&trackSelection.data.TrackId&&trackSelection.data.StageId===stageId)
     return <StudentTrackWorkspace key={trackSelection.data.TrackId} trackId={trackSelection.data.TrackId}/>;
-  if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&!trackSelection.data?.TrackId)
+  if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&(!trackSelection.data?.TrackId||trackSelection.data.StageId!==stageId))
     return <main className="mx-auto max-w-xl p-6"><h1 className="text-xl font-bold">{ar?'اختر صفك أو مساقك':'Choose your grade or course'}</h1><Link className="mt-4 inline-block rounded-xl bg-primary px-4 py-3 text-primary-foreground" href="/learning-stage">{ar?'اختيار المسار':'Choose learning track'}</Link></main>;
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">

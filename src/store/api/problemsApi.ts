@@ -267,7 +267,7 @@ export const problemsApi = createApi({
           ]));
           // The journey/daily-practice pages also use a separate stagesApi.
           // Refresh their confirmed solved counts on the same successful write.
-          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge', 'LearningTrack']));
         } catch {
           // Do not show earned points or a changed rank for failed submissions.
         }

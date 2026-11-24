@@ -140,6 +140,8 @@ export default function ProblemPage() {
   const isArabic = locale === "ar";
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const problemId = Number.parseInt(params.id, 10);
+  const trackId = Number(searchParams.get('trackId') ?? 0);
+  const fromTrack = learnerWorkspace && Number.isSafeInteger(trackId) && trackId > 0;
   const challengeStageId = Number(searchParams.get('stageId') ?? 0);
   const challengeDate = searchParams.get('daily') ?? '';
   const challengeIndex = Number(searchParams.get('step') ?? -1);
@@ -602,7 +604,7 @@ export default function ProblemPage() {
           {t("errors.problemNotFound")}
         </p>
         <Link
-          href={learnerWorkspace ? "/dashboard/problems" : "/problems"}
+          href={fromTrack ? "/dashboard/categories" : learnerWorkspace ? "/dashboard/problems" : "/problems"}
           className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
         >
           <DirectionalArrow direction="back" />
@@ -639,7 +641,7 @@ export default function ProblemPage() {
             ? [
                 {
                   label: stageName,
-                  href: `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
+                  href: fromTrack ? "/dashboard/categories" : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
                 },
               ]
             : []),
@@ -647,7 +649,7 @@ export default function ProblemPage() {
             ? [
                 {
                   label: categoryName,
-                  href: `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
+                  href: fromTrack ? "/dashboard/categories" : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
                 },
               ]
             : []),
@@ -1052,7 +1054,7 @@ export default function ProblemPage() {
                         </div>
                       )}
                       <Link
-                        href={inDailyChallenge ? '/dashboard/daily-challenge' : categoryId != null
+                        href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? '/dashboard/categories' : categoryId != null
                           ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
                           : stageId != null
                             ? `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`

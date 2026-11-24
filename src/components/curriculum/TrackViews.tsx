@@ -35,7 +35,7 @@ function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
     {isFetching&&!data&&<p role="status">{ar?'جارٍ تحميل المسائل…':'Loading problems…'}</p>}
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسائل.':'Could not load problems.'} <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&<><div className="flex justify-end"><button className={btn} onClick={()=>void refetch()}>{ar?'تحديث':'Refresh'}</button></div>
-      {data.Items.map(p=><Link key={p.Id} href={'/dashboard/problems/'+p.Id} className="flex items-center justify-between gap-2 rounded-xl border p-3 text-sm"><span>{ar?p.TitleAr:p.TitleEn}</span><span className={p.IsSolved?'text-emerald-600':'text-amber-600'}>{p.IsSolved?(ar?'محلولة':'Solved'):(ar?'غير محلولة':'Unsolved')}</span></Link>)}
+      {data.Items.map(p=><Link key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id} className="flex items-center justify-between gap-2 rounded-xl border p-3 text-sm"><span>{ar?p.TitleAr:p.TitleEn}</span><span className={p.IsSolved?'text-emerald-600':'text-amber-600'}>{p.IsSolved?(ar?'محلولة':'Solved'):(ar?'غير محلولة':'Unsolved')}</span></Link>)}
       {data.Total>data.PageSize&&<div className="flex items-center gap-2"><button className={btn} disabled={page<=1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*data.PageSize>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
     </>}
   </div>;
@@ -56,7 +56,7 @@ export function StudentTrackWorkspace({trackId}:{trackId:number}){
       <p className="text-sm text-muted-foreground">{ar?c.DescriptionAr:c.DescriptionEn}</p>
       <p className="text-sm">{ar?'محلولة':'Solved'}: {p?.Solved??0}/{c.ProblemsCount}</p>
       <div className="flex flex-wrap gap-2"><button className={btn} aria-expanded={skills===c.Id} onClick={()=>setSkills(skills===c.Id?null:c.Id)}>{ar?'عرض المهارات':'View skills'}</button>
-      {locked?<Link className={btn} href="/dashboard/premium">{ar?'ترقية الحساب':'Upgrade account'}</Link>:<button className={btn} aria-expanded={category===c.Id} onClick={()=>setCategory(category===c.Id?null:c.Id)}>{ar?'عرض المسائل':'View problems'}</button>}</div>
+      {locked?<Link className={btn} href="/dashboard/upgrade">{ar?'ترقية الحساب':'Upgrade account'}</Link>:<button className={btn} aria-expanded={category===c.Id} onClick={()=>setCategory(category===c.Id?null:c.Id)}>{ar?'عرض المسائل':'View problems'}</button>}</div>
       {skills===c.Id&&<ul className="list-inside list-disc text-sm">{data.Skills.filter(s=>s.CategoryId===c.Id).map(s=><li key={s.Id}>{ar?s.NameAr:s.NameEn}</li>)}</ul>}
       {!locked&&category===c.Id&&<Practice key={c.Id} id={trackId} categoryId={c.Id} ar={ar}/>}
     </article>;})}</div>
