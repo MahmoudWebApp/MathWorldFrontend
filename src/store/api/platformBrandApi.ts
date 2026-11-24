@@ -32,9 +32,28 @@ export function isSafeBrandLogo(value: string, origin: string): boolean {
 export function publishedSocialLinks(profile?: BrandProfile): PlatformSocialLink[] {
   return (profile?.SocialLinks ?? []).filter(link => link.IsEnabled && safeHttps(link.Url)).sort((a,b) => a.DisplayOrder-b.DisplayOrder);
 }
+export interface SupervisorAccount {
+  Id: number; FullName: string; Email: string; IsActive: boolean; StaffSetupPending: boolean;
+  Permissions: number; Revision: number; CreatedAt: string; LastLoginAt?: string | null;
+}
 export const platformBrandApi = createApi({
-  reducerPath: 'platformBrandApi', baseQuery, tagTypes: ['Brand', 'EmailOutbox'],
+  reducerPath: 'platformBrandApi', baseQuery, tagTypes: ['Brand', 'EmailOutbox', 'Supervisors', 'SupervisorPermissions'],
   endpoints: builder => ({
+    getSupervisors: builder.query<{Total:number;Items:SupervisorAccount[]}, number>({
+      query: page => ({url:'/admin/supervisors',params:{page}}), providesTags:['Supervisors'],
+    }),
+    createSupervisor: builder.mutation<{Id:number;StaffSetupPending:boolean;InvitationQueued:boolean},{FullName:string;Email:string;Language:string}>({
+      query: body=>({url:'/admin/supervisors',method:'POST',body}), invalidatesTags:(_r,e)=>e?[]:['Supervisors'],
+    }),
+    updateSupervisor: builder.mutation<{Updated:boolean},{id:number;IsActive:boolean;Permissions:number;Revision:number}>({
+      query: ({id,...body})=>({url:'/admin/supervisors/'+id,method:'PUT',body}), invalidatesTags:(_r,e)=>e?[]:['Supervisors'],
+    }),
+    inviteSupervisor: builder.mutation<{Queued:boolean;WorkerEnabled:boolean},{id:number;Language:string}>({
+      query: ({id,...body})=>({url:'/admin/supervisors/'+id+'/invite',method:'POST',body}), invalidatesTags:(_r,e)=>e?[]:['Supervisors','EmailOutbox'],
+    }),
+    getSupervisorPermissions: builder.query<{Id:number;FullName:string;Permissions:number},void>({
+      query:()=>'/supervisor/permissions',providesTags:['SupervisorPermissions'],
+    }),
     getPublicBrand: builder.query<BrandView, void>({ query: () => '/platform/brand', providesTags: ['Brand'] }),
     getAdminBrand: builder.query<BrandView, void>({ query: () => '/admin/platform/brand', providesTags: ['Brand'] }),
     updateBrand: builder.mutation<BrandView, { Revision: number; Profile: BrandProfile }>({
@@ -54,4 +73,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery } = platformBrandApi;

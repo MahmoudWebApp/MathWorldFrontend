@@ -52,7 +52,7 @@ function EmailPreview({ar}:{ar:boolean}){
     <h2 className="text-lg font-bold">{ar?'معاينة قوالب البريد':'Email template preview'}</h2>
     <p className="text-sm text-muted-foreground">{ar?'معاينة فقط، لا يتم إرسال رسائل حقيقية.':'Preview only. No actual email is sent.'}</p>
     <div className="flex flex-wrap gap-2">
-      <select aria-label={ar?'القالب':'Template'} value={template} onChange={e=>setTemplate(e.target.value)} className="rounded-xl border bg-background p-2"><option value="password-reset">{ar?'استعادة كلمة المرور':'Password reset'}</option><option value="password-changed">{ar?'تغيير كلمة المرور':'Password changed'}</option><option value="welcome">{ar?'الترحيب':'Welcome'}</option><option value="announcement">{ar?'إشعار إداري':'Announcement'}</option></select>
+      <select aria-label={ar?'القالب':'Template'} value={template} onChange={e=>setTemplate(e.target.value)} className="rounded-xl border bg-background p-2"><option value="supervisor-invite">{ar?'دعوة مشرف':'Supervisor invitation'}</option><option value="password-reset">{ar?'استعادة كلمة المرور':'Password reset'}</option><option value="password-changed">{ar?'تغيير كلمة المرور':'Password changed'}</option><option value="welcome">{ar?'الترحيب':'Welcome'}</option><option value="announcement">{ar?'إشعار إداري':'Announcement'}</option></select>
       <select aria-label={ar?'اللغة':'Language'} value={language} onChange={e=>setLanguage(e.target.value)} className="rounded-xl border bg-background p-2"><option value="ar">العربية</option><option value="en">English</option></select>
       <button type="button" disabled={isFetching} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground" onClick={()=>void load({language,template})}>{ar?'معاينة':'Preview'}</button>
     </div>

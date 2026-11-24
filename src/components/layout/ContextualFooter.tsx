@@ -9,7 +9,7 @@ import type { RootState } from "@/store";
 export function ContextualFooter() {
   const pathname = usePathname();
   const role = useSelector((state: RootState) => state.auth.user?.Role);
-  const workspace = ['/dashboard', '/admin', '/learning-stage', '/journey', '/social-accounts']
+  const workspace = ['/dashboard', '/admin', '/supervisor', '/learning-stage', '/journey', '/social-accounts']
     .some(base => pathname === base || pathname.startsWith(base + '/'));
   const learnerFlow = role === 'Student' && (
     pathname === '/notifications' || pathname.startsWith('/problems') || pathname.startsWith('/stages/')

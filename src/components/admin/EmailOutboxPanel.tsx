@@ -10,6 +10,7 @@ const states: Record<string, [string,string]> = {
   Failed: ['فشل','Failed'], Expired: ['منتهي','Expired'], Cancelled: ['ملغى','Cancelled'],
 };
 const templates: Record<string, [string,string]> = {
+  'supervisor-invite': ['دعوة مشرف','Supervisor invitation'],
   'password-reset': ['استعادة كلمة المرور','Password reset'],
   'password-changed': ['تغيير كلمة المرور','Password changed'],
   test: ['اختبار الإرسال','Test email'],

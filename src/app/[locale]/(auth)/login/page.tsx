@@ -49,7 +49,9 @@ export default function LoginPage() {
       const destination =
         user.Role === 'Admin'
           ? 'admin'
-          : user.CurrentStageId == null
+          : user.Role === 'Supervisor'
+            ? 'supervisor'
+            : user.CurrentStageId == null
             ? 'learning-stage'
             : 'dashboard';
       // The public stage guide is not the learner's post-login destination.

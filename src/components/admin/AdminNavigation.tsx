@@ -66,6 +66,15 @@ export const ADMIN_NAV_ITEMS = [
     group: 'management',
   },
   {
+    href: '/admin/supervisors',
+    icon: ShieldCheck,
+    labelAr: 'إدارة المشرفين',
+    labelEn: 'Supervisors',
+    descriptionAr: 'دعوات الحسابات والصلاحيات وحالة التفعيل',
+    descriptionEn: 'Account invitations, permissions and activation',
+    group: 'management',
+  },
+  {
     href: '/admin/settings',
     icon: Settings,
     labelAr: 'إعدادات المنصة',

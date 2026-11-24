@@ -83,10 +83,20 @@ export default function middleware(request: NextRequest) {
   const { authenticated, role } = getTokenState(token);
 
   if (authenticated && AUTH_PATHS.includes(pathWithoutLocale)) {
-    const destination = role === 'Admin' ? 'admin' : 'dashboard';
+    const destination = role === 'Admin' ? 'admin' : role === 'Supervisor' ? 'supervisor' : 'dashboard';
     return NextResponse.redirect(
       new URL(`/${locale}/${destination}`, request.url),
     );
+  }
+
+  const supervisorArea = startsWithAny(pathWithoutLocale, ['/supervisor']);
+  if (supervisorArea && (!authenticated || role !== 'Supervisor')) {
+    const target = !authenticated ? 'login' : role === 'Admin' ? 'admin' : 'dashboard';
+    return NextResponse.redirect(new URL(`/${locale}/${target}`, request.url));
+  }
+  if (authenticated && role === 'Supervisor' && !supervisorArea &&
+      !['/forgot-password','/reset-password'].includes(pathWithoutLocale)) {
+    return NextResponse.redirect(new URL(`/${locale}/supervisor`, request.url));
   }
 
   if (startsWithAny(pathWithoutLocale, ADMIN_PATHS)) {
