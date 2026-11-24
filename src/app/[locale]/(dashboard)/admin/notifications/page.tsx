@@ -35,8 +35,8 @@ export default function AdminNotificationsPage() {
       return;
     }
     if (channel === 'email' && !emailReady) {
-      setError(ar ? 'البريد غير مهيّأ على السيرفر. لا يمكن الإرسال قبل إعداد SMTP.'
-        : 'Email is not configured on the server. Configure SMTP before sending.');
+      setError(ar ? 'البريد الاختياري غير مهيّأ. تحقق من إعدادات Brevo وطابور الإرسال.'
+        : 'Optional email is not configured. Check Brevo and the delivery queue.');
       return;
     }
     const confirmed = window.confirm(ar
@@ -54,15 +54,22 @@ export default function AdminNotificationsPage() {
       };
       if (channel === 'email') {
         const delivery = await sendEmail(payload).unwrap();
-        if (!delivery.EmailSent) throw new Error('EmailNotDelivered');
-        setResult(ar ? `تم إرسال البريد الإلكتروني للطالب رقم ${id}.`
-          : `Email delivered to learner #${id}.`);
+        if (delivery.Queued === true) {
+          setResult(ar ? `تم إنشاء إشعار للطالب رقم ${id} وإضافة رسالة البريد إلى الطابور. وصولها غير مؤكد بعد.`
+            : `Notice created for learner #${id}; email queued. Inbox delivery is not confirmed.`);
+        } else if (delivery.EmailSent === true) {
+          setResult(ar ? 'قبلت خدمة البريد الطلب؛ الوصول إلى صندوق الوارد غير مؤكد.' : 'The email service accepted the request; inbox delivery is not confirmed.');
+        } else throw new Error('EmailNotQueued');
       } else {
         const notice = await send(payload).unwrap();
         setResult(ar ? `تم إنشاء الإشعار رقم ${notice.Id} للطالب ${id}.`
           : `In-app notice #${notice.Id} created for learner #${id}.`);
       }
-    } catch {
+    } catch (e) {
+      if ((e as {data?:{message?:string}})?.data?.message === 'LearnerEmailConsentRequired') {
+        setError(ar?'لا يمكن إرسال البريد: يجب أن يكون بريد الطالب مؤكداً وموافقاً على رسائل الإشعارات المهمة.':'Email unavailable: the learner must verify their address and opt into important notices.');
+        return;
+      }
       setError(ar ? 'فشل الإرسال. تحقق من صلاحياتك ورقم الطالب وإعدادات الخدمة المختارة.'
         : 'Sending failed. Check permissions, learner ID and the selected channel configuration.');
     }
@@ -79,8 +86,8 @@ export default function AdminNotificationsPage() {
           {ar ? 'إرسال إشعار لطالب' : 'Send a learner notification'}
         </h1>
         <p className="text-muted-foreground">
-          {ar ? 'إشعار داخل التطبيق أو رسالة بريد إلكتروني إلى طالب واحد، بالعربية والإنجليزية.'
-            : 'Send a bilingual in-app notice or email to one student.'}
+          {ar ? 'إشعار إلى طالب واحد بالعربية والإنجليزية. البريد يرسل تنبيهاً عاماً لقراءة الإشعار من الحساب، بحسب موافقة الطالب.'
+            : 'Create a bilingual notice for one learner. Optional email alerts link to their private inbox and require consent.'}
         </p>
         {checkingEmail ? (
           <MathWorldLoading compact />
@@ -94,10 +101,10 @@ export default function AdminNotificationsPage() {
         ) : (
           <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
             {ar
-              ? (emailReady ? 'إرسال البريد مهيأ. SMS والإرسال الجماعي غير مفعّلين.'
-                : 'البريد الإلكتروني يحتاج إعداد SMTP على السيرفر. الإشعارات داخل التطبيق متاحة؛ SMS والإرسال الجماعي غير مفعّلين.')
-              : (emailReady ? 'Email is configured. SMS and bulk sending remain disabled.'
-                : 'SMTP must be configured before email is available. In-app notices work; SMS and bulk sending remain disabled.')}
+              ? (emailReady ? 'طابور البريد مهيأ. الإرسال يخضع لتأكيد البريد وموافقة الطالب. SMS والبريد الجماعي غير مفعّلين.'
+                : 'البريد الاختياري يحتاج إعداد Brevo وتفعيل الطابور. الإشعارات داخل التطبيق متاحة؛ SMS والبريد الجماعي غير مفعّلين.')
+              : (emailReady ? 'Email queue configured; verified address and learner consent required. SMS and bulk email remain disabled.'
+                : 'Configure Brevo and the optional email queue first. In-app notices work; SMS and bulk email remain disabled.')}
           </p>
         )}
       </div>
@@ -115,7 +122,7 @@ export default function AdminNotificationsPage() {
               <input type="radio" checked={channel === 'email'}
                 disabled={!emailReady || checkingEmail}
                 onChange={() => setChannel('email')} />
-              {ar ? 'بريد إلكتروني' : 'Email'}
+              {ar ? 'إشعار مع بريد إلكتروني' : 'Notice with email'}
               {!emailReady && <span className="text-xs text-muted-foreground">
                 {checkingEmail ? (ar ? 'جارٍ الفحص' : 'Checking') : emailError || !emailStatus
                     ? (ar ? 'تعذّر التحقق' : 'Unavailable') : (ar ? 'غير مهيّأ' : 'Not configured')}

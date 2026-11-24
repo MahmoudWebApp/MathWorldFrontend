@@ -117,7 +117,7 @@ export const notificationsApi = createApi({
       query: () => ({ url: '/admin/notifications/email-status' }),
     }),
     sendAdminEmail: builder.mutation<
-      { EmailSent: boolean; UserId: number },
+      { Queued?: boolean; EmailSent?: boolean; UserId: number; NoticeId?: number },
       SendAdminNotificationRequest
     >({
       query: ({ learnerId, ...body }) => ({
