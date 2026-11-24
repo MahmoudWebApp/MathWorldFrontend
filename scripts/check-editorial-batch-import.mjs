@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import ts from 'typescript';
+const source=fs.readFileSync('src/components/editorial/editorialBatchFiles.ts','utf8');
+const js=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
+const {combineEditorialFiles,readBatchIssues,readAmendmentFile}=await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
+const row=(key)=>({ContentKey:key,PrimarySkillKey:'skill',ProposedTrackCodes:['grade-4'],Content:{Question:{Ar:'سؤال',En:'Question'}},ReviewStatus:'Draft'});
+const file=(items)=>({name:'test.json',text:JSON.stringify({Items:items})});
+assert.deepEqual(combineEditorialFiles([file([row('first')]),file([row('second')])]).map(x=>x.ContentKey),['first','second']);
+assert.equal('ReviewStatus' in combineEditorialFiles([file([row('first')])])[0],false);
+assert.throws(()=>combineEditorialFiles([file([row('first')]),file([row('first')])]),/DuplicateContentKey/);
+assert.throws(()=>combineEditorialFiles([file(Array.from({length:51},(_,i)=>row('key-'+i)))]),/BatchLimit/);
+assert.throws(()=>combineEditorialFiles([file([])]),/InvalidEditorialBatch/);
+assert.throws(()=>combineEditorialFiles([file([{...row('first'),Content:{Question:'س'.repeat(1_000_000)}}])]),/BatchLimit/);
+assert.deepEqual(readBatchIssues([{ContentKey:'first',Status:'Invalid',Errors:['TrackStageMismatch']}]),[{ContentKey:'first',Status:'Invalid',Errors:['TrackStageMismatch']}]);
+assert.equal(readBatchIssues([{ContentKey:'first',Status:'Invalid',Errors:['<unsafe>']}]),undefined);
+assert.equal(readBatchIssues([{ContentKey:'first',Status:'Unexpected',Errors:[]}]),undefined);
+console.log('PASS: combined draft import, duplicate and size guards, safe per-item errors');
+
+const amendment={ProblemId:1,ExpectedOptionIds:[1,2,3,4],ExpectedLegacySolution:{Ar:'حل',En:'solution'},PrimarySkillKey:'skill',Content:{Question:{Ar:'سؤال',En:'question'}},Status:'StructuredAmendmentCandidateNotImported',ProposedTrackCode:'grade-3'};
+const amendmentFile=(items,status='NotImportedNotPublished')=>JSON.stringify({Status:status,Items:items});
+assert.equal(readAmendmentFile(amendmentFile([amendment]))[0].ProblemId,1);
+assert.equal('ProposedTrackCode' in readAmendmentFile(amendmentFile([amendment]))[0],false);
+assert.throws(()=>readAmendmentFile(amendmentFile([amendment],'HeldNotImportable')),/InvalidAmendmentBatch/);
+assert.throws(()=>readAmendmentFile(amendmentFile([{...amendment,Status:'HeldStructuredCandidateNotImportable'}])),/InvalidAmendmentBatch/);
+assert.throws(()=>readAmendmentFile(amendmentFile([amendment,amendment])),/InvalidAmendmentBatch/);
+assert.throws(()=>readAmendmentFile(amendmentFile([{...amendment,ExpectedOptionIds:[1,1,2,3]}])),/InvalidAmendmentBatch/);
+console.log('PASS: source-guarded amendment files, held/duplicate rejection, no proposed track override');

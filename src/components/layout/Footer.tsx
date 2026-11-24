@@ -1,13 +1,19 @@
 "use client"; // Note: Footer is now a Client component for Framer Motion interactions
 
 import { Link } from '@/i18n/routing';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { ExternalLink } from 'lucide-react';
+import { useGetPublicBrandQuery, publishedSocialLinks } from '@/store/api/platformBrandApi';
 import { socialLinks } from './socialLinks';
 import { motion } from 'framer-motion';
 import { BrandLogo } from './BrandLogo';
 
 export function Footer() {
   const t = useTranslations();
+  const ar = useLocale() === 'ar';
+  const { data: brand } = useGetPublicBrandQuery(undefined, { refetchOnMountOrArgChange: 60 });
+  const profile = brand?.Profile;
+  const published = publishedSocialLinks(profile);
 
   const footerLinks = [
     {
@@ -53,26 +59,29 @@ export function Footer() {
               <BrandLogo className="w-[190px] transition-transform duration-300 group-hover:scale-[1.025]" />
             </Link>
             <p className="text-base text-muted-foreground leading-relaxed mb-8 max-w-sm">
-              {t('footer.description')}
+              {(ar ? profile?.DescriptionAr : profile?.DescriptionEn) || t('footer.description')}
             </p>
             
             {/* Magnetic Social Icons */}
-            <div className="flex flex-wrap gap-3">
-              {socialLinks.map((social) => (
+            {profile?.SupportEmail && <p className="mb-3 break-all text-sm"><a href={`mailto:${profile.SupportEmail}`}>{profile.SupportEmail}</a></p>}
+            {profile?.Phone && <p className="mb-3 text-sm" dir="ltr">{profile.Phone}</p>}
+            {(ar ? profile?.ContactAddressAr : profile?.ContactAddressEn) && <p className="mb-3 text-sm">{ar ? profile?.ContactAddressAr : profile?.ContactAddressEn}</p>}
+            {published.length > 0 && <div className="flex flex-wrap gap-3">
+              {published.map((social) => (
                 <motion.a 
-                  key={social.name} 
-                  href={social.href} 
+                  key={social.Platform} 
+                  href={social.Url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.15, y: -5 }}
                   whileTap={{ scale: 0.95 }}
                   className="flex h-11 w-11 items-center justify-center rounded-xl border bg-background/50 backdrop-blur text-muted-foreground hover:bg-gradient-to-br hover:from-brand-primary hover:to-brand-secondary hover:text-white hover:border-brand-secondary/50 shadow-sm hover:shadow-primary/25 transition-colors duration-300"
-                  aria-label={social.name}
+                  aria-label={ar ? social.LabelAr : social.LabelEn}
                 >
-                  {social.icon}
+                  {socialLinks.find(item => item.name.toLowerCase() === social.Platform.toLowerCase())?.icon ?? <ExternalLink className="h-4 w-4" />}
                 </motion.a>
               ))}
-            </div>
+            </div>}
           </div>
 
           {/* Link Columns */}

@@ -4,7 +4,7 @@ import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
   ChartNoAxesCombined, ChevronDown,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, Gift,
+  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, Gift, Settings,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -64,6 +64,42 @@ export const ADMIN_NAV_ITEMS = [
     descriptionAr: 'إشعارات الطلاب فقط',
     descriptionEn: 'Learner-only notifications',
     group: 'management',
+  },
+  {
+    href: '/admin/supervisors',
+    icon: ShieldCheck,
+    labelAr: 'إدارة المشرفين',
+    labelEn: 'Supervisors',
+    descriptionAr: 'دعوات الحسابات والصلاحيات وحالة التفعيل',
+    descriptionEn: 'Account invitations, permissions and activation',
+    group: 'management',
+  },
+  {
+    href: '/admin/settings',
+    icon: Settings,
+    labelAr: 'إعدادات المنصة',
+    labelEn: 'Platform settings',
+    descriptionAr: 'أمان الحساب والهوية والتواصل وقوالب البريد',
+    descriptionEn: 'Account security, branding, contact and email templates',
+    group: 'management',
+  },
+  {
+    href: '/admin/editorial',
+    icon: GraduationCap,
+    labelAr: 'محرر المسائل والمراجعة',
+    labelEn: 'Problem editor and review',
+    descriptionAr: 'إنشاء المسائل ومراجعة المسودات واعتمادها',
+    descriptionEn: 'Create problems, review and approve drafts',
+    group: 'content',
+  },
+  {
+    href: '/admin/learning-tracks',
+    icon: GraduationCap,
+    labelAr: 'الصفوف والمساقات',
+    labelEn: 'Grades and courses',
+    descriptionAr: 'ربط الفئات والمهارات والمسائل ومراجعة التغطية',
+    descriptionEn: 'Map categories, skills and problems; review coverage',
+    group: 'content',
   },
   {
     href: '/admin/stages',

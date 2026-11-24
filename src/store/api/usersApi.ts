@@ -5,6 +5,33 @@ import { stagesApi } from './stagesApi';
 import type { DashboardData, ProblemPreview } from './types';
 import type { MasteryStatus } from './problemsApi';
 
+export interface EmailPreferenceInput {
+  EmailLearningUpdates: boolean;
+  EmailSubscriptionUpdates: boolean;
+  EmailImportantAnnouncements: boolean;
+  Locale: 'ar' | 'en';
+}
+export interface EmailPreferences extends EmailPreferenceInput {
+  EmailVerified: boolean;
+  VerificationAvailable?: boolean;
+  OptionalDeliveryEnabled: boolean;
+}
+
+export type SessionKind = 'practice' | 'daily';
+export interface SessionScope { Kind: SessionKind; StageId: number; TrackId?: number | null; CategoryId?: number }
+export interface SessionQuestion { Id:number; CategoryId:number; TitleAr:string; TitleEn:string; QuestionTextAr:string; QuestionTextEn:string; Options:{Id:number; LatexCode:string; Order:number}[] }
+export interface LearningSessionState { Id:string; Kind:SessionKind; StageId:number; TrackId?:number|null; CategoryId?:number|null; Total:number; Completed:number; IsComplete:boolean; CurrentQuestion?:SessionQuestion|null; CanUseHints:boolean; HintsRevealed:number }
+export interface SessionSolution { Idea:string; FormulaLatex:string; Steps:string[]; Substitution:string; Result:string; Unit:string; Verification:string; CommonError:string }
+export interface SessionAnswerBody { RequestId:string; Position:number; ProblemId:number; SelectedOptionId:number }
+export interface SessionAnswerResult { SessionId:string; Position:number; ProblemId:number; RequestId:string; IsCorrect:boolean; AttemptNumber:number; PointsEarned:number; Completed:number; Total:number; IsComplete:boolean; UsedHint:boolean; IndependentFirstCorrect:boolean; CorrectOptionId?:number; DetailedSolutionAr?:string; DetailedSolutionEn?:string; SolutionStructure?:SessionSolution|null }
+export interface SessionRestartPreview { StageId:number; TrackId?:number|null; CategoryId?:number|null; SessionIds:string[] }
+export interface SessionHints { Available:boolean; RevealedCount:number; Hints:{Level:number;Text:string}[] }
+export interface SessionAchievements { PermanentSolvedProblems:number; PermanentPoints:number; CompletedPracticeSessions:number; CompletedDailyChallenges:number; CorrectSessionAnswers:number; UniqueSolvedProblems:number; IndependentFirstCorrect:number; AssistedCorrect:number; Badges:{Key:string;TitleAr:string;TitleEn:string;EarnedAtUtc:string}[] }
+
+export interface CertificateScope { StageId:number; TrackId?:number|null; CategoryId?:number|null }
+export interface CertificateRecord extends CertificateScope {Id:string;Kind:'category'|'grade'|'course';StudentName:string;TitleAr:string;TitleEn:string;VerificationCode:string;PolicyVersion:number;TotalProblems:number;RequiredSkills:number;IssuedAtUtc:string}
+export interface CertificateEligibility {Kind:string;TitleAr:string;TitleEn:string;TotalProblems:number;SolvedProblems:number;RequiredSkills:number;IndependentSkills:number;CatalogReady:boolean;Eligible:boolean}
+export interface CertificateList {IssuanceEnabled:boolean;Items:CertificateRecord[]}
 export interface UserProfile {
   Id: number;
   FullName: string;
@@ -48,10 +75,12 @@ export interface FavoriteCheck {
 
 export interface PracticeResetRequest {
   StageId: number;
+  TrackId?: number;
   CategoryId?: number;
 }
 export interface PracticeResetResult {
   StageId: number;
+  TrackId?: number|null;
   CategoryId?: number | null;
   ResetProblems: number;
   ResetSolved: number;
@@ -94,6 +123,8 @@ export interface LearningStage {
 
 export interface JourneyCategory {
   CategoryId: number;
+  PermanentSolvedProblems?: number;
+  PermanentPoints?: number;
   NameAr: string;
   NameEn: string;
   // Only the updated server returns this; undefined means not verified.
@@ -133,6 +164,12 @@ export interface PremiumProgressReport {
 
 export interface LearningJourney {
   StageId: number;
+  LearningSessionsEnabled?: boolean;
+  CertificatesEnabled?: boolean;
+  TrackPracticeIsolationEnabled?: boolean;
+  PermanentSolvedProblems?: number;
+  PermanentPoints?: number;
+  TrackId?: number | null;
   NameAr: string;
   NameEn: string;
   TotalProblems: number;
@@ -336,7 +373,16 @@ export interface PremiumCategoryStatistics {
   TimeSpentSeconds: number;
 }
 
+export interface AnalyticsFilter {stageId?:number;categoryId?:number;trackId?:number;days?:number}
+export type AnalyticsExportRequest = 'ar'|'en'|({lang:'ar'|'en'} & AnalyticsFilter);
 export interface StudentPremiumAnalyticsReport {
+  ScoreBasis?:'ActiveProgress'|'PermanentAchievements';
+  GuidedAttempts?:number;
+  GuidedTimeMeasured?:boolean;
+  FilterStageId?:number|null;
+  FilterCategoryId?:number|null;
+  FilterTrackId?:number|null;
+  WindowDays?:number|null;
   GeneratedAtUtc: string;
   AttemptedProblems: number;
   SolvedProblems: number;
@@ -556,6 +602,8 @@ export const usersApi = createApi({
     'ErrorNotebook',
     'LearningStage',
     'LearningJourney',
+    'SessionAchievements',
+    'Certificates',
     'Leaderboard',
     'Achievements',
     'PremiumAnalytics',
@@ -567,6 +615,58 @@ export const usersApi = createApi({
     'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
+    requestEmailVerification: builder.mutation<{Queued?:boolean;AlreadyVerified?:boolean},'ar'|'en'>({
+      query: (Language) => ({url:'/auth/email-verification/request',method:'POST',body:{Language}}),
+    }),
+    getEmailPreferences: builder.query<EmailPreferences, number>({
+      query: () => '/users/email-preferences',
+      keepUnusedDataFor: 0,
+    }),
+    saveEmailPreferences: builder.mutation<EmailPreferences, {userId:number; preferences:EmailPreferenceInput}>({
+      query: ({preferences}) => ({url:'/users/email-preferences',method:'PUT',body:preferences}),
+    }),
+    getCertificates: builder.query<CertificateList,void>({
+      query:()=>'/users/certificates',providesTags:['Certificates'],keepUnusedDataFor:0,
+    }),
+    getCertificateEligibility: builder.query<CertificateEligibility,CertificateScope>({
+      query:({StageId,TrackId,CategoryId})=>({url:'/users/certificates/eligibility',params:{stageId:StageId,...(TrackId?{trackId:TrackId}:{}),...(CategoryId?{categoryId:CategoryId}:{})}}),
+      keepUnusedDataFor:0,
+    }),
+    issueCertificate: builder.mutation<CertificateRecord,CertificateScope>({
+      query:body=>({url:'/users/certificates/issue',method:'POST',body}),invalidatesTags:result=>result?['Certificates']:[],
+    }),
+    downloadCertificate: builder.mutation<Blob,{Id:string;Lang:'ar'|'en'}>({
+      query:({Id,Lang})=>({url:'/users/certificates/'+encodeURIComponent(Id)+'/pdf',params:{lang:Lang},responseHandler:(r:Response)=>r.blob()}),
+    }),
+    getCurrentLearningSession: builder.query<LearningSessionState,SessionScope>({
+      query: ({Kind,CategoryId})=>({url:'/users/learning-sessions/current',params:{kind:Kind,...(CategoryId?{categoryId:CategoryId}:{})}}),
+      keepUnusedDataFor:0,
+    }),
+    previewSessionRestart: builder.query<SessionRestartPreview,SessionScope>({
+      query: ({CategoryId})=>({url:'/users/learning-sessions/restart-scope',params:CategoryId?{categoryId:CategoryId}:{}}),
+      keepUnusedDataFor:0,
+    }),
+    confirmSessionRestart: builder.mutation<{AbandonedSessionIds:string[]},SessionRestartPreview>({
+      query: body=>({url:'/users/learning-sessions/restart-scope',method:'POST',body}),
+    }),
+    getLearningSessionById: builder.query<LearningSessionState,string>({
+      query: id=>'/users/learning-sessions/'+id,
+      keepUnusedDataFor:0,
+    }),
+    startLearningSession: builder.mutation<LearningSessionState,{RequestId:string;Kind:SessionKind;Count:number;CategoryId?:number}>({
+      query: body=>({url:'/users/learning-sessions/start',method:'POST',body}),
+    }),
+    answerLearningSession: builder.mutation<SessionAnswerResult,{Id:string;Body:SessionAnswerBody}>({
+      query: ({Id,Body})=>({url:'/users/learning-sessions/'+Id+'/answer',method:'POST',body:Body}),
+      invalidatesTags: result=>result?['SessionAchievements','LearningJourney','Leaderboard']:[],
+    }),
+    revealLearningSessionHint: builder.mutation<SessionHints,{Id:string;Position:number;ProblemId:number;Level:number}>({
+      query: ({Id,...body})=>({url:'/users/learning-sessions/'+Id+'/hints',method:'POST',body}),
+    }),
+    getSessionAchievements: builder.query<SessionAchievements,void>({
+      query:()=>'/users/learning-sessions/achievements',
+      providesTags:['SessionAchievements'],
+    }),
     getProfile: builder.query<UserProfile, void>({
       query: () => '/users/profile',
       providesTags: ['User'],
@@ -767,7 +867,7 @@ export const usersApi = createApi({
       providesTags: ['User'],
     }),
 
-    getLearningJourney: builder.query<LearningJourney, number>({
+    getLearningJourney: builder.query<LearningJourney, number | void>({
       query: (stageId) => ({
         url: '/users/journey',
         params: { stageId },
@@ -779,35 +879,35 @@ export const usersApi = createApi({
       query: () => '/users/subscription',
       providesTags: ['Subscription'],
     }),
-    exportPremiumAnalyticsXlsx: builder.mutation<Blob, 'ar' | 'en'>({
-      query: (lang) => ({
+    exportPremiumAnalyticsXlsx: builder.mutation<Blob, AnalyticsExportRequest>({
+      query: (request) => ({
         url: '/users/premium-analytics/export.xlsx',
         method: 'GET',
-        params: { lang },
+        params: typeof request==='string'?{lang:request}:request,
         // Keep the authenticated baseQuery pipeline for private exports.
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
-    exportPremiumAnalyticsPdf: builder.mutation<Blob, 'ar' | 'en'>({
-      query: (lang) => ({
+    exportPremiumAnalyticsPdf: builder.mutation<Blob, AnalyticsExportRequest>({
+      query: (request) => ({
         url: '/users/premium-analytics/export.pdf',
         method: 'GET',
-        params: { lang },
+        params: typeof request==='string'?{lang:request}:request,
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
-    exportPremiumAnalyticsCsv: builder.mutation<Blob, 'ar' | 'en'>({
-      query: (lang) => ({
+    exportPremiumAnalyticsCsv: builder.mutation<Blob, AnalyticsExportRequest>({
+      query: (request) => ({
         url: '/users/premium-analytics/export.csv',
         method: 'GET',
-        params: { lang },
+        params: typeof request==='string'?{lang:request}:request,
         // UTF-8 with BOM is the compatibility alternative to native XLSX.
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
 
-    getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, void>({
-      query: () => '/users/premium-analytics',
+    getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, AnalyticsFilter | void>({
+      query: (filter) => ({url:'/users/premium-analytics',params:filter||{}}),
       providesTags: ['PremiumAnalytics'],
     }),
 
@@ -861,7 +961,7 @@ export const usersApi = createApi({
       }),
       invalidatesTags: [
         'Solved', 'Dashboard', 'User', 'LearningJourney',
-        'Leaderboard', 'Achievements', 'ErrorNotebook', 'Favorite',
+        'Leaderboard', 'Achievements', 'ErrorNotebook', 'Favorite','PremiumAnalytics',
       ],
       async onQueryStarted(_request, { dispatch, queryFulfilled }) {
         try {
@@ -872,7 +972,7 @@ export const usersApi = createApi({
             import('./problemsApi'), import('./stagesApi'),
           ]);
           dispatch(problemsApi.util.invalidateTags(['Problem', 'Category', 'AttemptHistory']));
-          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge','LearningTrack']));
         } catch { /* Failed resets must not update any cache. */ }
       },
     }),
@@ -1013,6 +1113,21 @@ export const usersApi = createApi({
 });
 
 export const {
+  useGetEmailPreferencesQuery,
+  useRequestEmailVerificationMutation,
+  useSaveEmailPreferencesMutation,
+  useGetCertificatesQuery,
+  useGetCertificateEligibilityQuery,
+  useIssueCertificateMutation,
+  useDownloadCertificateMutation,
+  useGetCurrentLearningSessionQuery,
+  useLazyGetLearningSessionByIdQuery,
+  useLazyPreviewSessionRestartQuery,
+  useConfirmSessionRestartMutation,
+  useStartLearningSessionMutation,
+  useAnswerLearningSessionMutation,
+  useRevealLearningSessionHintMutation,
+  useGetSessionAchievementsQuery,
   useGetLearningStageQuery,
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,

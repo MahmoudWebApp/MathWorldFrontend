@@ -74,3 +74,34 @@ export async function getPublicStageExamples(stageId: number): Promise<PublicSta
     return [];
   }
 }
+
+export interface PublicTrack {
+  Id:number;StageId:number;Code:string;Kind:'grade'|'course';NameAr:string;NameEn:string;
+  DescriptionAr:string;DescriptionEn:string;
+}
+export interface PublicTrackDetail {
+  Track:PublicTrack;
+  Categories:{Id:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string;IsFree:boolean;ProblemsCount:number}[];
+  Skills:{Id:number;CategoryId:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string}[];
+  Examples:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}[];
+}
+async function getPublicObject(endpoint:string):Promise<unknown>{
+  try{
+    const response=await fetch(API+'/'+endpoint,{headers:{Accept:'application/json'},next:{revalidate:120},signal:AbortSignal.timeout(8000)});
+    if(!response.ok)return null;
+    return await response.json();
+  }catch{return null;}
+}
+export async function getPublicTracks(stageId:number):Promise<PublicTrack[]>{
+  if(!Number.isSafeInteger(stageId)||stageId<=0)return [];
+  const raw=await getPublicObject('stages/'+stageId+'/tracks') as {Enabled?:boolean;Items?:PublicTrack[]}|null;
+  if(raw?.Enabled!==true||!Array.isArray(raw.Items))return [];
+  return raw.Items.filter(t=>Number.isSafeInteger(t.Id)&&t.Id>0&&t.StageId===stageId);
+}
+export async function getPublicTrack(stageId:number,id:number):Promise<PublicTrackDetail|null>{
+  if(!Number.isSafeInteger(id)||id<=0||!Number.isSafeInteger(stageId)||stageId<=0)return null;
+  const raw=await getPublicObject('learning-tracks/'+id) as PublicTrackDetail|null;
+  if(raw?.Track?.Id!==id||raw.Track.StageId!==stageId||!Array.isArray(raw.Categories)||!raw.Categories.length||
+     !Array.isArray(raw.Skills)||!Array.isArray(raw.Examples))return null;
+  return raw;
+}

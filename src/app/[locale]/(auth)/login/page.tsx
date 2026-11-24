@@ -49,7 +49,9 @@ export default function LoginPage() {
       const destination =
         user.Role === 'Admin'
           ? 'admin'
-          : user.CurrentStageId == null
+          : user.Role === 'Supervisor'
+            ? 'supervisor'
+            : user.CurrentStageId == null
             ? 'learning-stage'
             : 'dashboard';
       // The public stage guide is not the learner's post-login destination.
@@ -130,6 +132,11 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div className="flex justify-end">
+              <Link href="/forgot-password" className="text-sm font-semibold text-primary hover:underline">
+                {locale === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
+              </Link>
+            </div>
             <Button
               type="submit"
               className="w-full gap-2 rounded-xl py-2.5"

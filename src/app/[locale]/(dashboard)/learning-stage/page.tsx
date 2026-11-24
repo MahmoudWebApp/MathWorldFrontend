@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl';
 import { BookOpen, CheckCircle2, Loader2 } from 'lucide-react';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 
-import { useGetStagesQuery } from '@/store/api/stagesApi';
+import { useGetStagesQuery,useGetPublishedTracksQuery,useGetTrackSelectionQuery,useSelectTrackMutation } from '@/store/api/stagesApi';
 import {
   useGetLearningStageQuery,
   useSetLearningStageMutation,
@@ -56,16 +56,27 @@ export default function LearningStagePage() {
     useSetLearningStageMutation();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [trackChoice,setTrackChoice]=useState<number|null>(null);
+  const [selectTrack,{isLoading:savingTrack}]=useSelectTrackMutation();
 
   const effectiveId = selectedId ?? activeStage?.StageId ?? null;
+  const catalog=useGetPublishedTracksQuery(effectiveId??0,{skip:effectiveId==null,refetchOnMountOrArgChange:true});
+  const previous=useGetTrackSelectionQuery(undefined,{refetchOnMountOrArgChange:true});
+  const options=catalog.currentData?.Items??[];
+  const requiresTrack=catalog.currentData?.Enabled===true&&options.length>0;
+  const effectiveTrack=options.find(x=>x.Id===(trackChoice??previous.data?.TrackId))?.Id??null;
+  const checkingTracks=effectiveId!=null&&(catalog.isLoading||catalog.isFetching);
+  // A 404 from the old API is the only permitted compatibility fallback.
+  const catalogUnavailable=catalog.isError&&(catalog.error as {status?:number})?.status!==404;
 
   const save = async () => {
-    if (effectiveId == null || saving) {
+    if (effectiveId == null || saving || savingTrack || checkingTracks || catalogUnavailable || (requiresTrack&&effectiveTrack==null)) {
       return;
     }
     setError('');
     try {
-      await setLearningStage({ StageId: effectiveId }).unwrap();
+      if(requiresTrack&&effectiveTrack!=null) await selectTrack({TrackId:effectiveTrack}).unwrap();
+      else await setLearningStage({ StageId: effectiveId }).unwrap();
       // Keep the learner in the private workspace after onboarding or switching stages.
       window.location.assign(`/${locale}/dashboard/categories`);
     } catch (reason) {
@@ -107,7 +118,7 @@ export default function LearningStagePage() {
                     key={stage.Id}
                     type="button"
                     aria-pressed={selected}
-                    onClick={() => setSelectedId(stage.Id)}
+                    onClick={() => {setSelectedId(stage.Id);setTrackChoice(null);}}
                     className={[
                       'flex min-h-28 items-center justify-between gap-4 rounded-2xl border p-5 text-start transition-all',
                       selected
@@ -135,6 +146,11 @@ export default function LearningStagePage() {
               })}
             </fieldset>
 
+            {checkingTracks&&<p className="mt-4 text-sm text-muted-foreground" role="status">{isArabic?'جارٍ تحميل الصفوف والمساقات…':'Loading grades and courses…'}</p>}
+            {catalogUnavailable&&<p role="alert" className="mt-4 text-sm text-destructive">{isArabic?'تعذّر تحميل المسارات.':'Could not load learning tracks.'} <button className="underline" onClick={()=>void catalog.refetch()}>{isArabic?'إعادة المحاولة':'Retry'}</button></p>}
+            {requiresTrack&&<fieldset className="mt-6 space-y-2"><legend className="font-bold">{isArabic?'اختر الصف أو المساق':'Choose grade or course'}</legend>
+              <div className="grid gap-2 sm:grid-cols-2">{options.map(track=><button type="button" key={track.Id} aria-pressed={effectiveTrack===track.Id} onClick={()=>setTrackChoice(track.Id)} className={'rounded-xl border p-3 text-start '+(effectiveTrack===track.Id?'border-primary bg-primary/10':'bg-card')}><span className="font-semibold">{isArabic?track.NameAr:track.NameEn}</span><span className="ms-2 text-xs text-muted-foreground">{track.ProblemsCount} {isArabic?'مسألة':'problems'}</span></button>)}</div>
+            </fieldset>}
             {error && (
               <p role="alert" className="mt-6 text-center text-sm text-destructive">
                 {error}
@@ -144,10 +160,10 @@ export default function LearningStagePage() {
               <button
                 type="button"
                 onClick={save}
-                disabled={effectiveId == null || saving}
+                disabled={effectiveId == null || saving || savingTrack || checkingTracks || catalogUnavailable || (requiresTrack&&effectiveTrack==null)}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-7 py-3 font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {saving ? <Loader2 size={19} className="animate-spin" /> : <DirectionalArrow direction="forward" size={19} />}
+                {saving || savingTrack ? <Loader2 size={19} className="animate-spin" /> : <DirectionalArrow direction="forward" size={19} />}
                 {activeStage?.HasSelectedStage ? copy.change : copy.save}
               </button>
               {effectiveId == null && (

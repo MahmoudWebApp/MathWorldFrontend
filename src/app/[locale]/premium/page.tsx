@@ -27,7 +27,7 @@ export default function PremiumBenefitsPage() {
   const premiumFeatures = [
     { icon: CheckCircle2, ar: 'حل عدد غير محدود من المسائل في جميع الفئات', en: 'Unlimited problems in all categories' },
     { icon: LockOpen, ar: 'فتح كل فئات المرحلة التي يدرسها الطالب', en: 'Unlock every topic in the learner’s selected stage' },
-    { icon: GraduationCap, ar: 'مشاهدة الحل قبل إرسال الإجابة', en: 'View solutions before answering' },
+    { icon: GraduationCap, ar: 'تلميحان متدرجان قبل الحل', en: 'Two progressive hints before solving' },
     { icon: Sparkles, ar: 'تقارير وإحصائيات شخصية مع تصدير PDF وExcel (XLSX)',
       en: 'Personal analytics with PDF and native Excel (XLSX) reports' },
     { icon: Sparkles, ar: 'تحدٍ يومي تفاعلي حتى خمس مسائل متتالية', en: 'Sequential daily challenge with up to five questions' },

@@ -12,6 +12,33 @@ export interface Stage {
   Order: number;
 }
 
+export interface LearningTrack {
+  Id:number; StageId:number; Code:string; Kind:'grade'|'course'; NameAr:string; NameEn:string;
+  DescriptionAr:string; DescriptionEn:string; SortOrder:number; Revision:number; IsPublished:boolean;
+}
+export interface TrackMapping { CategoryIds:number[]; SkillIds:number[]; ProblemIds:number[] }
+export interface TrackDetail extends TrackMapping {
+  Track:LearningTrack; Coverage:{Categories:number;Skills:number;Problems:number;FreeProblems:number};
+}
+export interface TrackInventory {
+  Categories:{Id:number;NameAr:string;NameEn:string}[];
+  Skills:{Id:number;CategoryId:number;NameAr:string;NameEn:string;IsPublished:boolean}[];
+  Problems:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;PrimarySkillId?:number|null;AssignedTrackCount:number}[];
+  Total:number;
+}
+export interface TrackListRow {Track:LearningTrack;CategoryCount:number;SkillCount:number;ProblemCount:number}
+export type CreateTrackInput=Omit<LearningTrack,'Id'|'Revision'|'IsPublished'>;
+export type PublishedTrack = Pick<LearningTrack,'Id'|'StageId'|'Code'|'Kind'|'NameAr'|'NameEn'|'DescriptionAr'|'DescriptionEn'>;
+export interface TrackCatalog {Enabled:boolean;Items:(PublishedTrack&{ProblemsCount:number;CategoriesCount:number;SkillsCount:number;FreeProblemsCount:number})[]}
+export interface PublishedTrackDetail {
+  Track:PublishedTrack;
+  Categories:{Id:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string;Icon:string;IsFree:boolean;ProblemsCount:number}[];
+  Skills:{Id:number;CategoryId:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string}[];
+  Examples:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}[];
+}
+export interface TrackSelection {Enabled:boolean;StageId:number|null;TrackId:number|null;Track?:PublishedTrack|null}
+export interface TrackProgress {TrackId:number;StageId:number;TrackPracticeIsolationEnabled?:boolean;ProblemsCount:number;Solved:number;CompletionPercent:number;Categories:{CategoryId:number;ProblemsCount:number;IsLocked:boolean;Solved:number;Attempted:number;Mastered:number}[]}
+export interface TrackPractice {TrackId:number;CategoryId:number;Total:number;Page:number;PageSize:number;Items:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;Points:number;IsSolved:boolean}[]}
 export interface JourneyCategoryProgress {
   CategoryId: number;
   NameAr: string;
@@ -26,6 +53,7 @@ export interface JourneyCategoryProgress {
 
 export interface LearningJourney {
   StageId: number;
+  TrackId?: number | null;
   NameAr: string;
   NameEn: string;
   TotalProblems: number;
@@ -40,6 +68,7 @@ export interface LearningJourney {
 export interface DailyChallenge {
   DateUtc: string;
   StageId: number;
+  TrackId?: number | null;
   Total: number;
   Completed: number;
   Correct: number;
@@ -65,8 +94,50 @@ export interface CreateStageRequest {
 export const stagesApi = createApi({
   reducerPath: 'stagesApi',
   baseQuery,
-  tagTypes: ['Stage', 'LearningJourney', 'DailyChallenge'],
+  tagTypes: ['Stage', 'LearningJourney', 'DailyChallenge','LearningTrack'],
   endpoints: (builder) => ({
+    getPublishedTracks:builder.query<TrackCatalog,number>({
+      query:id=>'/stages/'+id+'/tracks',providesTags:['LearningTrack'],
+    }),
+    getPublishedTrack:builder.query<PublishedTrackDetail,number>({
+      query:id=>'/learning-tracks/'+id,providesTags:['LearningTrack'],
+    }),
+    getTrackSelection:builder.query<TrackSelection,void>({
+      query:()=>'/users/learning-track',providesTags:['LearningTrack'],
+    }),
+    selectTrack:builder.mutation<TrackSelection,{TrackId:number}>({
+      query:body=>({url:'/users/learning-track',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack','LearningJourney','DailyChallenge'],
+    }),
+    getTrackContinue:builder.query<{TrackId:number;Problem:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}|null},void>({
+      query:()=>'/users/learning-tracks/continue',providesTags:['LearningTrack'],
+    }),
+    getTrackProgress:builder.query<TrackProgress,number>({
+      query:id=>'/users/learning-tracks/'+id+'/progress',providesTags:['LearningTrack'],
+    }),
+    getTrackPractice:builder.query<TrackPractice,{id:number;categoryId:number;page:number}>({
+      query:({id,categoryId,page})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page}}),providesTags:['LearningTrack'],
+    }),
+    getAdminTracks:builder.query<{Enabled:boolean;Items:TrackListRow[]},void>({
+      query:()=>'/admin/learning-tracks',providesTags:['LearningTrack'],
+    }),
+    getAdminTrack:builder.query<TrackDetail,number>({
+      query:id=>'/admin/learning-tracks/'+id,providesTags:['LearningTrack'],
+    }),
+    getTrackInventory:builder.query<TrackInventory,{stageId:number;page:number;categoryId?:number}>({
+      query:({stageId,...params})=>({url:'/admin/learning-tracks/inventory/'+stageId,params}),providesTags:['LearningTrack'],
+    }),
+    createTrack:builder.mutation<LearningTrack,CreateTrackInput>({
+      query:body=>({url:'/admin/learning-tracks',method:'POST',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
+    }),
+    updateTrackMetadata:builder.mutation<{Revision:number},{id:number;Revision:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string;SortOrder:number}>({
+      query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/metadata',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
+    }),
+    mapTrack:builder.mutation<{Revision:number},TrackMapping&{id:number;Revision:number}>({
+      query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/mapping',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
+    }),
+    publishTrack:builder.mutation<{Revision:number;IsPublished:boolean},{id:number;Revision:number;Publish:boolean}>({
+      query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/publication',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
+    }),
     
     // ✅ PUBLIC: Get all stages (no auth required)
     // Calls: GET /api/stages
@@ -129,6 +200,8 @@ export const stagesApi = createApi({
 });
 
 export const {
+  useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackSelectionQuery,useSelectTrackMutation,useGetTrackProgressQuery,useGetTrackPracticeQuery,useGetTrackContinueQuery,
+  useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,
   useGetStagesQuery,
   useGetLearningJourneyQuery,
   useGetDailyChallengeQuery,

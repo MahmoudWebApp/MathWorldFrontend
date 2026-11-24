@@ -36,6 +36,7 @@ import { AdminNavMobile } from '@/components/admin/AdminNavigation';
 import { StudentWorkspaceNavigation } from '@/components/dashboard/StudentWorkspaceNavigation';
 import { cn } from '@/lib/utils';
 import { authApi } from '@/store/api/authApi';
+import { platformBrandApi } from '@/store/api/platformBrandApi';
 import { categoriesApi } from '@/store/api/categoriesApi';
 import { problemsApi } from '@/store/api/problemsApi';
 import { stagesApi } from '@/store/api/stagesApi';
@@ -104,6 +105,7 @@ function NavbarContent() {
     dispatch(logout());
     clearAuthSession();
     dispatch(authApi.util.resetApiState());
+    dispatch(platformBrandApi.util.resetApiState());
     dispatch(problemsApi.util.resetApiState());
     dispatch(categoriesApi.util.resetApiState());
     dispatch(stagesApi.util.resetApiState());
@@ -146,8 +148,9 @@ function NavbarContent() {
     pathname === '/learning-stage' || pathname.startsWith('/journey') ||
     pathname.startsWith('/social-accounts') ||
     (user?.Role === 'Student' && pathname === '/notifications');
-  const portalArea = adminArea || learnerArea;
-  const portalLanding = user?.Role === 'Admin' ? '/admin' : '/dashboard';
+  const supervisorArea = pathname === '/supervisor' || pathname.startsWith('/supervisor/');
+  const portalArea = adminArea || learnerArea || supervisorArea;
+  const portalLanding = user?.Role === 'Admin' ? '/admin' : user?.Role === 'Supervisor' ? '/supervisor' : '/dashboard';
   // Admin navigation lives in the desktop sidebar (or mobile drawer),
   // not in a second horizontal menu across the top.
   const navItems = portalArea ? [] : [
@@ -161,7 +164,7 @@ function NavbarContent() {
     <>
       {mounted && isAuthenticated && token && user?.Role === 'Student' &&
         <StudentPresenceHeartbeat token={token} />}
-      {mounted && isAuthenticated && token && <NotificationRealtimeSync token={token} />}
+      {mounted && isAuthenticated && token && user?.Role !== 'Supervisor' && <NotificationRealtimeSync token={token} />}
       {/* Scroll Progress Bar at the absolute top */}
       <motion.div 
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-primary via-brand-primary-light to-brand-secondary z-[60] origin-left shadow-[0_0_18px_rgba(92,36,255,0.38)]"
@@ -224,7 +227,7 @@ function NavbarContent() {
                   : <Monitor aria-hidden="true" className="h-5 w-5 text-muted-foreground" />}
             </button>
 
-            {mounted && isAuthenticated && <NotificationBell isAuthenticated={isAuthenticated} />}
+            {mounted && isAuthenticated && user?.Role !== 'Supervisor' && <NotificationBell isAuthenticated={isAuthenticated} />}
 
             {/* Auth Section */}
             {!mounted || isLoading || sessionUnavailable ? (
@@ -264,7 +267,10 @@ function NavbarContent() {
                             {locale === 'ar' ? 'لوحة الإدارة' : 'Admin dashboard'}
                           </Link>
                         )}
-                        {user.Role !== 'Admin' && (
+                        {user.Role === 'Supervisor' && <Link href="/supervisor" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10" onClick={() => setUserMenuOpen(false)}>
+                          <Element3 className="h-4 w-4" />{locale === 'ar' ? 'مساحة المشرف' : 'Supervisor workspace'}
+                        </Link>}
+                        {user.Role === 'Student' && (
                           <>
 
                         <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => setUserMenuOpen(false)}>
@@ -332,6 +338,7 @@ function NavbarContent() {
               className="max-h-[calc(100dvh-4rem)] space-y-2 overflow-y-auto border-t bg-background/95 px-4 py-4 backdrop-blur-xl lg:hidden">
               <p className="px-3 text-xs font-bold text-muted-foreground">
                 {adminArea ? (locale === 'ar' ? 'قائمة الإدارة' : 'Admin menu')
+                  : supervisorArea ? (locale === 'ar' ? 'مساحة المشرف' : 'Supervisor workspace')
                   : learnerArea ? (locale === 'ar' ? 'قائمة الطالب' : 'Learner menu')
                     : (locale === 'ar' ? 'الموقع العام' : 'Public website')}
               </p>
@@ -356,7 +363,7 @@ function NavbarContent() {
                  ) : <StudentWorkspaceNavigation isPremium={subscription.IsPremium} onNavigate={() => setMobileMenuOpen(false)} />
                )}
               {adminArea && isAuthenticated && user?.Role === 'Admin' && <AdminNavMobile onNavigate={() => setMobileMenuOpen(false)} />}
-              {(portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding} onClick={() => setMobileMenuOpen(false)}
+              {user?.Role !== 'Supervisor' && (portalArea || (mounted && isAuthenticated)) && <Link href={portalArea ? '/' : portalLanding} onClick={() => setMobileMenuOpen(false)}
                 className="flex min-h-11 items-center rounded-xl border border-primary/25 px-4 py-3 text-sm font-bold text-primary">
                 {portalArea ? (locale === 'ar' ? 'العودة إلى الموقع' : 'Back to website')
                   : (locale === 'ar' ? 'الذهاب إلى لوحة التحكم' : 'Go to dashboard')}

@@ -6,6 +6,8 @@ import { usersApi } from './usersApi';
 import { stagesApi } from './stagesApi';
 import type { PagedProblemsResponse, ProblemPreview } from './types';
 
+export interface ProblemHints {ProblemId:number;Available:boolean;RevealedCount:number;Hints:{Level:number;Text:string}[]}
+
 export interface OptionForStudent {
   Id: number;
   LatexCode: string;
@@ -27,7 +29,10 @@ export interface QuestionOptionDto {
 
 export type MasteryStatus = 'New' | 'NeedsReview' | 'Practicing' | 'Mastered';
 
+export interface SolutionStructure {Idea:string;FormulaLatex:string;Steps:string[];Substitution:string;Result:string;Unit:string;Verification:string;CommonError:string}
 export interface ProblemForStudent {
+  PracticeScopeId?: number|null;
+  SolutionStructure?:SolutionStructure|null;
   Id: number;
   Title: string;
   QuestionText: string;
@@ -134,6 +139,7 @@ export interface SearchProblemsParams {
 }
 
 export interface SubmitAnswerRequest {
+  PracticeScopeId?: number|null;
   ProblemId: number;
   SelectedOptionId: number;
   TimeSpentSeconds: number;
@@ -147,6 +153,8 @@ export interface ProblemSolutionPreview {
 }
 
 export interface AnswerResult {
+  SolutionStructure?:SolutionStructure|null;
+  UsedHint?:boolean;
   IsCorrect: boolean;
   IsSolved: boolean;
   SelectedOptionId: number;
@@ -267,7 +275,7 @@ export const problemsApi = createApi({
           ]));
           // The journey/daily-practice pages also use a separate stagesApi.
           // Refresh their confirmed solved counts on the same successful write.
-          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge', 'LearningTrack']));
         } catch {
           // Do not show earned points or a changed rank for failed submissions.
         }
@@ -330,6 +338,14 @@ export const problemsApi = createApi({
       invalidatesTags: (_result, _error, problemId) => [{ type: 'Problem', id: problemId }],
     }),
 
+    getProblemHints: builder.query<ProblemHints,{problemId:number;locale:string;scope?:number|null}>({
+      query:({problemId,locale,scope})=>({url:`/problems/${problemId}/hints`,params:scope==null?{}:{practiceScopeId:scope},headers:{'Accept-Language':locale}}),
+      providesTags:(_r,_e,{problemId})=>[{type:'Problem',id:problemId}],
+    }),
+    revealProblemHint: builder.mutation<ProblemHints,{problemId:number;Level:number;locale:string;scope?:number|null}>({
+      query:({problemId,Level,locale,scope})=>({url:`/problems/${problemId}/hints`,method:'POST',body:{Level,...(scope==null?{}:{PracticeScopeId:scope})},headers:{'Accept-Language':locale}}),
+      invalidatesTags:(_r,e,{problemId})=>e?[]:[{type:'Problem',id:problemId}],
+    }),
     getPremiumSolution: builder.query<PremiumSolution, number>({
       query: (problemId) => `/problems/${problemId}/premium-solution`,
     }),
@@ -373,6 +389,8 @@ export const {
   useUpsertAdminProblemDiagramMutation,
   useDeleteAdminProblemDiagramMutation,
   useGetProblemQuery,
+  useGetProblemHintsQuery,
+  useRevealProblemHintMutation,
   useLazyGetPremiumSolutionQuery,
   useLazyGetSolutionPreviewQuery,
   useGetProblemAttemptsQuery,

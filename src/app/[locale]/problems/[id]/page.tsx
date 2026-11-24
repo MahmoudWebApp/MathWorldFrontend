@@ -33,8 +33,8 @@ import {
   type ProblemForStudent,
   useGetProblemDiagramQuery,
   useGetProblemQuery,
-  useLazyGetPremiumSolutionQuery,
-  useLazyGetSolutionPreviewQuery,
+  useGetProblemHintsQuery,
+  useRevealProblemHintMutation,
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
@@ -132,6 +132,21 @@ function formatDuration(
 
 export default function ProblemPage() {
   const params = useParams<{ id: string }>();
+  const locale = useLocale();
+  const {isAuthenticated,user}=useSelector((state:RootState)=>state.auth);
+  const problemId=Number.parseInt(params.id,10);
+  const query=useGetProblemQuery({Id:problemId,locale},{
+    skip:Number.isNaN(problemId),refetchOnMountOrArgChange:true,
+  });
+  // Remount interaction state if the authoritative scope or problem changes.
+  // RTK Query's currentData never supplies another route's previous response.
+  const problem=query.error?undefined:query.currentData;
+  const scope=isStudentProblem(problem)?problem.PracticeScopeId??0:"non-student";
+  return <ProblemPageContent key={JSON.stringify([problemId,locale,scope,isAuthenticated,user?.Id])} query={query}/>;
+}
+
+function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>}) {
+  const params = useParams<{ id: string }>();
   const learnerWorkspace = usePathname().startsWith("/dashboard/");
   const t = useTranslations();
   const router = useRouter();
@@ -140,6 +155,8 @@ export default function ProblemPage() {
   const isArabic = locale === "ar";
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const problemId = Number.parseInt(params.id, 10);
+  const trackId = Number(searchParams.get('trackId') ?? 0);
+  const fromTrack = learnerWorkspace && Number.isSafeInteger(trackId) && trackId > 0;
   const challengeStageId = Number(searchParams.get('stageId') ?? 0);
   const challengeDate = searchParams.get('daily') ?? '';
   const challengeIndex = Number(searchParams.get('step') ?? -1);
@@ -157,18 +174,8 @@ export default function ProblemPage() {
   const questionCardRef = useRef<HTMLDivElement>(null);
   const attemptStartedAtRef = useRef(Date.now());
 
-  const {
-    data: problem,
-    isLoading,
-    error,
-    refetch: refetchProblem,
-  } = useGetProblemQuery(
-    { Id: problemId, locale },
-    {
-      skip: Number.isNaN(problemId),
-      refetchOnMountOrArgChange: true,
-    },
-  );
+  const {isLoading,isFetching,error,refetch:refetchProblem}=query;
+  const problem=error?undefined:query.currentData;
 
   // Optional forward-compatible geometry payload. Older API responses have no diagram.
   const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
@@ -194,13 +201,12 @@ export default function ProblemPage() {
   const { data: entitlement } = useGetStudentEntitlementQuery(undefined, {
     skip: !isAuthenticated || !studentProblem,
   });
-  const [loadPremiumSolution, { data: premiumSolution, isFetching: isLoadingPremiumSolution, isError: premiumSolutionError }] = useLazyGetPremiumSolutionQuery();
+  const [revealHint,{isLoading:hintBusy}]=useRevealProblemHintMutation();
+  const [hintError,setHintError]=useState(false);
 
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
-  const [, { data: solutionPreviewData }] = useLazyGetSolutionPreviewQuery();
-  const solutionPreview = solutionPreviewData?.ProblemId === problemId
-    ? solutionPreviewData : null;
+
 
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
   const [localAnswerResult, setLocalAnswerResult] =
@@ -278,7 +284,7 @@ export default function ProblemPage() {
   // Students must have time to read the mathematical rule and explanation.
   // Auto-advance remains enabled by default and can be paused per question.
   useEffect(() => {
-    if (!localAnswerResult || !inDailyChallenge || !dailyChallenge ||
+    if (!localAnswerResult?.IsCorrect || !inDailyChallenge || !dailyChallenge ||
         pauseChallengeAdvance) return;
     const timer = window.setTimeout(() => router.replace(nextChallengeUrl), 8000);
     return () => window.clearTimeout(timer);
@@ -340,10 +346,11 @@ export default function ProblemPage() {
         null)
       : null;
 
-  const canRetry = searchParams.get('review') === '1' &&
-    (localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false);
+  const canRetry = localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
+  const hints=useGetProblemHintsQuery({problemId,locale,scope:studentProblem?.PracticeScopeId},{skip:!studentProblem||!entitlement?.IsPremium||isCorrect||!!studentProblem.IsSolved,refetchOnMountOrArgChange:true});
   const canAnswer =
     isAuthenticated &&
+    !isFetching &&
     !!studentProblem &&
     (!hasAttempted || (retryMode && canRetry));
 
@@ -358,9 +365,6 @@ export default function ProblemPage() {
     false;
 
   const solutionText = useMemo(() => {
-    if (solutionPreview?.DetailedSolution?.trim()) {
-      return solutionPreview.DetailedSolution;
-    }
     if (retryMode) {
       return null;
     }
@@ -387,14 +391,9 @@ export default function ProblemPage() {
     locale,
     retryMode,
     isCorrect,
-    solutionPreview,
   ]);
 
   const youtubeUrl = useMemo(() => {
-    if (solutionPreview?.YoutubeSolutionUrl &&
-        getYouTubeVideoId(solutionPreview.YoutubeSolutionUrl)) {
-      return solutionPreview.YoutubeSolutionUrl;
-    }
     if (retryMode || (!adminProblem && !isCorrect)) {
       return null;
     }
@@ -409,12 +408,14 @@ export default function ProblemPage() {
     }
 
     return value;
-  }, [localAnswerResult, studentProblem, adminProblem, retryMode, isCorrect, solutionPreview]);
+  }, [localAnswerResult, studentProblem, adminProblem, retryMode, isCorrect]);
 
+  const structuredSolution = isCorrect && !retryMode
+    ? localAnswerResult?.SolutionStructure ?? studentProblem?.SolutionStructure : null;
   const showSolutionSection = !!solutionText &&
-    (showResult || !!adminProblem || !!solutionPreview);
+    (showResult || !!adminProblem);
   const showVideoTab = !!youtubeUrl &&
-    (showResult || !!adminProblem || !!solutionPreview);
+    (showResult || !!adminProblem);
   const isFavorite =
     favoriteData?.IsFavorite ?? studentProblem?.IsFavorite ?? false;
 
@@ -480,6 +481,7 @@ export default function ProblemPage() {
     try {
       const result = await submitAnswer({
         ProblemId: studentProblem.Id,
+        PracticeScopeId:studentProblem.PracticeScopeId,
         SelectedOptionId: effectiveSelectedOptionId,
         TimeSpentSeconds: Math.max(
           0,
@@ -498,6 +500,16 @@ export default function ProblemPage() {
         status?: number;
         data?: { Message?: string; message?: string };
       };
+      if(normalized.status===409&&(normalized.data?.Message??normalized.data?.message)==="PracticeScopeChanged"){
+        setSelectedOptionId(null);
+        setLocalAnswerResult(null);
+        setSubmissionDone(false);
+        setRetryMode(false);
+        setActiveTab("question");
+        setSubmitError(isArabic?"تغيّر مسار التدريب. حدّثنا المسألة؛ اختر الإجابة من جديد.":"Your practice scope changed. We refreshed the question; choose your answer again.");
+        await refetchProblem();
+        return;
+      }
       setSubmitError(
         normalized.data?.Message || normalized.data?.message ||
         (normalized.status === 429
@@ -602,7 +614,7 @@ export default function ProblemPage() {
           {t("errors.problemNotFound")}
         </p>
         <Link
-          href={learnerWorkspace ? "/dashboard/problems" : "/problems"}
+          href={fromTrack ? "/dashboard/categories" : learnerWorkspace ? "/dashboard/problems" : "/problems"}
           className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
         >
           <DirectionalArrow direction="back" />
@@ -639,7 +651,7 @@ export default function ProblemPage() {
             ? [
                 {
                   label: stageName,
-                  href: `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
+                  href: fromTrack ? "/dashboard/categories" : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
                 },
               ]
             : []),
@@ -647,7 +659,7 @@ export default function ProblemPage() {
             ? [
                 {
                   label: categoryName,
-                  href: `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
+                  href: fromTrack ? "/dashboard/categories" : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
                 },
               ]
             : []),
@@ -751,56 +763,20 @@ export default function ProblemPage() {
         </div>
       )}
 
-      {studentProblem && entitlement && !entitlement.CanRevealSolutionBeforeAnswer && (
-        <section className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-          <LockedPremiumDialog>
-            <button type="button" className="flex min-h-11 items-center gap-2 rounded-xl border border-primary/30 px-4 py-3 text-sm font-bold text-primary hover:bg-primary/10">
-              <Lock aria-hidden="true" className="h-4 w-4" />
-              {isArabic ? "طريقة الحل — Premium" : "Solution method — Premium"}
-            </button>
-          </LockedPremiumDialog>
-        </section>
-      )}
-
-      {studentProblem && entitlement?.CanRevealSolutionBeforeAnswer && (
-        <section className="mb-5 rounded-2xl border border-primary/25 bg-primary/5 p-4">
-          <Button
-            variant="outline"
-            disabled={isLoadingPremiumSolution}
-            onClick={() => void loadPremiumSolution(problemId)}
-          >
-            {isLoadingPremiumSolution
-              ? (isArabic ? "جارٍ تحميل الحل..." : "Loading solution...")
-              : (isArabic ? "طريقة الحل" : "Solution method")}
-          </Button>
-          {premiumSolutionError && (
-            <p role="alert" className="mt-3 text-sm text-destructive">
-              {isArabic ? "تعذّر عرض الحل. حاول مجدداً." : "Could not load the solution. Please retry."}
-            </p>
-          )}
-          {premiumSolution?.ProblemId === problemId && (
-            <div className="mt-4 space-y-3">
-              {premiumSolution.DetailedSolution && (
-                <RichText text={premiumSolution.DetailedSolution} isArabic={isArabic} />
-              )}
-              {premiumSolution.CorrectOptionId !== null &&
-                studentProblem.Options.some(option => option.Id === premiumSolution.CorrectOptionId) && (
-                  <div className="rounded-xl border border-primary/15 bg-background p-3">
-                    <p className="mb-2 text-sm font-bold">
-                      {isArabic ? "الإجابة الصحيحة:" : "Correct answer:"}
-                    </p>
-                    <LatexPreview
-                      latex={studentProblem.Options.find(
-                        option => option.Id === premiumSolution.CorrectOptionId,
-                      )?.LatexCode ?? ""}
-                    />
-                  </div>
-                )}
-              {premiumSolution.YoutubeSolutionUrl && getYouTubeVideoId(premiumSolution.YoutubeSolutionUrl) && (
-                <YoutubeEmbed url={premiumSolution.YoutubeSolutionUrl} />
-              )}
-            </div>
-          )}
+      {studentProblem && !isCorrect && !studentProblem.IsSolved && entitlement && (
+        <section className="mb-5 space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <h2 className="font-semibold">{isArabic ? 'تلميحات تساعدك على الحل' : 'Hints to help you solve'}</h2>
+          {!entitlement.IsPremium ? <LockedPremiumDialog><button type="button" className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"><Lock className="h-4 w-4"/>{isArabic?'تلميحات Premium':'Premium hints'}</button></LockedPremiumDialog> : <>
+            {hints.isLoading&&<p role="status">{isArabic?'جارٍ التحميل…':'Loading…'}</p>}
+            {hints.isError&&<button className="text-sm underline" onClick={()=>void hints.refetch()}>{isArabic?'تعذّر تحميل التلميحات. إعادة المحاولة':'Could not load hints. Retry'}</button>}
+            {hints.currentData?.Available===false&&<p className="text-sm text-muted-foreground">{isArabic?'لا توجد تلميحات لهذه المسألة بعد.':'Hints are not yet available for this problem.'}</p>}
+            {hints.currentData?.Available&&<>
+              {hints.currentData.Hints.map(h=><div key={h.Level} className="rounded-xl border bg-background p-3"><p className="mb-1 text-sm font-semibold">{isArabic?'التلميح':'Hint'} {h.Level}</p><RichText text={h.Text} isArabic={isArabic}/></div>)}
+              {hints.currentData.RevealedCount<2&&<Button variant="outline" disabled={hintBusy||isSubmitting} onClick={async()=>{setHintError(false);try{await revealHint({problemId,Level:(hints.currentData?.RevealedCount??0)+1,locale,scope:studentProblem?.PracticeScopeId}).unwrap();}catch{setHintError(true);}}}>{hintBusy?(isArabic?'جارٍ التحميل…':'Loading…'):(isArabic?'عرض التلميح':'Reveal hint')+' '+(hints.currentData.RevealedCount+1)}</Button>}
+            </>}
+            {hintError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر عرض التلميح. حاول مجدداً.':'Could not reveal hint. Please retry.'}</p>}
+          </>}
+          <p className="text-xs text-muted-foreground">{isArabic?'الإجابة وطريقة الحل تظهران بعد الحل الصحيح لجميع الطلاب.':'The answer and solution appear after a correct solve for all learners.'}</p>
         </section>
       )}
       <div className="grid grid-cols-1 gap-8">
@@ -1027,7 +1003,7 @@ export default function ProblemPage() {
                               {isArabic ? 'تحدي اليوم · السؤال ' + (challengeIndex + 1) + ' من ' + dailyChallenge?.Total
                                 : 'Daily challenge · Question ' + (challengeIndex + 1) + ' of ' + dailyChallenge?.Total}
                             </p>
-                            {localAnswerResult && (
+                            {localAnswerResult?.IsCorrect && (
                               <p role="status" className="mt-1 text-xs text-muted-foreground">
                                 {pauseChallengeAdvance
                                   ? (isArabic ? 'تم إيقاف الانتقال التلقائي حتى تنتهي من قراءة طريقة الحل.'
@@ -1037,22 +1013,22 @@ export default function ProblemPage() {
                               </p>
                             )}
                           </div>
-                          {localAnswerResult && !pauseChallengeAdvance &&
+                          {localAnswerResult?.IsCorrect && !pauseChallengeAdvance &&
                             <button type="button" onClick={() => setPauseChallengeAdvance(true)}
                               className="min-h-10 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold">
                               {isArabic ? 'أحتاج وقتاً للحل' : 'Give me time to review'}
                             </button>}
-                          <Link href={nextChallengeUrl}
+                          {isCorrect && <Link href={nextChallengeUrl}
                             className="inline-flex min-h-10 items-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
                             {nextChallengeProblem
                               ? (isArabic ? 'السؤال التالي' : 'Next question')
                               : (isArabic ? 'إنهاء التحدي' : 'Finish challenge')}
                             <DirectionalArrow direction="forward" className="h-4 w-4" />
-                          </Link>
+                          </Link>}
                         </div>
                       )}
                       <Link
-                        href={inDailyChallenge ? '/dashboard/daily-challenge' : categoryId != null
+                        href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? '/dashboard/categories' : categoryId != null
                           ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
                           : stageId != null
                             ? `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`
@@ -1143,7 +1119,11 @@ export default function ProblemPage() {
               <CheckCircle className="h-5 w-5" />
               {t("problem.solution")}
             </h3>
-            <RichText text={solutionText} isArabic={isArabic} />
+            {structuredSolution ? <div className="space-y-4">
+              <section><h4 className="font-bold">{isArabic?'الفكرة والقانون':'Idea and formula'}</h4><RichText text={structuredSolution.Idea} isArabic={isArabic}/><LatexPreview latex={structuredSolution.FormulaLatex} block/></section>
+              <section><h4 className="font-bold">{isArabic?'خطوات الحل':'Solution steps'}</h4><ol className="list-decimal space-y-2 ps-6">{structuredSolution.Steps.map((step,i)=><li key={i}><RichText text={step} isArabic={isArabic}/></li>)}</ol></section>
+              {([[isArabic?'التعويض':'Substitution',structuredSolution.Substitution],[isArabic?'النتيجة والوحدة':'Result and unit',structuredSolution.Result+' '+structuredSolution.Unit],[isArabic?'التحقق':'Verification',structuredSolution.Verification],[isArabic?'الخطأ الشائع':'Common error',structuredSolution.CommonError]] as const).map(([label,value])=><section key={label}><h4 className="font-bold">{label}</h4><RichText text={value} isArabic={isArabic}/></section>)}
+            </div>:<RichText text={solutionText} isArabic={isArabic} />}
           </div>
         )}
 

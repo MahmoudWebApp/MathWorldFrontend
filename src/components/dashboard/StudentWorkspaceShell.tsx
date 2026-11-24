@@ -11,6 +11,7 @@ import { logout } from '@/store/slices/authSlice';
 import { clearAuthSession } from '@/lib/authSession';
 import { API_BASE_URL } from '@/store/api/baseQuery';
 import { authApi } from '@/store/api/authApi';
+import { platformBrandApi } from '@/store/api/platformBrandApi';
 import { categoriesApi, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { problemsApi } from '@/store/api/problemsApi';
 import { stagesApi } from '@/store/api/stagesApi';
@@ -32,7 +33,8 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
   const isStudent = useSelector((state: RootState) => state.auth.isAuthenticated && state.auth.user?.Role === 'Student');
   const learnerRoute = pathname === '/dashboard' || pathname.startsWith('/dashboard/') ||
     pathname === '/learning-stage' || pathname === '/social-accounts' || pathname === '/notifications';
-  const securedRoute = learnerRoute || pathname === '/admin' || pathname.startsWith('/admin/');
+  const securedRoute = learnerRoute || pathname === '/admin' || pathname.startsWith('/admin/') ||
+    pathname === '/supervisor' || pathname.startsWith('/supervisor/');
   const { data: subscription, isLoading: membershipLoading, isFetching: membershipFetching,
     isError: membershipError, refetch: reloadMembership } =
     useGetStudentSubscriptionQuery(undefined, { skip: !isStudent || !learnerRoute });
@@ -57,6 +59,7 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
     dispatch(logout());
     clearAuthSession();
     dispatch(authApi.util.resetApiState());
+    dispatch(platformBrandApi.util.resetApiState());
     dispatch(problemsApi.util.resetApiState());
     dispatch(categoriesApi.util.resetApiState());
     dispatch(stagesApi.util.resetApiState());

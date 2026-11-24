@@ -10,6 +10,7 @@ import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
 import { useGetStageCategoryAccessQuery } from '@/store/api/categoriesApi';
 import { getStageAccent } from '@/lib/stageVisuals';
+import { PublicTrackCatalog } from '@/components/curriculum/TrackViews';
 import { CategorySkillsDialog } from '@/components/curriculum/CategorySkillsDialog';
 
 /**
@@ -32,6 +33,7 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
 
   return (
     <section className="container mx-auto px-4 pb-16 pt-2 sm:px-6 lg:px-12">
+      <PublicTrackCatalog stageId={stageId}/>
       <div className="mb-5">
         <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
           {ar ? 'فئات هذه المرحلة التعليمية' : 'Mathematics topics in this stage'}

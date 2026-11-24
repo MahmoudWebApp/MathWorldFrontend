@@ -1,5 +1,7 @@
 'use client';
 
+import { StudentTrackWorkspace } from '@/components/curriculum/TrackViews';
+import { useGetTrackSelectionQuery,useGetPublishedTracksQuery } from '@/store/api/stagesApi';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
 import { useState } from 'react';
@@ -24,6 +26,8 @@ export default function StudentCategoriesPage() {
   const ar = locale === 'ar';
   const { data: selected, isLoading: selecting, isError: selectedError, refetch: reloadSelected } = useGetLearningStageQuery();
   const stageId = selected?.StageId ?? 0;
+  const trackSelection=useGetTrackSelectionQuery(undefined,{refetchOnMountOrArgChange:true});
+  const trackCatalog=useGetPublishedTracksQuery(stageId,{skip:stageId<=0,refetchOnMountOrArgChange:true});
   const { data: journey } = useGetLearningJourneyQuery(stageId, {
     skip: stageId <= 0,
     refetchOnMountOrArgChange: 45,
@@ -52,6 +56,15 @@ export default function StudentCategoriesPage() {
     }
   }
 
+  if(stageId>0&&trackCatalog.isLoading) return <MathWorldLoading compact/>;
+  if(stageId>0&&trackCatalog.isError&&(trackCatalog.error as {status?:number})?.status!==404)
+    return <main className="p-6"><button className="underline" onClick={()=>void trackCatalog.refetch()}>{ar?'تعذّر تحميل المسارات. إعادة المحاولة':'Could not load tracks. Retry'}</button></main>;
+  if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&(trackSelection.isLoading||trackSelection.isError))
+    return <main className="p-6">{trackSelection.isError?<button className="underline" onClick={()=>void trackSelection.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>:<MathWorldLoading compact/>}</main>;
+  if(trackCatalog.currentData?.Enabled&&trackSelection.data?.Enabled&&trackSelection.data.TrackId&&trackSelection.data.StageId===stageId)
+    return <StudentTrackWorkspace key={trackSelection.data.TrackId} trackId={trackSelection.data.TrackId}/>;
+  if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&(!trackSelection.data?.TrackId||trackSelection.data.StageId!==stageId))
+    return <main className="mx-auto max-w-xl p-6"><h1 className="text-xl font-bold">{ar?'اختر صفك أو مساقك':'Choose your grade or course'}</h1><Link className="mt-4 inline-block rounded-xl bg-primary px-4 py-3 text-primary-foreground" href="/learning-stage">{ar?'اختيار المسار':'Choose learning track'}</Link></main>;
   return (
     <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -95,7 +108,7 @@ export default function StudentCategoriesPage() {
               <li>{ar ? 'المسائل اللي جربتها بهذا النطاق رح ترجع جديدة وغير محلولة.' : 'Attempted questions in this scope become new and unsolved.'}</li>
               <li>{ar ? 'تقدم التدريب الحالي ودفتر أخطائه لهذا النطاق رح يتصفّروا.' : 'Current practice progress and error-notebook entries for this scope are reset.'}</li>
               <li>{ar ? 'المراحل والفئات خارج نطاق الإعادة ما رح تتأثر.' : 'Other stages and categories outside this scope are not affected.'}</li>
-              <li>{ar ? 'المفضلة بتضل محفوظة، والتصفير ما فيك تتراجع عنه.' : 'Favorites stay saved, and this reset cannot be undone.'}</li>
+              <li>{ar ? 'المفضلة والنقاط الدائمة والشهادات بتضل محفوظة، والتصفير ما فيك تتراجع عنه.' : 'Favorites, lifetime points and certificates remain saved; this reset cannot be undone.'}</li>
             </ul>
           </div>
           {resetError && <p role="alert" className="text-sm text-destructive">{resetError}</p>}

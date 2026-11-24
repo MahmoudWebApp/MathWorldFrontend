@@ -37,7 +37,7 @@ export interface User {
   Id: number;
   FullName: string;
   Email: string;
-  Role: 'Admin' | 'Student';
+  Role: 'Admin' | 'Student' | 'Supervisor';
   Token: string;
   SubscriptionType: string;
   ProfilePicture?: string | null;
