@@ -43,13 +43,20 @@ export interface Bilingual {Ar:string;En:string}
 export interface EditorialOption {LatexCode:string;IsCorrect:boolean;ErrorType:string;Reason:Bilingual}
 export interface EditorialSolution {Idea:Bilingual;FormulaLatex:string;Steps:Bilingual[];Substitution:Bilingual;Result:Bilingual;Unit:Bilingual;Verification:Bilingual;CommonError:Bilingual}
 export interface EditorialContent {StageId:number;CategoryId:number;PrimarySkillId:number;SecondarySkillIds:number[];TrackIds:number[];DifficultyLevel:number;Points:number;Title:Bilingual;Question:Bilingual;Options:EditorialOption[];Hints:Bilingual[];Solution:EditorialSolution}
-export interface EditorialRow {Id:number;OwnerUserId:number;Revision:number;Status:string;QuestionTextAr?:string;QuestionTextEn?:string;ReviewNote?:string;PublishedProblemId?:number}
-export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>}
+export interface EditorialRow {Id:number;OwnerUserId:number;Revision:number;Status:string;QuestionTextAr?:string;QuestionTextEn?:string;ReviewNote?:string;PublishedProblemId?:number;SourceProblemId?:number|null}
+export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>;LegacySolutionAr?:string|null;LegacySolutionEn?:string|null}
+export interface EditorialBankRow {Id:number;StageId:number;CategoryId:number;TitleAr:string;TitleEn:string;HasStructuredSolution:boolean;HasOpenReview:boolean}
 export interface ClassificationRow {Id:number;NameAr:string;NameEn:string}
 export interface EditorialClassification {Stages:ClassificationRow[];Tracks:ClassificationRow[];Categories:ClassificationRow[];Skills:(ClassificationRow&{CategoryId:number})[]}
 export const platformBrandApi = createApi({
   reducerPath: 'platformBrandApi', baseQuery, tagTypes: ['Brand', 'EmailOutbox', 'Supervisors', 'SupervisorPermissions','EditorialDraft'],
   endpoints: builder => ({
+    getEditorialBank:builder.query<{Total:number;Items:EditorialBankRow[]},{page:number;stageId?:number;categoryId?:number}>({
+      query:params=>({url:'/editorial/problems/bank',params}),providesTags:['EditorialDraft'],
+    }),
+    amendEditorialProblem:builder.mutation<EditorialDraft,number>({
+      query:id=>({url:'/editorial/problems/amend/'+id,method:'POST'}),invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
+    }),
     getEditorialDrafts:builder.query<{Total:number;Items:EditorialRow[]},number>({
       query:page=>({url:'/editorial/problems',params:{page}}),providesTags:['EditorialDraft'],
     }),
@@ -104,4 +111,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation } = platformBrandApi;
