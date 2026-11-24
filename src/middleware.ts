@@ -95,7 +95,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}/${target}`, request.url));
   }
   if (authenticated && role === 'Supervisor' && !supervisorArea &&
-      !['/forgot-password','/reset-password'].includes(pathWithoutLocale)) {
+      !['/forgot-password','/reset-password','/verify-email'].includes(pathWithoutLocale)) {
     return NextResponse.redirect(new URL(`/${locale}/supervisor`, request.url));
   }
 

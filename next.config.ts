@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
         headers: securityHeaders,
       },
       {
-        source: '/:locale(ar|en)/reset-password',
+        source: '/:locale(ar|en)/:accountAction(reset-password|verify-email)',
         headers: [
           { key: 'Referrer-Policy', value: 'no-referrer' },
           { key: 'Cache-Control', value: 'no-store' },

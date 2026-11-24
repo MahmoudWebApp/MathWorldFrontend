@@ -13,6 +13,7 @@ export interface EmailPreferenceInput {
 }
 export interface EmailPreferences extends EmailPreferenceInput {
   EmailVerified: boolean;
+  VerificationAvailable?: boolean;
   OptionalDeliveryEnabled: boolean;
 }
 
@@ -614,6 +615,9 @@ export const usersApi = createApi({
     'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
+    requestEmailVerification: builder.mutation<{Queued?:boolean;AlreadyVerified?:boolean},'ar'|'en'>({
+      query: (Language) => ({url:'/auth/email-verification/request',method:'POST',body:{Language}}),
+    }),
     getEmailPreferences: builder.query<EmailPreferences, number>({
       query: () => '/users/email-preferences',
       keepUnusedDataFor: 0,
@@ -1110,6 +1114,7 @@ export const usersApi = createApi({
 
 export const {
   useGetEmailPreferencesQuery,
+  useRequestEmailVerificationMutation,
   useSaveEmailPreferencesMutation,
   useGetCertificatesQuery,
   useGetCertificateEligibilityQuery,
