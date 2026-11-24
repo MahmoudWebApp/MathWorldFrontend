@@ -3,6 +3,7 @@ import {useState} from 'react';
 import {useLocale} from 'next-intl';
 import {useSelector} from 'react-redux';
 import type {RootState} from '@/store';
+import ReviewedTrackDraftBatchPanel from '@/components/curriculum/ReviewedTrackDraftBatch';
 import {readTrackProposal,MAX_TRACK_PROPOSAL_BYTES} from '@/components/curriculum/trackProposalImport';
 import {useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useGetAdminStagesQuery,
   useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
@@ -110,6 +111,7 @@ export default function LearningTracksPage(){
   if(!admin)return null;
   return <main className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6"><h1 className="text-2xl font-bold">{ar?'الصفوف والمساقات التعليمية':'Grades and university courses'}</h1>
     {data&&<p className="text-sm text-muted-foreground">{data.Enabled?(ar?'عرض المسارات المنشورة مفعّل.':'Published track catalog is enabled.'):(ar?'عرض المسارات للطلاب معطّل حتى اكتمال التهيئة.':'Learner track catalog is disabled until rollout is ready.')}</p>}
+    <ReviewedTrackDraftBatchPanel ar={ar} disabled={selected!==null}/>
     <details className="rounded-2xl border bg-card p-4"><summary className="cursor-pointer font-semibold">{ar?'إضافة صف أو مساق':'Add grade or course'}</summary><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submit}>
       <label className="text-sm">{ar?'المرحلة':'Stage'}<select className={field} required value={stageId||''} onChange={e=>setStage(Number(e.target.value))}><option value="">{ar?'اختر':'Select'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select></label>
       <label className="text-sm">{ar?'النوع':'Kind'}<select className={field} value={kind} onChange={e=>setKind(e.target.value as LearningTrack['Kind'])}><option value="grade">{ar?'صف':'Grade'}</option><option value="course">{ar?'مساق':'Course'}</option></select></label>
