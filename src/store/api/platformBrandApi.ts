@@ -61,6 +61,8 @@ export interface EditorialRow {Id:number;OwnerUserId:number;Revision:number;Stat
 export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>;LegacySolutionAr?:string|null;LegacySolutionEn?:string|null}
 export interface EditorialImportRow {ContentKey:string;PrimarySkillKey:string;ProposedTrackCodes:string[];Content:EditorialContent}
 export interface EditorialImportResult {Created:number;Ready?:number;Items:{ContentKey:string;Status:string;DraftId?:number|null;Errors:string[]}[];DraftIds?:number[]}
+export interface AmendmentImportRow {ProblemId:number;ExpectedOptionIds:number[];ExpectedLegacySolution:Bilingual;PrimarySkillKey:string;Content:Partial<EditorialContent>;Status:'StructuredAmendmentCandidateNotImported'}
+export interface AmendmentImportResult {Created:number;Ready?:number;Items:{ProblemId:number;Status:string;DraftId?:number|null;Errors:string[]}[];DraftIds?:number[]}
 export interface EditorialBankRow {Id:number;StageId:number;CategoryId:number;TitleAr:string;TitleEn:string;HasStructuredSolution:boolean;HasOpenReview:boolean}
 export interface ClassificationRow {Id:number;NameAr:string;NameEn:string}
 export interface EditorialClassification {Stages:ClassificationRow[];Tracks:ClassificationRow[];Categories:ClassificationRow[];Skills:(ClassificationRow&{CategoryId:number})[]}
@@ -69,6 +71,10 @@ export const platformBrandApi = createApi({
   endpoints: builder => ({
     importEditorialBatch:builder.mutation<EditorialImportResult,{Items:EditorialImportRow[];Confirm:boolean}>({
       query:body=>({url:'/editorial/problems/import',method:'POST',body}),
+      invalidatesTags:(_r,e,arg)=>!e&&arg.Confirm?['EditorialDraft']:[],
+    }),
+    importEditorialAmendments:builder.mutation<AmendmentImportResult,{Items:AmendmentImportRow[];Confirm:boolean}>({
+      query:body=>({url:'/editorial/problems/amend/import',method:'POST',body}),
       invalidatesTags:(_r,e,arg)=>!e&&arg.Confirm?['EditorialDraft']:[],
     }),
     getEditorialBank:builder.query<{Total:number;Items:EditorialBankRow[]},{page:number;stageId?:number;categoryId?:number}>({
@@ -131,4 +137,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation } = platformBrandApi;
