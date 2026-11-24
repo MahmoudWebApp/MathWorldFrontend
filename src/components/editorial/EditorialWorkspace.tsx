@@ -3,6 +3,7 @@ import {useRef, useState} from 'react';
 import {combineEditorialFiles, MAX_BATCH_BYTES, type BatchIssue} from './editorialBatchFiles';
 import {useLocale} from 'next-intl';
 import {HintProposalImport} from './HintProposalImport';
+import {SolutionProposalImport} from './SolutionProposalImport';
 import {LatexPreview} from '@/components/ui/LatexPreview';
 import {useImportEditorialBatchMutation,type EditorialImportRow,type EditorialImportResult,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,type EditorialContent,type EditorialDraft,type Bilingual,type EditorialSolution} from '@/store/api/platformBrandApi';
 
@@ -57,7 +58,14 @@ function Wizard({initial,admin,canSubmit,onSaved,onClose}:{initial?:EditorialDra
           <HintProposalImport key={draft.Id} ar={ar} problemId={draft.SourceProblemId} question={content.Question}
             onApply={Hints => patch({Hints})}/> : null}
         <p className="text-sm text-muted-foreground">{ar?'لا تكتب الإجابة النهائية ضمن التلميحات.':'Do not reveal the final answer in hints.'}</p>{content.Hints.map((h,i)=><PairField key={i} label={i===0?(ar?'تلميح القانون أو الفكرة':'Rule or concept hint'):(ar?'تلميح بداية الخطوة':'First-step hint')} value={h} onChange={v=>patch({Hints:content.Hints.map((x,j)=>j===i?v:x)})}/>)}</>}
-      {step===4&&<><PairField label={ar?'الفكرة والقانون':'Idea and rule'} value={content.Solution.Idea} onChange={v=>patchSolution({Idea:v})}/><label>{ar?'صيغة القانون LaTeX':'Formula LaTeX'}<input dir="ltr" className={input} value={content.Solution.FormulaLatex} onChange={e=>patchSolution({FormulaLatex:e.target.value})}/></label><LatexPreview latex={content.Solution.FormulaLatex} block/>
+      {step===4&&<>
+        {editable&&draft?.SourceProblemId&&content.Options.filter(o=>o.IsCorrect).length===1&&
+          !content.Solution.Idea.Ar.trim()&&!content.Solution.Idea.En.trim()&&
+          content.Solution.Steps.every(s=>!s.Ar.trim()&&!s.En.trim())&&
+          <SolutionProposalImport key={draft.Id} ar={ar} source={{problemId:draft.SourceProblemId,stageId:content.StageId,question:content.Question,
+            legacy:{Ar:draft.LegacySolutionAr??'',En:draft.LegacySolutionEn??''},correctOption:content.Options.find(o=>o.IsCorrect)!.LatexCode}}
+            onApply={p=>patchSolution(p)}/>}
+        <PairField label={ar?'الفكرة والقانون':'Idea and rule'} value={content.Solution.Idea} onChange={v=>patchSolution({Idea:v})}/><label>{ar?'صيغة القانون LaTeX':'Formula LaTeX'}<input dir="ltr" className={input} value={content.Solution.FormulaLatex} onChange={e=>patchSolution({FormulaLatex:e.target.value})}/></label><LatexPreview latex={content.Solution.FormulaLatex} block/>
         {content.Solution.Steps.map((v,i)=><div key={i} className="rounded-xl border p-3 space-y-2"><PairField label={(ar?'الخطوة ':'Step ')+(i+1)} value={v} onChange={p=>patchSolution({Steps:content.Solution.Steps.map((x,j)=>j===i?p:x)})}/><div className="flex flex-wrap gap-2">{[-1,1].map(d=><button type="button" key={d} className={btn} disabled={i+d<0||i+d>=content.Solution.Steps.length} onClick={()=>{const a=[...content.Solution.Steps];[a[i],a[i+d]]=[a[i+d],a[i]];patchSolution({Steps:a});}}>{d<0?(ar?'للأعلى':'Move up'):(ar?'للأسفل':'Move down')}</button>)}<button className={btn} type="button" disabled={content.Solution.Steps.length===1} onClick={()=>patchSolution({Steps:content.Solution.Steps.filter((_,j)=>i!==j)})}>{ar?'حذف':'Remove'}</button></div></div>)}
         <button type="button" className={btn} disabled={content.Solution.Steps.length>=20} onClick={()=>patchSolution({Steps:[...content.Solution.Steps,pair()]})}>{ar?'إضافة خطوة':'Add step'}</button>
         {([['Substitution','التعويض','Substitution'],['Result','النتيجة','Result'],['Unit','الوحدة (بلا وحدة إن لم تنطبق)','Unit (unitless if not applicable)'],['Verification','التحقق','Verification'],['CommonError','الخطأ الشائع','Common error']] as const).map(([key,a,b])=><PairField key={key} label={ar?a:b} value={content.Solution[key]} onChange={v=>patchSolution({[key]:v})}/>)}</>}
