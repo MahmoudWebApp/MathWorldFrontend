@@ -132,6 +132,21 @@ function formatDuration(
 
 export default function ProblemPage() {
   const params = useParams<{ id: string }>();
+  const locale = useLocale();
+  const {isAuthenticated,user}=useSelector((state:RootState)=>state.auth);
+  const problemId=Number.parseInt(params.id,10);
+  const query=useGetProblemQuery({Id:problemId,locale},{
+    skip:Number.isNaN(problemId),refetchOnMountOrArgChange:true,
+  });
+  // Remount interaction state if the authoritative scope or problem changes.
+  // RTK Query's currentData never supplies another route's previous response.
+  const problem=query.error?undefined:query.currentData;
+  const scope=isStudentProblem(problem)?problem.PracticeScopeId??0:"non-student";
+  return <ProblemPageContent key={JSON.stringify([problemId,locale,scope,isAuthenticated,user?.Id])} query={query}/>;
+}
+
+function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>}) {
+  const params = useParams<{ id: string }>();
   const learnerWorkspace = usePathname().startsWith("/dashboard/");
   const t = useTranslations();
   const router = useRouter();
@@ -159,18 +174,8 @@ export default function ProblemPage() {
   const questionCardRef = useRef<HTMLDivElement>(null);
   const attemptStartedAtRef = useRef(Date.now());
 
-  const {
-    data: problem,
-    isLoading,
-    error,
-    refetch: refetchProblem,
-  } = useGetProblemQuery(
-    { Id: problemId, locale },
-    {
-      skip: Number.isNaN(problemId),
-      refetchOnMountOrArgChange: true,
-    },
-  );
+  const {isLoading,isFetching,error,refetch:refetchProblem}=query;
+  const problem=error?undefined:query.currentData;
 
   // Optional forward-compatible geometry payload. Older API responses have no diagram.
   const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
@@ -279,7 +284,7 @@ export default function ProblemPage() {
   // Students must have time to read the mathematical rule and explanation.
   // Auto-advance remains enabled by default and can be paused per question.
   useEffect(() => {
-    if (!localAnswerResult || !inDailyChallenge || !dailyChallenge ||
+    if (!localAnswerResult?.IsCorrect || !inDailyChallenge || !dailyChallenge ||
         pauseChallengeAdvance) return;
     const timer = window.setTimeout(() => router.replace(nextChallengeUrl), 8000);
     return () => window.clearTimeout(timer);
@@ -345,6 +350,7 @@ export default function ProblemPage() {
   const hints=useGetProblemHintsQuery({problemId,locale,scope:studentProblem?.PracticeScopeId},{skip:!studentProblem||!entitlement?.IsPremium||isCorrect||!!studentProblem.IsSolved,refetchOnMountOrArgChange:true});
   const canAnswer =
     isAuthenticated &&
+    !isFetching &&
     !!studentProblem &&
     (!hasAttempted || (retryMode && canRetry));
 
@@ -494,6 +500,16 @@ export default function ProblemPage() {
         status?: number;
         data?: { Message?: string; message?: string };
       };
+      if(normalized.status===409&&(normalized.data?.Message??normalized.data?.message)==="PracticeScopeChanged"){
+        setSelectedOptionId(null);
+        setLocalAnswerResult(null);
+        setSubmissionDone(false);
+        setRetryMode(false);
+        setActiveTab("question");
+        setSubmitError(isArabic?"تغيّر مسار التدريب. حدّثنا المسألة؛ اختر الإجابة من جديد.":"Your practice scope changed. We refreshed the question; choose your answer again.");
+        await refetchProblem();
+        return;
+      }
       setSubmitError(
         normalized.data?.Message || normalized.data?.message ||
         (normalized.status === 429
@@ -997,7 +1013,7 @@ export default function ProblemPage() {
                               </p>
                             )}
                           </div>
-                          {localAnswerResult && !pauseChallengeAdvance &&
+                          {localAnswerResult?.IsCorrect && !pauseChallengeAdvance &&
                             <button type="button" onClick={() => setPauseChallengeAdvance(true)}
                               className="min-h-10 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold">
                               {isArabic ? 'أحتاج وقتاً للحل' : 'Give me time to review'}
