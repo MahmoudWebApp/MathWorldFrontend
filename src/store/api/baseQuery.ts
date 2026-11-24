@@ -7,6 +7,7 @@ import {
 
 import { clearAuthSession } from '@/lib/authSession';
 import { logout } from '@/store/slices/authSlice';
+import {readBatchIssues, type BatchIssue} from '@/components/editorial/editorialBatchFiles';
 
 const DEFAULT_API_BASE_URL = 'https://mathwordbackend.onrender.com/api';
 
@@ -45,6 +46,7 @@ export interface ApiResponse<T> {
 export interface ApiErrorData {
   message: string;
   errors?: Record<string, string[]>;
+  editorialBatchIssues?: BatchIssue[];
 }
 
 export type ApiBaseQueryError =
@@ -115,6 +117,7 @@ function normalizeErrorData(
         typeof message === 'string' && message.trim()
           ? message
           : fallbackMessage,
+      ...(message === 'EditorialBatchInvalid' ? {editorialBatchIssues: readBatchIssues(record.Items)} : {}),
       errors:
         Array.isArray(record.Errors) && record.Errors.every(x=>typeof x==='string')
           ? {validation:record.Errors as string[]}

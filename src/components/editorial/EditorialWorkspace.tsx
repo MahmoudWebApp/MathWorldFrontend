@@ -1,5 +1,6 @@
 'use client';
-import {useState} from 'react';
+import {useRef, useState} from 'react';
+import {combineEditorialFiles, MAX_BATCH_BYTES, type BatchIssue} from './editorialBatchFiles';
 import {useLocale} from 'next-intl';
 import {HintProposalImport} from './HintProposalImport';
 import {LatexPreview} from '@/components/ui/LatexPreview';
@@ -71,15 +72,53 @@ function Wizard({initial,admin,canSubmit,onSaved,onClose}:{initial?:EditorialDra
 }
 function Existing({id,...props}:{id:number;admin:boolean;canSubmit:boolean;onSaved:(id:number)=>void;onClose:()=>void}){const {currentData,isError,refetch}=useGetEditorialDraftQuery(id,{refetchOnMountOrArgChange:true});const ar=useLocale()==='ar';if(isError)return <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>;if(!currentData)return <p role="status">{ar?'جارٍ تحميل المسودة…':'Loading draft…'}</p>;return <Wizard key={id} initial={currentData} {...props}/>;}
 function BatchImport(){
-  const ar=useLocale()==='ar';const [rows,setRows]=useState<EditorialImportRow[]|null>(null);const [result,setResult]=useState<EditorialImportResult|null>(null);const [error,setError]=useState('');const [name,setName]=useState('');
+  const ar=useLocale()==='ar';const [rows,setRows]=useState<EditorialImportRow[]|null>(null);
+  const [result,setResult]=useState<EditorialImportResult|null>(null);const [issues,setIssues]=useState<BatchIssue[]>([]);
+  const [error,setError]=useState('');const [names,setNames]=useState<string[]>([]);
+  const [reading,setReading]=useState(false);const latest=useRef(0);
   const [run,{isLoading}]=useImportEditorialBatchMutation();
-  async function load(file?:File){setRows(null);setResult(null);setError('');setName('');if(!file)return;try{if(file.size>1_900_000)throw Error();const data=JSON.parse(await file.text());if(!Array.isArray(data.Items)||data.Items.length<1||data.Items.length>50)throw Error();setRows(data.Items);setName(file.name);}catch{setError(ar?'ملف غير صالح: يجب أن يحتوي على Items من 1 إلى 50 مسألة.':'Invalid file: expected Items with 1–50 problems.');}}
-  async function submit(confirm:boolean){if(!rows)return;setError('');try{const value=await run({Items:rows,Confirm:confirm}).unwrap();setResult(value);if(confirm)setRows(null);}catch(e){setResult(null);const code=(e as {data?:{message?:string}}).data?.message;setError(code==='EditorialBatchInvalid'?(ar?'الدفعة غير صالحة. راجع التصنيف والتكرار والحقول المطلوبة؛ لم تُحفظ أي مسودة.':'Batch validation failed. Check classification, duplicates and required fields; nothing was saved.'):(ar?'تعذّر استيراد الدفعة':'Could not import batch'));}}
-  return <details className="rounded-xl border p-4"><summary className="cursor-pointer font-bold">{ar?'استيراد دفعة مسودات':'Import draft batch'}</summary><div className="mt-3 space-y-3"><p className="text-sm text-muted-foreground">{ar?'حمّل ملف JSON معتمد للتدقيق. المعاينة لا تحفظ شيئاً، والتأكيد ينشئ مسودات فقط دون نشر.':'Load a JSON candidate batch. Preview writes nothing; confirmation creates drafts only, never publishes.'}</p><input type="file" accept=".json,application/json" disabled={isLoading} aria-label={ar?'ملف المسودات':'Draft file'} onChange={e=>void load(e.target.files?.[0])}/>
-    {rows&&<p className="text-sm">{name} · {rows.length} {ar?'مسألة':'problems'}</p>}
-    <div className="flex gap-2"><button className={btn} disabled={!rows||isLoading} onClick={()=>void submit(false)}>{ar?'تحقق ومعاينة':'Validate and preview'}</button><button className={btn} disabled={!rows||isLoading||!(result?.Ready&&result.Ready>0)} onClick={()=>{if(window.confirm(ar?'إنشاء المسودات دون نشر؟':'Create drafts without publishing?'))void submit(true);}}>{ar?'إنشاء المسودات':'Create drafts'}</button></div>
-    {result&&<div className="text-sm space-y-1"><p>{ar?'الجاهزة':'Ready'}: {result.Ready??0} · {ar?'المُنشأة':'Created'}: {result.Created}</p>{result.Items.map(row=><p key={row.ContentKey}>{row.ContentKey} · {row.Status==='AlreadyExists'?(ar?'موجودة مسبقاً':'Already exists'):(ar?'صالحة':'Ready')}</p>)}</div>}
+  const busy=reading||isLoading;
+  async function load(files:File[]){
+    const request=++latest.current;
+    setRows(null);setResult(null);setIssues([]);setError('');setNames([]);
+    if(!files.length){setReading(false);return;}
+    setReading(true);
+    try{
+      if(files.length>50||files.reduce((total,file)=>total+file.size,0)>MAX_BATCH_BYTES)throw Error('BatchLimit');
+      const parsed=combineEditorialFiles(await Promise.all(files.map(async file=>({name:file.name,text:await file.text()}))));
+      if(request!==latest.current)return;
+      setRows(parsed);setNames(files.map(file=>file.name));
+    }catch(e){
+      if(request!==latest.current)return;
+      const code=e instanceof Error?e.message:'';
+      setError(code==='DuplicateContentKey'?(ar?'تكرر معرف محتوى بين الملفات.':'Duplicate content key across files.'):
+        code==='BatchLimit'?(ar?'الحد الإجمالي 50 مسألة وأقل من 1.9 ميغابايت للدفعة.':'Combined limit: 50 problems and less than 1.9 MB.'):
+        (ar?'ملف غير صالح: يجب أن يحتوي كل ملف على Items صالحة.':'Invalid file: each file must contain valid Items.'));
+    }finally{if(request===latest.current)setReading(false);}
+  }
+  async function submit(confirm:boolean){
+    if(!rows||busy)return;
+    if(confirm&&!(result?.Ready&&result.Ready>0))return;
+    setError('');setIssues([]);setResult(null);
+    try{
+      const value=await run({Items:rows,Confirm:confirm}).unwrap();
+      setResult(value);if(confirm)setRows(null);
+    }catch(e){
+      const data=(e as {data?:{message?:string;editorialBatchIssues?:BatchIssue[]}}).data;
+      setIssues(data?.editorialBatchIssues??[]);
+      setError(data?.message==='EditorialBatchInvalid'?(ar?'الدفعة غير صالحة؛ لم تُحفظ أي مسودة. راجع أسباب الرفض أدناه.':'Batch validation failed; no drafts were saved. Review the errors below.'):(ar?'تعذّر استيراد الدفعة. أعد المعاينة للتحقق قبل المحاولة مجدداً.':'Could not import batch. Preview again before retrying.'));
+    }
+  }
+  const batchErrors:Record<string,[string,string]>={SkillNotFound:['المهارة غير موجودة','Skill not found'],ImportClassificationMismatch:['التصنيف غير مطابق للمهارة','Classification does not match skill'],QuestionAlreadyExistsInBatch:['السؤال مكرر ضمن الدفعة','Duplicate question in batch'],QuestionAlreadyExistsInDraft:['السؤال موجود في مسودة أخرى','Question already exists in another draft'],DraftTooLarge:['المسودة كبيرة جداً','Draft too large']};
+  return <details className="rounded-xl border p-4"><summary className="cursor-pointer font-bold">{ar?'استيراد دفعة مسودات':'Import draft batch'}</summary><div className="mt-3 space-y-3">
+    <p className="text-sm text-muted-foreground">{ar?'اختر ملفاً أو عدة ملفات JSON (حتى 50 مسألة إجمالاً). تُراجع جميع الملفات معاً؛ المعاينة لا تحفظ شيئاً، والتأكيد ينشئ مسودات فقط دون نشر.':'Choose one or more JSON files (up to 50 problems total). All files are validated together; preview writes nothing and confirmation creates drafts only, never publishes.'}</p>
+    <input type="file" multiple accept=".json,application/json" disabled={isLoading} aria-label={ar?'ملفات المسودات':'Draft files'} onChange={e=>void load(Array.from(e.target.files??[]))}/>
+    {reading&&<p role="status">{ar?'جارٍ قراءة الملفات…':'Reading files…'}</p>}
+    {names.length>0&&<p className="break-words text-sm">{names.join(' · ')}{rows?' · '+rows.length+' '+(ar?'مسألة':'problems'):''}</p>}
+    <div className="flex flex-wrap gap-2"><button className={btn} disabled={!rows||busy} onClick={()=>void submit(false)}>{ar?'تحقق ومعاينة':'Validate and preview'}</button><button className={btn} disabled={!rows||busy||!(result?.Ready&&result.Ready>0)} onClick={()=>{if(window.confirm(ar?'إنشاء المسودات دون نشر؟':'Create drafts without publishing?'))void submit(true);}}>{ar?'إنشاء المسودات':'Create drafts'}</button></div>
+    {result&&<div className="text-sm space-y-1" role="status"><p>{ar?'الجاهزة للإنشاء':'Ready to create'}: {result.Ready??0} · {ar?'المُنشأة':'Created'}: {result.Created}</p>{result.Items.map(row=><p key={row.ContentKey}>{row.ContentKey} · {row.Status==='AlreadyExists'?(ar?'موجودة مسبقاً':'Already exists'):(ar?'صالحة':'Validated')}</p>)}</div>}
     {error&&<p role="alert" className="text-destructive">{error}</p>}
+    {issues.filter(row=>row.Status==='Invalid').map(row=><div key={row.ContentKey} className="rounded-lg border p-2 text-sm"><p className="font-semibold" dir="ltr">{row.ContentKey}</p><ul className="list-inside list-disc text-destructive">{row.Errors.map((code,index)=><li key={index}>{batchErrors[code]?.[ar?0:1]??errors[code]?.[ar?0:1]??code}</li>)}</ul></div>)}
   </div></details>;
 }
 function BankReview({onOpen}:{onOpen:(id:number)=>void}){

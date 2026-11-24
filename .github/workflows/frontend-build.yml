@@ -41,6 +41,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck
         run: pnpm typecheck
+      - name: Check grouped editorial import
+        run: node scripts/check-editorial-batch-import.mjs
       - name: Verify QA launch blocks the production API
         shell: bash
         run: |
