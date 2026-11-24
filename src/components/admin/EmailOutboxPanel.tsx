@@ -18,6 +18,9 @@ const readinessLabels:Record<string,[string,string]>={
   AdminTestRecipientUnavailable:['بريد الإدارة غير متاح ضمن قائمة الاختبار','Admin test recipient unavailable'],
   RecoveryDisabled:['استعادة الحساب معطّلة','Account recovery disabled'],
   RecoveryKeyMissingOrInvalid:['مفتاح الاستعادة غير مهيأ أو غير صالح','Recovery key missing or invalid'],
+  AdminTestCooldown:['انتظر خمس دقائق بين رسائل الاختبار','Wait five minutes between test emails'],
+  DailyTestLimitReached:['تم بلوغ الحد اليومي لرسائل الاختبار','Daily test email limit reached'],
+  TestAttemptBudgetReserved:['المحاولات المتبقية مخصصة لاستعادة الحساب والدعوات','Remaining attempts reserved for recovery and invitations'],
   AdminRecoveryAddressNotVerifiedInConfig:['عنوان استعادة الإدارة غير معتمد في الإعدادات','Admin recovery address not verified in configuration'],
 };
 export function EmailOutboxPanel() {
@@ -41,6 +44,8 @@ export function EmailOutboxPanel() {
       setTestError(status === 429 ? (ar?'بلغت حد الاختبار، حاول لاحقاً.':'Test limit reached. Try later.')
         : status === 403 ? (ar?'بريد حسابك غير مسموح له بالاختبار.':'Your account email is not on the test allowlist.')
         : (ar?'إرسال الاختبار غير متاح حالياً.':'Test sending is currently unavailable.'));
+    } finally {
+      void refetch();
     }
   }
   return <section className="space-y-4 rounded-2xl border bg-card p-5">
@@ -73,7 +78,7 @@ export function EmailOutboxPanel() {
         <div className="flex flex-wrap gap-2">
           {data.TestTemplates&&<select aria-label={ar?'قالب الاختبار':'Test template'} className="rounded-xl border bg-background p-2" value={data.TestTemplates.includes(template)?template:'test'} onChange={e=>setTemplate(e.target.value)}>{data.TestTemplates.map(key=><option key={key} value={key}>{label(emailTemplateLabels[key],key)}</option>)}</select>}
           <select aria-label={ar?'لغة رسالة الاختبار':'Test email language'} className="rounded-xl border bg-background p-2" value={language} onChange={e=>setLanguage(e.target.value)}><option value="ar">العربية</option><option value="en">English</option></select>
-          <button type="button" disabled={isLoading||!data.IsConfigured||!data.IsTestMode||!data.IsWorkerEnabled||data.Readiness?.CanQueueAdminTest===false} onClick={()=>void test()} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{isLoading?(ar?'جارٍ الإضافة…':'Queuing…'):(ar?'إرسال رسالة اختبار':'Queue test email')}</button>
+          <button type="button" disabled={isLoading||isFetching||!data.IsConfigured||!data.IsTestMode||!data.IsWorkerEnabled||data.Readiness?.CanQueueAdminTest===false} onClick={()=>void test()} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{isLoading?(ar?'جارٍ الإضافة…':'Queuing…'):(ar?'إرسال رسالة اختبار':'Queue test email')}</button>
         </div>
         {message&&<p role="status" className="text-sm text-primary">{message}</p>}
         {testError&&<p role="alert" className="text-sm text-destructive">{testError}</p>}
