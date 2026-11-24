@@ -45,12 +45,18 @@ export interface EditorialSolution {Idea:Bilingual;FormulaLatex:string;Steps:Bil
 export interface EditorialContent {StageId:number;CategoryId:number;PrimarySkillId:number;SecondarySkillIds:number[];TrackIds:number[];DifficultyLevel:number;Points:number;Title:Bilingual;Question:Bilingual;Options:EditorialOption[];Hints:Bilingual[];Solution:EditorialSolution}
 export interface EditorialRow {Id:number;OwnerUserId:number;Revision:number;Status:string;QuestionTextAr?:string;QuestionTextEn?:string;ReviewNote?:string;PublishedProblemId?:number;SourceProblemId?:number|null}
 export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>;LegacySolutionAr?:string|null;LegacySolutionEn?:string|null}
+export interface EditorialImportRow {ContentKey:string;PrimarySkillKey:string;ProposedTrackCodes:string[];Content:EditorialContent}
+export interface EditorialImportResult {Created:number;Ready?:number;Items:{ContentKey:string;Status:string;DraftId?:number|null;Errors:string[]}[];DraftIds?:number[]}
 export interface EditorialBankRow {Id:number;StageId:number;CategoryId:number;TitleAr:string;TitleEn:string;HasStructuredSolution:boolean;HasOpenReview:boolean}
 export interface ClassificationRow {Id:number;NameAr:string;NameEn:string}
 export interface EditorialClassification {Stages:ClassificationRow[];Tracks:ClassificationRow[];Categories:ClassificationRow[];Skills:(ClassificationRow&{CategoryId:number})[]}
 export const platformBrandApi = createApi({
   reducerPath: 'platformBrandApi', baseQuery, tagTypes: ['Brand', 'EmailOutbox', 'Supervisors', 'SupervisorPermissions','EditorialDraft'],
   endpoints: builder => ({
+    importEditorialBatch:builder.mutation<EditorialImportResult,{Items:EditorialImportRow[];Confirm:boolean}>({
+      query:body=>({url:'/editorial/problems/import',method:'POST',body}),
+      invalidatesTags:(_r,e,arg)=>!e&&arg.Confirm?['EditorialDraft']:[],
+    }),
     getEditorialBank:builder.query<{Total:number;Items:EditorialBankRow[]},{page:number;stageId?:number;categoryId?:number}>({
       query:params=>({url:'/editorial/problems/bank',params}),providesTags:['EditorialDraft'],
     }),
@@ -70,7 +76,7 @@ export const platformBrandApi = createApi({
       query:({id,...body})=>({url:'/editorial/problems'+(id?'/'+id:''),method:id?'PUT':'POST',body}),
       invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
     }),
-    editorialAction:builder.mutation<EditorialDraft,{id:number;action:'submit'|'review'|'publish';Revision:number;Note?:string;Confirm?:boolean}>({
+    editorialAction:builder.mutation<EditorialDraft,{id:number;action:'submit'|'review'|'publish'|'withdraw';Revision:number;Note?:string;Confirm?:boolean}>({
       query:({id,action,...body})=>({url:'/editorial/problems/'+id+'/'+action,method:'POST',body}),
       invalidatesTags:(_r,e)=>e?[]:['EditorialDraft','SupervisorPermissions'],
     }),
@@ -111,4 +117,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation } = platformBrandApi;
