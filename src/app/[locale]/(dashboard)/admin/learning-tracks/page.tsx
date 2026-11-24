@@ -4,7 +4,7 @@ import {useLocale} from 'next-intl';
 import {useSelector} from 'react-redux';
 import type {RootState} from '@/store';
 import {useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useGetAdminStagesQuery,
-  useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
+  useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
 
 const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
 const field='w-full rounded-xl border bg-background p-2.5 text-sm';
@@ -12,6 +12,23 @@ function message(e:unknown,ar:boolean){
   const code=(e as {data?:{Message?:string}})?.data?.Message;
   const errors:Record<string,[string,string]>={TrackNotReady:['المسار غير جاهز: تحقق من المسائل والمهارات المنشورة وتغطية Free.','Track is not ready: check published skills, problems and Free coverage.'],ProblemPrimarySkillMismatch:['مسألة بلا مهارة أساسية مطابقة للتصنيف.','A problem lacks a matching primary skill.'],SkillCategoryMismatch:['مهارة لا تنتمي إلى الفئة المحددة.','Skill/category mismatch.'],CategoryStageMismatch:['فئة من مرحلة مختلفة.','Category/stage mismatch.'],TrackChanged:['تغير المسار، حدّث البيانات.','Track changed; refresh.'],UnpublishOrRefreshTrack:['ألغِ النشر أو حدّث البيانات أولاً.','Unpublish or refresh first.']};
   return code&&errors[code]?errors[code][ar?0:1]:ar?'تعذّر تنفيذ العملية. راجع البيانات.':'Request failed. Check the data.';
+}
+function MetadataEditor({track,ar,disabled}:{track:LearningTrack;ar:boolean;disabled:boolean}){
+  const [form,setForm]=useState({NameAr:track.NameAr,NameEn:track.NameEn,DescriptionAr:track.DescriptionAr,DescriptionEn:track.DescriptionEn,SortOrder:track.SortOrder});
+  const [save,{isLoading}]=useUpdateTrackMetadataMutation();
+  const [error,setError]=useState('');
+  async function submit(e:React.FormEvent){e.preventDefault();setError('');try{await save({id:track.Id,Revision:track.Revision,...form}).unwrap();}catch(e){setError(message(e,ar));}}
+  return <details className="rounded-xl border p-3"><summary className="cursor-pointer font-semibold">{ar?'تعديل الاسم والوصف والترتيب':'Edit name, description and order'}</summary>
+    <form onSubmit={submit} className="mt-3 grid gap-2 sm:grid-cols-2">
+      <label className="text-sm">{ar?'الاسم بالعربية':'Arabic name'}<input required maxLength={150} className={field} value={form.NameAr} onChange={e=>setForm(f=>({...f,NameAr:e.target.value}))}/></label>
+      <label className="text-sm">{ar?'الاسم بالإنجليزية':'English name'}<input required maxLength={150} className={field} value={form.NameEn} onChange={e=>setForm(f=>({...f,NameEn:e.target.value}))}/></label>
+      <label className="text-sm">{ar?'الوصف بالعربية':'Arabic description'}<textarea maxLength={1500} className={field} value={form.DescriptionAr} onChange={e=>setForm(f=>({...f,DescriptionAr:e.target.value}))}/></label>
+      <label className="text-sm">{ar?'الوصف بالإنجليزية':'English description'}<textarea maxLength={1500} className={field} value={form.DescriptionEn} onChange={e=>setForm(f=>({...f,DescriptionEn:e.target.value}))}/></label>
+      <label className="text-sm">{ar?'الترتيب':'Order'}<input type="number" min={0} max={10000} className={field} value={form.SortOrder} onChange={e=>setForm(f=>({...f,SortOrder:Number(e.target.value)}))}/></label>
+      <button type="submit" className={btn} disabled={disabled||isLoading}>{isLoading?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ البيانات':'Save metadata')}</button>
+      {disabled&&<p className="text-xs text-muted-foreground">{ar?'احفظ تغييرات الروابط أولاً.':'Save pending mapping changes first.'}</p>}
+      {error&&<p role="alert" className="text-destructive text-sm">{error}</p>}
+    </form></details>;
 }
 function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
   const t=detail.Track;
@@ -32,6 +49,7 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
   const name=(x:{NameAr:string;NameEn:string})=>ar?x.NameAr:x.NameEn;
   return <section className="space-y-4 rounded-2xl border bg-card p-4">
     <div className="flex flex-wrap justify-between gap-2"><h2 className="text-lg font-bold">{name(t)}</h2><span className="text-sm">{t.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</span></div>
+    <MetadataEditor track={t} ar={ar} disabled={dirty||saving||publishing}/>
     <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
       {[[ar?'فئات صالحة':'Valid categories',detail.Coverage.Categories],[ar?'مهارات أساسية':'Primary skills',detail.Coverage.Skills],[ar?'مسائل جاهزة':'Ready problems',detail.Coverage.Problems],[ar?'مسائل Free':'Free problems',detail.Coverage.FreeProblems]].map(([label,count])=><div key={label} className="rounded-xl border p-3"><p className="text-muted-foreground">{label}</p><p className="text-xl font-bold">{count}</p></div>)}
     </div>

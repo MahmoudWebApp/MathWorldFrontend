@@ -95,6 +95,9 @@ export const stagesApi = createApi({
     createTrack:builder.mutation<LearningTrack,CreateTrackInput>({
       query:body=>({url:'/admin/learning-tracks',method:'POST',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
     }),
+    updateTrackMetadata:builder.mutation<{Revision:number},{id:number;Revision:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string;SortOrder:number}>({
+      query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/metadata',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
+    }),
     mapTrack:builder.mutation<{Revision:number},TrackMapping&{id:number;Revision:number}>({
       query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/mapping',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
     }),
@@ -163,7 +166,7 @@ export const stagesApi = createApi({
 });
 
 export const {
-  useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,
+  useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,
   useGetStagesQuery,
   useGetLearningJourneyQuery,
   useGetDailyChallengeQuery,
