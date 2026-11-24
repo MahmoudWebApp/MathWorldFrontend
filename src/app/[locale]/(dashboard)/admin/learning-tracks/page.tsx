@@ -127,6 +127,6 @@ export default function LearningTracksPage(){
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسارات.':'Could not load tracks.'}</p>}
     {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} className={'rounded-xl border p-3 text-start '+(selected===x.Track.Id?'border-primary bg-primary/10':'bg-card')}><p className="font-bold">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>
-    {selected!==null&&<TrackEditor key={selected} id={selected} ar={ar}/>}
+    {selected!==null&&<><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق محرر المسار':'Close track editor'}</button><TrackEditor key={selected} id={selected} ar={ar}/></>}
   </main>;
 }
