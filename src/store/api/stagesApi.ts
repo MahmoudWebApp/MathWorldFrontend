@@ -26,6 +26,10 @@ export interface TrackInventory {
   Problems:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;PrimarySkillId?:number|null;AssignedTrackCount:number}[];
   Total:number;
 }
+export interface ReviewedTrackDraftBatch {
+  Confirmed:boolean;AppliedTracks:number;ExcludedCount:number;
+  Items:{Id:number;Revision:number;Code:string;StageId:number;Problems:number;FreeProblems:number;Status:'Ready'|'AlreadyMapped'}[];
+}
 export interface TrackListRow {Track:LearningTrack;CategoryCount:number;SkillCount:number;ProblemCount:number}
 export type CreateTrackInput=Omit<LearningTrack,'Id'|'Revision'|'IsPublished'>;
 export type PublishedTrack = Pick<LearningTrack,'Id'|'StageId'|'Code'|'Kind'|'NameAr'|'NameEn'|'DescriptionAr'|'DescriptionEn'>;
@@ -132,6 +136,10 @@ export const stagesApi = createApi({
     updateTrackMetadata:builder.mutation<{Revision:number},{id:number;Revision:number;NameAr:string;NameEn:string;DescriptionAr:string;DescriptionEn:string;SortOrder:number}>({
       query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/metadata',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
     }),
+    reviewedTrackDraftBatch:builder.mutation<ReviewedTrackDraftBatch,{Confirm:boolean;Revisions?:{Id:number;Revision:number}[]}>({
+      query:body=>({url:'/admin/learning-tracks/reviewed-draft-batch',method:'POST',body}),
+      invalidatesTags:(r,e)=>!e&&r?.Confirmed?['LearningTrack']:[],
+    }),
     mapTrack:builder.mutation<{Revision:number},TrackMapping&{id:number;Revision:number}>({
       query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/mapping',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
     }),
@@ -201,7 +209,7 @@ export const stagesApi = createApi({
 
 export const {
   useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackSelectionQuery,useSelectTrackMutation,useGetTrackProgressQuery,useGetTrackPracticeQuery,useGetTrackContinueQuery,
-  useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,
+  useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useCreateTrackMutation,useReviewedTrackDraftBatchMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,
   useGetStagesQuery,
   useGetLearningJourneyQuery,
   useGetDailyChallengeQuery,
