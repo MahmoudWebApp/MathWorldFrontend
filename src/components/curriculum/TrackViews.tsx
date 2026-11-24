@@ -27,7 +27,8 @@ export function PublicTrackCatalog({stageId}:{stageId:number}){
   const effective=data.Items.some(x=>x.Id===selected)?selected:null;
   return <section className="mb-8 space-y-3"><h2 className="text-xl font-bold">{ar?'الصفوف والمساقات':'Grades and courses'}</h2>
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data.Items.map(t=><button key={t.Id} type="button" aria-pressed={effective===t.Id} className={btn+' text-start '+(effective===t.Id?'border-primary bg-primary/10':'')} onClick={()=>setSelected(t.Id)}><span className="block">{ar?t.NameAr:t.NameEn}</span><span className="text-xs text-muted-foreground">{t.ProblemsCount} {ar?'مسألة':'problems'} · {t.SkillsCount} {ar?'مهارة':'skills'}</span></button>)}</div>
-    {effective!==null&&<PublicTrackDetails key={effective} id={effective} ar={ar}/>}
+    <div className="flex flex-wrap gap-3">{data.Items.map(t=><Link key={t.Id} href={'/stages/'+stageId+'/tracks/'+t.Id} className="text-sm text-primary underline">{ar?t.NameAr:t.NameEn}</Link>)}</div>
+    {effective!==null&&<><PublicTrackDetails key={effective} id={effective} ar={ar}/><Link className="inline-flex text-primary underline" href={'/stages/'+stageId+'/tracks/'+effective}>{ar?'صفحة الصف أو المساق الكاملة':'Full grade or course page'}</Link></>}
   </section>;
 }
 function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){

@@ -14,6 +14,8 @@ export default function robots(): MetadataRoute.Robots {
         '/ar/learning-stage/', '/en/learning-stage/',
         '/ar/social-accounts/', '/en/social-accounts/',
         '/ar/login', '/en/login', '/ar/register', '/en/register',
+        '/ar/forgot-password', '/en/forgot-password', '/ar/reset-password', '/en/reset-password',
+        '/ar/verify-certificate', '/en/verify-certificate',
         '/api/',
       ],
     }],
