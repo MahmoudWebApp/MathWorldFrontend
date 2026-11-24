@@ -12,6 +12,7 @@ export interface LearningSessionState { Id:string; Kind:SessionKind; StageId:num
 export interface SessionSolution { Idea:string; FormulaLatex:string; Steps:string[]; Substitution:string; Result:string; Unit:string; Verification:string; CommonError:string }
 export interface SessionAnswerBody { RequestId:string; Position:number; ProblemId:number; SelectedOptionId:number }
 export interface SessionAnswerResult { SessionId:string; Position:number; ProblemId:number; RequestId:string; IsCorrect:boolean; AttemptNumber:number; PointsEarned:number; Completed:number; Total:number; IsComplete:boolean; UsedHint:boolean; IndependentFirstCorrect:boolean; CorrectOptionId?:number; DetailedSolutionAr?:string; DetailedSolutionEn?:string; SolutionStructure?:SessionSolution|null }
+export interface SessionRestartPreview { StageId:number; TrackId?:number|null; CategoryId?:number|null; SessionIds:string[] }
 export interface SessionHints { Available:boolean; RevealedCount:number; Hints:{Level:number;Text:string}[] }
 export interface SessionAchievements { PermanentSolvedProblems:number; PermanentPoints:number; CompletedPracticeSessions:number; CompletedDailyChallenges:number; CorrectSessionAnswers:number; UniqueSolvedProblems:number; IndependentFirstCorrect:number; AssistedCorrect:number; Badges:{Key:string;TitleAr:string;TitleEn:string;EarnedAtUtc:string}[] }
 
@@ -588,6 +589,13 @@ export const usersApi = createApi({
       query: ({Kind,CategoryId})=>({url:'/users/learning-sessions/current',params:{kind:Kind,...(CategoryId?{categoryId:CategoryId}:{})}}),
       keepUnusedDataFor:0,
     }),
+    previewSessionRestart: builder.query<SessionRestartPreview,SessionScope>({
+      query: ({CategoryId})=>({url:'/users/learning-sessions/restart-scope',params:CategoryId?{categoryId:CategoryId}:{}}),
+      keepUnusedDataFor:0,
+    }),
+    confirmSessionRestart: builder.mutation<{AbandonedSessionIds:string[]},SessionRestartPreview>({
+      query: body=>({url:'/users/learning-sessions/restart-scope',method:'POST',body}),
+    }),
     getLearningSessionById: builder.query<LearningSessionState,string>({
       query: id=>'/users/learning-sessions/'+id,
       keepUnusedDataFor:0,
@@ -1054,6 +1062,8 @@ export const usersApi = createApi({
 export const {
   useGetCurrentLearningSessionQuery,
   useLazyGetLearningSessionByIdQuery,
+  useLazyPreviewSessionRestartQuery,
+  useConfirmSessionRestartMutation,
   useStartLearningSessionMutation,
   useAnswerLearningSessionMutation,
   useRevealLearningSessionHintMutation,

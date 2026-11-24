@@ -6,7 +6,7 @@ import {BookOpen,Trophy,Medal} from 'lucide-react';
 export function LearningSessionCards({stageId,trackId,premium}:{stageId:number;trackId:number|null;premium:boolean}){
   const ar=useLocale()==='ar';
   const scope:SessionScope={Kind:'daily',StageId:stageId,TrackId:trackId};
-  const daily=useGetCurrentLearningSessionQuery(scope,{skip:!premium,refetchOnMountOrArgChange:true});
+  const daily=useGetCurrentLearningSessionQuery(scope,{skip:!premium,refetchOnMountOrArgChange:true,refetchOnFocus:true,refetchOnReconnect:true});
   const data=daily.currentData;
   const matches=data?.StageId===stageId&&(data.TrackId??null)===trackId;
   const complete=matches&&data?.IsComplete;
