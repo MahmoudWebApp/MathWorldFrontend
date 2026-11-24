@@ -10,6 +10,7 @@ export interface StudentEntitlement {
   PremiumExpiresAtUtc?: string | null;
   DailyNewProblemsLimit?: number | null;
   CanRevealSolutionBeforeAnswer: boolean;
+  CanUseProgressiveHints?: boolean;
   CanExportAnalytics: boolean;
   AdsEligible: boolean;
 }

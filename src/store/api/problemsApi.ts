@@ -29,7 +29,9 @@ export interface QuestionOptionDto {
 
 export type MasteryStatus = 'New' | 'NeedsReview' | 'Practicing' | 'Mastered';
 
+export interface SolutionStructure {Idea:string;FormulaLatex:string;Steps:string[];Substitution:string;Result:string;Unit:string;Verification:string;CommonError:string}
 export interface ProblemForStudent {
+  SolutionStructure?:SolutionStructure|null;
   Id: number;
   Title: string;
   QuestionText: string;
@@ -149,6 +151,8 @@ export interface ProblemSolutionPreview {
 }
 
 export interface AnswerResult {
+  SolutionStructure?:SolutionStructure|null;
+  UsedHint?:boolean;
   IsCorrect: boolean;
   IsSolved: boolean;
   SelectedOptionId: number;
