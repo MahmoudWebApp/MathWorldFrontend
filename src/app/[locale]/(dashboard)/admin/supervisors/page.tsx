@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import { useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, type SupervisorAccount } from '@/store/api/platformBrandApi';
+import { useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorActivityQuery, type SupervisorAccount } from '@/store/api/platformBrandApi';
 
 const input='w-full rounded-xl border bg-background p-2.5 text-sm';
 const button='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
@@ -15,7 +15,21 @@ function errorText(e:unknown,ar:boolean) {
   if(status===503)return ar?'خدمة البريد أو عنوان الاختبار غير مهيأ.':'Mail service or test recipient is not configured.';
   return ar?'تعذّر تنفيذ الطلب.':'Request failed.';
 }
+const activityLabels:Record<string,string>={SupervisorCreated:'إنشاء الحساب',SupervisorInvited:'إرسال الدعوة للطابور',SupervisorInvitationAccepted:'قبول الدعوة',SupervisorPermissionsChanged:'تعديل الصلاحيات',LoggedIn:'تسجيل الدخول',ExplicitSignOut:'تسجيل الخروج',PasswordChanged:'تغيير كلمة المرور',PasswordReset:'استعادة كلمة المرور'};
+function StaffActivity({id,ar}:{id:number;ar:boolean}) {
+  const [page,setPage]=useState(1);
+  const {data,isFetching,isError,refetch}=useGetSupervisorActivityQuery({id,page},{refetchOnMountOrArgChange:true});
+  return <section className="space-y-2 border-t pt-3">
+    <div className="flex items-center justify-between"><h3 className="font-semibold">{ar?'سجل النشاط':'Activity history'}</h3><button className={button} disabled={isFetching} onClick={()=>void refetch()}>{ar?'تحديث':'Refresh'}</button></div>
+    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
+    {isError&&<p role="alert">{ar?'تعذّر جلب السجل':'Could not load history'}</p>}
+    {data&&!isError&&<>{data.Items.length===0&&<p className="text-sm text-muted-foreground">{ar?'لا توجد أحداث مسجلة':'No recorded events'}</p>}
+    {data.Items.map(event=><div key={event.Id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-2 text-sm"><span>{ar?activityLabels[event.Action]??event.Action:event.Action} · {event.ActorRole==='Admin'?(ar?'المدير العام':'Super admin'):(ar?'المشرف':'Supervisor')}</span><time dateTime={event.CreatedAtUtc} className="text-xs text-muted-foreground">{new Date(event.CreatedAtUtc).toLocaleString(ar?'ar':'en')}</time></div>)}
+    {data.Total>30&&<div className="flex gap-2"><button className={button} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><button className={button} disabled={page*30>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}</>}
+  </section>;
+}
 function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
+  const [showActivity,setShowActivity]=useState(false);
   const [active,setActive]=useState(row.IsActive);
   const [permissions,setPermissions]=useState(row.Permissions);
   const [update,{isLoading:saving}]=useUpdateSupervisorMutation();
@@ -51,8 +65,10 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
     <div className="flex flex-wrap gap-2">
       <button className={button} disabled={saving||sending||(active===row.IsActive&&permissions===row.Permissions)} onClick={()=>void save()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الصلاحيات':'Save permissions')}</button>
       {row.StaffSetupPending&&row.IsActive&&<button className={button} disabled={saving||sending||active!==row.IsActive||permissions!==row.Permissions} onClick={()=>void send()}>{sending?(ar?'جارٍ الإضافة…':'Queuing…'):(ar?'إرسال / إعادة الدعوة':'Send / resend invitation')}</button>}
+      <button className={button} aria-expanded={showActivity} onClick={()=>setShowActivity(v=>!v)}>{showActivity?(ar?'إخفاء السجل':'Hide history'):(ar?'سجل النشاط':'Activity history')}</button>
     </div>
     {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
+    {showActivity&&<StaffActivity id={row.Id} ar={ar}/>}
   </article>;
 }
 export default function SupervisorsPage(){

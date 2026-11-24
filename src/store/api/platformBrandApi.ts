@@ -32,6 +32,9 @@ export function isSafeBrandLogo(value: string, origin: string): boolean {
 export function publishedSocialLinks(profile?: BrandProfile): PlatformSocialLink[] {
   return (profile?.SocialLinks ?? []).filter(link => link.IsEnabled && safeHttps(link.Url)).sort((a,b) => a.DisplayOrder-b.DisplayOrder);
 }
+export interface SupervisorActivity {
+  Id:number; ActorRole:string; Action:string; Resource:string; CreatedAtUtc:string;
+}
 export interface SupervisorAccount {
   Id: number; FullName: string; Email: string; IsActive: boolean; StaffSetupPending: boolean;
   Permissions: number; Revision: number; CreatedAt: string; LastLoginAt?: string | null;
@@ -50,6 +53,9 @@ export const platformBrandApi = createApi({
     }),
     inviteSupervisor: builder.mutation<{Queued:boolean;WorkerEnabled:boolean},{id:number;Language:string}>({
       query: ({id,...body})=>({url:'/admin/supervisors/'+id+'/invite',method:'POST',body}), invalidatesTags:(_r,e)=>e?[]:['Supervisors','EmailOutbox'],
+    }),
+    getSupervisorActivity: builder.query<{Total:number;Items:SupervisorActivity[]},{id:number;page:number}>({
+      query:({id,page})=>({url:'/admin/supervisors/'+id+'/activity',params:{page}}),providesTags:['Supervisors'],
     }),
     getSupervisorPermissions: builder.query<{Id:number;FullName:string;Permissions:number},void>({
       query:()=>'/supervisor/permissions',providesTags:['SupervisorPermissions'],
@@ -73,4 +79,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery } = platformBrandApi;

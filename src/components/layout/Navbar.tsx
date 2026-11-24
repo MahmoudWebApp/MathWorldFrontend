@@ -85,7 +85,7 @@ function NavbarContent() {
     // Explicit sign-out audit is best-effort. Local session removal must
     // always work even if offline or if the server endpoint is not deployed.
     try {
-      if (token && user?.Role !== 'Supervisor') {
+      if (token) {
         const controller = new AbortController();
         const timer = window.setTimeout(() => controller.abort(), 1200);
         try {
