@@ -3,6 +3,8 @@ import {useState} from 'react';
 import {useLocale} from 'next-intl';
 import {Link} from '@/i18n/routing';
 import {useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackProgressQuery,useGetTrackPracticeQuery} from '@/store/api/stagesApi';
+import {useResetPracticeMutation} from '@/store/api/usersApi';
+import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription,DialogFooter} from '@/components/ui/Dialog';
 const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
 function PublicTrackDetails({id,ar}:{id:number;ar:boolean}){
   const {currentData:data,isFetching,isError,refetch}=useGetPublishedTrackQuery(id,{refetchOnMountOrArgChange:true});
@@ -45,18 +47,27 @@ export function StudentTrackWorkspace({trackId}:{trackId:number}){
   const progress=useGetTrackProgressQuery(trackId,{refetchOnMountOrArgChange:true});
   const [category,setCategory]=useState<number|null>(null);const [skills,setSkills]=useState<number|null>(null);
   const data=detail.currentData;const stats=progress.currentData;
+  const [target,setTarget]=useState<{categoryId?:number;name:string}|null>(null);
+  const [reset,resetState]=useResetPracticeMutation();
+  const [notice,setNotice]=useState('');const [error,setError]=useState('');
+  async function confirm(){if(!target||!stats||!stats.TrackPracticeIsolationEnabled||resetState.isLoading||stats.TrackId!==trackId)return;
+    setError('');try{await reset({StageId:stats.StageId,TrackId:trackId,CategoryId:target.categoryId}).unwrap();setTarget(null);setNotice(ar?'بدأ تدريب جديد ضمن النطاق المحدد.':'A new practice cycle has started in the selected scope.');}
+    catch{setError(ar?'تعذّرت إعادة التدريب. حدّث المسار وحاول مجدداً.':'Restart failed. Refresh the track and retry.');}}
+
   if(detail.isError||progress.isError)return <main className="p-6"><p role="alert">{ar?'تعذّر تحميل المسار أو تقدمه.':'Could not load track or progress.'}</p><button className={btn} onClick={()=>{void detail.refetch();void progress.refetch();}}>{ar?'إعادة المحاولة':'Retry'}</button> <Link href="/learning-stage">{ar?'تغيير المسار':'Change track'}</Link></main>;
   if(!data||!stats)return <p className="p-6" role="status">{ar?'جارٍ تحميل مسارك…':'Loading your track…'}</p>;
   const byId=new Map(stats.Categories.map(c=>[c.CategoryId,c]));
   return <main className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
     <header className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-2xl font-bold">{ar?data.Track.NameAr:data.Track.NameEn}</h1><Link className={btn} href="/learning-stage">{ar?'تغيير الصف أو المساق':'Change grade or course'}</Link></header>
-    <section className="rounded-xl border bg-card p-4"><p>{ar?'التقدم':'Progress'}: {stats.Solved} / {stats.ProblemsCount} · {stats.CompletionPercent}%</p><progress className="mt-2 w-full" max={100} value={stats.CompletionPercent}/><button className={btn} onClick={()=>void progress.refetch()}>{ar?'تحديث التقدم':'Refresh progress'}</button></section>
+    <Dialog open={!!target} onOpenChange={open=>{if(!open&&!resetState.isLoading)setTarget(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'تأكيد إعادة التدريب':'Confirm practice restart'}</DialogTitle><DialogDescription>{target?.name}</DialogDescription></DialogHeader><p>{ar?'يعود تقدم التدريب ودفتر الأخطاء في هذا النطاق فقط إلى البداية. النقاط الدائمة والمفضلة والشهادات وتقدم الصفوف الأخرى محفوظة.':'Only practice progress and review errors in this scope reset. Lifetime points, favorites, certificates and other tracks remain.'}</p>{error&&<p role="alert" className="text-destructive">{error}</p>}<DialogFooter><button className={btn} disabled={resetState.isLoading} onClick={()=>setTarget(null)}>{ar?'إلغاء':'Cancel'}</button><button className={btn+' bg-primary text-primary-foreground'} disabled={resetState.isLoading} onClick={()=>void confirm()}>{ar?'تأكيد':'Confirm'}</button></DialogFooter></DialogContent></Dialog>
+    {notice&&<p role="status" className="text-primary">{notice}</p>}
+    <section className="rounded-xl border bg-card p-4"><p>{ar?'التقدم':'Progress'}: {stats.Solved} / {stats.ProblemsCount} · {stats.CompletionPercent}%</p><progress className="mt-2 w-full" max={100} value={stats.CompletionPercent}/><button className={btn} onClick={()=>void progress.refetch()}>{ar?'تحديث التقدم':'Refresh progress'}</button>{stats.TrackPracticeIsolationEnabled&&stats.Categories.some(c=>c.Attempted>0)&&<button className={btn} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({name:ar?data.Track.NameAr:data.Track.NameEn})}}>{ar?'إعادة تدريب الصف أو المساق':'Restart grade or course'}</button>}</section>
     <div className="grid gap-3 sm:grid-cols-2">{data.Categories.map(c=>{const p=byId.get(c.Id);const locked=!p||p.IsLocked;return <article key={c.Id} className="space-y-3 rounded-2xl border bg-card p-4">
       <div className="flex items-center justify-between gap-2"><h2 className="font-bold">{ar?c.NameAr:c.NameEn}</h2><span className="text-sm">{c.ProblemsCount} {ar?'مسألة':'problems'}</span></div>
       <p className="text-sm text-muted-foreground">{ar?c.DescriptionAr:c.DescriptionEn}</p>
       <p className="text-sm">{ar?'محلولة':'Solved'}: {p?.Solved??0}/{c.ProblemsCount}</p>
       <div className="flex flex-wrap gap-2"><button className={btn} aria-expanded={skills===c.Id} onClick={()=>setSkills(skills===c.Id?null:c.Id)}>{ar?'عرض المهارات':'View skills'}</button>
-      {locked?<Link className={btn} href="/dashboard/upgrade">{ar?'ترقية الحساب':'Upgrade account'}</Link>:<button className={btn} aria-expanded={category===c.Id} onClick={()=>setCategory(category===c.Id?null:c.Id)}>{ar?'عرض المسائل':'View problems'}</button>}</div>
+      {locked?<Link className={btn} href="/dashboard/upgrade">{ar?'ترقية الحساب':'Upgrade account'}</Link>:<button className={btn} aria-expanded={category===c.Id} onClick={()=>setCategory(category===c.Id?null:c.Id)}>{ar?'عرض المسائل':'View problems'}</button>}{!locked&&stats.TrackPracticeIsolationEnabled&&(p?.Attempted??0)>0&&<button className={btn} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({categoryId:c.Id,name:ar?c.NameAr:c.NameEn})}}>{ar?'إعادة تدريب الفئة':'Restart topic'}</button>}</div>
       {skills===c.Id&&<ul className="list-inside list-disc text-sm">{data.Skills.filter(s=>s.CategoryId===c.Id).map(s=><li key={s.Id}>{ar?s.NameAr:s.NameEn}</li>)}</ul>}
       {!locked&&category===c.Id&&<Practice key={c.Id} id={trackId} categoryId={c.Id} ar={ar}/>}
     </article>;})}</div>

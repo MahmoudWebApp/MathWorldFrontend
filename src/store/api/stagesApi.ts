@@ -37,7 +37,7 @@ export interface PublishedTrackDetail {
   Examples:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}[];
 }
 export interface TrackSelection {Enabled:boolean;StageId:number|null;TrackId:number|null;Track?:PublishedTrack|null}
-export interface TrackProgress {TrackId:number;StageId:number;ProblemsCount:number;Solved:number;CompletionPercent:number;Categories:{CategoryId:number;ProblemsCount:number;IsLocked:boolean;Solved:number;Attempted:number;Mastered:number}[]}
+export interface TrackProgress {TrackId:number;StageId:number;TrackPracticeIsolationEnabled?:boolean;ProblemsCount:number;Solved:number;CompletionPercent:number;Categories:{CategoryId:number;ProblemsCount:number;IsLocked:boolean;Solved:number;Attempted:number;Mastered:number}[]}
 export interface TrackPractice {TrackId:number;CategoryId:number;Total:number;Page:number;PageSize:number;Items:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;Points:number;IsSolved:boolean}[]}
 export interface JourneyCategoryProgress {
   CategoryId: number;

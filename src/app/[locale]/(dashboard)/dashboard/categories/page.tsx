@@ -108,7 +108,7 @@ export default function StudentCategoriesPage() {
               <li>{ar ? 'المسائل اللي جربتها بهذا النطاق رح ترجع جديدة وغير محلولة.' : 'Attempted questions in this scope become new and unsolved.'}</li>
               <li>{ar ? 'تقدم التدريب الحالي ودفتر أخطائه لهذا النطاق رح يتصفّروا.' : 'Current practice progress and error-notebook entries for this scope are reset.'}</li>
               <li>{ar ? 'المراحل والفئات خارج نطاق الإعادة ما رح تتأثر.' : 'Other stages and categories outside this scope are not affected.'}</li>
-              <li>{ar ? 'المفضلة بتضل محفوظة، والتصفير ما فيك تتراجع عنه.' : 'Favorites stay saved, and this reset cannot be undone.'}</li>
+              <li>{ar ? 'المفضلة والنقاط الدائمة والشهادات بتضل محفوظة، والتصفير ما فيك تتراجع عنه.' : 'Favorites, lifetime points and certificates remain saved; this reset cannot be undone.'}</li>
             </ul>
           </div>
           {resetError && <p role="alert" className="text-sm text-destructive">{resetError}</p>}

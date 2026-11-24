@@ -63,10 +63,12 @@ export interface FavoriteCheck {
 
 export interface PracticeResetRequest {
   StageId: number;
+  TrackId?: number;
   CategoryId?: number;
 }
 export interface PracticeResetResult {
   StageId: number;
+  TrackId?: number|null;
   CategoryId?: number | null;
   ResetProblems: number;
   ResetSolved: number;
@@ -152,6 +154,7 @@ export interface LearningJourney {
   StageId: number;
   LearningSessionsEnabled?: boolean;
   CertificatesEnabled?: boolean;
+  TrackPracticeIsolationEnabled?: boolean;
   PermanentSolvedProblems?: number;
   PermanentPoints?: number;
   TrackId?: number | null;
@@ -936,7 +939,7 @@ export const usersApi = createApi({
       }),
       invalidatesTags: [
         'Solved', 'Dashboard', 'User', 'LearningJourney',
-        'Leaderboard', 'Achievements', 'ErrorNotebook', 'Favorite',
+        'Leaderboard', 'Achievements', 'ErrorNotebook', 'Favorite','PremiumAnalytics',
       ],
       async onQueryStarted(_request, { dispatch, queryFulfilled }) {
         try {
@@ -947,7 +950,7 @@ export const usersApi = createApi({
             import('./problemsApi'), import('./stagesApi'),
           ]);
           dispatch(problemsApi.util.invalidateTags(['Problem', 'Category', 'AttemptHistory']));
-          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge','LearningTrack']));
         } catch { /* Failed resets must not update any cache. */ }
       },
     }),
