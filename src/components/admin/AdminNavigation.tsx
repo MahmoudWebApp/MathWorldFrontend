@@ -84,6 +84,15 @@ export const ADMIN_NAV_ITEMS = [
     group: 'management',
   },
   {
+    href: '/admin/editorial',
+    icon: GraduationCap,
+    labelAr: 'محرر المسائل والمراجعة',
+    labelEn: 'Problem editor and review',
+    descriptionAr: 'إنشاء المسائل ومراجعة المسودات واعتمادها',
+    descriptionEn: 'Create problems, review and approve drafts',
+    group: 'content',
+  },
+  {
     href: '/admin/learning-tracks',
     icon: GraduationCap,
     labelAr: 'الصفوف والمساقات',

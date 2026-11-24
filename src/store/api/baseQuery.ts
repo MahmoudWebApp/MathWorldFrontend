@@ -116,7 +116,9 @@ function normalizeErrorData(
           ? message
           : fallbackMessage,
       errors:
-        typeof record.errors === 'object' && record.errors !== null
+        Array.isArray(record.Errors) && record.Errors.every(x=>typeof x==='string')
+          ? {validation:record.Errors as string[]}
+          : typeof record.errors === 'object' && record.errors !== null
           ? (record.errors as Record<string, string[]>)
           : undefined,
     };

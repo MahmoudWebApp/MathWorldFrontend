@@ -4,6 +4,7 @@ import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { useGetSupervisorPermissionsQuery } from '@/store/api/platformBrandApi';
+import { EditorialWorkspace } from '@/components/editorial/EditorialWorkspace';
 import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm';
 
 export default function SupervisorWorkspace(){
@@ -19,8 +20,9 @@ export default function SupervisorWorkspace(){
       <h2 className="font-bold">{data.FullName}</h2><p className="text-sm text-muted-foreground">{ar?'صلاحيات حسابك المعتمدة':'Your assigned permissions'}</p>
       <p>{(data.Permissions&1)!==0?(ar?'مسموح: إنشاء وتحرير مسوداتك':'Allowed: create and edit your drafts'):(ar?'غير مسموح: تحرير المسودات':'Not allowed: edit drafts')}</p>
       <p>{(data.Permissions&2)!==0?(ar?'مسموح: إرسال مسوداتك للمراجعة':'Allowed: submit drafts for review'):(ar?'غير مسموح: إرسال للمراجعة':'Not allowed: submit drafts')}</p>
-      <p className="text-sm text-muted-foreground">{ar?'محرر المسائل غير متاح بعد. نشر المحتوى واعتماده من اختصاص المدير العام.':'The problem editor is not yet available. Publishing and approval are reserved for the super administrator.'}</p>
+      <p className="text-sm text-muted-foreground">{ar?'نشر المحتوى واعتماده من اختصاص المدير العام.':'Publishing and approval are reserved for the super administrator.'}</p>
     </section>}
+    {data&&!isError&&(data.Permissions&1)!==0&&<EditorialWorkspace admin={false} canSubmit={(data.Permissions&2)!==0}/>}
     <ChangePasswordForm/>
   </main>;
 }

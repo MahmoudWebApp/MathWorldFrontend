@@ -39,9 +39,34 @@ export interface SupervisorAccount {
   Id: number; FullName: string; Email: string; IsActive: boolean; StaffSetupPending: boolean;
   Permissions: number; Revision: number; CreatedAt: string; LastLoginAt?: string | null;
 }
+export interface Bilingual {Ar:string;En:string}
+export interface EditorialOption {LatexCode:string;IsCorrect:boolean;ErrorType:string;Reason:Bilingual}
+export interface EditorialSolution {Idea:Bilingual;FormulaLatex:string;Steps:Bilingual[];Substitution:Bilingual;Result:Bilingual;Unit:Bilingual;Verification:Bilingual;CommonError:Bilingual}
+export interface EditorialContent {StageId:number;CategoryId:number;PrimarySkillId:number;SecondarySkillIds:number[];TrackIds:number[];DifficultyLevel:number;Points:number;Title:Bilingual;Question:Bilingual;Options:EditorialOption[];Hints:Bilingual[];Solution:EditorialSolution}
+export interface EditorialRow {Id:number;OwnerUserId:number;Revision:number;Status:string;QuestionTextAr?:string;QuestionTextEn?:string;ReviewNote?:string;PublishedProblemId?:number}
+export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>}
+export interface ClassificationRow {Id:number;NameAr:string;NameEn:string}
+export interface EditorialClassification {Stages:ClassificationRow[];Tracks:ClassificationRow[];Categories:ClassificationRow[];Skills:(ClassificationRow&{CategoryId:number})[]}
 export const platformBrandApi = createApi({
-  reducerPath: 'platformBrandApi', baseQuery, tagTypes: ['Brand', 'EmailOutbox', 'Supervisors', 'SupervisorPermissions'],
+  reducerPath: 'platformBrandApi', baseQuery, tagTypes: ['Brand', 'EmailOutbox', 'Supervisors', 'SupervisorPermissions','EditorialDraft'],
   endpoints: builder => ({
+    getEditorialDrafts:builder.query<{Total:number;Items:EditorialRow[]},number>({
+      query:page=>({url:'/editorial/problems',params:{page}}),providesTags:['EditorialDraft'],
+    }),
+    getEditorialDraft:builder.query<EditorialDraft,number>({
+      query:id=>'/editorial/problems/'+id,providesTags:(_r,_e,id)=>[{type:'EditorialDraft',id}],
+    }),
+    getEditorialClassification:builder.query<EditorialClassification,number>({
+      query:id=>'/editorial/problems/classification/'+id,
+    }),
+    saveEditorialDraft:builder.mutation<EditorialDraft,{id?:number;Revision:number;Content:EditorialContent}>({
+      query:({id,...body})=>({url:'/editorial/problems'+(id?'/'+id:''),method:id?'PUT':'POST',body}),
+      invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
+    }),
+    editorialAction:builder.mutation<EditorialDraft,{id:number;action:'submit'|'review'|'publish';Revision:number;Note?:string;Confirm?:boolean}>({
+      query:({id,action,...body})=>({url:'/editorial/problems/'+id+'/'+action,method:'POST',body}),
+      invalidatesTags:(_r,e)=>e?[]:['EditorialDraft','SupervisorPermissions'],
+    }),
     getSupervisors: builder.query<{Total:number;Items:SupervisorAccount[]}, number>({
       query: page => ({url:'/admin/supervisors',params:{page}}), providesTags:['Supervisors'],
     }),
@@ -79,4 +104,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation } = platformBrandApi;
