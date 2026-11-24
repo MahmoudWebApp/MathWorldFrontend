@@ -16,6 +16,10 @@ export interface SessionRestartPreview { StageId:number; TrackId?:number|null; C
 export interface SessionHints { Available:boolean; RevealedCount:number; Hints:{Level:number;Text:string}[] }
 export interface SessionAchievements { PermanentSolvedProblems:number; PermanentPoints:number; CompletedPracticeSessions:number; CompletedDailyChallenges:number; CorrectSessionAnswers:number; UniqueSolvedProblems:number; IndependentFirstCorrect:number; AssistedCorrect:number; Badges:{Key:string;TitleAr:string;TitleEn:string;EarnedAtUtc:string}[] }
 
+export interface CertificateScope { StageId:number; TrackId?:number|null; CategoryId?:number|null }
+export interface CertificateRecord extends CertificateScope {Id:string;Kind:'category'|'grade'|'course';StudentName:string;TitleAr:string;TitleEn:string;VerificationCode:string;PolicyVersion:number;TotalProblems:number;RequiredSkills:number;IssuedAtUtc:string}
+export interface CertificateEligibility {Kind:string;TitleAr:string;TitleEn:string;TotalProblems:number;SolvedProblems:number;RequiredSkills:number;IndependentSkills:number;CatalogReady:boolean;Eligible:boolean}
+export interface CertificateList {IssuanceEnabled:boolean;Items:CertificateRecord[]}
 export interface UserProfile {
   Id: number;
   FullName: string;
@@ -147,6 +151,7 @@ export interface PremiumProgressReport {
 export interface LearningJourney {
   StageId: number;
   LearningSessionsEnabled?: boolean;
+  CertificatesEnabled?: boolean;
   PermanentSolvedProblems?: number;
   PermanentPoints?: number;
   TrackId?: number | null;
@@ -574,6 +579,7 @@ export const usersApi = createApi({
     'LearningStage',
     'LearningJourney',
     'SessionAchievements',
+    'Certificates',
     'Leaderboard',
     'Achievements',
     'PremiumAnalytics',
@@ -585,6 +591,19 @@ export const usersApi = createApi({
     'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
+    getCertificates: builder.query<CertificateList,void>({
+      query:()=>'/users/certificates',providesTags:['Certificates'],keepUnusedDataFor:0,
+    }),
+    getCertificateEligibility: builder.query<CertificateEligibility,CertificateScope>({
+      query:({StageId,TrackId,CategoryId})=>({url:'/users/certificates/eligibility',params:{stageId:StageId,...(TrackId?{trackId:TrackId}:{}),...(CategoryId?{categoryId:CategoryId}:{})}}),
+      keepUnusedDataFor:0,
+    }),
+    issueCertificate: builder.mutation<CertificateRecord,CertificateScope>({
+      query:body=>({url:'/users/certificates/issue',method:'POST',body}),invalidatesTags:result=>result?['Certificates']:[],
+    }),
+    downloadCertificate: builder.mutation<Blob,{Id:string;Lang:'ar'|'en'}>({
+      query:({Id,Lang})=>({url:'/users/certificates/'+encodeURIComponent(Id)+'/pdf',params:{lang:Lang},responseHandler:(r:Response)=>r.blob()}),
+    }),
     getCurrentLearningSession: builder.query<LearningSessionState,SessionScope>({
       query: ({Kind,CategoryId})=>({url:'/users/learning-sessions/current',params:{kind:Kind,...(CategoryId?{categoryId:CategoryId}:{})}}),
       keepUnusedDataFor:0,
@@ -1060,6 +1079,10 @@ export const usersApi = createApi({
 });
 
 export const {
+  useGetCertificatesQuery,
+  useGetCertificateEligibilityQuery,
+  useIssueCertificateMutation,
+  useDownloadCertificateMutation,
   useGetCurrentLearningSessionQuery,
   useLazyGetLearningSessionByIdQuery,
   useLazyPreviewSessionRestartQuery,

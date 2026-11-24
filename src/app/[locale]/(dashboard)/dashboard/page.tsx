@@ -153,6 +153,7 @@ export default function UserDashboardPage() {
       </section>
 
       {journey?.LearningSessionsEnabled === true && stageId > 0 && <LearningSessionCards stageId={stageId} trackId={trackId} premium={isPremium}/>}
+      {journey?.CertificatesEnabled===true&&<Link href="/dashboard/certificates" className="flex items-center justify-between rounded-2xl border bg-card p-4 font-semibold"><span>{ar?'شهاداتي التعليمية':'My learning certificates'}</span><span className="text-primary">{ar?'عرض':'View'}</span></Link>}
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-4"><StudentAchievementsPanel compact />{journey?.LearningSessionsEnabled === true && <SessionBadges/>}</div>
         <section className="rounded-3xl border bg-card p-5 sm:p-6">
