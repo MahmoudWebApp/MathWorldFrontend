@@ -10,6 +10,8 @@ import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {
   useGetStudentEntitlementQuery,
+  useGetLearningJourneyQuery,
+  type AnalyticsFilter,
   useGetPremiumAnalyticsQuery,
   useExportPremiumAnalyticsXlsxMutation,
   useExportPremiumAnalyticsPdfMutation,
@@ -35,6 +37,12 @@ export default function PremiumAnalyticsPage() {
   const { data: entitlement, isLoading: loadingEntitlement, isFetching: fetchingEntitlement, isError: entitlementError,
     refetch: refetchEntitlement } = useGetStudentEntitlementQuery(undefined, { skip: !isStudent });
   const premium = entitlement?.IsPremium === true;
+  const journey=useGetLearningJourneyQuery(undefined,{skip:!isStudent||!premium,refetchOnMountOrArgChange:true});
+  const j=journey.currentData;
+  const canFilter=j?.LearningSessionsEnabled===true;
+  const [scope,setScope]=useState('all');
+  const [days,setDays]=useState(0);
+  const filters:AnalyticsFilter=canFilter?{...(days?{days}:{}),...(scope==='stage'&&j?{stageId:j.StageId}:{}),...(scope==='track'&&j?.TrackId?{stageId:j.StageId,trackId:j.TrackId}:{}),...((scope.startsWith('category:')&&j?.Categories.some(c=>String(c.CategoryId)===scope.slice(9)))?{stageId:j.StageId,categoryId:Number(scope.slice(9)),...(j.TrackId?{trackId:j.TrackId}:{})}:{})}:{};
   const [exportXlsx, { isLoading: exportingXlsx }] =
     useExportPremiumAnalyticsXlsxMutation();
   const [exportPdf, { isLoading: exportingPdf }] =
@@ -58,7 +66,7 @@ export default function PremiumAnalyticsPage() {
   };
 
   const getExcelBlob = async (language: 'ar' | 'en'): Promise<Blob> => {
-    const blob = await exportXlsx(language).unwrap();
+    const blob = await exportXlsx({lang:language,...filters}).unwrap();
     if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
       !blob.type.toLowerCase().includes('spreadsheetml.sheet')) {
       throw new Error('Invalid XLSX response');
@@ -72,7 +80,7 @@ export default function PremiumAnalyticsPage() {
   };
 
   const getPdfBlob = async (language: 'ar' | 'en'): Promise<Blob> => {
-    const blob = await exportPdf(language).unwrap();
+    const blob = await exportPdf({lang:language,...filters}).unwrap();
     if (!(blob instanceof Blob) || blob.size < 100 || blob.size > 20_000_000 ||
       !blob.type.toLowerCase().includes('application/pdf')) {
       throw new Error('Invalid PDF response');
@@ -153,7 +161,7 @@ export default function PremiumAnalyticsPage() {
     }
   };
 
-  const { data: report, isLoading, isError, refetch } = useGetPremiumAnalyticsQuery(undefined, {
+  const { currentData: report, isLoading, isError, refetch } = useGetPremiumAnalyticsQuery(canFilter?filters:undefined, {
     skip: !isStudent || !premium,
     refetchOnMountOrArgChange: true,
   });
@@ -225,6 +233,17 @@ export default function PremiumAnalyticsPage() {
         )}
       </div>
 
+      {canFilter&&premium&&j&&<section className="premium-report-actions flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4">
+        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'النطاق':'Scope'}<select disabled={!!pendingExport||preparingExport} className="rounded-lg border bg-background p-2" value={scope} onChange={e=>setScope(e.target.value)}>
+          <option value="all">{ar?'جميع المراحل':'All stages'}</option><option value="stage">{ar?'المرحلة الحالية':'Current stage'}</option>
+          {j.TrackId&&<option value="track">{ar?'الصف أو المساق الحالي':'Current grade or course'}</option>}
+          {j.Categories.map(c=><option key={c.CategoryId} value={'category:'+c.CategoryId}>{ar?c.NameAr:c.NameEn}</option>)}
+        </select></label>
+        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'الفترة':'Period'}<select disabled={!!pendingExport||preparingExport} className="rounded-lg border bg-background p-2" value={days} onChange={e=>setDays(Number(e.target.value))}>
+          <option value={0}>{ar?'كل الوقت':'All time'}</option>{[7,30,90,365].map(d=><option key={d} value={d}>{d} {ar?'يوم':'days'}</option>)}
+        </select></label>
+        <p className="basis-full text-xs text-muted-foreground">{ar?'النقاط حسب تاريخ اكتسابها؛ دفتر الأخطاء يعرض الحالة الحالية. زمن الجلسات الموجهة غير مقاس.':'Points follow their original earn date; review errors show current state. Guided-session time is not measured.'}</p>
+      </section>}
       {downloadError && !pendingExport && (
         <div role="alert" className="premium-report-actions rounded-xl border border-destructive/30 p-3 text-sm text-destructive">
           {ar ? 'تعذّر تنزيل التقرير. تحقق من اشتراك Premium واتصال الإنترنت.'

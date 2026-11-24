@@ -358,7 +358,16 @@ export interface PremiumCategoryStatistics {
   TimeSpentSeconds: number;
 }
 
+export interface AnalyticsFilter {stageId?:number;categoryId?:number;trackId?:number;days?:number}
+export type AnalyticsExportRequest = 'ar'|'en'|({lang:'ar'|'en'} & AnalyticsFilter);
 export interface StudentPremiumAnalyticsReport {
+  ScoreBasis?:'ActiveProgress'|'PermanentAchievements';
+  GuidedAttempts?:number;
+  GuidedTimeMeasured?:boolean;
+  FilterStageId?:number|null;
+  FilterCategoryId?:number|null;
+  FilterTrackId?:number|null;
+  WindowDays?:number|null;
   GeneratedAtUtc: string;
   AttemptedProblems: number;
   SolvedProblems: number;
@@ -845,35 +854,35 @@ export const usersApi = createApi({
       query: () => '/users/subscription',
       providesTags: ['Subscription'],
     }),
-    exportPremiumAnalyticsXlsx: builder.mutation<Blob, 'ar' | 'en'>({
-      query: (lang) => ({
+    exportPremiumAnalyticsXlsx: builder.mutation<Blob, AnalyticsExportRequest>({
+      query: (request) => ({
         url: '/users/premium-analytics/export.xlsx',
         method: 'GET',
-        params: { lang },
+        params: typeof request==='string'?{lang:request}:request,
         // Keep the authenticated baseQuery pipeline for private exports.
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
-    exportPremiumAnalyticsPdf: builder.mutation<Blob, 'ar' | 'en'>({
-      query: (lang) => ({
+    exportPremiumAnalyticsPdf: builder.mutation<Blob, AnalyticsExportRequest>({
+      query: (request) => ({
         url: '/users/premium-analytics/export.pdf',
         method: 'GET',
-        params: { lang },
+        params: typeof request==='string'?{lang:request}:request,
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
-    exportPremiumAnalyticsCsv: builder.mutation<Blob, 'ar' | 'en'>({
-      query: (lang) => ({
+    exportPremiumAnalyticsCsv: builder.mutation<Blob, AnalyticsExportRequest>({
+      query: (request) => ({
         url: '/users/premium-analytics/export.csv',
         method: 'GET',
-        params: { lang },
+        params: typeof request==='string'?{lang:request}:request,
         // UTF-8 with BOM is the compatibility alternative to native XLSX.
         responseHandler: (response: Response) => response.blob(),
       }),
     }),
 
-    getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, void>({
-      query: () => '/users/premium-analytics',
+    getPremiumAnalytics: builder.query<StudentPremiumAnalyticsReport, AnalyticsFilter | void>({
+      query: (filter) => ({url:'/users/premium-analytics',params:filter||{}}),
       providesTags: ['PremiumAnalytics'],
     }),
 
