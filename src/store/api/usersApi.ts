@@ -5,6 +5,17 @@ import { stagesApi } from './stagesApi';
 import type { DashboardData, ProblemPreview } from './types';
 import type { MasteryStatus } from './problemsApi';
 
+export interface EmailPreferenceInput {
+  EmailLearningUpdates: boolean;
+  EmailSubscriptionUpdates: boolean;
+  EmailImportantAnnouncements: boolean;
+  Locale: 'ar' | 'en';
+}
+export interface EmailPreferences extends EmailPreferenceInput {
+  EmailVerified: boolean;
+  OptionalDeliveryEnabled: boolean;
+}
+
 export type SessionKind = 'practice' | 'daily';
 export interface SessionScope { Kind: SessionKind; StageId: number; TrackId?: number | null; CategoryId?: number }
 export interface SessionQuestion { Id:number; CategoryId:number; TitleAr:string; TitleEn:string; QuestionTextAr:string; QuestionTextEn:string; Options:{Id:number; LatexCode:string; Order:number}[] }
@@ -603,6 +614,13 @@ export const usersApi = createApi({
     'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
+    getEmailPreferences: builder.query<EmailPreferences, number>({
+      query: () => '/users/email-preferences',
+      keepUnusedDataFor: 0,
+    }),
+    saveEmailPreferences: builder.mutation<EmailPreferences, {userId:number; preferences:EmailPreferenceInput}>({
+      query: ({preferences}) => ({url:'/users/email-preferences',method:'PUT',body:preferences}),
+    }),
     getCertificates: builder.query<CertificateList,void>({
       query:()=>'/users/certificates',providesTags:['Certificates'],keepUnusedDataFor:0,
     }),
@@ -1091,6 +1109,8 @@ export const usersApi = createApi({
 });
 
 export const {
+  useGetEmailPreferencesQuery,
+  useSaveEmailPreferencesMutation,
   useGetCertificatesQuery,
   useGetCertificateEligibilityQuery,
   useIssueCertificateMutation,
