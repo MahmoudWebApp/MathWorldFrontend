@@ -84,6 +84,15 @@ export const ADMIN_NAV_ITEMS = [
     group: 'management',
   },
   {
+    href: '/admin/learning-tracks',
+    icon: GraduationCap,
+    labelAr: 'الصفوف والمساقات',
+    labelEn: 'Grades and courses',
+    descriptionAr: 'ربط الفئات والمهارات والمسائل ومراجعة التغطية',
+    descriptionEn: 'Map categories, skills and problems; review coverage',
+    group: 'content',
+  },
+  {
     href: '/admin/stages',
     icon: GraduationCap,
     labelAr: 'المراحل التعليمية',
