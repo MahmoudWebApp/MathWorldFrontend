@@ -56,6 +56,9 @@ export default function StudentCategoriesPage() {
     }
   }
 
+  if(stageId>0&&trackCatalog.isLoading) return <MathWorldLoading compact/>;
+  if(stageId>0&&trackCatalog.isError&&(trackCatalog.error as {status?:number})?.status!==404)
+    return <main className="p-6"><button className="underline" onClick={()=>void trackCatalog.refetch()}>{ar?'تعذّر تحميل المسارات. إعادة المحاولة':'Could not load tracks. Retry'}</button></main>;
   if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&(trackSelection.isLoading||trackSelection.isError))
     return <main className="p-6">{trackSelection.isError?<button className="underline" onClick={()=>void trackSelection.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>:<MathWorldLoading compact/>}</main>;
   if(trackCatalog.currentData?.Enabled&&trackSelection.data?.Enabled&&trackSelection.data.TrackId&&trackSelection.data.StageId===stageId)

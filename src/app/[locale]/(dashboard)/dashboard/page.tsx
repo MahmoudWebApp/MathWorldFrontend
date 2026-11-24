@@ -7,6 +7,7 @@ import { Link, useRouter } from '@/i18n/routing';
 import { BookOpen, ChartNoAxesCombined, Heart, LockKeyhole, NotebookTabs, Target, Trophy } from 'lucide-react';
 import { useGetDashboardQuery, useGetLearningJourneyQuery } from '@/store/api/usersApi';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
+import { useGetTrackContinueQuery } from '@/store/api/stagesApi';
 import { useSearchProblemsQuery } from '@/store/api/problemsApi';
 import { StudentAchievementsPanel } from '@/components/dashboard/StudentAchievementsPanel';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
@@ -29,12 +30,14 @@ export default function UserDashboardPage() {
   });
   const accent = getStageAccent({ Id: stageId, NameAr: journey?.NameAr, NameEn: journey?.NameEn });
   const isPremium = subscription?.IsPremium === true;
+  const trackId=journey?.TrackId??null;
+  const {currentData:trackNext}=useGetTrackContinueQuery(undefined,{skip:!isPremium||!trackId,refetchOnMountOrArgChange:true});
   const { data: nextUnsolved } = useSearchProblemsQuery(
     { StageId: stageId, HideSolved: true, Page: 1, PageSize: 1 },
-    { skip: !isPremium || dashboard?.Role !== 'Student' || stageId <= 0,
+    { skip: !isPremium || dashboard?.Role !== 'Student' || stageId <= 0 || !journey || trackId!==null,
       refetchOnMountOrArgChange: 45 },
   );
-  const nextProblemId = nextUnsolved?.Results?.[0]?.Id;
+  const nextProblemId = trackId ? (trackNext?.TrackId===trackId?trackNext.Problem?.Id:undefined) : nextUnsolved?.Results?.[0]?.Id;
 
   useEffect(() => {
     if (!isLoading && !isError && dashboard?.Role === 'Student' && !dashboard.CurrentStageId) {
@@ -137,7 +140,7 @@ export default function UserDashboardPage() {
           ))}
         </div>
         <Link href={nextProblemId
-          ? `/dashboard/problems/${nextProblemId}`
+          ? `/dashboard/problems/${nextProblemId}${trackId?'?trackId='+trackId:''}`
           : stageId > 0 ? '/dashboard/categories' : '/learning-stage'}
           className="mt-4 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-extrabold text-primary-foreground hover:opacity-90">
           <BookOpen className="h-5 w-5" aria-hidden="true" />

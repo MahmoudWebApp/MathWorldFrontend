@@ -133,6 +133,7 @@ export interface PremiumProgressReport {
 
 export interface LearningJourney {
   StageId: number;
+  TrackId?: number | null;
   NameAr: string;
   NameEn: string;
   TotalProblems: number;

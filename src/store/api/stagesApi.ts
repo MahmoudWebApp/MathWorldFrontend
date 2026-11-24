@@ -53,6 +53,7 @@ export interface JourneyCategoryProgress {
 
 export interface LearningJourney {
   StageId: number;
+  TrackId?: number | null;
   NameAr: string;
   NameEn: string;
   TotalProblems: number;
@@ -67,6 +68,7 @@ export interface LearningJourney {
 export interface DailyChallenge {
   DateUtc: string;
   StageId: number;
+  TrackId?: number | null;
   Total: number;
   Completed: number;
   Correct: number;
@@ -105,6 +107,9 @@ export const stagesApi = createApi({
     }),
     selectTrack:builder.mutation<TrackSelection,{TrackId:number}>({
       query:body=>({url:'/users/learning-track',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack','LearningJourney','DailyChallenge'],
+    }),
+    getTrackContinue:builder.query<{TrackId:number;Problem:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}|null},void>({
+      query:()=>'/users/learning-tracks/continue',providesTags:['LearningTrack'],
     }),
     getTrackProgress:builder.query<TrackProgress,number>({
       query:id=>'/users/learning-tracks/'+id+'/progress',providesTags:['LearningTrack'],
@@ -195,7 +200,7 @@ export const stagesApi = createApi({
 });
 
 export const {
-  useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackSelectionQuery,useSelectTrackMutation,useGetTrackProgressQuery,useGetTrackPracticeQuery,
+  useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackSelectionQuery,useSelectTrackMutation,useGetTrackProgressQuery,useGetTrackPracticeQuery,useGetTrackContinueQuery,
   useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,
   useGetStagesQuery,
   useGetLearningJourneyQuery,
