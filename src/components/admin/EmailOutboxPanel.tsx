@@ -2,18 +2,12 @@
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { useGetEmailOutboxQuery, useQueueTestEmailMutation } from '@/store/api/platformBrandApi';
+import { useGetEmailOutboxQuery, useQueueTestEmailMutation,emailTemplateLabels } from '@/store/api/platformBrandApi';
 
 const states: Record<string, [string,string]> = {
   Pending: ['بانتظار الإرسال','Pending'], Processing: ['قيد المعالجة','Processing'],
   Accepted: ['قبله المزوّد','Provider accepted'], Unknown: ['نتيجة غير مؤكدة','Outcome unknown'],
   Failed: ['فشل','Failed'], Expired: ['منتهي','Expired'], Cancelled: ['ملغى','Cancelled'],
-};
-const templates: Record<string, [string,string]> = {
-  'supervisor-invite': ['دعوة مشرف','Supervisor invitation'],
-  'password-reset': ['استعادة كلمة المرور','Password reset'],
-  'password-changed': ['تغيير كلمة المرور','Password changed'],
-  test: ['اختبار الإرسال','Test email'],
 };
 const readinessLabels:Record<string,[string,string]>={
   ProviderDisabled:['مزود البريد معطّل','Email provider disabled'],
@@ -29,6 +23,7 @@ const readinessLabels:Record<string,[string,string]>={
 export function EmailOutboxPanel() {
   const ar = useLocale() === 'ar';
   const [language, setLanguage] = useState(ar ? 'ar' : 'en');
+  const [template,setTemplate]=useState('test');
   const [message, setMessage] = useState('');
   const [testError, setTestError] = useState('');
   const { data, isFetching, isError, refetch } = useGetEmailOutboxQuery(undefined, {
@@ -39,7 +34,7 @@ export function EmailOutboxPanel() {
   async function test() {
     setMessage(''); setTestError('');
     try {
-      const result = await send({Language: language}).unwrap();
+      const result = await send({Language: language,Template:data?.TestTemplates?.includes(template)?template:'test'}).unwrap();
       if (result.Queued) setMessage(ar ? 'أضيفت رسالة الاختبار إلى الطابور. راجع حالتها هنا؛ لم يتم تأكيد وصولها بعد.' : 'Test email queued. Check its status here; delivery is not yet confirmed.');
     } catch (e) {
       const status = (e as {status?: number})?.status;
@@ -76,6 +71,7 @@ export function EmailOutboxPanel() {
       <div className="space-y-2 rounded-xl border p-3">
         <p className="text-sm text-muted-foreground">{ar?'رسالة اختبار إلى بريد حساب الإدارة فقط، بشرط أن يكون ضمن قائمة الاختبار المسموحة.':'Test email to your own admin account only, provided its email is allowlisted.'}</p>
         <div className="flex flex-wrap gap-2">
+          {data.TestTemplates&&<select aria-label={ar?'قالب الاختبار':'Test template'} className="rounded-xl border bg-background p-2" value={data.TestTemplates.includes(template)?template:'test'} onChange={e=>setTemplate(e.target.value)}>{data.TestTemplates.map(key=><option key={key} value={key}>{label(emailTemplateLabels[key],key)}</option>)}</select>}
           <select aria-label={ar?'لغة رسالة الاختبار':'Test email language'} className="rounded-xl border bg-background p-2" value={language} onChange={e=>setLanguage(e.target.value)}><option value="ar">العربية</option><option value="en">English</option></select>
           <button type="button" disabled={isLoading||!data.IsConfigured||!data.IsTestMode||!data.IsWorkerEnabled||data.Readiness?.CanQueueAdminTest===false} onClick={()=>void test()} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{isLoading?(ar?'جارٍ الإضافة…':'Queuing…'):(ar?'إرسال رسالة اختبار':'Queue test email')}</button>
         </div>
@@ -85,7 +81,7 @@ export function EmailOutboxPanel() {
       <h3 className="font-semibold">{ar?'آخر الرسائل':'Recent messages'}</h3>
       {data.Items.length===0 ? <p className="text-sm text-muted-foreground">{ar?'لا توجد رسائل بعد.':'No messages yet.'}</p> : <div className="overflow-x-auto">
         <table className="w-full text-start text-sm"><thead><tr className="border-b"><th className="p-2 text-start">{ar?'القالب':'Template'}</th><th className="p-2 text-start">{ar?'الحالة':'Status'}</th><th className="p-2 text-start">{ar?'المحاولات':'Attempts'}</th><th className="p-2 text-start">{ar?'الوقت':'Time'}</th></tr></thead>
-        <tbody>{data.Items.map(item=><tr key={item.Id} className="border-b"><td className="p-2">{label(templates[item.TemplateKey],item.TemplateKey)}</td><td className="p-2">{label(states[item.State],item.State)}</td><td className="p-2">{item.Attempts}</td><td className="p-2 whitespace-nowrap">{new Date(item.CreatedAtUtc).toLocaleString(ar?'ar':'en')}</td></tr>)}</tbody></table>
+        <tbody>{data.Items.map(item=><tr key={item.Id} className="border-b"><td className="p-2">{item.TemplateKey.startsWith('test:')?(ar?'اختبار: ':'Test: ')+label(emailTemplateLabels[item.TemplateKey.slice(5)],item.TemplateKey.slice(5)):label(emailTemplateLabels[item.TemplateKey],item.TemplateKey)}</td><td className="p-2">{label(states[item.State],item.State)}</td><td className="p-2">{item.Attempts}</td><td className="p-2 whitespace-nowrap">{new Date(item.CreatedAtUtc).toLocaleString(ar?'ar':'en')}</td></tr>)}</tbody></table>
       </div>}
       <p className="text-xs text-muted-foreground">{ar?'قبول المزوّد لا يعني وصول الرسالة إلى صندوق البريد. لا تُعرض عناوين المستلمين أو رموز الاستعادة.':'Provider acceptance does not prove inbox delivery. Recipient addresses and reset tokens are never displayed.'}</p>
     </>}

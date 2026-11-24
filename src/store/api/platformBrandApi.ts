@@ -10,6 +10,18 @@ export interface BrandProfile {
   HelpUrl?: string | null; PrivacyUrl?: string | null; TermsUrl?: string | null; SocialLinks: PlatformSocialLink[];
 }
 export interface BrandView { Revision: number; WebsiteUrl: string; Profile: BrandProfile }
+export const emailTemplateLabels:Record<string,[string,string]>={
+  test:['اختبار الإرسال','Test email'],
+  'supervisor-invite':['دعوة مشرف','Supervisor invitation'],
+  'password-reset':['استعادة كلمة المرور','Password reset'],
+  'password-changed':['تغيير كلمة المرور','Password changed'],
+  welcome:['الترحيب','Welcome'],
+  'premium-granted':['تفعيل Premium','Premium activated'],
+  'premium-renewed':['تجديد Premium','Premium renewed'],
+  'premium-expired':['انتهاء Premium','Premium expired'],
+  announcement:['إشعار إداري','Announcement'],
+  'certificate-issued':['إصدار شهادة','Certificate issued'],
+};
 export interface EmailPreview { Subject: string; PlainText: string; Html: string }
 export interface EmailOutboxEntry {
   Id: string; TemplateKey: string; Locale: string; State: string; Attempts: number;
@@ -18,6 +30,7 @@ export interface EmailOutboxEntry {
 export interface EmailOutboxStatus {
   IsConfigured: boolean; IsTestMode: boolean; IsWorkerEnabled: boolean; RecoveryEnabled: boolean;
   Readiness?: {Missing:string[];CanQueueAdminTest:boolean;AdminRecoveryConfigured:boolean;ProviderConnectionVerified:boolean;InboxDeliveryVerified:boolean};
+  TestTemplates?:string[];
   AttemptLimit: number; ReservedAttempts: number;
   Counts: { State: string; Count: number }[]; Items: EmailOutboxEntry[];
 }
@@ -109,7 +122,7 @@ export const platformBrandApi = createApi({
       query: () => '/admin/platform/email-outbox',
       providesTags: ['EmailOutbox'],
     }),
-    queueTestEmail: builder.mutation<{ Queued: boolean }, { Language: string }>({
+    queueTestEmail: builder.mutation<{ Queued: boolean }, { Language: string;Template?:string }>({
       query: body => ({ url: '/admin/platform/email-outbox/test', method: 'POST', body }),
       invalidatesTags: (_result, error) => error ? [] : ['EmailOutbox'],
     }),
