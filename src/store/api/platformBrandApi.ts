@@ -17,6 +17,7 @@ export interface EmailOutboxEntry {
 }
 export interface EmailOutboxStatus {
   IsConfigured: boolean; IsTestMode: boolean; IsWorkerEnabled: boolean; RecoveryEnabled: boolean;
+  Readiness?: {Missing:string[];CanQueueAdminTest:boolean;AdminRecoveryConfigured:boolean;ProviderConnectionVerified:boolean;InboxDeliveryVerified:boolean};
   AttemptLimit: number; ReservedAttempts: number;
   Counts: { State: string; Count: number }[]; Items: EmailOutboxEntry[];
 }

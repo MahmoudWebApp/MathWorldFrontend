@@ -15,6 +15,17 @@ const templates: Record<string, [string,string]> = {
   'password-changed': ['تغيير كلمة المرور','Password changed'],
   test: ['اختبار الإرسال','Test email'],
 };
+const readinessLabels:Record<string,[string,string]>={
+  ProviderDisabled:['مزود البريد معطّل','Email provider disabled'],
+  ApiKeyMissing:['مفتاح Brevo غير مهيأ','Brevo API key missing'],
+  SenderMissingOrInvalid:['عنوان المرسل غير مهيأ أو غير صالح','Sender missing or invalid'],
+  ModeInvalid:['وضع الإرسال غير صالح','Invalid sending mode'],
+  WorkerDisabled:['عامل الإرسال معطّل','Outbox worker disabled'],
+  AdminTestRecipientUnavailable:['بريد الإدارة غير متاح ضمن قائمة الاختبار','Admin test recipient unavailable'],
+  RecoveryDisabled:['استعادة الحساب معطّلة','Account recovery disabled'],
+  RecoveryKeyMissingOrInvalid:['مفتاح الاستعادة غير مهيأ أو غير صالح','Recovery key missing or invalid'],
+  AdminRecoveryAddressNotVerifiedInConfig:['عنوان استعادة الإدارة غير معتمد في الإعدادات','Admin recovery address not verified in configuration'],
+};
 export function EmailOutboxPanel() {
   const ar = useLocale() === 'ar';
   const [language, setLanguage] = useState(ar ? 'ar' : 'en');
@@ -51,6 +62,12 @@ export function EmailOutboxPanel() {
         <p>{ar?'عامل الإرسال':'Worker'}: {data.IsWorkerEnabled?(ar?'مفعّل':'Enabled'):(ar?'معطّل':'Disabled')}</p>
         <p>{ar?'استعادة الحساب':'Recovery'}: {data.RecoveryEnabled&&data.IsWorkerEnabled?(ar?'مهيأة':'Configured'):(ar?'غير مفعّلة':'Disabled')}</p>
       </div>
+      {data.Readiness&&<section className="space-y-2 rounded-xl border p-3 text-sm">
+        <h3 className="font-semibold">{ar?'جاهزية إعداد البريد':'Email configuration readiness'}</h3>
+        {data.Readiness.Missing.length>0?<ul className="list-disc space-y-1 ps-5">{data.Readiness.Missing.map(code=><li key={code}>{label(readinessLabels[code],code)}</li>)}</ul>:<p>{ar?'الإعدادات المحلية مكتملة.':'Local configuration is complete.'}</p>}
+        <p>{ar?'استعادة حساب الإدارة':'Admin account recovery'}: {data.Readiness.AdminRecoveryConfigured?(ar?'مهيأة محلياً':'Locally configured'):(ar?'غير جاهزة':'Not ready')}</p>
+        <p className="text-muted-foreground">{ar?'هذا فحص إعدادات فقط. يجب تأكيد قبول المزوّد ووصول رسالة اختبار فعلية قبل اعتماد الإرسال.':'Configuration checks only. Confirm provider acceptance and actual test-email receipt before enabling live delivery.'}</p>
+      </section>}
       <div className="rounded-xl border p-3 text-sm">
         <p>{ar?'استهلاك محاولات الإرسال ضمن النافذة الاحتياطية':'Reserved-window sending attempts'}: {data.ReservedAttempts} / {data.AttemptLimit}</p>
         <div className="mt-2 h-2 overflow-hidden rounded bg-muted"><div className="h-full rounded bg-primary" style={{width:Math.min(100,100*data.ReservedAttempts/Math.max(1,data.AttemptLimit))+'%'}}/></div>
@@ -60,7 +77,7 @@ export function EmailOutboxPanel() {
         <p className="text-sm text-muted-foreground">{ar?'رسالة اختبار إلى بريد حساب الإدارة فقط، بشرط أن يكون ضمن قائمة الاختبار المسموحة.':'Test email to your own admin account only, provided its email is allowlisted.'}</p>
         <div className="flex flex-wrap gap-2">
           <select aria-label={ar?'لغة رسالة الاختبار':'Test email language'} className="rounded-xl border bg-background p-2" value={language} onChange={e=>setLanguage(e.target.value)}><option value="ar">العربية</option><option value="en">English</option></select>
-          <button type="button" disabled={isLoading||!data.IsConfigured||!data.IsTestMode||!data.IsWorkerEnabled} onClick={()=>void test()} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{isLoading?(ar?'جارٍ الإضافة…':'Queuing…'):(ar?'إرسال رسالة اختبار':'Queue test email')}</button>
+          <button type="button" disabled={isLoading||!data.IsConfigured||!data.IsTestMode||!data.IsWorkerEnabled||data.Readiness?.CanQueueAdminTest===false} onClick={()=>void test()} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{isLoading?(ar?'جارٍ الإضافة…':'Queuing…'):(ar?'إرسال رسالة اختبار':'Queue test email')}</button>
         </div>
         {message&&<p role="status" className="text-sm text-primary">{message}</p>}
         {testError&&<p role="alert" className="text-sm text-destructive">{testError}</p>}
