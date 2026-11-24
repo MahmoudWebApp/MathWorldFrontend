@@ -43,6 +43,8 @@ jobs:
         run: pnpm typecheck
       - name: Check grouped editorial import
         run: node scripts/check-editorial-batch-import.mjs
+      - name: Check stage-bound mapping proposal import
+        run: node scripts/check-track-proposal-import.mjs
       - name: Verify QA launch blocks the production API
         shell: bash
         run: |
