@@ -588,6 +588,10 @@ export const usersApi = createApi({
       query: ({Kind,CategoryId})=>({url:'/users/learning-sessions/current',params:{kind:Kind,...(CategoryId?{categoryId:CategoryId}:{})}}),
       keepUnusedDataFor:0,
     }),
+    getLearningSessionById: builder.query<LearningSessionState,string>({
+      query: id=>'/users/learning-sessions/'+id,
+      keepUnusedDataFor:0,
+    }),
     startLearningSession: builder.mutation<LearningSessionState,{RequestId:string;Kind:SessionKind;Count:number;CategoryId?:number}>({
       query: body=>({url:'/users/learning-sessions/start',method:'POST',body}),
     }),
@@ -802,7 +806,7 @@ export const usersApi = createApi({
       providesTags: ['User'],
     }),
 
-    getLearningJourney: builder.query<LearningJourney, number>({
+    getLearningJourney: builder.query<LearningJourney, number | void>({
       query: (stageId) => ({
         url: '/users/journey',
         params: { stageId },
@@ -1049,6 +1053,7 @@ export const usersApi = createApi({
 
 export const {
   useGetCurrentLearningSessionQuery,
+  useLazyGetLearningSessionByIdQuery,
   useStartLearningSessionMutation,
   useAnswerLearningSessionMutation,
   useRevealLearningSessionHintMutation,

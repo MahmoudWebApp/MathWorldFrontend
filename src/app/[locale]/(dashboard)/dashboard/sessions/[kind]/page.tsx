@@ -5,7 +5,7 @@ import {useLocale} from 'next-intl';
 import {Link} from '@/i18n/routing';
 import {LatexPreview} from '@/components/ui/LatexPreview';
 import {RichText} from '@/components/ui/RichText';
-import {useGetLearningJourneyQuery,useGetCurrentLearningSessionQuery,useStartLearningSessionMutation,useAnswerLearningSessionMutation,useRevealLearningSessionHintMutation,type SessionKind,type SessionScope,type LearningSessionState,type SessionAnswerBody,type SessionAnswerResult,type SessionHints} from '@/store/api/usersApi';
+import {useGetLearningJourneyQuery,useGetCurrentLearningSessionQuery,useLazyGetLearningSessionByIdQuery,useStartLearningSessionMutation,useAnswerLearningSessionMutation,useRevealLearningSessionHintMutation,type SessionKind,type SessionScope,type LearningSessionState,type SessionAnswerBody,type SessionAnswerResult,type SessionHints} from '@/store/api/usersApi';
 
 const button='rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground disabled:opacity-50';
 const secondary='rounded-xl border px-4 py-2 font-semibold disabled:opacity-50';
@@ -23,6 +23,7 @@ export default function SessionPage(){
 function SessionFlow({scope}:{scope:SessionScope}){
   const ar=useLocale()==='ar'; const kind:SessionKind=scope.Kind;
   const current=useGetCurrentLearningSessionQuery(scope,{refetchOnMountOrArgChange:true});
+  const [getById,byIdState]=useLazyGetLearningSessionByIdQuery();
   const [start,startState]=useStartLearningSessionMutation();
   const [answer,answerState]=useAnswerLearningSessionMutation();
   const [reveal,hintState]=useRevealLearningSessionHintMutation();
@@ -35,7 +36,7 @@ function SessionFlow({scope}:{scope:SessionScope}){
   const pending=useRef<SessionAnswerBody|null>(null);
   const starting=useRef<{RequestId:string;Count:number}|null>(null);
   const lock=useRef(false);
-  const busy=startState.isLoading||answerState.isLoading||hintState.isLoading||current.isFetching;
+  const busy=startState.isLoading||answerState.isLoading||hintState.isLoading||current.isFetching||byIdState.isFetching;
   const view=session??current.currentData??null;
   const q=view?.CurrentQuestion;
   const unavailable=current.isError&&status(current.error)!==404&&!session;
@@ -43,7 +44,7 @@ function SessionFlow({scope}:{scope:SessionScope}){
   function clear(){setResult(null);setSelected(null);setHints(null);setError('');pending.current=null;}
   async function reload(){
     if(lock.current)return;lock.current=true;
-    try{const fresh=await current.refetch().unwrap();setSession(fresh);clear();}
+    try{const fresh=view?await getById(view.Id,false).unwrap():await current.refetch().unwrap();setSession(fresh);clear();}
     catch(e){setError(message(e));}
     finally{lock.current=false;}
   }
