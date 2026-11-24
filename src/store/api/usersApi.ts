@@ -5,6 +5,16 @@ import { stagesApi } from './stagesApi';
 import type { DashboardData, ProblemPreview } from './types';
 import type { MasteryStatus } from './problemsApi';
 
+export type SessionKind = 'practice' | 'daily';
+export interface SessionScope { Kind: SessionKind; StageId: number; TrackId?: number | null; CategoryId?: number }
+export interface SessionQuestion { Id:number; CategoryId:number; TitleAr:string; TitleEn:string; QuestionTextAr:string; QuestionTextEn:string; Options:{Id:number; LatexCode:string; Order:number}[] }
+export interface LearningSessionState { Id:string; Kind:SessionKind; StageId:number; TrackId?:number|null; CategoryId?:number|null; Total:number; Completed:number; IsComplete:boolean; CurrentQuestion?:SessionQuestion|null; CanUseHints:boolean; HintsRevealed:number }
+export interface SessionSolution { Idea:string; FormulaLatex:string; Steps:string[]; Substitution:string; Result:string; Unit:string; Verification:string; CommonError:string }
+export interface SessionAnswerBody { RequestId:string; Position:number; ProblemId:number; SelectedOptionId:number }
+export interface SessionAnswerResult { SessionId:string; Position:number; ProblemId:number; RequestId:string; IsCorrect:boolean; AttemptNumber:number; PointsEarned:number; Completed:number; Total:number; IsComplete:boolean; UsedHint:boolean; IndependentFirstCorrect:boolean; CorrectOptionId?:number; DetailedSolutionAr?:string; DetailedSolutionEn?:string; SolutionStructure?:SessionSolution|null }
+export interface SessionHints { Available:boolean; RevealedCount:number; Hints:{Level:number;Text:string}[] }
+export interface SessionAchievements { PermanentSolvedProblems:number; PermanentPoints:number; CompletedPracticeSessions:number; CompletedDailyChallenges:number; CorrectSessionAnswers:number; UniqueSolvedProblems:number; IndependentFirstCorrect:number; AssistedCorrect:number; Badges:{Key:string;TitleAr:string;TitleEn:string;EarnedAtUtc:string}[] }
+
 export interface UserProfile {
   Id: number;
   FullName: string;
@@ -94,6 +104,8 @@ export interface LearningStage {
 
 export interface JourneyCategory {
   CategoryId: number;
+  PermanentSolvedProblems?: number;
+  PermanentPoints?: number;
   NameAr: string;
   NameEn: string;
   // Only the updated server returns this; undefined means not verified.
@@ -133,6 +145,9 @@ export interface PremiumProgressReport {
 
 export interface LearningJourney {
   StageId: number;
+  LearningSessionsEnabled?: boolean;
+  PermanentSolvedProblems?: number;
+  PermanentPoints?: number;
   TrackId?: number | null;
   NameAr: string;
   NameEn: string;
@@ -557,6 +572,7 @@ export const usersApi = createApi({
     'ErrorNotebook',
     'LearningStage',
     'LearningJourney',
+    'SessionAchievements',
     'Leaderboard',
     'Achievements',
     'PremiumAnalytics',
@@ -568,6 +584,24 @@ export const usersApi = createApi({
     'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
+    getCurrentLearningSession: builder.query<LearningSessionState,SessionScope>({
+      query: ({Kind,CategoryId})=>({url:'/users/learning-sessions/current',params:{kind:Kind,...(CategoryId?{categoryId:CategoryId}:{})}}),
+      keepUnusedDataFor:0,
+    }),
+    startLearningSession: builder.mutation<LearningSessionState,{RequestId:string;Kind:SessionKind;Count:number;CategoryId?:number}>({
+      query: body=>({url:'/users/learning-sessions/start',method:'POST',body}),
+    }),
+    answerLearningSession: builder.mutation<SessionAnswerResult,{Id:string;Body:SessionAnswerBody}>({
+      query: ({Id,Body})=>({url:'/users/learning-sessions/'+Id+'/answer',method:'POST',body:Body}),
+      invalidatesTags: result=>result?['SessionAchievements','LearningJourney','Leaderboard']:[],
+    }),
+    revealLearningSessionHint: builder.mutation<SessionHints,{Id:string;Position:number;ProblemId:number;Level:number}>({
+      query: ({Id,...body})=>({url:'/users/learning-sessions/'+Id+'/hints',method:'POST',body}),
+    }),
+    getSessionAchievements: builder.query<SessionAchievements,void>({
+      query:()=>'/users/learning-sessions/achievements',
+      providesTags:['SessionAchievements'],
+    }),
     getProfile: builder.query<UserProfile, void>({
       query: () => '/users/profile',
       providesTags: ['User'],
@@ -1014,6 +1048,11 @@ export const usersApi = createApi({
 });
 
 export const {
+  useGetCurrentLearningSessionQuery,
+  useStartLearningSessionMutation,
+  useAnswerLearningSessionMutation,
+  useRevealLearningSessionHintMutation,
+  useGetSessionAchievementsQuery,
   useGetLearningStageQuery,
   useSetLearningStageMutation,
   useGetLearningJourneyQuery,

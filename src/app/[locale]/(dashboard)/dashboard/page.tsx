@@ -9,6 +9,7 @@ import { useGetDashboardQuery, useGetLearningJourneyQuery } from '@/store/api/us
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { useGetTrackContinueQuery } from '@/store/api/stagesApi';
 import { useSearchProblemsQuery } from '@/store/api/problemsApi';
+import { LearningSessionCards, SessionBadges } from '@/components/dashboard/LearningSessionCards';
 import { StudentAchievementsPanel } from '@/components/dashboard/StudentAchievementsPanel';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { ProblemCard } from '@/components/problems/ProblemCard';
@@ -98,7 +99,7 @@ export default function UserDashboardPage() {
   const completion = Math.min(100, Math.max(0, journey?.CompletionPercent ?? 0));
   const stats = [
     { label: ar ? 'مسائل محلولة' : 'Solved', value: journey ? `${journey.SolvedProblems} ${ar ? 'من' : 'of'} ${journey.TotalProblems}` : '—', icon: Target },
-    { label: ar ? 'نقاط مكتسبة' : 'Earned points', value: journey?.TotalPoints ?? '—', icon: Trophy },
+    { label: ar ? 'نقاط مكتسبة' : 'Earned points', value: (journey?.LearningSessionsEnabled ? journey.PermanentPoints : journey?.TotalPoints) ?? '—', icon: Trophy },
     { label: ar ? 'مسائل مجرّبة' : 'Attempted', value: journey?.AttemptedProblems ?? '—', icon: BookOpen },
   ];
 
@@ -151,8 +152,9 @@ export default function UserDashboardPage() {
         </Link>
       </section>
 
+      {journey?.LearningSessionsEnabled === true && stageId > 0 && <LearningSessionCards stageId={stageId} trackId={trackId} premium={isPremium}/>}
       <div className="grid gap-5 lg:grid-cols-2">
-        <StudentAchievementsPanel compact />
+        <div className="space-y-4"><StudentAchievementsPanel compact />{journey?.LearningSessionsEnabled === true && <SessionBadges/>}</div>
         <section className="rounded-3xl border bg-card p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-extrabold">{ar ? 'آخر المسائل المحلولة' : 'Recently solved'}</h2>
