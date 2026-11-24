@@ -135,7 +135,7 @@ export const stagesApi = createApi({
     mapTrack:builder.mutation<{Revision:number},TrackMapping&{id:number;Revision:number}>({
       query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/mapping',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
     }),
-    publishTrack:builder.mutation<{Revision:number;IsPublished:boolean},{id:number;Revision:number;Publish:boolean}>({
+    publishTrack:builder.mutation<{Revision:number;IsPublished:boolean},{id:number;Revision:number;Publish:boolean;ConfirmPremiumOnlyCourse?:boolean}>({
       query:({id,...body})=>({url:'/admin/learning-tracks/'+id+'/publication',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack'],
     }),
     

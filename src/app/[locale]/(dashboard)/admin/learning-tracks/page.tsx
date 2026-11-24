@@ -11,7 +11,7 @@ const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50
 const field='w-full rounded-xl border bg-background p-2.5 text-sm';
 function message(e:unknown,ar:boolean){
   const code=(e as {data?:{Message?:string}})?.data?.Message;
-  const errors:Record<string,[string,string]>={TrackNotReady:['المسار غير جاهز: تحقق من المسائل والمهارات المنشورة وتغطية Free.','Track is not ready: check published skills, problems and Free coverage.'],ProblemPrimarySkillMismatch:['مسألة بلا مهارة أساسية مطابقة للتصنيف.','A problem lacks a matching primary skill.'],SkillCategoryMismatch:['مهارة لا تنتمي إلى الفئة المحددة.','Skill/category mismatch.'],CategoryStageMismatch:['فئة من مرحلة مختلفة.','Category/stage mismatch.'],TrackChanged:['تغير المسار، حدّث البيانات.','Track changed; refresh.'],UnpublishOrRefreshTrack:['ألغِ النشر أو حدّث البيانات أولاً.','Unpublish or refresh first.']};
+  const errors:Record<string,[string,string]>={TrackNotReady:['المسار غير جاهز: تحقق من المسائل والمهارات المنشورة وتغطية Free.','Track is not ready: check published skills, problems and Free coverage.'],PremiumOnlyCourseConfirmationRequired:['يجب تأكيد نشر هذا المساق للمشتركين فقط.','Confirm publication of this Premium-only course.'],ProblemPrimarySkillMismatch:['مسألة بلا مهارة أساسية مطابقة للتصنيف.','A problem lacks a matching primary skill.'],SkillCategoryMismatch:['مهارة لا تنتمي إلى الفئة المحددة.','Skill/category mismatch.'],CategoryStageMismatch:['فئة من مرحلة مختلفة.','Category/stage mismatch.'],TrackChanged:['تغير المسار، حدّث البيانات.','Track changed; refresh.'],UnpublishOrRefreshTrack:['ألغِ النشر أو حدّث البيانات أولاً.','Unpublish or refresh first.']};
   return code&&errors[code]?errors[code][ar?0:1]:ar?'تعذّر تنفيذ العملية. راجع البيانات.':'Request failed. Check the data.';
 }
 function MetadataEditor({track,ar,disabled}:{track:LearningTrack;ar:boolean;disabled:boolean}){
@@ -38,6 +38,8 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
   const [page,setPage]=useState(1);
   const [error,setError]=useState('');
   const [confirm,setConfirm]=useState(false);
+  const [confirmPremiumOnly,setConfirmPremiumOnly]=useState(false);
+  const premiumOnly=!t.IsPublished&&t.StageId===4&&t.Kind==='course'&&detail.Coverage.Problems>0&&detail.Coverage.FreeProblems===0;
   const [readingProposal,setReadingProposal]=useState(false);
   const [proposalNotice,setProposalNotice]=useState(false);
   const {data:inventory,isFetching,isError}=useGetTrackInventoryQuery({stageId:t.StageId,page,categoryId:category});
@@ -59,7 +61,7 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
     }finally{setReadingProposal(false);}
   }
   async function saveMapping(){setError('');try{await save({id:t.Id,Revision:t.Revision,...mapping}).unwrap();}catch(e){setError(message(e,ar));}}
-  async function publishTrack(){setError('');try{await publish({id:t.Id,Revision:t.Revision,Publish:!t.IsPublished}).unwrap();setConfirm(false);}catch(e){setError(message(e,ar));}}
+  async function publishTrack(){setError('');try{await publish({id:t.Id,Revision:t.Revision,Publish:!t.IsPublished,ConfirmPremiumOnlyCourse:premiumOnly&&confirmPremiumOnly}).unwrap();setConfirm(false);}catch(e){setError(message(e,ar));}}
   const name=(x:{NameAr:string;NameEn:string})=>ar?x.NameAr:x.NameEn;
   return <section className="space-y-4 rounded-2xl border bg-card p-4">
     <div className="flex flex-wrap justify-between gap-2"><h2 className="text-lg font-bold">{name(t)}</h2><span className="text-sm">{t.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</span></div>
@@ -90,8 +92,8 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
       <div className="flex items-center gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*100>=inventory.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>
     </>}
     <div className="flex flex-wrap gap-2"><button className={btn} disabled={disabled||!dirty} onClick={()=>void saveMapping()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الروابط':'Save mappings')}</button>
-    <button className={btn} disabled={dirty||saving||publishing||readingProposal} onClick={()=>setConfirm(true)}>{t.IsPublished?(ar?'إلغاء النشر':'Unpublish'):(ar?'نشر المسار':'Publish track')}</button></div>
-    {confirm&&<div className="rounded-xl border p-3 space-y-2"><p>{ar?(t.IsPublished?'إلغاء إظهار هذا المسار؟':'هل راجعت التصنيف والمحتوى؟ النشر لا يضيف مسائل جديدة.'):(t.IsPublished?'Hide this track?':'Have you reviewed the mapping and content? Publishing does not add new problems.')}</p><div className="flex gap-2"><button className={btn} disabled={publishing||dirty} onClick={()=>void publishTrack()}>{ar?'تأكيد':'Confirm'}</button><button className={btn} onClick={()=>setConfirm(false)}>{ar?'إلغاء':'Cancel'}</button></div></div>}
+    <button className={btn} disabled={dirty||saving||publishing||readingProposal} onClick={()=>{setConfirmPremiumOnly(false);setConfirm(true);}}>{t.IsPublished?(ar?'إلغاء النشر':'Unpublish'):(ar?'نشر المسار':'Publish track')}</button></div>
+    {confirm&&<div className="rounded-xl border p-3 space-y-2"><p>{ar?(t.IsPublished?'إلغاء إظهار هذا المسار؟':'هل راجعت التصنيف والمحتوى؟ النشر لا يضيف مسائل جديدة.'):(t.IsPublished?'Hide this track?':'Have you reviewed the mapping and content? Publishing does not add new problems.')}</p>{premiumOnly&&<label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={confirmPremiumOnly} onChange={e=>setConfirmPremiumOnly(e.target.checked)}/><span>{ar?'أوافق على إظهار المساق للجميع، مع إتاحة حل مسائله لمشتركي Premium فقط. لن تتغير الفئتان المجانيتان.':'I confirm the course is visible to everyone, but practice is available only to Premium subscribers. The two Free categories remain unchanged.'}</span></label>}<div className="flex gap-2"><button className={btn} disabled={publishing||dirty||(premiumOnly&&!confirmPremiumOnly)} onClick={()=>void publishTrack()}>{ar?'تأكيد':'Confirm'}</button><button className={btn} onClick={()=>setConfirm(false)}>{ar?'إلغاء':'Cancel'}</button></div></div>}
     {error&&<p role="alert" className="text-destructive text-sm">{error}</p>}
   </section>;
 }
