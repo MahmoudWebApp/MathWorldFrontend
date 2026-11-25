@@ -10,6 +10,8 @@ import type {RootState} from '@/store';
 import {readTrackProposal,MAX_TRACK_PROPOSAL_BYTES} from '@/components/curriculum/trackProposalImport';
 import {MathWorldLoading} from '@/components/ui/MathWorldLoading';
 import {Link} from '@/i18n/routing';
+import {useGetAdminCategoriesQuery} from '@/store/api/categoriesApi';
+import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
 import {useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useGetAdminStagesQuery,
   useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
 
@@ -103,7 +105,18 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
     {error&&<p role="alert" className="text-destructive text-sm">{error}</p>}
   </section>;
 }
-function TrackEditor({id,ar}:{id:number;ar:boolean}){const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:true});return <>{isFetching&&!data&&<MathWorldLoading/>}{isError&&<button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{data&&!isError&&<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>}</>}
+function TrackEditor({id,ar}:{id:number;ar:boolean}){
+ const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:60});
+ const categories=useGetAdminCategoriesQuery();
+ const [settings,setSettings]=useState(false);
+ if((isFetching&&!data)||categories.isLoading)return <MathWorldLoading/>;
+ if(isError||categories.isError||!data)return <button className={btn} onClick={()=>{void refetch();void categories.refetch();}}>{ar?'إعادة المحاولة':'Retry'}</button>;
+ const accent=getStageAccent({Id:data.Track.StageId});
+ const items=(categories.data??[]).filter(c=>data.CategoryIds.includes(c.Id)).sort((a,b)=>(a.Order??0)-(b.Order??0)||a.Id-b.Id);
+ return <section className="space-y-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-bold" style={{color:accent}}>{ar?data.Track.NameAr:data.Track.NameEn}</h2><button className={btn} onClick={()=>setSettings(v=>!v)}>{ar?'إعدادات الصف':'Grade settings'}</button></div>
+ {settings?<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>:<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{items.map(c=><Link key={c.Id} href={`/admin/editorial?stageId=${data.Track.StageId}&trackId=${id}&categoryId=${c.Id}`} style={{'--stage-accent':accent} as import('react').CSSProperties} className="mw-topic-surface rounded-xl border p-4 flex items-center gap-3">{c.Icon&&/^(https?:|\/)/.test(c.Icon)&&<StageTopicArtwork src={c.Icon} size={40} accent={accent}/>}<span className="font-bold mw-topic-ink">{ar?c.NameAr:c.NameEn}</span></Link>)}{!items.length&&<p className="text-muted-foreground">{ar?'لا توجد فئات مرتبطة بهذا الصف':'No categories assigned to this grade'}</p>}</div>}
+ </section>;
+}
 export default function LearningTracksPage(){
   const ar=useLocale()==='ar';const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
   const {data,isFetching,isError}=useGetAdminTracksQuery(undefined,{skip:!admin});
@@ -124,9 +137,9 @@ export default function LearningTracksPage(){
       <TabsList className="w-fit max-w-full"><TabsTrigger value="list">{ar?'الصفوف والمساقات':'Grades and courses'}</TabsTrigger><TabsTrigger value="create" disabled={selected!==null}>{ar?'إضافة صف أو مساق':'Add grade or course'}</TabsTrigger></TabsList>
       <TabsContent value="list" className="space-y-4">    
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسارات.':'Could not load tracks.'}</p>}
-    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties} className={'rounded-xl border mw-topic-surface p-3 text-start '+(selected===x.Track.Id?'ring-1 ring-[var(--stage-accent)]':'')}><p className="font-bold mw-topic-ink">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>
-    {selected!==null&&<><Link className={btn+" inline-flex"} href={`/admin/editorial?stageId=${data?.Items.find(x=>x.Track.Id===selected)?.Track.StageId??0}&trackId=${selected}`}>{ar?"عرض مسائل الصف":"View grade problems"}</Link><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق محرر المسار':'Close track editor'}</button><TrackEditor key={selected} id={selected} ar={ar}/></>}
+    {isFetching&&!data&&<MathWorldLoading/>}
+    {selected===null&&<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties} className={'rounded-xl border mw-topic-surface p-3 text-start '+(selected===x.Track.Id?'ring-1 ring-[var(--stage-accent)]':'')}><p className="font-bold mw-topic-ink">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>}
+    {selected!==null&&<><Link className={btn+" inline-flex"} href={`/admin/editorial?stageId=${data?.Items.find(x=>x.Track.Id===selected)?.Track.StageId??0}&trackId=${selected}`}>{ar?"عرض مسائل الصف":"View grade problems"}</Link><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'العودة للصفوف':'Back to grades'}</button><TrackEditor key={selected} id={selected} ar={ar}/></>}
 </TabsContent>
       <TabsContent value="create">    <section className="rounded-2xl border bg-card p-4"><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submit}>
       <label className="text-sm">{ar?'المرحلة':'Stage'}<select className={field} required value={stageId||''} onChange={e=>setStage(Number(e.target.value))}><option value="">{ar?'اختر':'Select'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select></label>
