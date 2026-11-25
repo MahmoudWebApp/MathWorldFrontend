@@ -27,7 +27,7 @@ export function LockedPremiumDialog({ children, topicName, featureName }: Locked
             <LockKeyhole className="h-6 w-6" aria-hidden="true" />
           </span>
           <DialogTitle className="text-xl font-extrabold leading-8">
-            {ar ? 'هذه الميزة متاحة لحساب Premium' : 'This feature is for Premium learners'}
+            {ar ? 'مميزات Premium' : 'Premium benefits'}
           </DialogTitle>
           <DialogDescription className="pt-1 text-sm leading-7">
             {featureName
@@ -48,9 +48,6 @@ export function LockedPremiumDialog({ children, topicName, featureName }: Locked
         <Link href="/dashboard/upgrade" className="flex min-h-12 items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-extrabold text-primary-foreground hover:opacity-90">
           {ar ? 'عرض المميزات وترقية الحساب' : 'See benefits and upgrade'}
         </Link>
-        <p className="text-center text-xs text-muted-foreground">
-          {ar ? 'التفعيل حالياً بكود من الإدارة، دون عرض أسعار.' : 'Activation currently uses an admin-issued code. No prices are shown.'}
-        </p>
       </DialogContent>
     </Dialog>
   );

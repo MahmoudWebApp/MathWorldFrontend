@@ -113,8 +113,8 @@ export function AdminWorkspaceShell({ children }: { children: React.ReactNode })
           title={collapsed ? (ar ? 'فتح القائمة' : 'Expand menu') : (ar ? 'طي القائمة' : 'Collapse menu')}
           className="mb-4 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/70 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
           {collapsed
-            ? <PanelRightOpen className="h-5 w-5" aria-hidden="true" />
-            : <PanelRightClose className="h-5 w-5" aria-hidden="true" />}
+            ? <PanelRightOpen className="h-5 w-5 ltr:rotate-180" aria-hidden="true" />
+            : <PanelRightClose className="h-5 w-5 ltr:rotate-180" aria-hidden="true" />}
           {!collapsed && <span className="text-xs font-bold">{ar ? 'طي القائمة' : 'Collapse'}</span>}
         </button>
         <AdminWorkspaceNavigation collapsed={collapsed} />

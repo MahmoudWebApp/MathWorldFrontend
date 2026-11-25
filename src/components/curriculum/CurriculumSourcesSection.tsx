@@ -43,8 +43,8 @@ export function CurriculumSourcesSection() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-12">
         <div className="mx-auto max-w-3xl text-center">
           <BookOpenCheck aria-hidden="true" className="mx-auto mb-4 h-7 w-7 text-primary" />
-          <h2 id="curriculum-references-title" className="brand-display-title text-2xl font-black tracking-tight sm:text-4xl">
-            {ar ? 'منهج رياضيات يستند إلى مراجع عالمية' : 'Mathematics guided by global references'}
+          <h2 id="curriculum-references-title" className="brand-display-title text-gradient-math text-2xl font-black tracking-tight sm:text-4xl">
+            {ar ? 'مراجع تعليم الرياضيات العالمية' : 'Global mathematics references'}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
             {ar
@@ -61,9 +61,9 @@ export function CurriculumSourcesSection() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={reference.fullName}
-              className="math-reference-wave group relative isolate flex min-h-28 flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-primary/20 bg-card/85 px-3 py-5 text-center shadow-sm transition-[border-color,transform,box-shadow] hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="math-reference-wave group relative isolate flex min-h-24 items-center justify-center gap-3 overflow-hidden rounded-2xl border border-primary/20 bg-card/85 px-3 py-5 text-center shadow-sm transition-[border-color,transform,box-shadow] hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <span aria-hidden="true" className="relative z-10 flex h-12 min-w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 px-2 font-serif text-lg font-black tracking-tight text-primary">
+              <span aria-hidden="true" className="relative z-10 flex h-9 min-w-9 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 px-2 font-serif text-base font-black tracking-tight text-primary">
                 {reference.shortMark}
               </span>
               <span className="relative z-10 flex items-center gap-1 text-xs font-bold sm:text-sm">
@@ -73,11 +73,7 @@ export function CurriculumSourcesSection() {
             </a>
           ))}
         </div>
-        <p className="mx-auto mt-5 max-w-3xl text-center text-xs leading-6 text-muted-foreground">
-          {ar
-            ? 'هذه مراجع نستفيد منها بشكل مستقل؛ لا يعني ذكرها اعتماد MathWorld أو شراكتها مع الجهات المذكورة.'
-            : 'We use these sources independently. Their mention does not imply MathWorld is accredited, affiliated with or endorsed by them.'}
-        </p>
+
       </div>
     </section>
   );

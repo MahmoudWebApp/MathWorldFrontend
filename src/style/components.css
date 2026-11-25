@@ -867,3 +867,17 @@ button.bg-primary:disabled {opacity:.5;}
 .mw-filter-search {padding-inline-start:2.5rem;}
 .mw-filter-bar {display:grid;gap:.75rem;align-items:end;border-radius:1rem;padding:1rem;}
 .mw-filter-field:disabled {opacity:.6;}
+
+/* A single focus treatment for native and shared form fields, including dialogs. */
+.brand-word-math { color: #5c24ff; }
+.brand-word-world { color: #ff2399; }
+.dark .brand-word-math { color: #a78bfa; }
+.dark .brand-word-world { color: #ff4dac; }
+:where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]):not([type=file]):not([type=button]):not([type=submit]), textarea, select):not(:disabled):hover { border-color: rgb(var(--sr-primary-rgb) / .45); }
+:where(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]):not([type=file]):not([type=button]):not([type=submit]), textarea, select):not(:disabled):focus { border-color: var(--color-ring); outline: none; box-shadow: 0 0 0 3px rgb(var(--sr-primary-rgb) / .12); }
+:where(input,textarea,select)[aria-invalid=true] { border-color: var(--color-destructive); }
+:where(input,textarea,select)[aria-invalid=true]:focus { border-color: var(--color-destructive); }
+.mw-stage-progress { appearance:none; height:.55rem; border-radius:999px; overflow:hidden; background:var(--color-muted); }
+.mw-stage-progress::-webkit-progress-bar { background:var(--color-muted); border-radius:999px; }
+.mw-stage-progress::-webkit-progress-value { background:var(--stage-accent); border-radius:999px; }
+.mw-stage-progress::-moz-progress-bar { background:var(--stage-accent); border-radius:999px; }
