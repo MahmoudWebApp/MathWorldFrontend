@@ -27,7 +27,7 @@ export function BrandLogo({ compact = false, className }: BrandLogoProps) {
         ) : <BrandMark className={compact ? 'h-11 w-11' : 'h-16 w-16'} />}
       </span>
       <span className={cn('brand-wordmark font-extrabold tracking-tight', compact ? 'hidden text-[1.2rem] min-[430px]:inline' : 'text-2xl')} dir="auto">
-        {name.toLowerCase()==='mathworld'?<span dir="ltr" aria-label="MathWorld"><span className="brand-word-math">Math</span><span className="brand-word-world">World</span></span>:<span style={{color:'var(--sr-primary)'}}>{name}</span>}
+        {name.toLowerCase()==='mathworld'?<span dir="ltr" aria-label="MathWorld" className="mw-brand-flow">MathWorld</span>:<span className="mw-brand-flow">{name}</span>}
       </span>
     </div>
   );
