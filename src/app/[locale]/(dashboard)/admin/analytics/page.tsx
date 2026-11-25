@@ -22,12 +22,13 @@ export default function AdminAnalyticsPage() {
   const isArabic = useLocale() === 'ar';
   const [days, setDays] = useState<(typeof periods)[number]>(30);
   const [chosenStage, setChosenStage] = useState<number | null>(null);
+  const [tab,setTab]=useState('overview');
   const { data: overview, isLoading, isError, refetch } =
     useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: 60 });
   const stageId = chosenStage ?? overview?.Stages[0]?.StageId ?? 0;
   const { data: detail, isLoading: loadingDetail, isError: detailError } =
     useGetAdminAnalyticsStageQuery({ stageId, days }, {
-      skip: stageId <= 0, refetchOnMountOrArgChange: true,
+      skip: stageId <= 0 || tab !== 'stages', refetchOnMountOrArgChange: 60,
     });
   const n = (value: number) => new Intl.NumberFormat(isArabic ? 'ar' : 'en').format(value);
   const labels = isArabic ? {
@@ -128,7 +129,7 @@ export default function AdminAnalyticsPage() {
         </div>
       ) : (
         <>
-          <Tabs defaultValue="overview" dir={isArabic?'rtl':'ltr'}>
+          <Tabs value={tab} onValueChange={setTab} dir={isArabic?'rtl':'ltr'}>
             <TabsList className="w-fit max-w-full"><TabsTrigger value="overview">{isArabic?'نظرة عامة':'Overview'}</TabsTrigger><TabsTrigger value="stages">{labels.stages}</TabsTrigger><TabsTrigger value="mistakes">{isArabic?'الأخطاء':'Mistakes'}</TabsTrigger></TabsList>
             <TabsContent value="overview">          <section aria-label={labels.total} className="mb-8 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {cards.map(({ label, value, icon: Icon }) => (
@@ -174,7 +175,7 @@ export default function AdminAnalyticsPage() {
 
 </TabsContent>
             <TabsContent value="stages" className="space-y-4">          <section aria-label={labels.stages}>
-            <h2 className="mb-4 text-xl font-bold">{labels.stages}</h2>
+            
             <div className="mb-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               {overview.Stages.map((stage) => (
                 <button type="button" key={stage.StageId}
