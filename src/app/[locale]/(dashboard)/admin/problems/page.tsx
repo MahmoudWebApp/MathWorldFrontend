@@ -978,28 +978,7 @@ function AdminProblemsPageContent() {
         ]}
         className="mb-6"
       />
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <WorkspacePageHeader title={t("admin.problems.title")} icon={BookOpen}/>
-          {filters.StageId && (
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-primary">
-              <Link href={`/${locale}/admin/categories?stageId=${filters.StageId}`}
-                className="inline-flex items-center gap-1 hover:underline">
-                <DirectionalChevron direction="back" className="h-4 w-4" />
-                {locale === "ar" ? "فئات المستوى" : "Stage categories"}
-              </Link>
-              <span className="text-muted-foreground">/</span>
-              <span>{getStageName(filters.StageId)}</span>
-              {filters.CategoryId && (
-                <>
-                  <span className="text-muted-foreground">/</span>
-                  <span>{getCategoryName(filters.CategoryId)}</span>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <WorkspacePageHeader title={t("admin.problems.title")} icon={BookOpen} actions={<div className="flex flex-wrap items-center gap-2">
           {!isSearching && totalProblems > 0 && (
             <span className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium">
               {t("admin.problems.total")}: {totalProblems}
@@ -1025,8 +1004,7 @@ function AdminProblemsPageContent() {
             <Plus className="h-5 w-5" />
             {t("admin.problems.addNew")}
           </Button>
-        </div>
-      </div>
+        </div>}/>
 
       <Card>
         <CardContent className="p-4">
