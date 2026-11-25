@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
   icons: {
     icon: [
-      { url: '/mathworld-favicon-v4.ico?v=4', sizes: 'any' },
-      { url: '/mathworld-favicon-32-v4.png?v=4', sizes: '32x32', type: 'image/png' },
-      { url: '/mathworld-favicon-16-v4.png?v=4', sizes: '16x16', type: 'image/png' },
+      { url: '/mathworld-favicon-v5.ico?v=5', sizes: 'any' },
+      { url: '/mathworld-favicon-32-v5.png?v=5', sizes: '32x32', type: 'image/png' },
+      { url: '/mathworld-favicon-16-v5.png?v=5', sizes: '16x16', type: 'image/png' },
     ],
     apple: [{ url: '/mathworld-apple-v4.png', sizes: '180x180', type: 'image/png' }],
   },
