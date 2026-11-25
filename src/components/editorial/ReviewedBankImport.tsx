@@ -2,6 +2,7 @@
 
 import {useRef,useState} from 'react';
 import {useLocale} from 'next-intl';
+import {HeldWordingImport} from './HeldWordingImport';
 import {LatexPreview} from '@/components/ui/LatexPreview';
 import {useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useEditorialActionMutation,type ReviewedBankInfo,type ReviewedBankBatch,type ReviewedBankKind,type ReviewedHintRow,type ReviewedDraftState,type AmendmentImportRow,type EditorialImportRow,type Bilingual} from '@/store/api/platformBrandApi';
 
@@ -124,6 +125,7 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
         {busy&&<button type="button" className={button} onClick={()=>{stop.current=true;}}>{ar?'إيقاف بعد العملية الحالية':'Stop after current operation'}</button>}
       </div>
     </>}
+    <HeldWordingImport onChanged={onChanged}/>
     {busy&&!status&&<p role="status">{ar?'جارٍ التحقق…':'Working…'}</p>}
     {status&&<p role="status" className="text-sm">{status}</p>}{error&&<p role="alert" className="break-words text-sm text-destructive">{error}</p>}
   </section>;
