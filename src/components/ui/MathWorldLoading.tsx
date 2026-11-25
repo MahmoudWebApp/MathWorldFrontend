@@ -42,7 +42,7 @@ export function MathWorldLoading({
         </div>
       </div>
       <div className="space-y-1">
-        <p className="font-extrabold tracking-tight" dir="ltr"><span style={{color:"#5C24FF"}}>Math</span><span style={{color:"#FF2399"}}>World</span></p>
+        <p className="brand-wordmark font-extrabold tracking-tight" dir="ltr"><span className="mw-brand-flow">MathWorld</span></p>
         <p className="text-sm text-muted-foreground">
           {copy}
         </p>
