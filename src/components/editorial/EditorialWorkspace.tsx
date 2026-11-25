@@ -2,7 +2,7 @@
 import { BookOpen } from 'lucide-react';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
-import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
+import { MathWorldLoading, MathWorldSkeleton } from '@/components/ui/MathWorldLoading';
 import {useEffect, useState} from 'react';
 import {useGetProblemQuery,useDeleteProblemMutation} from '@/store/api/problemsApi';
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/Dialog';
@@ -111,8 +111,8 @@ function BankReview({onOpen,stage,category,track}:{onOpen:(id:number)=>void;stag
   async function deleteLegacy(id:number){if(!window.confirm(ar?'تأكيد حذف هذه المسألة؟':'Confirm deletion of this problem?'))return;setError('');try{await remove(id).unwrap();await bank.refetch();}catch{setError(ar?'تعذّر الحذف. قد تكون المسألة مرتبطة بمحتوى أو بسجل طالب محمي.':'Deletion failed. The problem may be linked to protected content or learner history.');}}
   return <section className="space-y-3 rounded-xl border bg-card p-4">
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><input className={input} value={search} maxLength={120} onChange={e=>setSearch(e.target.value)} placeholder={ar?'بحث بالعنوان أو رقم المسألة':'Search title or problem ID'} aria-label={ar?'بحث المسائل':'Search problems'}/></div>
-    {bank.isError&&<button className={btn} onClick={()=>void bank.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{bank.isFetching&&<MathWorldLoading compact mode="filter"/>}
-    {bank.currentData&&!bank.isFetching&&!bank.isError&&<div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[620px] text-sm"><thead><tr><th className="p-3 text-start">ID</th><th className="p-3 text-start">{ar?'المسألة':'Problem'}</th><th className="p-3 text-start">{ar?'الحالة':'Status'}</th><th className="p-3 text-end">{ar?'الإجراء':'Action'}</th></tr></thead><tbody>
+    {bank.isError&&<button className={btn} onClick={()=>void bank.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{bank.isFetching&&(bank.currentData?<MathWorldLoading inline mode="filter"/>:<MathWorldSkeleton kind="table"/>)}
+    {bank.currentData&&!bank.isError&&<div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[620px] text-sm"><thead><tr><th className="p-3 text-start">ID</th><th className="p-3 text-start">{ar?'المسألة':'Problem'}</th><th className="p-3 text-start">{ar?'الحالة':'Status'}</th><th className="p-3 text-end">{ar?'الإجراء':'Action'}</th></tr></thead><tbody>
       {bank.currentData.Items.map(row=><tr key={row.Id} className="border-b mw-topic-row" style={{'--stage-accent':getStageAccent({Id:row.StageId})} as import('react').CSSProperties}><td className="p-3 tabular-nums text-muted-foreground">#{row.Id}</td><td className="p-3 font-semibold mw-topic-ink"><MathPreview value={ar?row.TitleAr:row.TitleEn}/></td><td className="p-3"><span className="inline-flex rounded-lg px-2 py-1 text-xs font-semibold bg-card">{row.HasOpenReview?(ar?'مراجعة مفتوحة':'Review open'):row.HasStructuredSolution?(ar?'حل منظم':'Structured solution'):(ar?'يحتاج مراجعة':'Needs review')}</span></td><td className="p-3 text-end"><div className="flex flex-wrap justify-end gap-1"><button type="button" className={btn} onClick={()=>setPreview(row.Id)}>{ar?'عرض':'View'}</button><button className={btn+' mw-topic-action whitespace-nowrap'} disabled={isLoading||(row.HasOpenReview&&!row.OpenDraftId)} onClick={()=>row.OpenDraftId?onOpen(row.OpenDraftId):void open(row.Id)}>{ar?'تعديل':'Edit'}</button>{!row.HasStructuredSolution&&!row.HasOpenReview&&<button type="button" className={btn+' text-destructive'} disabled={deleting} onClick={()=>void deleteLegacy(row.Id)}>{ar?'حذف':'Delete'}</button>}</div></td></tr>)}
       {!bank.currentData.Items.length&&<tr><td colSpan={4} className="p-6 text-center text-muted-foreground">{ar?'لا توجد مسائل مطابقة':'No matching problems'}</td></tr>}
     </tbody></table></div>}
@@ -132,8 +132,8 @@ export function EditorialWorkspace({admin,canSubmit,initialStage=0,initialCatego
   const props={admin,canSubmit,onSaved:()=>{if(!list.isUninitialized)void list.refetch();},onClose:()=>setSelected(null)};
   const requests=<div className="space-y-3">
     {list.isError&&<button className={btn} onClick={()=>void list.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}
-    {list.isFetching&&<MathWorldLoading compact mode="tab"/>}
-    {list.currentData&&!list.isFetching&&!list.isError&&<div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[560px] text-sm">
+    {list.isFetching&&(list.currentData?<MathWorldLoading inline mode="tab"/>:<MathWorldSkeleton kind="table"/>)}
+    {list.currentData&&!list.isError&&<div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[560px] text-sm">
       <thead><tr><th className="p-3 text-start">ID</th><th className="p-3 text-start">{ar?'المسألة':'Problem'}</th><th className="p-3 text-start">{ar?'الحالة':'Status'}</th><th className="p-3 text-end">{ar?'الإجراء':'Action'}</th></tr></thead><tbody>
       {list.currentData.Items.filter(d=>!admin||!['Published','Withdrawn'].includes(d.Status)).map(d=><tr key={d.Id} className="border-b"><td className="p-3 tabular-nums text-muted-foreground">#{d.SourceProblemId??d.Id}</td><td className="p-3 font-semibold"><MathPreview value={(ar?d.QuestionTextAr:d.QuestionTextEn)||(ar?'مسألة محفوظة':'Saved problem')}/></td><td className="p-3"><span className="rounded-lg bg-muted px-2 py-1 text-xs">{labels[d.Status]?.[ar?0:1]??d.Status}</span></td><td className="p-3 text-end"><button className={btn+' whitespace-nowrap'} onClick={()=>setSelected(d.Id)}>{admin?(ar?'مراجعة':'Review'):(ar?'عرض':'View')}</button></td></tr>)}
       {list.currentData.Items.length===0&&<tr><td colSpan={4} className="p-6 text-center text-muted-foreground">{admin?(ar?'لا توجد مسائل بانتظار المراجعة':'No problems awaiting review'):(ar?'لا توجد مسائل محفوظة':'No saved problems')}</td></tr>}
