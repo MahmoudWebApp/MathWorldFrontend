@@ -47,6 +47,9 @@ export function isSafeBrandLogo(value: string, origin: string): boolean {
 export function publishedSocialLinks(profile?: BrandProfile): PlatformSocialLink[] {
   return (profile?.SocialLinks ?? []).filter(link => link.IsEnabled && safeHttps(link.Url)).sort((a,b) => a.DisplayOrder-b.DisplayOrder);
 }
+export interface SupervisorStudent {Id:number;FullName:string;Email:string;IsActive:boolean;CurrentStageId:number|null;CurrentTrackId:number|null;CreatedAt:string;LastLoginAt?:string|null}
+export interface SupervisorStudentEvent {Id:number;Action:string;Resource:string;CreatedAtUtc:string}
+export interface SupervisorReports {Students:number;ActiveAccounts:number;Stages:{StageId:number|null;Students:number;ActiveAccounts:number}[];Attempts:{StageId:number;Attempts:number}[]}
 export interface SupervisorActivity {
   Id:number; ActorRole:string; Action:string; Resource:string; CreatedAtUtc:string;
 }
@@ -141,6 +144,15 @@ export const platformBrandApi = createApi({
     getSupervisorActivity: builder.query<{Total:number;Items:SupervisorActivity[]},{id:number;page:number}>({
       query:({id,page})=>({url:'/admin/supervisors/'+id+'/activity',params:{page}}),providesTags:['Supervisors'],
     }),
+    getSupervisorStudents: builder.query<{Total:number;Items:SupervisorStudent[]},number>({
+      query:page=>({url:'/supervisor/students',params:{page}}),keepUnusedDataFor:0,
+    }),
+    getSupervisorStudentActivity: builder.query<{Total:number;Items:SupervisorStudentEvent[]},{id:number;page:number}>({
+      query:({id,page})=>({url:'/supervisor/students/'+id+'/activity',params:{page}}),keepUnusedDataFor:0,
+    }),
+    getSupervisorReports: builder.query<SupervisorReports,void>({
+      query:()=>'/supervisor/reports',keepUnusedDataFor:0,
+    }),
     getSupervisorPermissions: builder.query<{Id:number;FullName:string;Permissions:number},void>({
       query:()=>'/supervisor/permissions',providesTags:['SupervisorPermissions'],
     }),
@@ -163,4 +175,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;

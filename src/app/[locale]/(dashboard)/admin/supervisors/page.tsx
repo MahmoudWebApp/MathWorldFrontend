@@ -20,9 +20,9 @@ function StaffActivity({id,ar}:{id:number;ar:boolean}) {
   const [page,setPage]=useState(1);
   const {data,isFetching,isError,refetch}=useGetSupervisorActivityQuery({id,page},{refetchOnMountOrArgChange:true});
   return <section className="space-y-2 border-t pt-3">
-    <div className="flex items-center justify-between"><h3 className="font-semibold">{ar?'سجل النشاط':'Activity history'}</h3><button className={button} disabled={isFetching} onClick={()=>void refetch()}>{ar?'تحديث':'Refresh'}</button></div>
+    <div className="flex items-center justify-between"><h3 className="font-semibold">{ar?'سجل النشاط':'Activity history'}</h3></div>
     {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
-    {isError&&<p role="alert">{ar?'تعذّر جلب السجل':'Could not load history'}</p>}
+    {isError&&<p role="alert">{ar?'تعذّر جلب السجل':'Could not load history'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&<>{data.Items.length===0&&<p className="text-sm text-muted-foreground">{ar?'لا توجد أحداث مسجلة':'No recorded events'}</p>}
     {data.Items.map(event=><div key={event.Id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-2 text-sm"><span>{ar?activityLabels[event.Action]??event.Action:event.Action} · {event.ActorRole==='Admin'?(ar?'المدير العام':'Super admin'):(ar?'المشرف':'Supervisor')}</span><time dateTime={event.CreatedAtUtc} className="text-xs text-muted-foreground">{new Date(event.CreatedAtUtc).toLocaleString(ar?'ar':'en')}</time></div>)}
     {data.Total>30&&<div className="flex gap-2"><button className={button} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><button className={button} disabled={page*30>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}</>}
@@ -59,8 +59,11 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
     </div>
     <div className="flex flex-wrap gap-4 text-sm">
       <label className="flex items-center gap-2"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} disabled={saving||sending}/>{ar?'الحساب مفعّل':'Account enabled'}</label>
-      <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&1)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|1:0)} disabled={saving||sending}/>{ar?'إنشاء وتحرير مسوداته':'Create/edit own drafts'}</label>
+      <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&1)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|1:p&~3)} disabled={saving||sending}/>{ar?'إضافة وتعديل مسائله':'Add/edit own problems'}</label>
       <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&2)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|2:p&~2)} disabled={saving||sending||(permissions&1)===0}/>{ar?'إرسال للمراجعة':'Submit for review'}</label>
+      <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&4)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|4:p&~12)} disabled={saving||sending}/>{ar?'عرض الطلاب':'View students'}</label>
+      <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&8)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|8:p&~8)} disabled={saving||sending||(permissions&4)===0}/>{ar?'عرض سجلات الطلاب':'View student activity'}</label>
+      <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&16)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|16:p&~16)} disabled={saving||sending}/>{ar?'عرض التقارير':'View reports'}</label>
     </div>
     <div className="flex flex-wrap gap-2">
       <button className={button} disabled={saving||sending||(active===row.IsActive&&permissions===row.Permissions)} onClick={()=>void save()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الصلاحيات':'Save permissions')}</button>
@@ -92,7 +95,7 @@ export default function SupervisorsPage(){
   if(!admin)return null;
   return <main className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
     <div><h1 className="text-2xl font-bold">{ar?'إدارة المشرفين':'Supervisor management'}</h1>
-    <p className="text-sm text-muted-foreground">{ar?'المدير العام وحده يدير الحسابات ويعتمد المحتوى. المشرف لا ينشر ولا يصل إلى حسابات الطلاب أو التقارير.':'Only the super administrator manages accounts and approves content. Supervisors cannot publish or access learner data or reports.'}</p></div>
+    <p className="text-sm text-muted-foreground">{ar?'الأدمن وحده يعتمد المحتوى ويدير صلاحيات المشرفين. امنح كل مشرف الوظائف التي يحتاجها فقط.':'Only the administrator approves content and manages staff permissions. Grant each supervisor only the access they need.'}</p></div>
     <form className="space-y-3 rounded-2xl border bg-card p-4" onSubmit={submit}>
       <h2 className="font-bold">{ar?'إضافة مشرف':'Add supervisor'}</h2>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -103,8 +106,8 @@ export default function SupervisorsPage(){
       <button type="submit" className="rounded-xl bg-primary px-4 py-2.5 text-primary-foreground disabled:opacity-50" disabled={isLoading}>{isLoading?(ar?'جارٍ الإنشاء…':'Creating…'):(ar?'إنشاء حساب':'Create account')}</button>
       {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     </form>
-    <div className="flex items-center justify-between"><h2 className="text-lg font-bold">{ar?'المشرفون':'Supervisors'} {data?('('+data.Total+')'):''}</h2><button className={button} disabled={isFetching} onClick={()=>void refetch()}>{ar?'تحديث':'Refresh'}</button></div>
-    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<p role="alert">{ar?'تعذّر تحميل المشرفين.':'Could not load supervisors.'}</p>}
+    <div className="flex items-center justify-between"><h2 className="text-lg font-bold">{ar?'المشرفون':'Supervisors'} {data?('('+data.Total+')'):''}</h2></div>
+    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<p role="alert">{ar?'تعذّر تحميل المشرفين.':'Could not load supervisors.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&<>{data.Items.length===0&&<p className="text-muted-foreground">{ar?'لا يوجد مشرفون حالياً.':'No supervisors yet.'}</p>}
       {data.Items.map(row=><StaffRow key={row.Id+'-'+row.Revision} row={row} ar={ar}/>)}
       {data.Total>50&&<div className="flex gap-2 items-center"><button className={button} disabled={page<=1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={button} disabled={page*50>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
