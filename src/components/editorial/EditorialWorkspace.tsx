@@ -182,7 +182,7 @@ function BankReview({onOpen,stage,category,setStage,setCategory}:{onOpen:(id:num
 export function EditorialWorkspace({admin,canSubmit,initialStage=0,initialCategory=0,create=false,initialTab='published',embedded=false}:{admin:boolean;canSubmit:boolean;initialStage?:number;initialCategory?:number;create?:boolean;initialTab?:'published'|'requests';embedded?:boolean}){
   const ar=useLocale()==='ar';const [page,setPage]=useState(1);const [selected,setSelected]=useState<number|'new'|null>(create?'new':null);
   const [stage,setStage]=useState(initialStage);const [category,setCategory]=useState(initialCategory);
-  const [tab,setTab]=useState(admin?initialTab:'requests');
+  const [tab,setTab]=useState<string>(admin?initialTab:'requests');
   const list=useGetEditorialDraftsQuery(admin?{page,activeOnly:true}:page,{refetchOnMountOrArgChange:true});
   useEffect(()=>{if(page>1&&list.currentData&&page>Math.max(1,Math.ceil(list.currentData.Total/30)))setPage(Math.max(1,Math.ceil(list.currentData.Total/30)));},[page,list.currentData]);
   const props={admin,canSubmit,onSaved:()=>{void list.refetch();},onClose:()=>setSelected(null)};
