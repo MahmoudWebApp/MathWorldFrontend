@@ -273,7 +273,7 @@ export default function AdminUsersPage() {
                       <p className="mt-1 break-all text-xs text-muted-foreground" dir="ltr">{u.Email}</p>
                     </div>
                     <span className={`shrink-0 rounded-md px-2 py-1 text-xs ${
-                      u.IsActive ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
+                      u.IsActive ? 'bg-gradient-to-r from-violet-600 to-pink-500 text-white' : 'bg-destructive/10 text-destructive'
                     }`}>{u.IsActive ? label.active : label.disabled}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
@@ -327,7 +327,7 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-3 text-muted-foreground">{expiry(u)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-2">
-                          <Link href={`/admin/users/${u.Id}`} className="font-semibold text-primary hover:underline">{label.detail}</Link>
+                          <Link href={`/admin/users/${u.Id}`} className="inline-flex rounded-lg border border-primary/25 px-3 py-2 font-semibold text-primary hover:bg-primary/10">{label.detail}</Link>
                           <button type="button" disabled={!u.IsActive || granting || searching || isFetching} onClick={() => openGrant([u.Id])}
                             className="text-xs font-semibold text-primary underline-offset-2 hover:underline disabled:opacity-40">
                             {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
