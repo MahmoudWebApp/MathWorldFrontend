@@ -11,7 +11,7 @@ const states: Record<string, [string,string]> = {
 };
 const readinessLabels:Record<string,[string,string]>={
   ProviderDisabled:['مزود البريد معطّل','Email provider disabled'],
-  ApiKeyMissing:['مفتاح Brevo غير مهيأ','Brevo API key missing'],
+  ApiKeyMissing:['بيانات اعتماد مزود البريد غير مهيأة','Email provider credentials missing'],
   SenderMissingOrInvalid:['عنوان المرسل غير مهيأ أو غير صالح','Sender missing or invalid'],
   ModeInvalid:['وضع الإرسال غير صالح','Invalid sending mode'],
   WorkerDisabled:['عامل الإرسال معطّل','Outbox worker disabled'],
@@ -31,6 +31,8 @@ export function EmailOutboxPanel() {
   const [testError, setTestError] = useState('');
   const { data, isFetching, isError, refetch } = useGetEmailOutboxQuery(undefined, {
     refetchOnMountOrArgChange: true,
+    pollingInterval: 15000,
+    skipPollingIfUnfocused: true,
   });
   const [send, {isLoading}] = useQueueTestEmailMutation();
   const label = (values: [string,string] | undefined, fallback: string) => values?.[ar ? 0 : 1] ?? fallback;
@@ -57,7 +59,7 @@ export function EmailOutboxPanel() {
     {isError&&<p role="alert" className="text-destructive">{ar?'تعذّر جلب حالة الإرسال.':'Could not load email status.'}</p>}
     {data&&!isError&&<>
       <div className="grid gap-2 sm:grid-cols-2 text-sm">
-        <p>{ar?'المزوّد':'Provider'}: Brevo — {data.IsConfigured?(ar?'الإعدادات موجودة':'Configured'):(ar?'غير مهيأ':'Not configured')}</p>
+        <p>{ar?'المزوّد':'Provider'}: {data.Provider ?? (ar?'غير محدد':'Not reported')} — {data.IsConfigured?(ar?'الإعدادات موجودة':'Configured'):(ar?'غير مهيأ':'Not configured')}</p>
         <p>{ar?'الوضع':'Mode'}: {data.IsTestMode?(ar?'اختبار':'Test'):(ar?'فعلي':'Live')}</p>
         <p>{ar?'عامل الإرسال':'Worker'}: {data.IsWorkerEnabled?(ar?'مفعّل':'Enabled'):(ar?'معطّل':'Disabled')}</p>
         <p>{ar?'استعادة الحساب':'Recovery'}: {data.RecoveryEnabled&&data.IsWorkerEnabled?(ar?'مهيأة':'Configured'):(ar?'غير مفعّلة':'Disabled')}</p>

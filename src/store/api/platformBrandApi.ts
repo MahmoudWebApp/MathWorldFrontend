@@ -28,6 +28,7 @@ export interface EmailOutboxEntry {
   CreatedAtUtc: string; NextRetryAtUtc: string; LastErrorCode?: string | null;
 }
 export interface EmailOutboxStatus {
+  Provider?: string;
   IsConfigured: boolean; IsTestMode: boolean; IsWorkerEnabled: boolean; RecoveryEnabled: boolean;
   Readiness?: {Missing:string[];CanQueueAdminTest:boolean;AdminRecoveryConfigured:boolean;ProviderConnectionVerified:boolean;InboxDeliveryVerified:boolean};
   TestTemplates?:string[];
