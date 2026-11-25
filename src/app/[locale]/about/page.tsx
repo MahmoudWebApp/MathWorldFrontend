@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { SITE_URL } from '@/lib/publicCurriculum';
 import { AboutHero } from '@/components/about/AboutHero';
 import { MissionSection } from '@/components/about/MissionSection';
 import { ValuesSection } from '@/components/about/ValuesSection';
@@ -17,7 +18,18 @@ export async function generateMetadata({
   
   return {
     title: t('title'),
-    description: t('description'), 
+    description: t('description'),
+    alternates: {
+      canonical: `${SITE_URL}/${locale}/about`,
+      languages: { ar: `${SITE_URL}/ar/about`, en: `${SITE_URL}/en/about` },
+    },
+    openGraph: {
+      title: t('title'),
+      description: t('description'),
+      siteName: 'MathWorld', type: 'website',
+      url: `${SITE_URL}/${locale}/about`,
+      images: [{ url: `${SITE_URL}/mathworld-logo.png`, alt: 'MathWorld' }],
+    },
   };
 }
 
