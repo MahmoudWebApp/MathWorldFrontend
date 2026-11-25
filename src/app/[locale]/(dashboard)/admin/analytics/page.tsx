@@ -23,10 +23,10 @@ export default function AdminAnalyticsPage() {
   const [days, setDays] = useState<(typeof periods)[number]>(30);
   const [chosenStage, setChosenStage] = useState<number | null>(null);
   const [tab,setTab]=useState('overview');
-  const { data: overview, isLoading, isError, refetch } =
+  const { currentData: overview, isFetching: isLoading, isError, refetch } =
     useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: 60 });
   const stageId = chosenStage ?? overview?.Stages[0]?.StageId ?? 0;
-  const { data: detail, isLoading: loadingDetail, isError: detailError } =
+  const { currentData: detail, isFetching: loadingDetail, isError: detailError } =
     useGetAdminAnalyticsStageQuery({ stageId, days }, {
       skip: stageId <= 0 || tab !== 'stages', refetchOnMountOrArgChange: 60,
     });
@@ -110,16 +110,8 @@ export default function AdminAnalyticsPage() {
         ))}
       </div>}/>
 
-      {isLoading ? (
-        <div role="status" aria-busy="true" aria-label={labels.loading} className="animate-pulse space-y-5">
-          <MathWorldLoading compact />
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-            {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-28 rounded-2xl bg-muted/60" />)}
-          </div>
-          <div className="grid gap-5 xl:grid-cols-2">
-            <div className="h-80 rounded-2xl bg-muted/60" /><div className="h-80 rounded-2xl bg-muted/60" />
-          </div>
-        </div>
+      {isLoading || (tab === "stages" && loadingDetail) ? (
+        <MathWorldLoading />
       ) : isError || !overview ? (
         <div role="alert" className="math-card mw-workspace-panel rounded-2xl border border-destructive/30 p-8">
           <p>{labels.error}</p>
@@ -147,6 +139,30 @@ export default function AdminAnalyticsPage() {
               <AdminActivityChart data={overview.DailyActivity ?? []} arabic={isArabic} height={280} />
             </section>
           </div>
+          <section className="math-card mw-workspace-panel mb-8 rounded-2xl border border-border p-5 md:p-6" aria-label={isArabic ? 'مقارنة نشاط المراحل' : 'Stage engagement comparison'}>
+            <h2 className="mb-1 text-lg font-bold">{isArabic ? 'مقارنة نشاط الطلاب عبر المراحل' : 'Student engagement across stages'}</h2>
+            <p className="mb-5 text-xs text-muted-foreground">{isArabic ? 'مقارنة المحاولات والإجابات الصحيحة خلال الفترة المختارة، بدل مقارنة عدد محتويات الموقع' : 'Actual student attempts and correct answers, not content inventory'}</p>
+            {overview.AttemptsInWindow === 0 ? (
+              <p className="py-12 text-center text-muted-foreground">{labels.noActivity}</p>
+            ) : (
+              <div className="w-full overflow-x-auto" role="region"
+                aria-label={isArabic ? 'مقارنة مراحل قابلة للتمرير أفقياً' : 'Scrollable stage comparison chart'}>
+                <div className="h-64 min-w-[580px]" dir="ltr">
+                  <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stageComparison} margin={{top: 8,right: 12,bottom: 12,left: -15}}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2}/>
+                    <XAxis dataKey="stage" tick={{fontSize: 11, fill: 'var(--color-muted-foreground)'}} interval={0} />
+                    <YAxis allowDecimals={false} tick={{fontSize: 11, fill: 'var(--color-muted-foreground)'}} />
+                    <Tooltip contentStyle={{ backgroundColor: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)", borderRadius: 12 }} labelStyle={{ color: "var(--color-foreground)" }} itemStyle={{ color: "var(--color-foreground)" }} /><Legend wrapperStyle={{ color: "var(--color-muted-foreground)" }} />
+                    <Bar dataKey="attempts" name={labels.attempts} fill="var(--color-brand-primary)" radius={[6,6,0,0]} maxBarSize={50}/>
+                    <Bar dataKey="correct" name={labels.correct} fill="var(--color-brand-secondary)" radius={[6,6,0,0]} maxBarSize={50}/>
+                  </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
+          </section>
+
 </TabsContent>
             <TabsContent value="mistakes" className="space-y-4">            <section className="math-card mw-workspace-panel min-w-0 rounded-2xl border border-border p-5">
               <h2 className="mb-4 text-lg font-bold">{labels.highestErrors}</h2>
@@ -199,30 +215,6 @@ export default function AdminAnalyticsPage() {
                 </button>
               ))}
             </div>
-          </section>
-
-          <section className="math-card mw-workspace-panel mb-8 rounded-2xl border border-border p-5 md:p-6" aria-label={isArabic ? 'مقارنة نشاط المراحل' : 'Stage engagement comparison'}>
-            <h2 className="mb-1 text-lg font-bold">{isArabic ? 'مقارنة نشاط الطلاب عبر المراحل' : 'Student engagement across stages'}</h2>
-            <p className="mb-5 text-xs text-muted-foreground">{isArabic ? 'مقارنة المحاولات والإجابات الصحيحة خلال الفترة المختارة، بدل مقارنة عدد محتويات الموقع' : 'Actual student attempts and correct answers, not content inventory'}</p>
-            {overview.AttemptsInWindow === 0 ? (
-              <p className="py-12 text-center text-muted-foreground">{labels.noActivity}</p>
-            ) : (
-              <div className="w-full overflow-x-auto" role="region"
-                aria-label={isArabic ? 'مقارنة مراحل قابلة للتمرير أفقياً' : 'Scrollable stage comparison chart'}>
-                <div className="h-64 min-w-[580px]" dir="ltr">
-                  <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stageComparison} margin={{top: 8,right: 12,bottom: 12,left: -15}}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2}/>
-                    <XAxis dataKey="stage" tick={{fontSize: 11, fill: 'var(--color-muted-foreground)'}} interval={0} />
-                    <YAxis allowDecimals={false} tick={{fontSize: 11, fill: 'var(--color-muted-foreground)'}} />
-                    <Tooltip contentStyle={{ backgroundColor: "var(--color-card)", color: "var(--color-foreground)", border: "1px solid var(--color-border)", borderRadius: 12 }} labelStyle={{ color: "var(--color-foreground)" }} itemStyle={{ color: "var(--color-foreground)" }} /><Legend wrapperStyle={{ color: "var(--color-muted-foreground)" }} />
-                    <Bar dataKey="attempts" name={labels.attempts} fill="var(--color-brand-primary)" radius={[6,6,0,0]} maxBarSize={50}/>
-                    <Bar dataKey="correct" name={labels.correct} fill="var(--color-brand-secondary)" radius={[6,6,0,0]} maxBarSize={50}/>
-                  </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
           </section>
 
           {loadingDetail ? (
