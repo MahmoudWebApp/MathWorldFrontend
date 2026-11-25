@@ -76,20 +76,14 @@ export default function NotificationsPage() {
   return (
     <main className="container mx-auto max-w-4xl space-y-6 px-4 py-8">
       
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <WorkspacePageHeader title={ar?'الإشعارات':'Notifications'} icon={BellRing}/>
-          
-        </div>
-        {inbox && inbox.UnreadCount > 0 && (
+      <WorkspacePageHeader title={ar?'الإشعارات':'Notifications'} icon={BellRing} actions={inbox && inbox.UnreadCount > 0 && (
           <button type="button" disabled={markingAll || isFetching}
             onClick={() => void markAllRead()}
             className="inline-flex items-center gap-2 rounded-xl border border-primary/30 px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary/5 disabled:opacity-50">
             <CheckCheck className="h-4 w-4" aria-hidden="true" />
             {markingAll ? (ar ? 'جارٍ التحديث…' : 'Updating…') : (ar ? 'تعليم الكل كمقروء' : 'Mark all as read')}
           </button>
-        )}
-      </div>
+        )}/>
       {actionError && <p role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm text-destructive">{actionError}</p>}
       <section className="overflow-hidden rounded-2xl border border-border bg-card" aria-label={ar ? 'قائمة الإشعارات' : 'Notifications list'}>
         {isLoading || (isFetching && !inbox) ? (
