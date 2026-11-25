@@ -84,12 +84,12 @@ export const ADMIN_NAV_ITEMS = [
     group: 'management',
   },
   {
-    href: '/admin/stages',
+    href: '/admin/learning-tracks',
     icon: GraduationCap,
     labelAr: 'المحتوى التعليمي',
     labelEn: 'Learning content',
-    descriptionAr: 'مرحلة ثم فئة ثم مسائل',
-    descriptionEn: 'Stage → topic → problems',
+    descriptionAr: 'صف أو مساق ثم فئة ثم مسائل',
+    descriptionEn: 'Grade or course → topic → problems',
     group: 'content',
   },
 ] as const;
@@ -104,7 +104,7 @@ function AdminMenuLink({
 }) {
   const active = item.href === '/admin'
     ? pathname === '/admin'
-    : pathname === item.href || pathname.startsWith(item.href + '/');
+    : pathname === item.href || pathname.startsWith(item.href + '/') || (item.group==='content'&&/^\/admin\/(editorial|problems|categories|stages)(\/|$)/.test(pathname));
   const Icon = item.icon;
   return (
     <Link
@@ -157,7 +157,7 @@ export function AdminWorkspaceNavigation({ collapsed = false }: { collapsed?: bo
   // than /admin/problems) to avoid two highlighted links at once.
   const selectedHref = [...ADMIN_NAV_ITEMS]
     .filter(item => pathname === item.href ||
-      (item.href !== '/admin' && pathname.startsWith(item.href + '/')))
+      (item.href !== '/admin' && pathname.startsWith(item.href + '/')) || (item.group==='content'&&/^\/admin\/(editorial|problems|categories|stages)(\/|$)/.test(pathname)))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   const groups = [
