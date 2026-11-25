@@ -45,9 +45,9 @@ export function EmailVerificationForm(){
       <h1 className="text-2xl font-bold">{ar?'تأكيد البريد الإلكتروني':'Verify your email'}</h1>
       {!ready?<p role="status">{ar?'جارٍ التحقق…':'Checking…'}</p>:success?<p role="status">{ar?'تم تأكيد البريد بنجاح. تابع إلى حسابك لإكمال اختيار المرحلة والصف أو المساق.':'Your email has been verified. Continue to your account to finish choosing your stage and grade or course.'}</p>
         :secret.current?<><p>{ar?'اضغط لتأكيد بريد حساب MathWorld. لن تتغير كلمة مرورك ولن يتم تسجيل دخولك تلقائياً.':'Confirm your MathWorld account email. This does not change your password or sign you in.'}</p><button type="button" disabled={busy} onClick={()=>void confirm()} className="w-full rounded-xl bg-primary p-3 text-primary-foreground disabled:opacity-60">{busy?(ar?'جارٍ التأكيد…':'Verifying…'):(ar?'تأكيد البريد':'Verify email')}</button></>
-        :!error&&<p role="alert">{ar?'الرابط غير صالح. اطلب رابطاً جديداً من إعدادات الحساب.':'Invalid link. Request a new link from account settings.'}</p>}
+        :!error&&<p role="alert">{ar?'الرابط غير صالح. تابع إلى صفحة التأكيد لطلب رابط جديد.':'Invalid link. Continue to the verification screen to request a new link.'}</p>}
       {error&&<p role="alert" className="text-destructive">{error}</p>}
-      <Link href={success?"/learning-stage":"/dashboard/settings"} className="block text-center text-primary underline">{success?(ar?'متابعة إلى حسابي':'Continue to my account'):(ar?'إعدادات الحساب':'Account settings')}</Link>
+      {ready&&!busy&&(success||!secret.current)&&<Link href="/learning-stage" className="block rounded-xl bg-primary p-3 text-center font-semibold text-primary-foreground">{success?(ar?'اختيار المرحلة التعليمية والمتابعة':'Choose learning stage and continue'):(ar?'العودة إلى تأكيد البريد':'Return to email verification')}</Link>}
     </section>
   </main>;
 }
