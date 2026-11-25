@@ -25,7 +25,8 @@ import {
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet,Shapes } from "lucide-react";
+import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 // Tooltip components are configured globally.
 import {
   Tooltip,
@@ -292,18 +293,7 @@ function AdminCategoriesPageContent() {
         ]}
         className="mb-6"
       />
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            {t("admin.categories.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {locale === "ar"
-              ? "اختر فئة من المستوى لعرض مسائلها وإضافة مسائل جديدة ضمنها."
-              : "Choose a category in this stage to view its questions and add new ones."}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <WorkspacePageHeader title={t("admin.categories.title")} icon={Shapes} actions={<div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin/categories/import"
             className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
@@ -319,8 +309,7 @@ function AdminCategoriesPageContent() {
           <Add className="h-4 w-4" />
           {t("admin.categories.addNew")}
         </Button>
-        </div>
-      </div>
+        </div>}/>
 
       {/* Free access stays exactly two categories, explicitly chosen and
           audited by web administrators for each educational stage. */}
@@ -335,7 +324,7 @@ function AdminCategoriesPageContent() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-center">
+            <table className="mw-workspace-table w-full min-w-[620px] text-center">
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <th className="p-4">{t("admin.categories.icon")}</th>
@@ -367,7 +356,7 @@ function AdminCategoriesPageContent() {
                             <img
                               src={category.Icon}
                               alt={category.NameAr}
-                              className="w-10 h-10 rounded-lg object-cover border mx-auto shadow-sm"
+                              className="mw-topic-icon-art w-10 h-10 rounded-lg border mx-auto shadow-sm"
                             />
                           </>
                         ) : (
@@ -384,7 +373,7 @@ function AdminCategoriesPageContent() {
                     </td>
                     <td className="p-4 font-bold text-start">
                       <Link
-                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}`}
+                        href={`/admin/editorial?stageId=${category.StageId}&categoryId=${category.Id}`}
                         className="inline-flex items-center gap-1.5 mw-topic-ink hover:underline"
                       >
                         {category.NameAr}
@@ -404,14 +393,14 @@ function AdminCategoriesPageContent() {
                     </td>
                     <td className="p-4 space-x-2 rtl:space-x-reverse whitespace-nowrap">
                       <Link
-                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}`}
+                        href={`/admin/editorial?stageId=${category.StageId}&categoryId=${category.Id}`}
                         className="mb-1 inline-flex items-center gap-1 rounded-lg border mw-topic-action px-2.5 py-2 text-xs font-semibold"
                       >
                         {locale === "ar" ? "عرض المسائل" : "View problems"}
                         <DirectionalChevron direction="forward" className="h-4 w-4" />
                       </Link>
                       <Link
-                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}&create=1`}
+                        href={`/admin/editorial?stageId=${category.StageId}&categoryId=${category.Id}&create=1`}
                         className="mb-1 inline-flex items-center gap-1 rounded-lg border mw-topic-action px-2.5 py-2 text-xs font-semibold"
                       >
                         {locale === "ar" ? "إضافة مسألة" : "Add problem"}

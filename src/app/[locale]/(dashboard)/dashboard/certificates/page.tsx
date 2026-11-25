@@ -15,7 +15,7 @@ export default function CertificatesPage(){
   const j=journey.currentData;
   if(journey.isLoading)return <main className="p-6" role="status">{ar?'جارٍ التحميل…':'Loading…'}</main>;
   return <main className="mx-auto max-w-4xl space-y-5 p-4 sm:p-6">
-    <header className="flex flex-wrap items-center justify-between gap-3"><WorkspacePageHeader title={ar?'الشهادات':'Certificates'} icon={Award}/><Link className="text-primary" href="/dashboard">{ar?'الرئيسية':'Dashboard'}</Link></header>
+    <WorkspacePageHeader title={ar?'الشهادات':'Certificates'} icon={Award}/>
     {journey.isError?<button onClick={()=>void journey.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>:!active?<p>{ar?'الشهادات غير متاحة حالياً.':'Certificates are not available.'}</p>:<>
       {list.isFetching&&!list.currentData?<p role="status">{ar?'جارٍ تحميل الشهادات…':'Loading certificates…'}</p>:list.isError?<button onClick={()=>void list.refetch()}>{ar?'إعادة تحميل الشهادات':'Reload certificates'}</button>:<>
         {list.currentData?.IssuanceEnabled&&plan.isError&&<div role="alert" className="rounded-xl border p-4"><p>{ar?'تعذّر التحقق من الاشتراك.':'Could not verify your subscription.'}</p><button className="text-primary underline" onClick={()=>void plan.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}

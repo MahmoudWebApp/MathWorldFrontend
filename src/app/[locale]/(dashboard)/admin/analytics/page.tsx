@@ -4,8 +4,8 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
-import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
+import { Tabs,TabsList,TabsTrigger,TabsContent } from '@/components/ui/Tabs';
+import { getStageAccent } from '@/lib/stageVisuals';
 import { Activity, AlertTriangle, CheckCircle2, Users, Trophy, ShieldCheck } from 'lucide-react';
 import { AdminActivityChart, AdminCategoryMistakesChart } from '@/components/admin/AdminActivityCharts';
 import {
@@ -22,12 +22,13 @@ export default function AdminAnalyticsPage() {
   const isArabic = useLocale() === 'ar';
   const [days, setDays] = useState<(typeof periods)[number]>(30);
   const [chosenStage, setChosenStage] = useState<number | null>(null);
+  const [tab,setTab]=useState('overview');
   const { data: overview, isLoading, isError, refetch } =
     useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: 60 });
   const stageId = chosenStage ?? overview?.Stages[0]?.StageId ?? 0;
   const { data: detail, isLoading: loadingDetail, isError: detailError } =
     useGetAdminAnalyticsStageQuery({ stageId, days }, {
-      skip: stageId <= 0, refetchOnMountOrArgChange: true,
+      skip: stageId <= 0 || tab !== 'stages', refetchOnMountOrArgChange: 60,
     });
   const n = (value: number) => new Intl.NumberFormat(isArabic ? 'ar' : 'en').format(value);
   const labels = isArabic ? {
@@ -94,23 +95,7 @@ export default function AdminAnalyticsPage() {
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <WorkspacePageHeader title={labels.title} icon={Activity}/>
-          
-          
-        </div>
-        
-      </div>
-
-      <div className="mb-5">
-        <Link href="/admin/users" className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
-          <Users className="h-4 w-4" aria-hidden />{labels.directory}
-          <DirectionalArrow direction="forward" className="h-4 w-4" />
-        </Link>
-      </div>
-
-      <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label={labels.activity}>
+      <WorkspacePageHeader title={labels.title} icon={Activity} actions={<div className="flex flex-wrap gap-2" role="group" aria-label={labels.activity}>
         {periods.map((option) => (
           <button
             type="button" key={option} aria-pressed={days === option}
@@ -123,7 +108,7 @@ export default function AdminAnalyticsPage() {
             {labels.days.replace('{days}', String(option))}
           </button>
         ))}
-      </div>
+      </div>}/>
 
       {isLoading ? (
         <div role="status" aria-busy="true" aria-label={labels.loading} className="animate-pulse space-y-5">
@@ -136,7 +121,7 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
       ) : isError || !overview ? (
-        <div role="alert" className="math-card rounded-2xl border border-destructive/30 p-8">
+        <div role="alert" className="math-card mw-workspace-panel rounded-2xl border border-destructive/30 p-8">
           <p>{labels.error}</p>
           <button type="button" onClick={() => refetch()} className="mt-3 rounded-xl bg-primary px-4 py-2 text-primary-foreground">
             {labels.retry}
@@ -144,9 +129,11 @@ export default function AdminAnalyticsPage() {
         </div>
       ) : (
         <>
-          <section aria-label={labels.total} className="mb-8 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+          <Tabs value={tab} onValueChange={setTab} dir={isArabic?'rtl':'ltr'}>
+            <TabsList className="w-fit max-w-full"><TabsTrigger value="overview">{isArabic?'نظرة عامة':'Overview'}</TabsTrigger><TabsTrigger value="stages">{labels.stages}</TabsTrigger><TabsTrigger value="mistakes">{isArabic?'الأخطاء':'Mistakes'}</TabsTrigger></TabsList>
+            <TabsContent value="overview">          <section aria-label={labels.total} className="mb-8 grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
             {cards.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="math-card min-w-0 rounded-2xl border border-border p-4">
+              <div key={label} className="math-card mw-workspace-panel min-w-0 rounded-2xl border border-border p-4">
                 <Icon className="mb-3 h-6 w-6 text-primary" aria-hidden />
                 <p className="break-words text-2xl font-bold tabular-nums">{value}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{label}</p>
@@ -154,17 +141,19 @@ export default function AdminAnalyticsPage() {
             ))}
           </section>
 
-          <div className="mb-8 grid gap-5 xl:grid-cols-2">
-            <section className="math-card min-w-0 rounded-2xl border border-border p-5">
+          <div className="mb-8 grid gap-5">
+            <section className="math-card mw-workspace-panel min-w-0 rounded-2xl border border-border p-5">
               <h2 className="mb-4 text-lg font-bold">{labels.globalTrend}</h2>
               <AdminActivityChart data={overview.DailyActivity ?? []} arabic={isArabic} height={280} />
             </section>
-            <section className="math-card min-w-0 rounded-2xl border border-border p-5">
+          </div>
+</TabsContent>
+            <TabsContent value="mistakes" className="space-y-4">            <section className="math-card mw-workspace-panel min-w-0 rounded-2xl border border-border p-5">
               <h2 className="mb-4 text-lg font-bold">{labels.highestErrors}</h2>
               <AdminCategoryMistakesChart categories={overview.MostMissedCategories ?? []} arabic={isArabic} height={280} />
             </section>
-          </div>
-          <section className="math-card mb-8 rounded-2xl border border-border p-5">
+
+          <section className="math-card mw-workspace-panel mb-8 rounded-2xl border border-border p-5">
             <h2 className="mb-4 text-lg font-bold">{labels.missedQuestions}</h2>
             {(overview.MostMissedProblems ?? []).length === 0 ? (
               <p className="py-8 text-center text-sm text-muted-foreground">{labels.noMistakes}</p>
@@ -184,18 +173,20 @@ export default function AdminAnalyticsPage() {
             )}
           </section>
 
-          <section aria-label={labels.stages}>
-            <h2 className="mb-4 text-xl font-bold">{labels.stages}</h2>
+</TabsContent>
+            <TabsContent value="stages" className="space-y-4">          <section aria-label={labels.stages}>
+            
             <div className="mb-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               {overview.Stages.map((stage) => (
                 <button type="button" key={stage.StageId}
                   onClick={() => setChosenStage(stage.StageId)}
                   aria-pressed={stageId === stage.StageId}
-                  className={`math-card rounded-2xl border p-5 text-start transition-colors ${
-                    stageId === stage.StageId ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
+                  style={{"--stage-accent":getStageAccent({Id:stage.StageId,NameAr:stage.NameAr,NameEn:stage.NameEn})} as import("react").CSSProperties}
+                  className={`math-card mw-workspace-panel rounded-2xl border p-5 text-start transition-colors ${
+                    stageId === stage.StageId ? 'mw-topic-surface ring-1 ring-[var(--stage-accent)]' : 'mw-topic-surface'
                   }`}
                 >
-                  <h3 className="text-lg font-bold">{displayStage(stage)}</h3>
+                  <h3 className="text-lg font-bold mw-topic-ink">{displayStage(stage)}</h3>
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div><strong className="text-xl">{n(stage.SelectedStudents)}</strong><p className="text-xs text-muted-foreground">{labels.selected}</p></div>
                     <div><strong className="text-xl">{n(stage.ActiveStudentsInWindow)}</strong><p className="text-xs text-muted-foreground">{labels.active}</p></div>
@@ -210,7 +201,7 @@ export default function AdminAnalyticsPage() {
             </div>
           </section>
 
-          <section className="math-card mb-8 rounded-2xl border border-border p-5 md:p-6" aria-label={isArabic ? 'مقارنة نشاط المراحل' : 'Stage engagement comparison'}>
+          <section className="math-card mw-workspace-panel mb-8 rounded-2xl border border-border p-5 md:p-6" aria-label={isArabic ? 'مقارنة نشاط المراحل' : 'Stage engagement comparison'}>
             <h2 className="mb-1 text-lg font-bold">{isArabic ? 'مقارنة نشاط الطلاب عبر المراحل' : 'Student engagement across stages'}</h2>
             <p className="mb-5 text-xs text-muted-foreground">{isArabic ? 'مقارنة المحاولات والإجابات الصحيحة خلال الفترة المختارة، بدل مقارنة عدد محتويات الموقع' : 'Actual student attempts and correct answers, not content inventory'}</p>
             {overview.AttemptsInWindow === 0 ? (
@@ -239,10 +230,10 @@ export default function AdminAnalyticsPage() {
               <div className="h-72 rounded-2xl bg-muted/60" /><div className="h-72 rounded-2xl bg-muted/60" />
             </div>
           ) : detailError || !detail ? (
-            <p role="alert" className="math-card rounded-2xl border border-destructive/30 p-6">{labels.error}</p>
+            <p role="alert" className="math-card mw-workspace-panel rounded-2xl border border-destructive/30 p-6">{labels.error}</p>
           ) : (
             <div className="grid gap-6 xl:grid-cols-2">
-              <section className="math-card rounded-2xl border border-border p-5">
+              <section className="math-card mw-workspace-panel rounded-2xl border border-border p-5">
                 <h2 className="mb-4 text-lg font-bold">{labels.activity} — {displayStage(detail.Summary)}</h2>
                 {detail.Summary.AttemptsInWindow === 0 ? (
                   <div className="py-20 text-center text-muted-foreground">{labels.noActivity}</div>
@@ -262,7 +253,7 @@ export default function AdminAnalyticsPage() {
                 )}
               </section>
 
-              <section className="math-card rounded-2xl border border-border p-5">
+              <section className="math-card mw-workspace-panel rounded-2xl border border-border p-5">
                 <h2 className="mb-2 text-lg font-bold">{isArabic ? 'التصنيفات الأعلى بالأخطاء' : 'Categories with the most errors'}</h2>
                 <p className="mb-4 text-xs text-muted-foreground">{isArabic ? 'تساعدك تحدد وين يحتاج الطلاب دعم ومراجعة' : 'Identify where learners need extra support'}</p>
                 {!weakCategories.length ? (
@@ -282,10 +273,10 @@ export default function AdminAnalyticsPage() {
                 )}
               </section>
 
-              <section className="math-card rounded-2xl border border-border p-5">
+              <section className="math-card mw-workspace-panel rounded-2xl border border-border p-5 xl:col-span-2">
                 <h2 className="mb-4 text-lg font-bold">{labels.categories}</h2>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[420px] text-sm">
+                  <table className="mw-workspace-table w-full min-w-[420px] text-sm">
                     <thead><tr className="border-b border-border text-muted-foreground">
                       <th className="px-2 py-3 text-start">{labels.categories}</th>
                       <th className="px-2 py-3 text-end">{labels.problems}</th>
@@ -304,13 +295,13 @@ export default function AdminAnalyticsPage() {
                 </div>
               </section>
 
-              <section className="math-card rounded-2xl border border-border p-5 xl:col-span-2">
+              <section className="math-card mw-workspace-panel rounded-2xl border border-border p-5 xl:col-span-2">
                 <h2 className="mb-4 text-lg font-bold">{labels.leaders}</h2>
                 {!detail.TopLearners.length ? (
                   <p className="py-8 text-center text-muted-foreground">{labels.empty}</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[600px] text-sm">
+                    <table className="mw-workspace-table w-full min-w-[600px] text-sm">
                       <thead><tr className="border-b border-border text-muted-foreground">
                         <th className="px-3 py-3 text-start">#</th>
                         <th className="px-3 py-3 text-start">{labels.learner}</th>
@@ -333,6 +324,8 @@ export default function AdminAnalyticsPage() {
               </section>
             </div>
           )}
+</TabsContent>
+          </Tabs>
         </>
       )}
     </main>

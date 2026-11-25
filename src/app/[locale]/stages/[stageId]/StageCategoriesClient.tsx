@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
@@ -80,7 +80,7 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
                   style={{ backgroundColor: `${stageAccent}20`, borderColor: `${stageAccent}55` }}
                 >
                   {iconUrl.startsWith('https://') || iconUrl.startsWith('/') ? (
-                    <Image src={iconUrl} alt="" unoptimized width={44} height={44} className="h-11 w-11 object-contain" />
+                    <StageTopicArtwork src={iconUrl} size={44} accent={stageAccent}/>
                   ) : iconUrl && iconUrl.length <= 4 ? (
                     <span aria-hidden="true" className="text-2xl">{iconUrl}</span>
                   ) : (

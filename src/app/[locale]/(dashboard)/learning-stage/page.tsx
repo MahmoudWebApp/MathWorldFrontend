@@ -1,5 +1,7 @@
 'use client';
 
+import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
+import { getStageAccent } from '@/lib/stageVisuals';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { BookOpen, CheckCircle2, Loader2 } from 'lucide-react';
@@ -91,14 +93,7 @@ export default function LearningStagePage() {
   return (
     <main className="container mx-auto min-h-[75vh] max-w-5xl px-4 py-10 md:py-16">
       <div className="brand-surface math-card rounded-3xl p-6 md:p-10">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
-            <BookOpen size={16} />
-            {copy.eyebrow}
-          </span>
-          <h1 className="brand-display-title text-gradient-math mb-3 text-3xl font-bold md:text-4xl">
-            {copy.title}
-          </h1>
+        <div><WorkspacePageHeader title={copy.title} icon={BookOpen}/>
           <p className="text-muted-foreground">{copy.description}</p>
         </div>
 
@@ -122,19 +117,20 @@ export default function LearningStagePage() {
                     key={stage.Id}
                     type="button"
                     aria-pressed={selected}
+                    style={{'--stage-accent':getStageAccent(stage)} as import('react').CSSProperties}
                     onClick={() => {setSelectedId(stage.Id);setTrackChoice(null);}}
                     className={[
-                      'flex min-h-28 items-center justify-between gap-4 rounded-2xl border p-5 text-start transition-all',
+                      'flex min-h-28 items-center justify-between gap-4 rounded-2xl border mw-topic-surface p-5 text-start transition-all',
                       selected
-                        ? 'border-primary bg-primary/10 shadow-[0_12px_30px_rgba(92,36,255,0.10)]'
-                        : 'border-border bg-card hover:border-primary/50',
+                        ? 'ring-1 ring-[var(--stage-accent)]'
+                        : '',
                     ].join(' ')}
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl mw-topic-action">
                         <BookOpen size={22} />
                       </span>
-                      <span className="text-lg font-semibold">
+                      <span className="text-lg font-semibold mw-topic-ink">
                         {isArabic ? stage.NameAr : stage.NameEn}
                       </span>
                     </div>
