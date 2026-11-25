@@ -1,6 +1,7 @@
 'use client';
 import {useRef, useState} from 'react';
 import {combineEditorialFiles, MAX_BATCH_BYTES, type BatchIssue} from './editorialBatchFiles';
+import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {useLocale} from 'next-intl';
 import {ReviewedBankImport} from './ReviewedBankImport';
 import {AmendmentBatchImport} from './AmendmentBatchImport';
@@ -27,13 +28,35 @@ function Wizard({initial,admin,canSubmit,onSaved,onClose}:{initial?:EditorialDra
   const [save,{isLoading:saving}]=useSaveEditorialDraftMutation();const [action,{isLoading:acting}]=useEditorialActionMutation();
   const inventory=useGetEditorialClassificationQuery(content.StageId);
   const amendment=!!draft?.SourceProblemId;
-  const busy=saving||acting;const editable=!draft||['Draft','NeedsChanges'].includes(draft.Status);const disabled=!editable||busy;
+  const [processing,setProcessing]=useState(false);
+  const busy=saving||acting||processing;const editable=!draft||['Draft','NeedsChanges'].includes(draft.Status);const disabled=!editable||busy;
   const steps=ar?['التصنيف','السؤال','الخيارات','التلميحات','طريقة الحل','المعاينة والمراجعة']:['Classification','Question','Options','Hints','Solution','Preview and review'];
   function patch(p:Partial<EditorialContent>){setContent(c=>({...c,...p}));setDirty(true);setMessage('');}
   function patchSolution(p:Partial<EditorialSolution>){patch({Solution:{...content.Solution,...p}});}
   function failure(e:unknown){const x=e as {data?:{message?:string;errors?:Record<string,string[]>}};const codes=x.data?.errors?.validation??[x.data?.message??'Request failed'];setError(codes.map(c=>errors[c]?.[ar?0:1]??c));}
   async function store(){setError([]);setMessage('');try{const d=await save({id:draft?.Id,Revision:draft?.Revision??0,Content:content}).unwrap();setDraft(d);setDirty(false);setMessage(ar?'تم حفظ المسودة':'Draft saved');onSaved(d.Id);return d;}catch(e){failure(e);return null;}}
   async function transition(name:'submit'|'review'|'publish'|'withdraw',confirm?:boolean){setError([]);setMessage('');if(!draft||dirty)return;try{const d=await action({id:draft.Id,Revision:draft.Revision,action:name,Note:note,Confirm:confirm}).unwrap();setDraft(d);setNote('');setMessage(ar?'تم تحديث حالة المسودة':'Draft status updated');onSaved(d.Id);}catch(e){failure(e);}}
+  async function completeProblem(){
+    if(busy||!canSubmit)return;
+    if(admin&&!window.confirm(ar?'تأكيد اعتماد ونشر المسألة للطلاب؟':'Confirm approval and publication to learners?'))return;
+    setProcessing(true);setError([]);setMessage('');
+    try{
+      let current=draft;
+      if(!current||dirty){const saved=await store();if(!saved)return;current=saved;}
+      if(!current)return;
+      if(['Draft','NeedsChanges'].includes(current.Status)){
+        current=await action({id:current.Id,Revision:current.Revision,action:'submit'}).unwrap();setDraft(current);onSaved(current.Id);
+      }
+      if(admin&&current.Status==='PendingReview'){
+        current=await action({id:current.Id,Revision:current.Revision,action:'review',Confirm:true,Note:note.trim()||(ar?'اعتماد مباشر بواسطة الأدمن':'Approved directly by administrator')}).unwrap();setDraft(current);onSaved(current.Id);
+      }
+      if(admin&&current.Status==='Approved'){
+        current=await action({id:current.Id,Revision:current.Revision,action:'publish',Confirm:true}).unwrap();setDraft(current);onSaved(current.Id);
+      }
+      if(current.Status!==(admin?'Published':'PendingReview'))throw Error('UnexpectedEditorialStatus');
+      setMessage(admin?(ar?'تم نشر المسألة بنجاح':'Problem published'):(ar?'تم إرسال المسألة للموافقة':'Problem submitted for approval'));setNote('');
+    }catch(e){failure(e);}finally{setProcessing(false);}
+  }
   const pick=(id:number,arr:number[])=>arr.includes(id)?arr.filter(x=>x!==id):[...arr,id];
   const n=(x:{NameAr:string;NameEn:string})=>ar?x.NameAr:x.NameEn;
   const showPair=(p:Bilingual)=>ar?p.Ar:p.En;
@@ -73,9 +96,9 @@ function Wizard({initial,admin,canSubmit,onSaved,onClose}:{initial?:EditorialDra
         {([['Substitution','التعويض','Substitution'],['Result','النتيجة','Result'],['Unit','الوحدة (بلا وحدة إن لم تنطبق)','Unit (unitless if not applicable)'],['Verification','التحقق','Verification'],['CommonError','الخطأ الشائع','Common error']] as const).map(([key,a,b])=><PairField key={key} label={ar?a:b} value={content.Solution[key]} onChange={v=>patchSolution({[key]:v})}/>)}</>}
     </fieldset>
     {step===5&&<div className="space-y-3 rounded-xl border p-4"><h3 className="font-bold">{showPair(content.Title)}</h3><MathPreview value={showPair(content.Question)}/>{content.Options.map((o,i)=><div className="rounded-lg border p-2" key={i}><LatexPreview latex={o.LatexCode}/>{o.IsCorrect&&<span className="ms-2 font-semibold text-emerald-600">{ar?'صحيح':'Correct'}</span>}{!o.IsCorrect&&<p className="text-sm">{o.ErrorType} · {showPair(o.Reason)}</p>}</div>)}<h4 className="font-bold">{ar?'التلميحات (معاينة إدارية فقط)':'Hints (editorial preview only)'}</h4>{content.Hints.map((h,i)=><MathPreview key={i} value={showPair(h)}/>)}<h4 className="font-bold">{ar?'طريقة الحل':'Solution'}</h4><MathPreview value={showPair(content.Solution.Idea)}/><LatexPreview latex={content.Solution.FormulaLatex} block/>{content.Solution.Steps.map((x,i)=><div key={i}>{i+1}. <MathPreview value={showPair(x)}/></div>)}{[content.Solution.Substitution,content.Solution.Result,content.Solution.Unit,content.Solution.Verification,content.Solution.CommonError].map((p,i)=><MathPreview key={i} value={showPair(p)}/>)}</div>}
-    <div className="flex flex-wrap gap-2"><button className={btn} disabled={step===0} onClick={()=>setStep(i=>i-1)}>{ar?'السابق':'Previous'}</button><button className={btn} disabled={step===5} onClick={()=>setStep(i=>i+1)}>{ar?'التالي':'Next'}</button>{editable&&<button className={btn} disabled={busy||(!dirty&&!!draft)} onClick={()=>void store()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ مسودة':'Save draft')}</button>}{editable&&canSubmit&&draft&&<button className={btn} disabled={busy||dirty} onClick={()=>void transition('submit')}>{ar?'إرسال للمراجعة':'Submit for review'}</button>}</div>
-    {dirty&&<p className="text-sm text-muted-foreground">{ar?'احفظ التغييرات قبل إرسال المسودة.':'Save changes before submitting.'}</p>}
-    {admin&&draft&&['PendingReview','Approved'].includes(draft.Status)&&<div className="space-y-2 rounded-xl border p-3"><label>{ar?'ملاحظات المراجع':'Review notes'}<textarea className={input} value={note} onChange={e=>setNote(e.target.value)}/></label><div className="flex flex-wrap gap-2"><button className={btn} disabled={busy||!note.trim()} onClick={()=>void transition('review',false)}>{ar?'إعادة للتعديل':'Return for changes'}</button>{draft.Status==='PendingReview'&&<button className={btn} disabled={busy||!note.trim()} onClick={()=>void transition('review',true)}>{ar?'اعتماد':'Approve'}</button>}{draft.Status==='Approved'&&<button className={btn} disabled={busy} onClick={()=>{if(window.confirm(ar?'تأكيد نشر المسألة للطلاب؟':'Confirm publication to learners?'))void transition('publish',true);}}>{ar?'نشر المسألة':'Publish problem'}</button>}</div></div>}
+    <div className="flex flex-wrap gap-2"><button className={btn} disabled={step===0} onClick={()=>setStep(i=>i-1)}>{ar?'السابق':'Previous'}</button><button className={btn} disabled={step===5} onClick={()=>setStep(i=>i+1)}>{ar?'التالي':'Next'}</button>{editable&&<button className={btn} disabled={busy||(!dirty&&!!draft)} onClick={()=>void store()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ للمتابعة لاحقاً':'Save for later')}</button>}{editable&&canSubmit&&<button className={btn+' sr-wave-button text-white'} disabled={busy} onClick={()=>void completeProblem()}>{admin?(ar?'حفظ ونشر':'Save and publish'):(ar?'إرسال للموافقة':'Submit for approval')}</button>}</div>
+    {dirty&&<p className="text-sm text-muted-foreground">{ar?'يمكنك حفظ المسألة للمتابعة لاحقاً، أو إرسالها مباشرة.':'Save for later or submit directly.'}</p>}
+    {admin&&draft&&['PendingReview','Approved'].includes(draft.Status)&&<div className="space-y-2 rounded-xl border p-3"><label>{ar?'ملاحظات المراجع':'Review notes'}<textarea className={input} value={note} onChange={e=>setNote(e.target.value)}/></label><div className="flex flex-wrap gap-2"><button className={btn} disabled={busy||!note.trim()} onClick={()=>void transition('review',false)}>{ar?'إعادة للتعديل':'Return for changes'}</button>{draft.Status==='PendingReview'&&<button className={btn+' sr-wave-button text-white'} disabled={busy} onClick={()=>void completeProblem()}>{ar?'موافقة ونشر':'Approve and publish'}</button>}{draft.Status==='Approved'&&<button className={btn} disabled={busy} onClick={()=>{if(window.confirm(ar?'تأكيد نشر المسألة للطلاب؟':'Confirm publication to learners?'))void transition('publish',true);}}>{ar?'نشر المسألة':'Publish problem'}</button>}</div></div>}
     {draft&&!dirty&&(editable||(admin&&['PendingReview','Approved'].includes(draft.Status)))&&<button className={btn} disabled={busy} onClick={()=>{const reason=window.prompt(ar?'سبب سحب المسودة (سيبقى السجل محفوظاً)':'Reason for withdrawing the draft (history is retained)');if(reason?.trim()){setNote(reason);void action({id:draft.Id,action:'withdraw',Revision:draft.Revision,Note:reason}).unwrap().then(d=>{setDraft(d);setNote('');onSaved(d.Id);}).catch(failure);}}}>{ar?'سحب المسودة':'Withdraw draft'}</button>}
     {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error.length>0&&<ul role="alert" className="list-inside list-disc text-sm text-destructive">{error.map((x,i)=><li key={i}>{x}</li>)}</ul>}
   </section>;
@@ -146,13 +169,12 @@ function BankReview({onOpen}:{onOpen:(id:number)=>void}){
   </section>;
 }
 export function EditorialWorkspace({admin,canSubmit}:{admin:boolean;canSubmit:boolean}){
-  const ar=useLocale()==='ar';const [page,setPage]=useState(1);const [selected,setSelected]=useState<number|'new'|null>(null);const [bank,setBank]=useState(false);
+  const ar=useLocale()==='ar';const [page,setPage]=useState(1);const [selected,setSelected]=useState<number|'new'|null>(null);
+  const [tab,setTab]=useState(admin?'published':'requests');
   const list=useGetEditorialDraftsQuery(page,{refetchOnMountOrArgChange:true});
   const props={admin,canSubmit,onSaved:()=>{void list.refetch();},onClose:()=>setSelected(null)};
-  return <div className="space-y-4"><div className="flex flex-wrap justify-between items-center gap-2"><h2 className="text-xl font-bold">{admin?(ar?'مسودات المحتوى':'Editorial drafts'):(ar?'مسوداتي':'My drafts')}</h2><button className={btn} disabled={selected!==null} onClick={()=>setSelected('new')}>{ar?'إضافة مسألة':'Add problem'}</button></div>
-    {selected===null&&<button className={btn} onClick={()=>setBank(v=>!v)}>{bank?(ar?'إخفاء البنك':'Hide bank'):(ar?'مراجعة المسائل المنشورة':'Review published problems')}</button>}
-    {selected===null&&admin&&<><ReviewedBankImport onChanged={()=>void list.refetch()}/><BatchImport/><AmendmentBatchImport/></>}
-    {selected===null&&bank&&<BankReview onOpen={id=>setSelected(id)}/>}
-    {selected==='new'?<Wizard {...props}/>:typeof selected==='number'?<Existing key={selected} id={selected} {...props}/>:<>{list.isError&&<button className={btn} onClick={()=>void list.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{list.isFetching&&!list.data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{list.currentData?.Items.length===0&&<p className="text-sm text-muted-foreground">{ar?'لا توجد مسودات بعد':'No drafts yet'}</p>}{list.currentData?.Items.map(d=><button key={d.Id} className="block w-full rounded-xl border bg-card p-3 text-start" onClick={()=>setSelected(d.Id)}><span className="font-semibold">#{d.Id} · {(ar?d.QuestionTextAr:d.QuestionTextEn)|| (ar?'مسودة جديدة':'New draft')}</span><span className="block text-sm text-muted-foreground">{labels[d.Status]?.[ar?0:1]??d.Status}</span></button>)}{(list.currentData?.Total??0)>30&&<div className="flex gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><button className={btn} disabled={page*30>=(list.currentData?.Total??0)} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}</>}
+  const requests=<div className="space-y-3">{list.isError&&<button className={btn} onClick={()=>void list.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{list.isFetching&&!list.data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{list.currentData?.Items.length===0&&<p className="text-sm text-muted-foreground">{ar?'لا توجد طلبات أو مسائل محفوظة بعد':'No requests or saved problems yet'}</p>}{list.currentData?.Items.map(d=><button key={d.Id} className="block w-full rounded-xl border bg-card p-3 text-start" onClick={()=>setSelected(d.Id)}><span className="font-semibold">#{d.Id} · {(ar?d.QuestionTextAr:d.QuestionTextEn)||(ar?'مسألة محفوظة':'Saved problem')}</span><span className="block text-sm text-muted-foreground">{labels[d.Status]?.[ar?0:1]??d.Status}</span></button>)}{(list.currentData?.Total??0)>30&&<div className="flex gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><button className={btn} disabled={page*30>=(list.currentData?.Total??0)} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}</div>;
+  return <div className="space-y-4"><div className="flex flex-wrap justify-between items-center gap-2"><h2 className="text-xl font-bold">{admin?(ar?'إدارة المسائل':'Problem management'):(ar?'مسائلي':'My problems')}</h2><button className={btn+' sr-wave-button text-white'} disabled={selected!==null} onClick={()=>setSelected('new')}>{ar?'إضافة مسألة':'Add problem'}</button></div>
+  {selected==='new'?<Wizard {...props}/>:typeof selected==='number'?<Existing key={selected} id={selected} {...props}/>:admin?<Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}><TabsList className="flex h-auto w-full flex-wrap justify-start gap-1"><TabsTrigger value="published">{ar?'المسائل المنشورة':'Published problems'}</TabsTrigger><TabsTrigger value="requests">{ar?'طلبات الاعتماد':'Approval requests'}</TabsTrigger><TabsTrigger value="import">{ar?'استيراد جماعي':'Bulk import'}</TabsTrigger></TabsList><TabsContent value="published"><BankReview onOpen={id=>setSelected(id)}/></TabsContent><TabsContent value="requests">{requests}</TabsContent><TabsContent value="import" className="space-y-4"><ReviewedBankImport onChanged={()=>void list.refetch()}/><details className="rounded-xl border p-4"><summary className="cursor-pointer font-semibold">{ar?'استيراد ملفات مخصصة':'Import custom files'}</summary><div className="mt-3 space-y-3"><BatchImport/><AmendmentBatchImport/></div></details></TabsContent></Tabs>:requests}
   </div>;
 }

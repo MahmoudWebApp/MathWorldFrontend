@@ -1,5 +1,7 @@
 'use client';
 
+import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
+import {Breadcrumbs} from '@/components/ui/Breadcrumbs';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
@@ -16,13 +18,6 @@ export default function SupervisorWorkspace(){
     <h1 className="text-2xl font-bold">{ar?'مساحة المشرف':'Supervisor workspace'}</h1>
     {isFetching&&!data&&<p role="status">{ar?'جارٍ التحقق من الصلاحيات…':'Checking permissions…'}</p>}
     {isError&&<div role="alert">{ar?'تعذّر التحقق من الصلاحيات.':'Could not verify permissions.'} <button className="text-primary underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}
-    {data&&!isError&&<section className="space-y-3 rounded-2xl border bg-card p-5">
-      <h2 className="font-bold">{data.FullName}</h2><p className="text-sm text-muted-foreground">{ar?'صلاحيات حسابك المعتمدة':'Your assigned permissions'}</p>
-      <p>{(data.Permissions&1)!==0?(ar?'مسموح: إنشاء وتحرير مسوداتك':'Allowed: create and edit your drafts'):(ar?'غير مسموح: تحرير المسودات':'Not allowed: edit drafts')}</p>
-      <p>{(data.Permissions&2)!==0?(ar?'مسموح: إرسال مسوداتك للمراجعة':'Allowed: submit drafts for review'):(ar?'غير مسموح: إرسال للمراجعة':'Not allowed: submit drafts')}</p>
-      <p className="text-sm text-muted-foreground">{ar?'نشر المحتوى واعتماده من اختصاص المدير العام.':'Publishing and approval are reserved for the super administrator.'}</p>
-    </section>}
-    {data&&!isError&&(data.Permissions&1)!==0&&<EditorialWorkspace admin={false} canSubmit={(data.Permissions&2)!==0}/>}
-    <ChangePasswordForm/>
+    {data&&!isError&&<><Breadcrumbs items={[{label:ar?'الرئيسية':'Home',href:'/supervisor'},{label:ar?'مساحة المشرف':'Supervisor workspace'}]}/><Tabs dir={ar?'rtl':'ltr'} defaultValue={(data.Permissions&1)!==0?'problems':'settings'}><TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">{(data.Permissions&1)!==0&&<TabsTrigger value="problems">{ar?'المسائل':'Problems'}</TabsTrigger>}<TabsTrigger value="settings">{ar?'إعدادات الحساب':'Account settings'}</TabsTrigger></TabsList>{(data.Permissions&1)!==0&&<TabsContent value="problems"><EditorialWorkspace admin={false} canSubmit={(data.Permissions&2)!==0}/></TabsContent>}<TabsContent value="settings"><ChangePasswordForm/></TabsContent></Tabs></>}
   </main>;
 }
