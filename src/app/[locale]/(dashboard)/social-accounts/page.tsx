@@ -90,13 +90,6 @@ export default function SocialAccountsPage() {
           <p className="mt-6 text-sm text-muted-foreground">{copy.inactive}</p>
         )}
         </TabsContent>{withinSettings&&<><TabsContent value="password"><ChangePasswordForm/></TabsContent><TabsContent value="email"><EmailPreferencesForm/></TabsContent><TabsContent value="privacy"><LeaderboardNamePreference/></TabsContent></>}</Tabs>
-        <Link
-          href="/dashboard"
-          className="mt-9 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-        >
-          <DirectionalArrow direction="back" />
-          {copy.back}
-        </Link>
       </section>
     </main>
   );
