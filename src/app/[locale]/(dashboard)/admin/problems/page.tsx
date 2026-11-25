@@ -1,4 +1,5 @@
 'use client';
+import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
 import { Suspense, useState, useEffect, useCallback, useRef } from "react";
@@ -979,10 +980,7 @@ function AdminProblemsPageContent() {
       />
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t("admin.problems.title")}</h1>
-          <p className="text-muted-foreground mt-1">
-            {t("admin.problems.subtitle")}
-          </p>
+          <WorkspacePageHeader title={t("admin.problems.title")} icon={BookOpen}/>
           {filters.StageId && (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-primary">
               <Link href={`/${locale}/admin/categories?stageId=${filters.StageId}`}
@@ -1066,7 +1064,7 @@ function AdminProblemsPageContent() {
             </div>
           )}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-center">
+            <table className="mw-workspace-table w-full min-w-[720px] text-center">
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <th className="p-5 font-semibold">ID</th>
