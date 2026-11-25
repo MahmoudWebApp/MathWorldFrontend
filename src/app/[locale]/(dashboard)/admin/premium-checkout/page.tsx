@@ -1,4 +1,6 @@
 'use client';
+import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
+import { Receipt } from 'lucide-react';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
 import { useState } from 'react';
@@ -40,9 +42,7 @@ export default function AdminPremiumCheckoutPage() {
     <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       
       <header className="space-y-2">
-        <h1 className="text-3xl font-extrabold">
-          {ar ? 'طلبات اشتراك Premium' : 'Premium checkout orders'}
-        </h1>
+        <WorkspacePageHeader title={ar?'طلبات اشتراك Premium':'Premium checkout orders'} icon={Receipt}/>
         <p className="text-sm text-muted-foreground">
           {ar ? 'مراجعة الطلبات والخصومات فقط. لا يمكن تأكيد الدفع أو تفعيل الاشتراك من هنا.'
             : 'Read-only order audit. This page cannot verify payments or activate subscriptions.'}
