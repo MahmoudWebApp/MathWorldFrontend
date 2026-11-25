@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { AuthCaptcha, useAuthCaptcha } from '@/components/auth/AuthCaptcha';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDispatch } from 'react-redux';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
@@ -49,6 +50,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const captcha = useAuthCaptcha();
+  const pending = useRef(false);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target;
@@ -57,6 +60,7 @@ export default function RegisterPage() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending.current || !captcha.ready) return;
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
@@ -64,11 +68,13 @@ export default function RegisterPage() {
       return;
     }
 
+    pending.current = true;
     try {
       const user = await register({
         FullName: formData.fullName.trim(),
         Email: formData.email.trim(),
         Password: formData.password,
+        CaptchaToken: captcha.token || undefined,
       }).unwrap();
 
       if (!user.Token) {
@@ -85,7 +91,7 @@ export default function RegisterPage() {
       setError(
         getApiErrorMessage(registerError, t('auth.register.generalError')),
       );
-    }
+    } finally { pending.current = false; captcha.reset(); }
   }
 
   return (
@@ -215,10 +221,11 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            <AuthCaptcha action="register" locale={locale} onToken={captcha.setToken} revision={captcha.revision}/>
             <Button
               type="submit"
               className="mt-2 w-full gap-2 rounded-xl py-2.5"
-              disabled={isLoading}
+              disabled={isLoading || !captcha.ready}
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
