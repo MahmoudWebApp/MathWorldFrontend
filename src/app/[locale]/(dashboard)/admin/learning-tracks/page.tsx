@@ -1,5 +1,6 @@
 'use client';
-import {useState} from 'react';
+import {Suspense,useState} from 'react';
+import {useSearchParams} from 'next/navigation';
 import {Link} from '@/i18n/routing';
 import {useGetAdminCategoriesQuery} from '@/store/api/categoriesApi';
 import {GraduationCap} from 'lucide-react';
@@ -119,14 +120,17 @@ function TrackEditor({id,ar}:{id:number;ar:boolean}){
  </div>}
  </section>;
 }
-export default function LearningTracksPage(){
+function LearningTracksContent(){
+  const params=useSearchParams();
+  const requestedStage=Number(params.get('stageId'));
+  const requestedTrack=Number(params.get('trackId'));
   const ar=useLocale()==='ar';const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
   const {data,isFetching,isError,refetch}=useGetAdminTracksQuery(undefined,{skip:!admin});
   const {data:stages,isLoading:stagesLoading,isError:stagesError,refetch:reloadStages}=useGetAdminStagesQuery(undefined,{skip:!admin});
-  const [selected,setSelected]=useState<number|null>(null);
-  const [stageFilter,setStageFilter]=useState(0);
+  const [selected,setSelected]=useState<number|null>(Number.isSafeInteger(requestedTrack)&&requestedTrack>0?requestedTrack:null);
+  const stageFilter=stages?.some(s=>s.Id===requestedStage)?requestedStage:0;
   const [tab,setTab]=useState('list');
-  const [stageId,setStage]=useState(0);const [kind,setKind]=useState<LearningTrack['Kind']>('course');
+  const [stageId,setStage]=useState(Number.isSafeInteger(requestedStage)&&requestedStage>0?requestedStage:0);const [kind,setKind]=useState<LearningTrack['Kind']>('course');
   const [code,setCode]=useState('');const [nameAr,setAr]=useState('');const [nameEn,setEn]=useState('');
   const [descAr,setDescAr]=useState('');const [descEn,setDescEn]=useState('');
   const [sort,setSort]=useState(1);const [error,setError]=useState('');
@@ -135,18 +139,20 @@ export default function LearningTracksPage(){
   if(!admin)return null;
   if((isFetching&&!data)||stagesLoading)return <MathWorldLoading className="min-h-[60vh]"/>;
   if(isError||stagesError)return <div role="alert" className="p-6">{ar?'تعذّر تحميل المحتوى التعليمي.':'Could not load learning content.'} <button className={btn} onClick={()=>{void refetch();void reloadStages();}}>{ar?'إعادة المحاولة':'Retry'}</button></div>;
+  if(!stageFilter)return <main className="p-6"><Link href="/admin/stages" className={btn}>{ar?'اختر المرحلة أولاً':'Choose a stage first'}</Link></main>;
+  const scopedTrack=selected!==null&&data?.Items.some(x=>x.Track.Id===selected&&x.Track.StageId===stageFilter)?selected:null;
   return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6">
-    <WorkspacePageHeader title={ar?'المحتوى التعليمي':'Learning content'} icon={GraduationCap} actions={<div className="flex flex-wrap gap-2"><Link className={btn} href="/admin/stages">{ar?'المراحل والفئات':'Stages and categories'}</Link><Link className={btn} href="/admin/editorial?tab=requests">{ar?'مسائل المشرفين للمراجعة':'Supervisor reviews'}</Link></div>}/>
+    <WorkspacePageHeader title={ar?(stages?.find(s=>s.Id===stageFilter)?.NameAr??'الصفوف والمساقات'):(stages?.find(s=>s.Id===stageFilter)?.NameEn??'Grades and courses')} icon={GraduationCap} actions={<div className="flex flex-wrap gap-2"><Link className={btn} href="/admin/stages">{ar?'المراحل':'Stages'}</Link><Link className={btn} href={'/admin/categories?stageId='+stageFilter}>{ar?'تعريفات فئات المرحلة':'Stage category definitions'}</Link></div>}/>
     {data&&!data.Enabled&&<p role="status" className="text-sm text-muted-foreground">{ar?'عرض المسارات للطلاب معطّل.':'Learner track catalog is disabled.'}</p>}
     <Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}>
       <TabsList className="w-fit max-w-full"><TabsTrigger value="list">{ar?'الصفوف والمساقات':'Grades and courses'}</TabsTrigger><TabsTrigger value="create" disabled={selected!==null}>{ar?'إضافة صف أو مساق':'Add grade or course'}</TabsTrigger></TabsList>
       <TabsContent value="list" className="space-y-4">    
-    <select aria-label={ar?'المرحلة':'Stage'} className={field+' max-w-xs'} value={stageFilter} onChange={e=>{setStageFilter(Number(e.target.value));setSelected(null);}}><option value={0}>{ar?'كل المراحل':'All stages'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select>
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.filter(x=>!stageFilter||x.Track.StageId===stageFilter).map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties} className={'rounded-xl border mw-topic-surface p-3 text-start '+(selected===x.Track.Id?'ring-1 ring-[var(--stage-accent)]':'')}><p className="font-bold mw-topic-ink">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>
-    {selected!==null&&<><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق الصف أو المساق':'Close grade or course'}</button><TrackEditor key={selected} id={selected} ar={ar}/></>}
+
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.filter(x=>x.Track.StageId===stageFilter).map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties} className={'rounded-xl border mw-topic-surface p-3 text-start '+(selected===x.Track.Id?'ring-1 ring-[var(--stage-accent)]':'')}><p className="font-bold mw-topic-ink">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>
+    {scopedTrack!==null&&<><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق الصف أو المساق':'Close grade or course'}</button><TrackEditor key={scopedTrack} id={scopedTrack} ar={ar}/></>}
 </TabsContent>
       <TabsContent value="create">    <section className="rounded-2xl border bg-card p-4"><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submit}>
-      <label className="text-sm">{ar?'المرحلة':'Stage'}<select className={field} required value={stageId||''} onChange={e=>setStage(Number(e.target.value))}><option value="">{ar?'اختر':'Select'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select></label>
+      <label className="text-sm">{ar?'المرحلة':'Stage'}<select className={field} required value={stageId||''} disabled onChange={e=>setStage(Number(e.target.value))}><option value="">{ar?'اختر':'Select'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select></label>
       <label className="text-sm">{ar?'النوع':'Kind'}<select className={field} value={kind} onChange={e=>setKind(e.target.value as LearningTrack['Kind'])}><option value="grade">{ar?'صف':'Grade'}</option><option value="course">{ar?'مساق':'Course'}</option></select></label>
       <label className="text-sm">{ar?'الرمز الثابت':'Stable code'}<input className={field} required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} value={code} onChange={e=>setCode(e.target.value)}/></label>
       <label className="text-sm">{ar?'الترتيب':'Order'}<input className={field} type="number" min={0} max={10000} value={sort} onChange={e=>setSort(Number(e.target.value))}/></label>
@@ -161,3 +167,5 @@ export default function LearningTracksPage(){
     </Tabs>
   </main>;
 }
+
+export default function LearningTracksPage(){return <Suspense fallback={<MathWorldLoading compact/>}><LearningTracksContent/></Suspense>;}

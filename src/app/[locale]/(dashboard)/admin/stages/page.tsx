@@ -165,7 +165,7 @@ export default function AdminStagesPage() {
                         <span className="inline-flex items-center gap-2">
                           <StageIconBadge stage={stage} size="xs" />
                           <Link
-                            href={`/admin/categories?stageId=${stage.Id}`}
+                            href={`/admin/learning-tracks?stageId=${stage.Id}`}
                             className="inline-flex items-center gap-1.5 font-bold mw-topic-ink hover:underline"
                           >
                             {stage.NameAr}
@@ -183,10 +183,10 @@ export default function AdminStagesPage() {
                       </td>
                       <td className="p-4 space-x-2 rtl:space-x-reverse">
                         <Link
-                          href={`/admin/categories?stageId=${stage.Id}`}
+                          href={`/admin/learning-tracks?stageId=${stage.Id}`}
                           className="mb-2 inline-flex items-center gap-1.5 rounded-lg border mw-topic-action px-3 py-2 text-xs font-bold sm:mb-0"
                         >
-                          {ar ? "عرض الفئات" : "View categories"}
+                          {ar ? "عرض الصفوف والمساقات" : "View grades and courses"}
                           <DirectionalChevron direction="forward" className="h-4 w-4" />
                         </Link>
                         <Button
