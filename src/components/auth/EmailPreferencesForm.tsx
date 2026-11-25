@@ -30,7 +30,6 @@ function Preferences({userId}:{userId:number}) {
   return <section className="space-y-3 rounded-2xl border bg-card p-4">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <h2 className="font-bold">{ar?'تفضيلات البريد الإلكتروني':'Email preferences'}</h2>
-      <button type="button" disabled={isFetching||requesting} className="rounded-lg border px-3 py-2 text-sm" onClick={()=>void refetch()}>{ar?'تحديث':'Refresh'}</button>
     </div>
     <p className="text-sm text-muted-foreground">{ar?'إشعارات المنصة تبقى متاحة داخل حسابك. هذه الخيارات للرسائل الإضافية فقط ولا تؤثر على رسائل الأمان.':'In-app notifications remain available. These choices apply only to optional emails, not security messages.'}</p>
     {isError?<div role="alert"><p>{ar?'تعذّر تحميل التفضيلات.':'Could not load preferences.'}</p><button type="button" className="mt-2 underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>

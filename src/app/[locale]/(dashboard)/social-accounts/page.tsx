@@ -5,7 +5,7 @@ import { Tabs,TabsList,TabsTrigger,TabsContent } from '@/components/ui/Tabs';
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
-import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
+import { LeaderboardNamePreference } from '@/components/auth/LeaderboardNamePreference';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons';
 import { EmailPreferencesForm } from '@/components/auth/EmailPreferencesForm';
@@ -46,7 +46,7 @@ export default function SocialAccountsPage() {
     <main className="container mx-auto min-h-[70vh] max-w-3xl px-4 py-12">
       <section className="brand-surface math-card rounded-3xl p-6 md:p-10">
         <WorkspacePageHeader title={copy.title} icon={ShieldCheck}/>
-        <Tabs defaultValue="connections" dir={locale==="ar"?"rtl":"ltr"}><TabsList className="mb-5 flex h-auto w-full flex-wrap justify-start gap-1">{withinSettings&&<TabsTrigger value="stage">{locale==="ar"?"المرحلة التعليمية":"Learning stage"}</TabsTrigger>}<TabsTrigger value="connections">{locale==="ar"?"ربط الحساب":"Connections"}</TabsTrigger>{withinSettings&&<><TabsTrigger value="password">{locale==="ar"?"كلمة المرور":"Password"}</TabsTrigger><TabsTrigger value="email">{locale==="ar"?"البريد الإلكتروني":"Email"}</TabsTrigger></>}</TabsList>
+        <Tabs defaultValue="connections" dir={locale==="ar"?"rtl":"ltr"}><TabsList className="mb-5 flex h-auto w-full flex-wrap justify-start gap-1">{withinSettings&&<TabsTrigger value="stage">{locale==="ar"?"المرحلة التعليمية":"Learning stage"}</TabsTrigger>}<TabsTrigger value="connections">{locale==="ar"?"ربط الحساب":"Connections"}</TabsTrigger>{withinSettings&&<><TabsTrigger value="password">{locale==="ar"?"كلمة المرور":"Password"}</TabsTrigger><TabsTrigger value="email">{locale==="ar"?"البريد الإلكتروني":"Email"}</TabsTrigger><TabsTrigger value="privacy">{locale==="ar"?"الخصوصية":"Privacy"}</TabsTrigger></>}</TabsList>
         {withinSettings&&<TabsContent value="stage">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-card p-4">
             <div>
@@ -89,7 +89,7 @@ export default function SocialAccountsPage() {
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">{copy.inactive}</p>
         )}
-        </TabsContent>{withinSettings&&<><TabsContent value="password"><ChangePasswordForm/></TabsContent><TabsContent value="email"><EmailPreferencesForm/></TabsContent></>}</Tabs>
+        </TabsContent>{withinSettings&&<><TabsContent value="password"><ChangePasswordForm/></TabsContent><TabsContent value="email"><EmailPreferencesForm/></TabsContent><TabsContent value="privacy"><LeaderboardNamePreference/></TabsContent></>}</Tabs>
         <Link
           href="/dashboard"
           className="mt-9 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
