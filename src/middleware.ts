@@ -66,6 +66,7 @@ function startsWithAny(pathname: string, paths: string[]) {
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (pathname === '/captcha-challenge') return NextResponse.next();
   const segments = pathname.split('/');
   const requestedLocale = segments[1];
   const locale = routing.locales.includes(

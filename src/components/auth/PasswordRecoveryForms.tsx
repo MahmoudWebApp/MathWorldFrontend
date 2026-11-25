@@ -6,19 +6,20 @@ import { Link } from '@/i18n/routing';
 import { LockKeyhole, Mail } from 'lucide-react';
 import { API_BASE_URL } from '@/store/api/baseQuery';
 import { clearAuthSession } from '@/lib/authSession';
+import { AuthCaptcha, useAuthCaptcha } from './AuthCaptcha';
 
 const inputClass = 'block w-full rounded-xl border border-brand-primary/20 bg-background p-3';
 const buttonClass = 'w-full rounded-xl bg-primary p-3 font-semibold text-primary-foreground disabled:opacity-60';
-async function requestRecovery(path: string, body: object, locale: string) {
+async function requestRecovery(path: string, body: object, locale: string, captchaToken: string) {
   // Passwords and bearer recovery secrets never enter Redux, analytics,
   // browser storage or query-string URLs.
   const result = await fetch(API_BASE_URL + '/auth/' + path, {
     method: 'POST', cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer',
-    headers: { 'Content-Type': 'application/json', 'Accept-Language': locale },
+    headers: { 'Content-Type': 'application/json', 'Accept-Language': locale, ...(captchaToken ? {'X-MathWorld-Captcha':captchaToken} : {}) },
     body: JSON.stringify(body),
   });
   const payload = await result.json().catch(() => null);
-  return { ok: result.ok && payload?.Success === true, data: payload?.Data, status: result.status };
+  return { ok: result.ok && payload?.Success === true, data: payload?.Data, status: result.status, captchaFailed: payload?.Errors?.Captcha?.includes('CaptchaVerificationFailed') === true };
 }
 
 export function ForgotPasswordForm() {
@@ -28,18 +29,19 @@ export function ForgotPasswordForm() {
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState('');
   const pending = useRef(false);
+  const captcha = useAuthCaptcha();
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending.current) return;
+    if (pending.current || !captcha.ready) return;
     pending.current = true; setBusy(true); setError('');
     try {
-      const result = await requestRecovery('forgot-password', { Email: email.trim() }, ar ? 'ar' : 'en');
+      const result = await requestRecovery('forgot-password', { Email: email.trim() }, ar ? 'ar' : 'en', captcha.token);
       if (result.ok && result.data?.Accepted === true) { setAccepted(true); setEmail(''); }
       else setError(result.status === 429
         ? ar ? 'محاولات كثيرة. حاول بعد دقيقة.' : 'Too many requests. Try again in a minute.'
         : ar ? 'تعذّر إرسال الطلب. حاول مجدداً.' : 'Could not submit the request. Try again.');
     } catch { setError(ar ? 'تعذّر الاتصال بالخادم.' : 'Could not reach the server.'); }
-    finally { pending.current = false; setBusy(false); }
+    finally { pending.current = false; setBusy(false); captcha.reset(); }
   }
   return <main className="brand-hero-bg flex min-h-[70vh] items-center justify-center px-4 py-12">
     <section className="brand-surface math-card w-full max-w-md space-y-5 rounded-3xl p-6 sm:p-8">
@@ -52,7 +54,8 @@ export function ForgotPasswordForm() {
           <p className="text-sm text-muted-foreground">{ar ? 'أدخل البريد المرتبط بحسابك المحلي.' : 'Enter the email associated with your local account.'}</p>
           <label className="block space-y-1 text-sm font-medium">{ar ? 'البريد الإلكتروني' : 'Email'}<input className={inputClass} type="email" autoComplete="email" maxLength={254} required value={email} onChange={e=>setEmail(e.target.value)} disabled={busy}/></label>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <button type="submit" disabled={busy} className={buttonClass}>{busy ? (ar?'جارٍ الإرسال…':'Submitting…') : (ar?'طلب رابط الاستعادة':'Request recovery link')}</button>
+          <AuthCaptcha action="forgot-password" locale={ar?'ar':'en'} onToken={captcha.setToken} revision={captcha.revision}/>
+          <button type="submit" disabled={busy || !captcha.ready} className={buttonClass}>{busy ? (ar?'جارٍ الإرسال…':'Submitting…') : (ar?'طلب رابط الاستعادة':'Request recovery link')}</button>
         </form>}
       <Link href="/login" className="block text-center text-sm font-semibold text-primary hover:underline">{ar ? 'العودة إلى تسجيل الدخول' : 'Back to sign in'}</Link>
     </section>
@@ -70,6 +73,7 @@ export function ResetPasswordForm() {
   const [invalid, setInvalid] = useState(false);
   const [error, setError] = useState('');
   const pending = useRef(false);
+  const captcha = useAuthCaptcha();
   useEffect(() => {
     const hash = window.location.hash;
     if (hash) {
@@ -82,7 +86,7 @@ export function ResetPasswordForm() {
   }, []);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending.current || !secret.current) return;
+    if (pending.current || !secret.current || !captcha.ready) return;
     setError('');
     if (password !== confirmation || password.length < 12 || password.trim().length === 0 ||
       /[\u0000-\u001f\u007f-\u009f]/.test(password) || new TextEncoder().encode(password).length > 72) {
@@ -91,14 +95,16 @@ export function ResetPasswordForm() {
     }
     pending.current = true; setBusy(true);
     try {
-      const result = await requestRecovery('reset-password', { Token: secret.current, NewPassword: password, ConfirmPassword: confirmation }, ar?'ar':'en');
+      const result = await requestRecovery('reset-password', { Token: secret.current, NewPassword: password, ConfirmPassword: confirmation }, ar?'ar':'en', captcha.token);
       if (result.ok && result.data?.RequiresSignIn === true) {
         secret.current = null; setPassword(''); setConfirmation(''); clearAuthSession(); setSuccess(true);
+      } else if (result.captchaFailed) {
+        setError(ar?'تعذّر التحقق. حاول مجدداً.':'Verification failed. Try again.');
       } else if (result.status === 400) {
         secret.current = null; setPassword(''); setConfirmation(''); setInvalid(true);
       } else setError(result.status === 429 ? ar?'محاولات كثيرة. حاول بعد دقيقة.':'Too many attempts. Try again in a minute.' : ar?'تعذّر التأكد من النتيجة. حاول مجدداً.':'Could not confirm the result. Try again.');
     } catch { setError(ar?'تعذّر الاتصال. إذا انتهت صلاحية الرابط فاطلب رابطاً جديداً.':'Connection failed. Request a new link if this one has expired.'); }
-    finally { pending.current = false; setBusy(false); }
+    finally { pending.current = false; setBusy(false); captcha.reset(); }
   }
   return <main className="brand-hero-bg flex min-h-[70vh] items-center justify-center px-4 py-12">
     <section className="brand-surface math-card w-full max-w-md space-y-5 rounded-3xl p-6 sm:p-8">
@@ -112,7 +118,8 @@ export function ResetPasswordForm() {
           <label className="block space-y-1 text-sm font-medium">{ar?'كلمة المرور الجديدة':'New password'}<input type="password" autoComplete="new-password" className={inputClass} required maxLength={128} value={password} onChange={e=>setPassword(e.target.value)} disabled={busy}/></label>
           <label className="block space-y-1 text-sm font-medium">{ar?'تأكيد كلمة المرور':'Confirm password'}<input type="password" autoComplete="new-password" className={inputClass} required maxLength={128} value={confirmation} onChange={e=>setConfirmation(e.target.value)} disabled={busy}/></label>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-          <button type="submit" disabled={busy} className={buttonClass}>{busy?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'تعيين كلمة المرور':'Reset password')}</button>
+          <AuthCaptcha action="reset-password" locale={ar?'ar':'en'} onToken={captcha.setToken} revision={captcha.revision}/>
+          <button type="submit" disabled={busy || !captcha.ready} className={buttonClass}>{busy?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'تعيين كلمة المرور':'Reset password')}</button>
         </form>}
     </section>
   </main>;

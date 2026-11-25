@@ -6,6 +6,7 @@ import type { User } from './types';
 export interface LoginRequest {
   Email: string;
   Password: string;
+  CaptchaToken?: string;
 }
 
 export interface RegisterRequest {
@@ -13,6 +14,7 @@ export interface RegisterRequest {
   Email: string;
   Password: string;
   StageId?: number;
+  CaptchaToken?: string;
 }
 
 export interface SocialLoginRequest {
@@ -28,18 +30,20 @@ export const authApi = createApi({
   tagTypes: ['User', 'SocialLinkStatus'],
   endpoints: (builder) => ({
     login: builder.mutation<User, LoginRequest>({
-      query: (credentials) => ({
+      query: ({CaptchaToken, ...credentials}) => ({
         url: '/auth/login',
         method: 'POST',
         body: credentials,
+        headers: CaptchaToken ? {'X-MathWorld-Captcha':CaptchaToken} : undefined,
       }),
     }),
 
     register: builder.mutation<User, RegisterRequest>({
-      query: (data) => ({
+      query: ({CaptchaToken, ...data}) => ({
         url: '/auth/register',
         method: 'POST',
         body: data,
+        headers: CaptchaToken ? {'X-MathWorld-Captcha':CaptchaToken} : undefined,
       }),
     }),
 

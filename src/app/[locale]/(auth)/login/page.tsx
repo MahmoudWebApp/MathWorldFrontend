@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { AuthCaptcha, useAuthCaptcha } from '@/components/auth/AuthCaptcha';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDispatch } from 'react-redux';
 import { Eye, EyeSlash, Lock, Refresh2, Sms } from 'iconsax-reactjs';
@@ -27,15 +28,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const captcha = useAuthCaptcha();
+  const pending = useRef(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending.current || !captcha.ready) return;
     setError('');
 
+    pending.current = true;
     try {
       const user = await login({
         Email: email.trim(),
         Password: password,
+        CaptchaToken: captcha.token || undefined,
       }).unwrap();
 
       if (!user.Token) {
@@ -58,7 +64,7 @@ export default function LoginPage() {
       window.location.assign(`/${locale}/${destination}`);
     } catch (loginError) {
       setError(getApiErrorMessage(loginError, t('common.error')));
-    }
+    } finally { pending.current = false; captcha.reset(); }
   }
 
   return (
@@ -137,10 +143,11 @@ export default function LoginPage() {
                 {locale === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
               </Link>
             </div>
+            <AuthCaptcha action="login" locale={locale} onToken={captcha.setToken} revision={captcha.revision}/>
             <Button
               type="submit"
               className="w-full gap-2 rounded-xl py-2.5"
-              disabled={isLoading}
+              disabled={isLoading || !captcha.ready}
             >
               {isLoading ? (
                 <Refresh2 className="h-4 w-4 animate-spin" />
