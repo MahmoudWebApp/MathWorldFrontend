@@ -10,6 +10,15 @@ const button='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity
 const labels:Record<ReviewedBankKind,[string,string]>={amendments:['تحسين الحلول','Structured improvements'],hints:['التلميحات فقط','Hints only'],'new-existing':['مسائل جديدة','New questions'],'new-missing':['مسائل المساقات الجديدة','New-course questions']};
 type Row=ReviewedBankBatch['Items'][number];
 type Preview={ready:number;token?:string};
+type BulkPlan={batch:ReviewedBankBatch;ready:number;issue?:string};
+function sameDraft(a:ReviewedDraftState,b:ReviewedDraftState){return a.Id===b.Id&&a.Revision===b.Revision&&a.Status===b.Status&&a.MatchesCandidate===b.MatchesCandidate;}
+function messageOf(e:unknown,ar:boolean){
+  const x=e as {data?:{Message?:string;message?:string;Errors?:string[];errors?:{validation?:string[]};Items?:{ProblemId?:number;ContentKey?:string;Errors?:string[]}[]};message?:string};
+  const rows=x.data?.Items?.filter(r=>r.Errors?.length).slice(0,3).map(r=>(r.ProblemId??r.ContentKey??'')+': '+r.Errors!.join(', '))??[];
+  return [x.data?.Message??x.data?.message??x.message??(ar?'تعذّر إتمام العملية':'Operation failed'),...(x.data?.Errors??[]),...(x.data?.errors?.validation??[]),...rows].join(' · ');
+}
+function shouldStop(e:unknown){const status=(e as {status?:number|string})?.status;return status===401||status===403||status===429||typeof status==='string'||(typeof status==='number'&&status>=500);}
+
 function keyOf(row:Row){return 'ContentKey' in row?row.ContentKey:'g1-amend-'+row.ProblemId;}
 function Pair({value}:{value?:Bilingual|null}){
   return value?<div className="space-y-1 break-words"><p dir="rtl" lang="ar">{value.Ar}</p><p dir="ltr" lang="en">{value.En}</p></div>:null;
@@ -37,11 +46,14 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
   const [info,setInfo]=useState<ReviewedBankInfo>();const [batch,setBatch]=useState<ReviewedBankBatch>();
   const [preview,setPreview]=useState<Preview>();const [note,setNote]=useState('');
   const [busy,setBusy]=useState(false);const [status,setStatus]=useState('');const [error,setError]=useState('');
+  const [bulk,setBulk]=useState<BulkPlan[]>([]);
+  const [scanComplete,setScanComplete]=useState(false);
+  const [advanced,setAdvanced]=useState(false);
   const running=useRef(false);const stop=useRef(false);
   async function run(task:()=>Promise<void>){
     if(running.current)return;running.current=true;stop.current=false;setBusy(true);setError('');setStatus('');
-    try{await task();}catch(e){const x=e as {data?:{message?:string;errors?:{validation?:string[]}};message?:string;status?:number};
-      setError([x.data?.message??x.message??(ar?'تعذّر إتمام العملية':'Operation failed'),...(x.data?.errors?.validation??[])].join(' · '));
+    try{await task();}catch(e){
+      setError(messageOf(e,ar));
       setPreview(undefined);
     }finally{running.current=false;setBusy(false);}
   }
@@ -101,10 +113,131 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
       setStatus((ar?'مسودات نُشرت فعلياً: ':'Drafts published: ')+done+'/'+selected.length);
     });
   }
+  // Bulk operations use the existing bounded, authenticated admin APIs.
+  // Preview is read-only; import and publication require separate confirmation.
+  const bulkReady=bulk.reduce((n,p)=>n+(p.issue?0:p.ready),0);
+  const bulkDrafts=bulk.reduce((n,p)=>n+(p.issue?0:p.batch.Drafts.filter(eligible).length),0);
+  const bulkPublished=bulk.reduce((n,p)=>n+p.batch.Drafts.filter(d=>d.Status==='Published').length,0);
+  const bulkBlocked=bulk.filter(p=>!!p.issue).length;
+  function planKey(b:ReviewedBankBatch){return b.Kind+':'+b.Number;}
+  function replacePlan(p:BulkPlan){setBulk(prev=>prev.map(x=>planKey(x.batch)===planKey(p.batch)?p:x));}
+  async function loadCurrent(b:{Kind:ReviewedBankKind;Number:number}){
+    return loadBatch({kind:b.Kind,number:b.Number},false).unwrap();
+  }
+  async function inspect(current:ReviewedBankBatch):Promise<BulkPlan>{
+    if(current.MissingMappings>0)throw Error(ar?'ربط المسارات غير مكتمل':'Track mapping is incomplete');
+    const remaining=pendingRows(current);
+    const ready=remaining.length?(await execute(current,false)).ready:0;
+    if(ready!==remaining.length)throw Error(ar?'المعاينة لا تشمل كل العناصر المتبقية':'Preview does not cover all remaining items');
+    return {batch:current,ready};
+  }
+  async function scan(){
+    setScanComplete(false);setBulk([]);setBatch(undefined);setPreview(undefined);
+    const catalog=await loadInfo(undefined,false).unwrap();setInfo(catalog);
+    const groups=catalog.Batches.filter(b=>b.Kind!=='hints');
+    let i=0;
+    for(const group of groups){
+      if(stop.current)break;
+      setStatus((ar?'معاينة الدفعات: ':'Checking batches: ')+(i+1)+'/'+groups.length);
+      const current=await loadCurrent(group);
+      let plan:BulkPlan;
+      try{plan=await inspect(current);}
+      catch(e){plan={batch:current,ready:0,issue:messageOf(e,ar)};if(shouldStop(e)){setBulk(prev=>[...prev,plan]);throw e;}}
+      setBulk(prev=>[...prev,plan]);i++;
+    }
+    setScanComplete(i===groups.length);
+    setStatus((stop.current?(ar?'أوقفت المعاينة عند ':'Preview stopped at '):(ar?'اكتملت المعاينة: ':'Preview complete: '))+i+'/'+groups.length);
+  }
+  function scanAll(){void run(scan);}
+  function importAll(){
+    if(!scanComplete||!bulkReady)return;
+    const selected=bulk.filter(p=>!p.issue&&p.ready>0);
+    if(!window.confirm(ar?'إنشاء '+bulkReady+' مسودة جاهزة دون نشر؟ سيتم تجاوز الدفعات المعلقة.':'Create '+bulkReady+' ready drafts without publishing? Blocked batches will be skipped.'))return;
+    void run(async()=>{
+      setScanComplete(false);let created=0,processed=0;
+      try{
+        for(const plan of selected){
+          if(stop.current)break;
+          setStatus((ar?'استيراد المسودات: ':'Importing drafts: ')+(processed+1)+'/'+selected.length+' · '+created);
+          let latest=plan.batch;
+          try{
+            latest=await loadCurrent(plan.batch);
+            if(latest.MissingMappings>0||JSON.stringify(pendingRows(latest))!==JSON.stringify(pendingRows(plan.batch)))
+              throw Error(ar?'تغيّرت الدفعة؛ أعد المعاينة':'Batch changed; preview again');
+            const result=await execute(latest,true);
+            created+=result.count;
+            latest=await loadCurrent(plan.batch);
+            replacePlan(await inspect(latest));
+          }catch(e){replacePlan({batch:latest,ready:0,issue:messageOf(e,ar)});if(shouldStop(e))throw e;}
+          processed++;
+        }
+      }finally{onChanged();}
+      setScanComplete(processed===selected.length&&!stop.current);
+      setStatus((ar?'المسودات المنشأة فعلياً: ':'Drafts created: ')+created+' · '+processed+'/'+selected.length+(ar?' دفعة':' batches'));
+    });
+  }
+  function publishAll(){
+    if(!scanComplete||!info?.PublicationEnabled||!note.trim()||!bulkDrafts)return;
+    const selected=bulk.filter(p=>!p.issue&&p.batch.MissingMappings===0).map(p=>({plan:p,drafts:p.batch.Drafts.filter(eligible)})).filter(x=>x.drafts.length);
+    const total=selected.reduce((n,x)=>n+x.drafts.length,0);
+    if(!total||!window.confirm(ar?'هل راجعت محتوى المسودات المطابقة وتؤكد اعتماد ونشر '+total+' مسألة؟ لن تُنشر المسائل المعلقة أو المعدلة.':'Have you reviewed the matching content and confirm approval and publication of '+total+' questions? Held and changed items are excluded.'))return;
+    void run(async()=>{
+      setScanComplete(false);let done=0;
+      try{
+        for(const {plan,drafts} of selected){
+          if(stop.current)break;
+          let latest=await loadCurrent(plan.batch);
+          if(latest.MissingMappings>0||drafts.some(d=>!latest.Drafts.some(x=>sameDraft(d,x)&&eligible(x)))){
+            replacePlan({batch:latest,ready:0,issue:ar?'تغيّرت المسودات؛ راجعها مجدداً':'Drafts changed; review again'});
+            continue;
+          }
+          let issue:string|undefined;
+          try{
+            for(const d of drafts){
+              if(stop.current)break;
+              let revision=d.Revision,state=d.Status;
+              setStatus((ar?'نشر المسائل: ':'Publishing questions: ')+done+'/'+total+' · #'+d.Id);
+              if(state==='Draft'){const next=await action({id:d.Id,action:'submit',Revision:revision}).unwrap();revision=next.Revision;state=next.Status;}
+              if(state==='PendingReview'){const next=await action({id:d.Id,action:'review',Revision:revision,Confirm:true,Note:note.trim()}).unwrap();revision=next.Revision;state=next.Status;}
+              if(state!=='Approved')throw Error('UnexpectedDraftStatus');
+              const published=await action({id:d.Id,action:'publish',Revision:revision,Confirm:true}).unwrap();
+              if(published.Status!=='Published')throw Error('PublicationNotConfirmed');
+              done++;
+            }
+          }catch(e){issue=messageOf(e,ar);if(shouldStop(e))throw e;}
+          finally{latest=await loadCurrent(plan.batch);replacePlan({batch:latest,ready:0,issue});}
+        }
+      }finally{onChanged();}
+      setStatus((ar?'مسائل نُشرت فعلياً: ':'Questions actually published: ')+done+'/'+total+(ar?' · أعد المعاينة لتحديث الحالة':' · Preview again to refresh status'));
+    });
+  }
   const count=batch?.Drafts.filter(eligible).length??0;
   return <section className="space-y-3 rounded-xl border p-4">
     <h3 className="font-bold">{ar?'استيراد واعتماد بنك المسائل':'Import and approve reviewed question bank'}</h3>
-    <p className="text-sm text-muted-foreground">{ar?'دفعات خاصة بالأدمن فقط، لا تحتاج ملفات. راجع كل دفعة ثم عاينها قبل التأكيد. الحالات المعلقة مستثناة.':'Private admin batches, no files required. Review each batch, then validate before confirmation. Held items are excluded.'}</p>
+    <p className="text-sm text-muted-foreground">{ar?'معاينة واحدة لكل الدفعات، ثم استيراد المسودات الجاهزة، ثم اعتماد النشر بعد مراجعة المحتوى. المسائل المعلقة مستثناة دائماً.':'One preview for every batch, then import ready drafts and approve publication after review. Held questions always stay excluded.'}</p>
+    <div className="space-y-3 rounded-xl border p-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-sm">
+        {[{label:ar?'جاهزة للاستيراد':'Ready to import',n:bulkReady},{label:ar?'مسودات مطابقة':'Matching drafts',n:bulkDrafts},{label:ar?'منشورة':'Published',n:bulkPublished},{label:ar?'دفعات تحتاج مراجعة':'Blocked batches',n:bulkBlocked}].map(x=><div key={x.label} className="rounded-lg border p-2"><strong className="block text-lg tabular-nums">{bulk.length?x.n:'—'}</strong>{x.label}</div>)}
+      </div>
+      {info&&<p className="text-sm">{ar?'مسائل مستثناة للمراجعة: ':'Held questions: '}{info.HeldCount}{!info.PublicationEnabled&&(ar?' · النشر معطّل على الخادم':' · Publication disabled on server')}</p>}
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className={button} disabled={busy} onClick={scanAll}>{ar?'1. معاينة جميع الدفعات':'1. Preview all batches'}</button>
+        <button type="button" className={button} disabled={busy||!scanComplete||!bulkReady} onClick={importAll}>{ar?'2. إنشاء كل المسودات الجاهزة':'2. Import all ready drafts'}</button>
+        {busy&&<button type="button" className={button} onClick={()=>{stop.current=true;}}>{ar?'إيقاف بعد العملية الحالية':'Stop after current operation'}</button>}
+      </div>
+      {bulk.length>0&&<details><summary className="cursor-pointer text-sm">{ar?'مراجعة تفاصيل الدفعات':'Review batch details'}</summary>
+        <div className="mt-2 max-h-[55vh] space-y-2 overflow-y-auto">
+          {bulk.map(p=><details key={planKey(p.batch)} className="rounded-lg border p-2 text-sm"><summary className="cursor-pointer">{labels[p.batch.Kind][lang]} {p.batch.Number} · {p.batch.Items.length} · {p.issue?(ar?'تحتاج مراجعة':'Review required'):(ar?'تم التحقق':'Checked')}</summary>
+            {p.issue&&<p role="alert" className="break-words text-destructive">{p.issue}</p>}
+            {p.batch.Items.map(row=><Candidate key={keyOf(row)} row={row} ar={ar} draft={p.batch.Drafts.find(d=>d.ContentKey===keyOf(row))}/>)}
+          </details>)}
+        </div>
+      </details>}
+      {bulkDrafts>0&&<><label className="block text-sm">{ar?'ملاحظة اعتماد المحتوى (بعد مراجعته)':'Content review note'}<textarea className="mt-1 w-full rounded-lg border bg-background p-2" maxLength={2000} value={note} disabled={busy} onChange={e=>setNote(e.target.value)}/></label>
+      <button type="button" className={button} disabled={busy||!scanComplete||!info?.PublicationEnabled||!note.trim()} onClick={publishAll}>{ar?'3. اعتماد ونشر المسودات المطابقة ('+bulkDrafts+')':'3. Approve and publish matching drafts ('+bulkDrafts+')'}</button></>}
+    </div>
+    <button type="button" className={button} disabled={busy} onClick={()=>{setAdvanced(v=>!v);setScanComplete(false);}}>{advanced?(ar?'إخفاء الخيارات المتقدمة':'Hide advanced options'):(ar?'خيارات متقدمة: دفعة واحدة أو تصحيح الحالات المعلقة':'Advanced: individual batches or held corrections')}</button>
+    {advanced&&<>
     <button type="button" className={button} disabled={busy} onClick={load}>{ar?'تحميل الدفعات المجهزة':'Load prepared batches'}</button>
     {info&&<><p className="text-sm">{ar?'مستثناة للمراجعة':'Held for review'}: {info.HeldCount}</p>
       {!info.PublicationEnabled&&<p className="text-sm text-muted-foreground">{ar?'نشر المسودات غير مفعّل على الخادم. يمكن المعاينة والاستيراد فقط.':'Draft publication is disabled on the server. Preview and import only.'}</p>}
@@ -125,7 +258,8 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
         {busy&&<button type="button" className={button} onClick={()=>{stop.current=true;}}>{ar?'إيقاف بعد العملية الحالية':'Stop after current operation'}</button>}
       </div>
     </>}
-    <HeldWordingImport onChanged={onChanged}/>
+    <HeldWordingImport onChanged={()=>{setScanComplete(false);onChanged();}}/>
+    </>}
     {busy&&!status&&<p role="status">{ar?'جارٍ التحقق…':'Working…'}</p>}
     {status&&<p role="status" className="text-sm">{status}</p>}{error&&<p role="alert" className="break-words text-sm text-destructive">{error}</p>}
   </section>;
