@@ -1,5 +1,9 @@
 'use client';
 import {useState} from 'react';
+import {GraduationCap} from 'lucide-react';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
+import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
+import {getStageAccent} from '@/lib/stageVisuals';
 import {useLocale} from 'next-intl';
 import {useSelector} from 'react-redux';
 import type {RootState} from '@/store';
@@ -104,16 +108,26 @@ export default function LearningTracksPage(){
   const {data,isFetching,isError}=useGetAdminTracksQuery(undefined,{skip:!admin});
   const {data:stages}=useGetAdminStagesQuery(undefined,{skip:!admin});
   const [selected,setSelected]=useState<number|null>(null);
+  const [tab,setTab]=useState('list');
   const [stageId,setStage]=useState(0);const [kind,setKind]=useState<LearningTrack['Kind']>('course');
   const [code,setCode]=useState('');const [nameAr,setAr]=useState('');const [nameEn,setEn]=useState('');
   const [descAr,setDescAr]=useState('');const [descEn,setDescEn]=useState('');
   const [sort,setSort]=useState(1);const [error,setError]=useState('');
   const [create,{isLoading}]=useCreateTrackMutation();
-  async function submit(e:React.FormEvent){e.preventDefault();setError('');try{const t=await create({StageId:stageId,Kind:kind,Code:code,NameAr:nameAr,NameEn:nameEn,DescriptionAr:descAr,DescriptionEn:descEn,SortOrder:sort}).unwrap();setSelected(t.Id);setCode('');setAr('');setEn('');setDescAr('');setDescEn('');}catch(e){setError(message(e,ar));}}
+  async function submit(e:React.FormEvent){e.preventDefault();setError('');try{const t=await create({StageId:stageId,Kind:kind,Code:code,NameAr:nameAr,NameEn:nameEn,DescriptionAr:descAr,DescriptionEn:descEn,SortOrder:sort}).unwrap();setSelected(t.Id);setTab('list');setCode('');setAr('');setEn('');setDescAr('');setDescEn('');}catch(e){setError(message(e,ar));}}
   if(!admin)return null;
-  return <main className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6"><h1 className="text-2xl font-bold">{ar?'الصفوف والمساقات التعليمية':'Grades and university courses'}</h1>
-    {data&&<p className="text-sm text-muted-foreground">{data.Enabled?(ar?'عرض المسارات المنشورة مفعّل.':'Published track catalog is enabled.'):(ar?'عرض المسارات للطلاب معطّل حتى اكتمال التهيئة.':'Learner track catalog is disabled until rollout is ready.')}</p>}
-    <details className="rounded-2xl border bg-card p-4"><summary className="cursor-pointer font-semibold">{ar?'إضافة صف أو مساق':'Add grade or course'}</summary><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submit}>
+  return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6">
+    <WorkspacePageHeader title={ar?'الصفوف والمساقات التعليمية':'Grades and university courses'} icon={GraduationCap}/>
+    {data&&!data.Enabled&&<p role="status" className="text-sm text-muted-foreground">{ar?'عرض المسارات للطلاب معطّل.':'Learner track catalog is disabled.'}</p>}
+    <Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}>
+      <TabsList className="w-fit max-w-full"><TabsTrigger value="list">{ar?'الصفوف والمساقات':'Grades and courses'}</TabsTrigger><TabsTrigger value="create" disabled={selected!==null}>{ar?'إضافة صف أو مساق':'Add grade or course'}</TabsTrigger><TabsTrigger value="batch" disabled={selected!==null}>{ar?'الربط الجماعي':'Bulk mapping'}</TabsTrigger></TabsList>
+      <TabsContent value="list" className="space-y-4">    
+    {isError&&<p role="alert">{ar?'تعذّر تحميل المسارات.':'Could not load tracks.'}</p>}
+    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties} className={'rounded-xl border mw-topic-surface p-3 text-start '+(selected===x.Track.Id?'ring-1 ring-[var(--stage-accent)]':'')}><p className="font-bold mw-topic-ink">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>
+    {selected!==null&&<><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق محرر المسار':'Close track editor'}</button><TrackEditor key={selected} id={selected} ar={ar}/></>}
+</TabsContent>
+      <TabsContent value="create">    <section className="rounded-2xl border bg-card p-4"><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submit}>
       <label className="text-sm">{ar?'المرحلة':'Stage'}<select className={field} required value={stageId||''} onChange={e=>setStage(Number(e.target.value))}><option value="">{ar?'اختر':'Select'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select></label>
       <label className="text-sm">{ar?'النوع':'Kind'}<select className={field} value={kind} onChange={e=>setKind(e.target.value as LearningTrack['Kind'])}><option value="grade">{ar?'صف':'Grade'}</option><option value="course">{ar?'مساق':'Course'}</option></select></label>
       <label className="text-sm">{ar?'الرمز الثابت':'Stable code'}<input className={field} required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} value={code} onChange={e=>setCode(e.target.value)}/></label>
@@ -123,12 +137,10 @@ export default function LearningTracksPage(){
       <label className="text-sm">{ar?'الوصف بالعربية':'Arabic description'}<textarea className={field} maxLength={1500} value={descAr} onChange={e=>setDescAr(e.target.value)}/></label>
       <label className="text-sm">{ar?'الوصف بالإنجليزية':'English description'}<textarea className={field} maxLength={1500} value={descEn} onChange={e=>setDescEn(e.target.value)}/></label>
       <button className={btn} disabled={isLoading||!stageId} type="submit">{ar?'إضافة مسودة':'Create draft'}</button>{error&&<p role="alert" className="text-destructive">{error}</p>}
-    </form></details>
-    <ReviewedTrackDraftBatchPanel ar={ar} disabled={selected!==null}/>
-    <div className="flex justify-between"><h2 className="font-bold">{ar?'المسارات الموجودة':'Existing tracks'}</h2></div>
-    {isError&&<p role="alert">{ar?'تعذّر تحميل المسارات.':'Could not load tracks.'}</p>}
-    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} className={'rounded-xl border p-3 text-start '+(selected===x.Track.Id?'border-primary bg-primary/10':'bg-card')}><p className="font-bold">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>
-    {selected!==null&&<><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق محرر المسار':'Close track editor'}</button><TrackEditor key={selected} id={selected} ar={ar}/></>}
+    </form></section>
+</TabsContent>
+      <TabsContent value="batch">    <ReviewedTrackDraftBatchPanel ar={ar} disabled={selected!==null}/>
+</TabsContent>
+    </Tabs>
   </main>;
 }
