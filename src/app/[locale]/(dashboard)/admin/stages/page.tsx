@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
 import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 import { GraduationCap } from "lucide-react";
+import { getStageAccent } from "@/lib/stageVisuals";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
 
 export default function AdminStagesPage() {
@@ -140,18 +141,12 @@ export default function AdminStagesPage() {
   return (
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
 
-      <div className="flex items-center justify-between mb-8">
-        <div className="min-w-0 flex-1"><WorkspacePageHeader title={t("admin.stages.title")} icon={GraduationCap}/></div>
-        <Button onClick={() => openModal()} className="gap-2">
-          <Add className="h-4 w-4" />
-          {t("admin.stages.addNew")}
-        </Button>
-      </div>
+      <WorkspacePageHeader title={t("admin.stages.title")} icon={GraduationCap} actions={<Button onClick={() => openModal()} className="gap-2"><Add className="h-4 w-4" />{t("admin.stages.addNew")}</Button>}/>
 
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-center">
+            <table className="mw-workspace-table w-full text-center">
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <th className="p-4">ID</th>
@@ -164,32 +159,32 @@ export default function AdminStagesPage() {
               <tbody>
                 {stages && stages.length > 0 ? (
                   stages.map((stage) => (
-                    <tr key={stage.Id} className="border-b hover:bg-muted/20">
+                    <tr key={stage.Id} className="border-b mw-topic-row" style={{"--stage-accent":getStageAccent(stage)} as import("react").CSSProperties}>
                       <td className="p-4 font-mono text-sm">{stage.Id}</td>
                       <td className="p-4 font-medium">
                         <span className="inline-flex items-center gap-2">
                           <StageIconBadge stage={stage} size="xs" />
                           <Link
                             href={`/admin/categories?stageId=${stage.Id}`}
-                            className="inline-flex items-center gap-1.5 font-bold text-primary hover:underline"
+                            className="inline-flex items-center gap-1.5 font-bold mw-topic-ink hover:underline"
                           >
                             {stage.NameAr}
                             <DirectionalChevron direction="forward" className="h-4 w-4" />
                           </Link>
                         </span>
                       </td>
-                      <td className="p-4 text-muted-foreground">
+                      <td className="p-4 mw-topic-ink">
                         {stage.NameEn}
                       </td>
                       <td className="p-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mw-topic-action">
                           {stage.Order}
                         </span>
                       </td>
                       <td className="p-4 space-x-2 rtl:space-x-reverse">
                         <Link
                           href={`/admin/categories?stageId=${stage.Id}`}
-                          className="mb-2 inline-flex items-center gap-1.5 rounded-lg border border-primary/20 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/10 sm:mb-0"
+                          className="mb-2 inline-flex items-center gap-1.5 rounded-lg border mw-topic-action px-3 py-2 text-xs font-bold sm:mb-0"
                         >
                           {ar ? "عرض الفئات" : "View categories"}
                           <DirectionalChevron direction="forward" className="h-4 w-4" />
@@ -199,7 +194,7 @@ export default function AdminStagesPage() {
                           size="sm"
                           onClick={() => openModal(stage)}
                         >
-                          <Edit className="h-4 w-4 text-primary" />
+                          <Edit className="h-4 w-4 mw-topic-ink" />
                         </Button>
 
                         <PopoverConfirm
