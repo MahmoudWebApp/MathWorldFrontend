@@ -1,14 +1,15 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { AlertTriangle, BookOpenCheck, ClipboardCheck, FolderOpen, RefreshCw, Users } from 'lucide-react';
+import { AlertTriangle, BookOpenCheck, ClipboardCheck, FolderOpen, Users } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { useGetAdminContentAuditQuery } from '@/store/api/statsApi';
 
 export default function AdminContentAuditPage() {
   const ar = useLocale() === 'ar';
-  const { data, isLoading, isFetching, isError, refetch } =
+  const { data, isLoading, isError, refetch } =
     useGetAdminContentAuditQuery(undefined, { refetchOnMountOrArgChange: true });
   const [stageFilter, setStageFilter] = useState<number | 'all'>('all');
   const fmt = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
@@ -27,35 +28,18 @@ export default function AdminContentAuditPage() {
     <main className="container mx-auto max-w-6xl space-y-7 px-4 py-8 md:px-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <Link href="/admin" className="text-sm font-semibold text-primary hover:underline">
-            {ar ? 'العودة للإدارة' : 'Back to administration'}
-          </Link>
-          <h1 className="mt-3 flex items-center gap-3 text-2xl font-bold md:text-3xl">
-            <ClipboardCheck className="h-7 w-7 text-primary" aria-hidden="true" />
-            {ar ? 'تدقيق المحتوى التعليمي' : 'Learning content audit'}
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-            {ar
-              ? 'اعرف كمية المسائل وحالة الفئات وخيارات الإجابة والحلول. هذا التقرير للقراءة فقط ولا يغير بيانات الطلاب.'
-              : 'Inspect problems, category inventory, answers and solutions. This is read-only and never changes learner data.'}
-          </p>
+          
+          <WorkspacePageHeader title={ar?'تدقيق المحتوى':'Content audit'} icon={ClipboardCheck}/>
+          
         </div>
-        <button
-          type="button"
-          disabled={isFetching}
-          onClick={() => void refetch()}
-          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
-          {ar ? 'تحديث البيانات' : 'Refresh'}
-        </button>
+        
       </header>
 
       {(isError || isEmpty) && (
         <div role="alert" className="rounded-xl border border-destructive/30 bg-card p-5">
           <p className="font-medium text-destructive">
             {ar ? 'تعذر تحميل التدقيق. تأكد من الاتصال أو أعد المحاولة.' : 'Could not load the audit. Check your connection and try again.'}
-          </p>
+          </p><button className="mt-2 text-primary underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>
         </div>
       )}
       {isLoading && (

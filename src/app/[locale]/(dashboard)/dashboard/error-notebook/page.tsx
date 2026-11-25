@@ -1,5 +1,6 @@
 'use client';
 
+import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
@@ -11,7 +12,6 @@ import {
   Clock3,
   Loader2,
   NotebookTabs,
-  RefreshCcw,
 } from 'lucide-react';
 
 import { Link } from '@/i18n/routing';
@@ -121,25 +121,7 @@ export default function ErrorNotebookPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-16 lg:px-24">
-      <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-primary">
-            <NotebookTabs className="h-6 w-6" />
-            <span className="text-sm font-semibold uppercase tracking-wide">
-              {t('errorNotebook.learningTool')}
-            </span>
-          </div>
-          <h1 className="text-3xl font-bold">{t('errorNotebook.title')}</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">
-            {t('errorNotebook.description')}
-          </p>
-        </div>
-
-        <Button variant="outline" className="gap-2" onClick={() => { void refetch(); void reloadStage(); }}>
-          <RefreshCcw className="h-4 w-4" />
-          {t('common.retry')}
-        </Button>
-      </div>
+      <WorkspacePageHeader title={t('errorNotebook.title')} icon={NotebookTabs} />
 
       <div className="mb-6 grid grid-cols-2 gap-3">
         <button

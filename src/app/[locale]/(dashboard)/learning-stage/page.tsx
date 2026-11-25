@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { BookOpen, CheckCircle2, Loader2 } from 'lucide-react';
+import { GradeAge } from '@/components/curriculum/TrackViews';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 
 import { useGetStagesQuery,useGetPublishedTracksQuery,useGetTrackSelectionQuery,useSelectTrackMutation } from '@/store/api/stagesApi';
@@ -20,8 +21,8 @@ const labels = {
     description:
       'سنرتب المسائل والتقدم وفق مرحلتك. يمكنك تغيير الاختيار لاحقًا دون فقدان محاولاتك أو نقاطك.',
     selected: 'المرحلة المختارة',
-    save: 'حفظ المرحلة وعرض فئاتي المفتوحة',
-    change: 'حفظ التغيير وعرض فئاتي',
+    save: 'حفظ الاختيار والانتقال للرئيسية',
+    change: 'حفظ التغيير والانتقال للرئيسية',
     loading: 'جاري تحميل المراحل التعليمية...',
     error: 'تعذر تحميل المراحل التعليمية. حاول تحديث الصفحة.',
     submitError: 'تعذر حفظ المرحلة. حاول مجددًا.',
@@ -33,8 +34,8 @@ const labels = {
     description:
       'We will personalize your problems and progress to this stage. You can change it later without losing attempts or points.',
     selected: 'Selected stage',
-    save: 'Save stage and see unlocked topics',
-    change: 'Save changes and see my topics',
+    save: 'Save selection and go to dashboard',
+    change: 'Save changes and go to dashboard',
     loading: 'Loading stages...',
     error: 'Unable to load stages. Please refresh the page.',
     submitError: 'Could not save your stage. Please try again.',
@@ -81,7 +82,7 @@ export default function LearningStagePage() {
       if(requiresTrack&&effectiveTrack!=null) await selectTrack({TrackId:effectiveTrack}).unwrap();
       else await setLearningStage({ StageId: effectiveId }).unwrap();
       // Keep the learner in the private workspace after onboarding or switching stages.
-      window.location.assign(`/${locale}/dashboard/categories`);
+      window.location.assign(`/${locale}/dashboard`);
     } catch (reason) {
       setError(getApiErrorMessage(reason, copy.submitError));
     }
@@ -153,7 +154,7 @@ export default function LearningStagePage() {
             {catalogUnavailable&&<p role="alert" className="mt-4 text-sm text-destructive">{isArabic?'تعذّر تحميل المسارات.':'Could not load learning tracks.'} <button className="underline" onClick={()=>void catalog.refetch()}>{isArabic?'إعادة المحاولة':'Retry'}</button></p>}
             {mandatoryTrack&&effectiveId!=null&&!checkingTracks&&!catalogUnavailable&&options.length===0&&<p role="alert" className="mt-4 text-sm text-destructive">{isArabic?'لا تتوفر صفوف أو مساقات منشورة لهذه المرحلة حالياً.':'No published grades or courses are available for this stage yet.'}</p>}
             {requiresTrack&&options.length>0&&<fieldset className="mt-6 space-y-2"><legend className="font-bold">{isArabic?'اختر الصف أو المساق':'Choose grade or course'}</legend>
-              <div className="grid gap-2 sm:grid-cols-2">{options.map(track=><button type="button" key={track.Id} aria-pressed={effectiveTrack===track.Id} onClick={()=>setTrackChoice(track.Id)} className={'rounded-xl border p-3 text-start '+(effectiveTrack===track.Id?'border-primary bg-primary/10':'bg-card')}><span className="font-semibold">{isArabic?track.NameAr:track.NameEn}</span><span className="ms-2 text-xs text-muted-foreground">{track.ProblemsCount} {isArabic?'مسألة':'problems'}</span>{track.FreeProblemsCount===0&&<span className="block mt-1 text-xs text-muted-foreground">{isArabic?'التدريب لمشتركي Premium':'Premium practice only'}</span>}</button>)}</div>
+              <div className="grid gap-2 sm:grid-cols-2">{options.map(track=><button type="button" key={track.Id} aria-pressed={effectiveTrack===track.Id} onClick={()=>setTrackChoice(track.Id)} className={'rounded-xl border p-3 text-start '+(effectiveTrack===track.Id?'border-primary bg-primary/10':'bg-card')}><span className="font-semibold">{isArabic?track.NameAr:track.NameEn}</span><GradeAge code={track.Code} ar={isArabic}/><span className="ms-2 text-xs text-muted-foreground">{track.ProblemsCount} {isArabic?'مسألة':'problems'}</span>{track.FreeProblemsCount===0&&<span className="block mt-1 text-xs text-muted-foreground">{isArabic?'التدريب لمشتركي Premium':'Premium practice only'}</span>}</button>)}</div>
             </fieldset>}
             {error && (
               <p role="alert" className="mt-6 text-center text-sm text-destructive">

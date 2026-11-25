@@ -1,5 +1,6 @@
 'use client';
 
+import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetFavoritesQuery, useGetLearningStageQuery, useToggleFavoriteMutation } from '@/store/api/usersApi';
@@ -60,42 +61,7 @@ export function FavoritesProblemsPage() {
 
   return (
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <Link 
-          href="/dashboard/categories" 
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
-        >
-          <DirectionalArrow direction="back" />
-          {t('dashboard.user.title')}
-        </Link>
-        
-        <h1 className="text-3xl font-bold mb-2">{t('favorites.title')}</h1>
-        <p className="text-muted-foreground">{t('favorites.subtitle')}</p>
-      </div>
-
-      {/* Compact summary: keep number and icon together; no empty full-width card. */}
-      <div className="mb-6 flex justify-end">
-      <Card className="w-fit min-w-[190px] max-w-full border shadow-sm">
-        <CardContent className="flex items-center gap-3 px-5 py-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20">
-            <Heart className="h-6 w-6 text-red-500 fill-red-500" />
-          </div>
-          <div>
-            <div className="text-xl font-extrabold tabular-nums sm:text-2xl">
-              {isLoading || stageLoading ? (
-                <span className="inline-block w-16 h-8 bg-muted animate-pulse rounded" />
-              ) : mounted ? (
-                <AnimatedCounter end={totalCount} duration={1500} />
-              ) : (
-                totalCount
-              )}
-            </div>
-            <div className="whitespace-nowrap text-xs text-muted-foreground">{t('favorites.stats.total')}</div>
-          </div>
-        </CardContent>
-      </Card>
-      </div>
+      <WorkspacePageHeader title={t('favorites.title')} icon={Heart} count={isLoading || stageLoading ? undefined : mounted ? <AnimatedCounter end={totalCount} duration={700}/> : totalCount} />
 
       {/* Problems List */}
       {isLoading ? (

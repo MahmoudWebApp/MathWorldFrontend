@@ -2,6 +2,8 @@
 
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
 import { useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { BookOpen, ChartNoAxesCombined, Heart, LockKeyhole, NotebookTabs, Target, Trophy } from 'lucide-react';
@@ -19,15 +21,21 @@ export default function UserDashboardPage() {
   const locale = useLocale();
   const ar = locale === 'ar';
   const router = useRouter();
-  const { data: dashboard, isLoading, isError, refetch } = useGetDashboardQuery(locale, {
+  const user=useSelector((state:RootState)=>state.auth.user);
+  const { currentData: dashboardData, isLoading, isFetching, isError, refetch } = useGetDashboardQuery(locale, {
+    skip:user?.Role!=='Student',
     refetchOnMountOrArgChange: 45,
+    refetchOnReconnect:true,
   });
-  const stageId = dashboard?.CurrentStageId ?? 0;
-  const { data: journey, isLoading: journeyLoading, isError: progressError, refetch: reloadProgress } = useGetLearningJourneyQuery(stageId, {
+  const dashboard=dashboardData?.Id===user?.Id?dashboardData:undefined;
+  // Start independent learning/entitlement requests immediately, using the
+  // authenticated profile until the dashboard confirms the active stage.
+  const stageId = dashboard ? (dashboard.CurrentStageId??0) : (user?.CurrentStageId??0);
+  const { currentData: journey, isLoading: journeyLoading, isFetching: journeyFetching, isError: progressError, refetch: reloadProgress } = useGetLearningJourneyQuery(stageId, {
     skip: stageId <= 0,
   });
   const { data: subscription, isLoading: planLoading, isError: planError, refetch: reloadPlan } = useGetStudentSubscriptionQuery(undefined, {
-    skip: dashboard?.Role !== 'Student',
+    skip: user?.Role !== 'Student',
   });
   const accent = getStageAccent({ Id: stageId, NameAr: journey?.NameAr, NameEn: journey?.NameEn });
   const isPremium = subscription?.IsPremium === true;
@@ -35,23 +43,23 @@ export default function UserDashboardPage() {
   const {currentData:trackNext}=useGetTrackContinueQuery(undefined,{skip:!isPremium||!trackId,refetchOnMountOrArgChange:true});
   const { data: nextUnsolved } = useSearchProblemsQuery(
     { StageId: stageId, HideSolved: true, Page: 1, PageSize: 1 },
-    { skip: !isPremium || dashboard?.Role !== 'Student' || stageId <= 0 || !journey || trackId!==null,
+    { skip: !isPremium || user?.Role !== 'Student' || stageId <= 0 || !journey || trackId!==null,
       refetchOnMountOrArgChange: 45 },
   );
   const nextProblemId = trackId ? (trackNext?.TrackId===trackId?trackNext.Problem?.Id:undefined) : nextUnsolved?.Results?.[0]?.Id;
 
   useEffect(() => {
-    if (!isLoading && !isError && dashboard?.Role === 'Student' && !dashboard.CurrentStageId) {
+    if (!isLoading && !isError && dashboard && user?.Role === 'Student' && !dashboard.CurrentStageId) {
       router.replace('/learning-stage');
     }
-  }, [dashboard, isLoading, isError, router]);
+  }, [dashboard, isLoading, isError, router,user?.Role]);
 
-  if (!isLoading && (isError || !dashboard)) {
+  if (!isLoading && !isFetching && stageId<=0 && (isError || !dashboard)) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-12">
         <div className="rounded-3xl border bg-card p-6">
           <h1 className="text-xl font-extrabold">{ar ? 'تعذّر تحميل الرئيسية' : 'Dashboard unavailable'}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{ar ? 'يمكنك مواصلة التعلم حتى لو تعذّر تحميل الإحصائيات.' : 'You can still practise while your dashboard reconnects.'}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{ar ? 'تعذّر الاتصال بالخادم.' : 'Could not connect to the server.'}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href="/dashboard/categories" className="rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{ar ? 'ابدأ التعلم' : 'Start learning'}</Link>
             <button type="button" onClick={() => void refetch()} className="rounded-xl border px-4 py-3 font-semibold">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
@@ -63,8 +71,8 @@ export default function UserDashboardPage() {
 
   // Do not show placeholder statistics or a generic stage before the actual
   // learner stage, progress and entitlement requests have resolved.
-  if (isLoading || (dashboard?.Role === 'Student' && stageId > 0 &&
-      (journeyLoading || planLoading))) {
+  if ((stageId<=0&&(isLoading||isFetching)) || (user?.Role === 'Student' && stageId > 0 &&
+      (journeyLoading || (journeyFetching&&!journey) || planLoading))) {
     return <main className="mx-auto w-full max-w-7xl animate-pulse space-y-5 px-4 py-6 sm:px-6" aria-busy="true">
       <MathWorldLoading compact />
       <div className="h-9 w-48 rounded-xl bg-muted" />
@@ -74,7 +82,7 @@ export default function UserDashboardPage() {
   }
 
   // A failed/empty API response is unknown, not a zero-progress or Free user.
-  if (dashboard?.Role === 'Student' && stageId > 0 &&
+  if (user?.Role === 'Student' && stageId > 0 &&
       (progressError || !journey || planError || !subscription)) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-12">
@@ -106,10 +114,10 @@ export default function UserDashboardPage() {
   return (
     <main className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 sm:px-6">
       <header>
-        <h1 className="text-2xl font-extrabold sm:text-3xl">{ar ? 'الرئيسية' : 'Dashboard'}</h1>
+        <h1 className="text-gradient-math text-2xl font-extrabold sm:text-3xl">{ar ? 'الرئيسية' : 'Dashboard'}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {isLoading ? (ar ? 'جارٍ تحميل بياناتك…' : 'Loading…')
-            : (ar ? `أهلاً بعودتك${dashboard?.FullName ? `، ${dashboard.FullName}` : ''}` : `Welcome back${dashboard?.FullName ? `, ${dashboard.FullName}` : ''}`)}
+            : (ar ? `أهلاً بعودتك${user?.FullName ? `، ${user.FullName}` : ''}` : `Welcome back${user?.FullName ? `, ${user.FullName}` : ''}`)}
         </p>
       </header>
 
@@ -162,7 +170,7 @@ export default function UserDashboardPage() {
             <Link href="/dashboard/solved" className="text-sm font-bold text-primary hover:underline">{ar ? 'عرض الكل' : 'View all'}</Link>
           </div>
           <div className="mt-4 space-y-3">
-            {dashboard?.RecentSolved?.some(problem => problem.StageId === stageId) ? dashboard.RecentSolved.filter(problem => problem.StageId === stageId).slice(0, 2).map((problem, index) => (
+            {!dashboard&&(isLoading||isFetching)?<MathWorldLoading compact/>:!dashboard||isError?<div role="alert" className="rounded-2xl bg-muted/30 p-4 text-sm">{ar?'تعذّر تحميل آخر المسائل.':'Recent problems unavailable.'} <button className="text-primary underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>:dashboard.RecentSolved?.some(problem => problem.StageId === stageId) ? dashboard.RecentSolved.filter(problem => problem.StageId === stageId).slice(0, 2).map((problem, index) => (
               <ProblemCard key={problem.Id ?? index} problem={problem} />
             )) : <div className="rounded-2xl bg-muted/30 p-5 text-sm text-muted-foreground">
               {ar ? 'لم تحل مسائل بعد. ابدأ بأول فئة من مرحلتك.' : 'No solved problems yet. Start with a topic in your stage.'}
@@ -194,7 +202,7 @@ export default function UserDashboardPage() {
         })}
       </section>
 
-      {!isPremium && dashboard?.Role === 'Student' && (
+      {!isPremium && user?.Role === 'Student' && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4">
           <p className="text-sm font-semibold">{ar ? 'اكتشف مميزات Premium، بدون عرض أسعار.' : 'Explore Premium benefits, with no prices displayed.'}</p>
           <Link href="/dashboard/upgrade" className="rounded-xl border border-primary/25 px-4 py-2 text-sm font-bold text-primary">

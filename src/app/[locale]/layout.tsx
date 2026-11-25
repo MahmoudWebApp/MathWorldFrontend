@@ -6,6 +6,7 @@ import { Providers } from '@/components/providers/Providers';
 import { Navbar } from '@/components/layout/Navbar';
 import { AdminWorkspaceShell } from '@/components/admin/AdminWorkspaceShell';
 import { ContextualFooter } from '@/components/layout/ContextualFooter';
+import { AuthGuard } from '@/components/AuthGuard';
 import { MathBackground } from '@/components/math/MathBackground';
 
 
@@ -59,9 +60,9 @@ export default async function LocaleLayout({
       <MathBackground />
       <Providers locale={locale} messages={messages} timeZone={timeZone}>
         <Navbar />
-        <AdminWorkspaceShell>
+        <AuthGuard><AdminWorkspaceShell>
           <main className="relative z-10 flex-1">{children}</main>
-        </AdminWorkspaceShell>
+        </AdminWorkspaceShell></AuthGuard>
         <ContextualFooter />
       </Providers>
     </div>

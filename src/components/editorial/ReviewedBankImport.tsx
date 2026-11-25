@@ -1,6 +1,8 @@
 'use client';
 
 import {useRef,useState} from 'react';
+import {useDispatch} from 'react-redux';
+import {platformBrandApi} from '@/store/api/platformBrandApi';
 import {useLocale} from 'next-intl';
 import {HeldWordingImport} from './HeldWordingImport';
 import {LatexPreview} from '@/components/ui/LatexPreview';
@@ -40,6 +42,8 @@ function Candidate({row,ar,draft}:{row:Row;ar:boolean;draft?:ReviewedDraftState}
 }
 export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
   const ar=useLocale()==='ar';const lang=ar?0:1;
+  const dispatch=useDispatch();
+  const refreshAfterPublication=()=>{dispatch(platformBrandApi.util.invalidateTags(['EditorialDraft']));};
   const [loadInfo]=useLazyGetReviewedBankInfoQuery();const [loadBatch]=useLazyGetReviewedBankBatchQuery();
   const [importAmendments]=useImportEditorialAmendmentsMutation();const [importNew]=useImportEditorialBatchMutation();
   const [importHints]=useImportReviewedHintsMutation();const [action]=useEditorialActionMutation();
@@ -87,6 +91,29 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
     });
   }
   function eligible(d:ReviewedDraftState){return d.MatchesCandidate&&['Draft','PendingReview','Approved'].includes(d.Status);}
+  // Reconcile a transient failure with persisted state before attempting another write.
+  async function publishMatching(current:ReviewedBankBatch,d:ReviewedDraftState){
+    const increments=d.Status==='Draft'?3:d.Status==='PendingReview'?2:d.Status==='Approved'?1:0;
+    if(!increments)throw Error('UnexpectedDraftStatus');
+    for(let attempt=0;attempt<3;attempt++){
+      try{
+        const result=await action({id:d.Id,action:'publish',Revision:d.Revision,Confirm:true,DirectApproval:true,DeferRefresh:true,Note:note.trim()}).unwrap();
+        if(result.Status!=='Published'||result.Revision!==d.Revision+increments)throw Error('UnexpectedEditorialTransition');
+        return;
+      }catch(e){
+        const code=(e as {status?:number|string})?.status;
+        if(!(code==='FETCH_ERROR'||code==='TIMEOUT_ERROR'||code===500||code===502||code===503||code===504)||attempt===2||stop.current)throw e;
+        setStatus(ar?'انقطع الاتصال مؤقتاً، جارٍ التحقق من حالة المسألة #'+d.Id:'Temporary connection issue; checking question #'+d.Id);
+        await new Promise<void>(resolve=>window.setTimeout(resolve,1500*(attempt+1)));
+        if(stop.current)throw e;
+        const fresh=await loadCurrent(current);
+        const actual=fresh.Drafts.find(x=>x.Id===d.Id&&x.ContentKey===d.ContentKey);
+        if(fresh.MissingMappings!==0||!actual||!actual.MatchesCandidate)throw e;
+        if(actual.Status==='Published'&&actual.Revision===d.Revision+increments&&actual.PublishedProblemId)return;
+        if(!sameDraft(d,actual))throw e;
+      }
+    }
+  }
   function publish(){
     if(!batch||!info?.PublicationEnabled||!note.trim())return;
     const current=batch;const selected=current.Drafts.filter(eligible);
@@ -100,16 +127,11 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
       try{
         for(const d of selected){
           if(stop.current)break;
-          let revision=d.Revision;let state=d.Status;
           setStatus((ar?'نشر الدفعة: ':'Publishing batch: ')+done+'/'+selected.length+' · #'+d.Id);
-          if(state==='Draft'){const next=await action({id:d.Id,action:'submit',Revision:revision}).unwrap();revision=next.Revision;state=next.Status;}
-          if(state==='PendingReview'){const next=await action({id:d.Id,action:'review',Revision:revision,Confirm:true,Note:note.trim()}).unwrap();revision=next.Revision;state=next.Status;}
-          if(state!=='Approved')throw Error('UnexpectedDraftStatus');
-          const published=await action({id:d.Id,action:'publish',Revision:revision,Confirm:true}).unwrap();
-          if(published.Status!=='Published')throw Error('PublicationNotConfirmed');
+          await publishMatching(current,d);
           done++;
         }
-      }finally{await refresh(current);onChanged();}
+      }finally{try{await refresh(current);}finally{refreshAfterPublication();}}
       setStatus((ar?'مسودات نُشرت فعلياً: ':'Drafts published: ')+done+'/'+selected.length);
     });
   }
@@ -195,19 +217,14 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
           try{
             for(const d of drafts){
               if(stop.current)break;
-              let revision=d.Revision,state=d.Status;
               setStatus((ar?'نشر المسائل: ':'Publishing questions: ')+done+'/'+total+' · #'+d.Id);
-              if(state==='Draft'){const next=await action({id:d.Id,action:'submit',Revision:revision}).unwrap();revision=next.Revision;state=next.Status;}
-              if(state==='PendingReview'){const next=await action({id:d.Id,action:'review',Revision:revision,Confirm:true,Note:note.trim()}).unwrap();revision=next.Revision;state=next.Status;}
-              if(state!=='Approved')throw Error('UnexpectedDraftStatus');
-              const published=await action({id:d.Id,action:'publish',Revision:revision,Confirm:true}).unwrap();
-              if(published.Status!=='Published')throw Error('PublicationNotConfirmed');
-              done++;
+          await publishMatching(plan.batch,d);
+          done++;
             }
           }catch(e){issue=messageOf(e,ar);if(shouldStop(e))throw e;}
           finally{latest=await loadCurrent(plan.batch);replacePlan({batch:latest,ready:0,issue});}
         }
-      }finally{onChanged();}
+      }finally{refreshAfterPublication();}
       setStatus((ar?'مسائل نُشرت فعلياً: ':'Questions actually published: ')+done+'/'+total+(ar?' · أعد المعاينة لتحديث الحالة':' · Preview again to refresh status'));
     });
   }

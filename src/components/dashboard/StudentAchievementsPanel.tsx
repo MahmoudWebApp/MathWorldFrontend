@@ -1,5 +1,6 @@
 'use client';
 
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
 import { CheckCircle2, LockKeyhole, Medal, RefreshCw, Sparkles } from 'lucide-react';
 import { useGetAchievementsQuery } from '@/store/api/usersApi';
@@ -21,25 +22,16 @@ export function StudentAchievementsPanel({ compact = false }: { compact?: boolea
 
   return (
     <section className="space-y-4 rounded-3xl border border-primary/15 bg-card p-5 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="rounded-xl bg-primary/10 p-2.5 text-primary">
-            <Medal className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <div>
-            <h2 className="text-lg font-extrabold">{ar ? 'الشارات والإنجازات' : 'Badges & achievements'}</h2>
-            <p className="text-xs text-muted-foreground">
-              {ar ? 'شاراتك المكتسبة وما يمكنك فتحه لاحقاً' : 'Earned badges and milestones to unlock'}
-            </p>
-          </div>
-        </div>
-        {data && <span className="rounded-full border border-border px-3 py-1 text-sm font-bold" aria-label={ar ? 'الشارات المكتسبة من المتاحة' : 'Earned out of available badges'}>
-          <span dir="ltr" className="inline-block tabular-nums">{data.EarnedCount} / {available.length}</span>
-        </span>}
+      <header className="flex items-center justify-between gap-3 border-b border-border/60 pb-4">
+        {compact?<h2 className="text-lg font-extrabold">{ar?'الشارات والإنجازات':'Badges & achievements'}</h2>:<h1 className="text-gradient-math text-2xl font-extrabold sm:text-3xl">{ar?'الشارات والإنجازات':'Badges & achievements'}</h1>}
+        <span className="flex shrink-0 items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-primary">
+          {data&&<strong dir="ltr" className="tabular-nums" aria-label={ar?'الشارات المكتسبة من المتاحة':'Earned out of available badges'}>{data.EarnedCount} / {available.length}</strong>}
+          <Medal className="h-6 w-6" aria-hidden="true"/>
+        </span>
       </header>
 
       {isLoading ? (
-        <p role="status" className="py-5 text-center text-muted-foreground">{ar ? 'جارٍ تحميل الشارات…' : 'Loading badges…'}</p>
+        <MathWorldLoading compact mode="tab"/>
       ) : isError || !data ? (
         <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-sm">
           {ar ? 'تعذّر تحميل الشارات.' : 'Could not load badges.'}

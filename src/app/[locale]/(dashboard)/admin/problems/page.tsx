@@ -1,4 +1,5 @@
-"use client";
+'use client';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
 import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
@@ -1037,7 +1038,7 @@ function AdminProblemsPageContent() {
                 placeholder={t("admin.problems.searchPlaceholder")}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                className="h-11 bg-muted/50"
+                className="mw-filter-field"
               />
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-bold text-primary">
@@ -1048,9 +1049,10 @@ function AdminProblemsPageContent() {
               variant="outline"
               size="icon"
               className="h-11 w-11 shrink-0"
+              aria-label={locale==="ar"?"مسح الفلاتر":"Clear filters"}
               onClick={handleResetFilters}
             >
-              <RotateCcw className="h-5 w-5" />
+              <RotateCcw className="h-5 w-5" aria-hidden="true" />
             </Button>
           </div>
         </CardContent>
@@ -1060,7 +1062,7 @@ function AdminProblemsPageContent() {
         <CardContent className="p-0 relative">
           {isFetching && !isSearching && (
             <div className="absolute inset-0 bg-background/50 flex items-center justify-center z-10 backdrop-blur-sm">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <MathWorldLoading compact mode="filter"/>
             </div>
           )}
           <div className="overflow-x-auto">
@@ -1084,10 +1086,8 @@ function AdminProblemsPageContent() {
                 </tr>
               </thead>
               <tbody>
-                {isSearching ? (
-                  Array.from({ length: 6 }, (_, index) => <tr key={index} className="animate-pulse border-b">
-                    <td className="p-5" colSpan={6}><div className="h-8 rounded-lg bg-muted/70" /></td>
-                  </tr>)
+                {isSearching || (isFetching&&!searchResult) ? (
+                  <tr><td colSpan={6}><MathWorldLoading compact mode="search"/></td></tr>
                 ) : searchError ? (
                   <tr><td colSpan={6} className="p-12 text-center">
                     <div role="alert" className="flex flex-col items-center gap-3 text-destructive">

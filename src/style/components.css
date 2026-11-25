@@ -852,3 +852,18 @@ html:not(.dark) .math-global-background::before {
   mask-image: linear-gradient(to bottom, transparent, black 18%, black 92%);
   -webkit-mask-image: linear-gradient(to bottom, transparent, black 18%, black 92%);
 }
+
+/* Unified primary actions; retain semantic destructive and disabled styling. */
+.sr-wave-button, button.bg-primary:not([role="tab"]), a.bg-primary {background:var(--sr-grad);color:white;}
+button.bg-primary:disabled {opacity:.5;}
+.text-gradient-math, .dark .text-gradient-math {background:linear-gradient(45deg,var(--color-one),var(--color-two),var(--color-three),var(--color-two),var(--color-one)) 0 0 / var(--bg-size) 100%;color:transparent;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:mw-title-wave 12s linear infinite;}
+.dark {--color-three:#c4b5fd;}
+@keyframes mw-title-wave {to{background-position:var(--bg-size) 0;}}
+@media(prefers-reduced-motion:reduce){.text-gradient-math,.dark .text-gradient-math{animation:none;}}
+
+/* Search and filter controls share one responsive shape in all workspaces. */
+.mw-filter-field { box-sizing:border-box; min-height:44px; width:100%; border-radius:12px; border:1px solid var(--color-border); background: var(--color-background); padding:.625rem .75rem; font-size:.875rem; transition:border-color .15s,box-shadow .15s; }
+.mw-filter-field:focus-visible {outline:2px solid var(--sr-primary);outline-offset:2px;}
+.mw-filter-search {padding-inline-start:2.5rem;}
+.mw-filter-bar {display:grid;gap:.75rem;align-items:end;border-radius:1rem;padding:1rem;}
+.mw-filter-field:disabled {opacity:.6;}

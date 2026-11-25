@@ -1,9 +1,11 @@
 'use client';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
+import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
-import { Search, UserRoundSearch, RefreshCw, Download, History } from 'lucide-react';
+import { Search, UserRoundSearch, Download, History } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { API_BASE_URL } from '@/store/api/baseQuery';
@@ -13,6 +15,9 @@ export default function AdminLearnerActivityPage() {
   const ar = useLocale() === 'ar';
   const [searchInput, setSearchInput] = useState('');
   const [term, setTerm] = useState('');
+  const [tab,setTab]=useState('students');
+  const searching=searchInput.trim()!==term;
+  useEffect(()=>{const timer=window.setTimeout(()=>{setTerm(searchInput.trim());setPage(1);},300);return ()=>window.clearTimeout(timer);},[searchInput]);
   const [stageId, setStageId] = useState(0);
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [page, setPage] = useState(1);
@@ -29,7 +34,7 @@ export default function AdminLearnerActivityPage() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('userId') ?? params.get('actorId');
     if (id && /^[1-9]\\d*$/.test(id) && Number.isSafeInteger(Number(id))) {
-      setSelectedStudentId(Number(id));
+      setSelectedStudentId(Number(id));setTab('activity');
     }
   }, []);
   const stages = useGetAdminEngagementOverviewQuery(30, {
@@ -112,7 +117,7 @@ export default function AdminLearnerActivityPage() {
 
   const chooseStudent = (id: number) => {
     setSelectedStudentId(id);
-    setActivityPage(1);
+    setActivityPage(1);setTab('activity');
   };
   const n = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);
   const date = (value: string | null) => {
@@ -127,36 +132,24 @@ export default function AdminLearnerActivityPage() {
   ]) ?? []);
   return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-6 px-4 py-8">
     <header className="space-y-2">
-      <Link href="/admin" className="text-sm font-semibold text-primary underline">
-        {ar ? 'لوحة الإدارة' : 'Admin dashboard'}
-      </Link>
-      <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
-        <UserRoundSearch className="h-6 w-6 shrink-0 text-primary"/>
-        {ar ? 'متابعة الطلاب وسجل نشاطهم' : 'Learner monitoring and activity log'}
-      </h1>
-      <p className="max-w-3xl text-sm text-muted-foreground">
-        {ar ? 'مكان واحد لمتابعة تسجيل الطلاب ودخولهم وخروجهم الصريح ونشاطهم، بدون خلطه بعمليات الإدارة.'
-          : 'Track student registrations, sign-ins, explicit sign-outs and activity in one place, separate from admin operations.'}
-      </p>
+      
+      <WorkspacePageHeader title={ar?'متابعة الطلاب':'Student monitoring'} icon={UserRoundSearch}/>
+      
     </header>
-    <section className="grid gap-3 rounded-2xl border bg-card p-4 lg:grid-cols-[minmax(0,1fr)_190px_auto_auto]">
-      <form className="flex gap-2" onSubmit={event => {
-        event.preventDefault(); setTerm(searchInput.trim()); setPage(1);
-      }}>
+    <Tabs dir={ar?"rtl":"ltr"} value={tab} onValueChange={setTab}><TabsList><TabsTrigger value="students">{ar?"الطلاب":"Students"}</TabsTrigger><TabsTrigger value="activity">{ar?"سجل النشاط":"Activity log"}</TabsTrigger></TabsList><TabsContent value="students" className="space-y-4">
+    <section className="mw-filter-bar border bg-card lg:grid-cols-[minmax(0,1fr)_190px_auto]">
+      <div className="flex gap-2">
         <label className="relative block min-w-0 flex-1">
           <span className="sr-only">{ar ? 'اسم الطالب' : 'Learner name'}</span>
           <Search className="pointer-events-none absolute start-3 top-3 h-4 w-4 text-muted-foreground" />
           <input value={searchInput} maxLength={80} onChange={e => setSearchInput(e.target.value)}
             placeholder={ar ? 'ابحث باسم الطالب' : 'Search by learner name'}
-            className="w-full rounded-xl border bg-background py-2.5 ps-10 pe-3 text-sm" />
+            className="mw-filter-field mw-filter-search" />
         </label>
-        <button type="submit" className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
-          {ar ? 'بحث' : 'Search'}
-        </button>
-      </form>
+        </div>
       <label className="block">
         <span className="sr-only">{ar ? 'تصفية حسب المستوى' : 'Filter by stage'}</span>
-        <select className="w-full rounded-xl border bg-background px-3 py-2.5 text-sm" value={stageId}
+        <select className="mw-filter-field" value={stageId}
           onChange={e => { setStageId(Number(e.target.value)); setPage(1); }}>
           <option value={0}>{ar ? 'كل المستويات' : 'All stages'}</option>
           {(stages.data?.Stages ?? []).map(stage => <option key={stage.StageId} value={stage.StageId}>
@@ -170,28 +163,21 @@ export default function AdminLearnerActivityPage() {
           className="h-4 w-4 accent-emerald-600" />
         {ar ? 'متصلون خلال آخر 5 دقائق فقط' : 'Seen in the last 5 minutes only'}
       </label>
-      <button type="button" onClick={() => void result.refetch()}
-        className="inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
-        <RefreshCw className="h-4 w-4"/>{ar ? 'تحديث' : 'Refresh'}
-      </button>
+      
     </section>
     <section className="overflow-hidden rounded-2xl border bg-card">
       <div className="flex flex-wrap justify-between gap-2 border-b p-4 text-sm">
-        <strong>{ar ? 'الطلاب' : 'Students'}: {result.data ? n(result.data.Total) : '—'}</strong>
+        <strong>{ar ? 'الطلاب' : 'Students'}: {result.currentData ? n(result.currentData.Total) : '—'}</strong>
         <span className="text-muted-foreground">{ar ? 'الترتيب حسب تاريخ التسجيل' : 'Newest registrations first'}</span>
       </div>
-      {result.isLoading ? <div role="status" aria-busy="true" aria-label={ar ? 'تحميل الطلاب' : 'Loading learners'} className="animate-pulse space-y-3 p-5">
-        {Array.from({ length: 6 }, (_, i) => <div key={i} className="flex gap-4 rounded-xl border p-4">
-          <div className="h-5 w-1/3 rounded bg-muted" /><div className="ms-auto h-5 w-1/4 rounded bg-muted" />
-        </div>)}
-      </div>
+      {searching||result.isLoading||(result.isFetching&&!result.currentData) ? <MathWorldLoading compact mode={searching||term?'search':'filter'}/>
         : result.isError ? <p role="alert" className="p-8">
           {ar ? 'تعذّر جلب البيانات.' : 'Could not load learner activity.'}
-        </p> : !result.data?.Students.length ? <p className="p-8 text-center text-muted-foreground">
+        </p> : !result.currentData?.Students.length ? <p className="p-8 text-center text-muted-foreground">
           {ar ? 'لا يوجد طلاب مطابقون.' : 'No matching students.'}
         </p> : <>
           <div className="space-y-3 p-3 md:hidden">
-            {result.data.Students.map(student => (
+            {result.currentData.Students.map(student => (
               <article key={student.Id} className="space-y-3 rounded-xl border bg-background/70 p-4 text-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
@@ -242,7 +228,7 @@ export default function AdminLearnerActivityPage() {
               </tr>
             </thead>
             <tbody>
-              {result.data.Students.map(student => <tr key={student.Id} className="border-t">
+              {result.currentData.Students.map(student => <tr key={student.Id} className="border-t">
                 <td className="p-3 font-semibold">
                   <button type="button" onClick={() => chooseStudent(student.Id)} className="text-start text-primary hover:underline">
                     {student.FullName}
@@ -272,13 +258,13 @@ export default function AdminLearnerActivityPage() {
           : 'A verified sign-out requires an explicit sign-out action; closing the app is not one. Recent connectivity is not a live socket. Backgrounded clients pause heartbeats and are considered offline after five minutes.'}
       </p>
       <div className="flex items-center justify-between gap-3 border-t p-4 text-sm">
-        <button type="button" disabled={page <= 1 || result.isFetching}
+        <button type="button" disabled={searching || page <= 1 || result.isFetching}
           onClick={() => setPage(x => Math.max(1, x - 1))}
           className="font-semibold text-primary disabled:opacity-40">
           {ar ? 'السابق' : 'Previous'}
         </button>
-        <span>{page} / {Math.max(1, Math.ceil((result.data?.Total ?? 0) / 20))}</span>
-        <button type="button" disabled={result.isFetching || !result.data || page * 20 >= result.data.Total}
+        <span>{page} / {Math.max(1, Math.ceil((result.currentData?.Total ?? 0) / 20))}</span>
+        <button type="button" disabled={searching || result.isFetching || !result.currentData || page * 20 >= result.currentData.Total}
           onClick={() => setPage(x => x + 1)}
           className="font-semibold text-primary disabled:opacity-40">
           {ar ? 'التالي' : 'Next'}
@@ -286,7 +272,7 @@ export default function AdminLearnerActivityPage() {
       </div>
     </section>
 
-    <section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-6" aria-label={ar ? 'سجل عمليات الطلاب' : 'Learner event log'}>
+    </TabsContent><TabsContent value="activity"><section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-6" aria-label={ar ? 'سجل عمليات الطلاب' : 'Learner event log'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-bold"><History className="h-5 w-5 text-primary" />
@@ -304,10 +290,7 @@ export default function AdminLearnerActivityPage() {
             className="rounded-xl border px-3 py-2 text-sm font-semibold">
             {ar ? 'عرض كل الطلاب' : 'All learners'}
           </button>}
-          <button type="button" onClick={() => { void events.refetch(); void result.refetch(); }}
-            className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold">
-            <RefreshCw className="h-4 w-4" />{ar ? 'تحديث' : 'Refresh'}
-          </button>
+          
           <button type="button" disabled={exporting || !token}
             onClick={() => void downloadStudentEvents()}
             className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary disabled:opacity-50">
@@ -319,7 +302,7 @@ export default function AdminLearnerActivityPage() {
         <label className="space-y-1 text-sm font-semibold">
           <span className="block">{ar ? 'فترة النشاط' : 'Event period'}</span>
           <select value={days} onChange={e => { setDays(Number(e.target.value) as 7 | 30 | 90); setActivityPage(1); }}
-            className="w-full rounded-xl border bg-background px-3 py-2.5">
+            className="mw-filter-field">
             <option value={7}>{ar ? 'آخر 7 أيام' : 'Last 7 days'}</option>
             <option value={30}>{ar ? 'آخر 30 يوماً' : 'Last 30 days'}</option>
             <option value={90}>{ar ? 'آخر 90 يوماً' : 'Last 90 days'}</option>
@@ -328,7 +311,7 @@ export default function AdminLearnerActivityPage() {
         <label className="space-y-1 text-sm font-semibold">
           <span className="block">{ar ? 'نوع الحدث' : 'Event type'}</span>
           <select value={action} onChange={e => { setAction(e.target.value); setActivityPage(1); }}
-            className="w-full rounded-xl border bg-background px-3 py-2.5">
+            className="mw-filter-field">
             <option value="">{ar ? 'كل عمليات الطلاب' : 'All student events'}</option>
             {['Registered','LoggedIn','LoggedInGoogle','ExplicitSignOut','CreateOrSubmit','Update','Redeem'].map(value =>
               <option key={value} value={value}>{eventLabel(value,'')}</option>)}
@@ -336,17 +319,15 @@ export default function AdminLearnerActivityPage() {
         </label>
       </div>
       {exportError && <p role="alert" className="text-sm text-destructive">{exportError}</p>}
-      {events.isLoading ? <div role="status" aria-busy="true" aria-label={ar ? 'تحميل سجل الطلاب' : 'Loading student events'} className="animate-pulse space-y-3 p-5">
-        {Array.from({ length: 5 }, (_, i) => <div key={i} className="h-16 rounded-xl bg-muted/60" />)}
-      </div>
+      {events.isLoading||(events.isFetching&&!events.currentData) ? <MathWorldLoading compact mode="filter"/>
         : events.isError ? <div role="alert" className="space-y-2 rounded-xl border p-4">
             <p>{ar ? 'تعذر تحميل سجل النشاط.' : 'Could not load student event log.'}</p>
             <button type="button" onClick={() => void events.refetch()} className="text-primary underline">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
           </div>
-        : !events.data?.Entries.length ? <p className="py-8 text-center text-muted-foreground">
+        : !events.currentData?.Entries.length ? <p className="py-8 text-center text-muted-foreground">
             {ar ? 'لا توجد أحداث طلاب مسجلة لهذه التصفية.' : 'No student events recorded for this filter.'}
           </p> : <ol className="divide-y">
-            {events.data.Entries.filter(item => item.ActorRole === 'Student').map(item =>
+            {events.currentData.Entries.filter(item => item.ActorRole === 'Student').map(item =>
               <li key={item.Id} className="flex flex-wrap items-start gap-3 py-4">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <UserRoundSearch className="h-5 w-5" />
@@ -367,8 +348,8 @@ export default function AdminLearnerActivityPage() {
         <button type="button" disabled={activityPage <= 1 || events.isFetching}
           onClick={() => setActivityPage(p => Math.max(1, p - 1))}
           className="font-semibold text-primary disabled:opacity-40">{ar ? 'السابق' : 'Previous'}</button>
-        <span>{ar ? 'صفحة' : 'Page'} {activityPage} / {Math.max(1, Math.ceil((events.data?.Total ?? 0) / 30))}</span>
-        <button type="button" disabled={!events.data?.HasMore || events.isFetching}
+        <span>{ar ? 'صفحة' : 'Page'} {activityPage} / {Math.max(1, Math.ceil((events.currentData?.Total ?? 0) / 30))}</span>
+        <button type="button" disabled={!events.currentData?.HasMore || events.isFetching}
           onClick={() => setActivityPage(p => p + 1)}
           className="font-semibold text-primary disabled:opacity-40">{ar ? 'التالي' : 'Next'}</button>
       </div>
@@ -376,6 +357,6 @@ export default function AdminLearnerActivityPage() {
         {ar ? 'هذا سجل أحداث لاحظها السيرفر منذ تفعيل التتبع فقط. إغلاق المتصفح لا يُسجّل خروجاً مؤكداً، ولا يمكن استرجاع أحداث غير مسجلة سابقاً.'
           : 'Only server-recorded events since tracking was enabled are available; closing a browser is not a verified sign-out and older unrecorded events cannot be reconstructed.'}
       </p>
-    </section>
+    </section></TabsContent></Tabs>
   </main>;
 }

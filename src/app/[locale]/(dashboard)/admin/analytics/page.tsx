@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useState } from 'react';
@@ -94,18 +95,12 @@ export default function AdminAnalyticsPage() {
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="brand-display-title text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
-            {labels.title}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">{labels.subtitle}</p>
-          <p className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
-            <ShieldCheck className="h-4 w-4" aria-hidden />{labels.admin}
-          </p>
+        <div className="min-w-0 flex-1">
+          <WorkspacePageHeader title={labels.title} icon={Activity}/>
+          
+          
         </div>
-        <Link href="/admin" className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2 text-sm hover:bg-muted">
-          <DirectionalArrow direction="back" className="h-4 w-4" />{labels.back}
-        </Link>
+        
       </div>
 
       <div className="mb-5">

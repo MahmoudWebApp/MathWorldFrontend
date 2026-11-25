@@ -1,4 +1,5 @@
 'use client';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -53,10 +54,10 @@ export function EmailOutboxPanel() {
   return <section className="space-y-4 rounded-2xl border bg-card p-5">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <h2 className="text-lg font-bold">{ar?'حالة خدمة البريد':'Email service status'}</h2>
-      <button type="button" disabled={isFetching} className="rounded-lg border px-3 py-2 text-sm" onClick={()=>void refetch()}>{ar?'تحديث':'Refresh'}</button>
+      
     </div>
-    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
-    {isError&&<p role="alert" className="text-destructive">{ar?'تعذّر جلب حالة الإرسال.':'Could not load email status.'}</p>}
+    {isFetching&&!data&&<MathWorldLoading compact mode="load"/>}
+    {isError&&<p role="alert" className="text-destructive">{ar?'تعذّر جلب حالة الإرسال.':'Could not load email status.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&<>
       <div className="grid gap-2 sm:grid-cols-2 text-sm">
         <p>{ar?'المزوّد':'Provider'}: {data.Provider ?? (ar?'غير محدد':'Not reported')} — {data.IsConfigured?(ar?'الإعدادات موجودة':'Configured'):(ar?'غير مهيأ':'Not configured')}</p>

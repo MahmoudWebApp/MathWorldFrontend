@@ -617,6 +617,13 @@ export const usersApi = createApi({
     'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
+    getLeaderboardNamePreference: builder.query<{ShareLeaderboardFullName:boolean},number>({
+      query:()=>'/users/leaderboard-preferences',keepUnusedDataFor:0,
+    }),
+    saveLeaderboardNamePreference: builder.mutation<{ShareLeaderboardFullName:boolean},{userId:number;ShareLeaderboardFullName:boolean}>({
+      query:({ShareLeaderboardFullName})=>({url:'/users/leaderboard-preferences',method:'PUT',body:{ShareLeaderboardFullName}}),
+      invalidatesTags:['Leaderboard'],
+    }),
     getStudentOnboarding: builder.query<StudentOnboardingState,void>({
       query:()=>'/users/onboarding',keepUnusedDataFor:0,
     }),
@@ -1119,6 +1126,8 @@ export const usersApi = createApi({
 
 export const {
   useGetStudentOnboardingQuery,
+  useGetLeaderboardNamePreferenceQuery,
+  useSaveLeaderboardNamePreferenceMutation,
   useGetEmailPreferencesQuery,
   useRequestEmailVerificationMutation,
   useSaveEmailPreferencesMutation,

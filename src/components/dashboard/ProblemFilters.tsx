@@ -34,9 +34,10 @@ export function ProblemFilters({
   const isRtl = locale === 'ar';
   const [showFilters, setShowFilters] = useState(false);
 
-  const hasActiveFilters = selectedCategory || selectedDifficulty || selectedSort !== 'newest';
+  const hasActiveFilters = searchQuery || selectedCategory || selectedDifficulty || selectedSort !== 'newest';
 
   const clearFilters = () => {
+    onSearch('');
     onCategoryChange('');
     onDifficultyChange('');
     onSortChange('newest');
@@ -53,19 +54,20 @@ export function ProblemFilters({
             value={searchQuery}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={t('search.placeholder')}
-            className={`${isRtl ? 'pr-10' : 'pl-10'}`}
+            className="mw-filter-field mw-filter-search"
           />
         </div>
         <Button
           variant="outline"
           size="icon"
+          aria-label={isRtl?"الفلاتر":"Filters"} aria-expanded={showFilters}
           onClick={() => setShowFilters(!showFilters)}
           className={`shrink-0 ${showFilters ? 'bg-primary/10 border-primary/30' : ''}`}
         >
           <SlidersHorizontal className="h-4 w-4" />
         </Button>
         {hasActiveFilters && (
-          <Button variant="ghost" size="icon" onClick={clearFilters} className="shrink-0">
+          <Button variant="ghost" size="icon" aria-label={isRtl?"مسح الفلاتر":"Clear filters"} onClick={clearFilters} className="shrink-0">
             <X className="h-4 w-4" />
           </Button>
         )}
@@ -82,7 +84,7 @@ export function ProblemFilters({
             <select
               value={selectedCategory}
               onChange={(e) => onCategoryChange(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="mw-filter-field"
             >
               <option value="">{t('search.allCategories')}</option>
               {categories.map((cat) => (
@@ -101,7 +103,7 @@ export function ProblemFilters({
             <select
               value={selectedDifficulty}
               onChange={(e) => onDifficultyChange(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="mw-filter-field"
             >
               <option value="">{t('search.allDifficulties')}</option>
               <option value="easy">{t('problems.difficulty.easy')}</option>
@@ -118,7 +120,7 @@ export function ProblemFilters({
             <select
               value={selectedSort}
               onChange={(e) => onSortChange(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="mw-filter-field"
             >
               <option value="newest">{t('solved.sort.newest')}</option>
               <option value="oldest">{t('solved.sort.oldest')}</option>
@@ -133,7 +135,7 @@ export function ProblemFilters({
         <div className="flex flex-wrap gap-2">
           {selectedCategory && (
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">
-              {categories.find(c => c.Id.toString() === selectedCategory)?.NameEn || selectedCategory}
+              {categories.find(c => c.Id.toString() === selectedCategory)?.[isRtl?'NameAr':'NameEn'] || selectedCategory}
               <button onClick={() => onCategoryChange('')} className="hover:text-primary/70">
                 <X className="h-3 w-3" />
               </button>

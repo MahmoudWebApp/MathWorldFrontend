@@ -1,11 +1,12 @@
 'use client';
 
+import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
-import { AlertCircle, ChevronLeft, ChevronRight, Medal, RefreshCw, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Medal, RefreshCw, Trophy, Users } from 'lucide-react';
 import {
   useGetLearningStageQuery,
   useGetStageLeaderboardQuery,
@@ -51,23 +52,7 @@ export default function StudentLeaderboardPage() {
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-10" dir={ar ? 'rtl' : 'ltr'}>
-      <Link href="/dashboard" className="text-sm font-semibold text-primary hover:underline">
-        {ar ? 'العودة للوحة الطالب' : 'Back to dashboard'}
-      </Link>
-      <header className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-pink-500/10 p-6 sm:p-8">
-        <div className="relative z-10 flex flex-wrap items-center gap-4">
-          <span className="rounded-2xl bg-primary/10 p-4 text-primary">
-            <Trophy className="h-8 w-8" aria-hidden="true" />
-          </span>
-          <div>
-            <h1 className="text-3xl font-extrabold">{ar ? 'لوحة المتصدرين' : 'Stage leaderboard'}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
-              {ar ? 'ترتيب بحسب المسائل التي تم حلها، ثم النقاط والمحاولات الأولى الصحيحة. هوية الطلاب الآخرين محمية.'
-                : 'Ranked by unique solved questions, earned points and first-try accuracy. Other learners remain anonymous.'}
-            </p>
-          </div>
-        </div>
-      </header>
+      <WorkspacePageHeader title={ar?'المتفوقون':'Leaderboard'} icon={Trophy}/>
 
       {!isStudent ? (
         <section className="space-y-3 rounded-2xl border bg-card p-6">
@@ -132,12 +117,7 @@ export default function StudentLeaderboardPage() {
                     <span>{ar ? 'طلاب المرحلة:' : 'Stage learners:'} {data.StageParticipants}</span>
                   )}
                   <strong className="text-primary">{ar ? 'ترتيبك:' : 'Your rank:'} {data.MyRank ?? '—'}</strong>
-                  <button type="button" onClick={() => void refetch()}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold text-primary hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-                    aria-label={ar ? 'تحديث ترتيب المتفوقين' : 'Refresh stage leaderboard'}>
-                    <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
-                    {ar ? 'تحديث' : 'Refresh'}
-                  </button>
+
                 </div>
               </div>
               {data.Entries.length === 0 ? (
@@ -189,7 +169,7 @@ export default function StudentLeaderboardPage() {
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <strong className="min-w-0 truncate text-base">{entry.DisplayName}</strong>
+                            <strong className="min-w-0 break-words text-base">{entry.DisplayName}</strong>
                             {entry.IsCurrentUser && (
                               <span className="shrink-0 rounded-full bg-violet-700 px-2.5 py-0.5 text-xs font-bold text-white dark:bg-violet-300 dark:text-violet-950">
                                 {ar ? 'ترتيبك' : 'Your ranking'}
@@ -222,11 +202,7 @@ export default function StudentLeaderboardPage() {
                   {ar ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </button>
               </div>
-              <p className="flex items-center gap-2 border-t bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-                <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-                {ar ? 'نعرض أسماء مختصرة للمتعلمين فقط بدون بريدهم الإلكتروني. الترتيب والنتائج من بيانات الحل الحقيقية.'
-                  : 'Only abbreviated learner names are displayed, never email addresses. Rankings use real recorded solves.'}
-              </p>
+
             </section>
           )}
         </>

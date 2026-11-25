@@ -2,6 +2,7 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
+import { useLocale } from "next-intl";
 import { Home } from "lucide-react";
 import { DirectionalChevron } from "@/components/ui/DirectionalNavigation";
 import { cn } from "@/lib/utils";
@@ -23,13 +24,14 @@ export function Breadcrumbs({
   className,
   surface = false,
 }: BreadcrumbsProps) {
+  const ar=useLocale()==="ar";
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={ar?"مسار التنقل":"Breadcrumb"}
       className={cn(
-        "min-w-0 text-sm font-medium text-muted-foreground",
+        "min-w-0 text-xs font-medium text-muted-foreground sm:text-sm",
         surface &&
-          "overflow-hidden rounded-xl border border-border/80 bg-card/75 px-3 py-2.5 shadow-sm backdrop-blur-sm sm:px-4",
+          "overflow-hidden rounded-lg border border-border/60 bg-card/60 px-3 py-2",
         className,
       )}
     >
@@ -52,19 +54,20 @@ export function Breadcrumbs({
                 isLast ? "flex-1 overflow-hidden" : "max-w-[40vw] shrink-0 overflow-hidden sm:max-w-none",
               )}
             >
-              {item.href ? (
+              {item.href && !isLast ? (
                 <Link
                   href={item.href}
                   className="flex min-w-0 items-center gap-1.5 transition-colors duration-200 hover:text-primary"
                   title={item.label}
                   aria-label={item.label}
                 >
-                  {index === 0 && <Home className="h-4 w-4 shrink-0" />}
+                  {index === 0 && <Home className="order-last h-4 w-4 shrink-0" aria-hidden="true" />}
                   <span dir="auto" className={labelClassName}>{item.label}</span>
                 </Link>
               ) : (
                 <span
                   dir="auto"
+                  aria-current={isLast?"page":undefined}
                   className={cn(labelClassName, "font-bold text-foreground")}
                   title={item.label}
                   aria-label={item.label}

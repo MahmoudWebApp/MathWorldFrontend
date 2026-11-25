@@ -1,8 +1,8 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
 import { CheckCheck, Copy, Gift, ShieldCheck, Trash2 } from 'lucide-react';
 import {
   useGetAdminPremiumCodesQuery,
@@ -66,18 +66,10 @@ export default function AdminPremiumGiftCodesPage() {
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-      <Link href="/admin" className="text-sm font-semibold text-primary hover:underline">
-        {ar ? 'العودة للأدمن' : 'Back to admin'}
-      </Link>
+      
       <header className="space-y-3">
-        <h1 className="flex items-center gap-2 text-3xl font-extrabold">
-          <Gift className="h-7 w-7 text-primary" />{ar ? 'أكواد Premium' : 'Premium activation codes'}
-        </h1>
-        <p className="text-muted-foreground">
-          {ar
-            ? 'إنشاء أكواد تمنح اشتراكاً مجانياً لمرة واحدة، بدون بوابة دفع إلكتروني.'
-            : 'Issue introductory Premium activation codes without checkout or prices.'}
-        </p>
+        <WorkspacePageHeader title={ar?'أكواد Premium':'Premium codes'} icon={Gift}/>
+        
         <div className="flex gap-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
           <ShieldCheck className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
           <p>
