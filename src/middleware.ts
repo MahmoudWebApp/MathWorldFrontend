@@ -115,11 +115,11 @@ export default function middleware(request: NextRequest) {
   }
 
   const detail = /^\/problems\/[^/]+$/.test(pathWithoutLocale);
-  const learner = detail || startsWithAny(pathWithoutLocale, AUTH_REQUIRED_PATHS.filter(p=>p!=='/notifications'));
+  const learner = startsWithAny(pathWithoutLocale, AUTH_REQUIRED_PATHS.filter(p=>p!=='/notifications'));
   if (authenticated && learner && role !== 'Student') {
     return NextResponse.redirect(new URL(`/${locale}/${role==='Admin'?'admin':role==='Supervisor'?'supervisor':'login'}`,request.url));
   }
-  if ((learner || pathWithoutLocale==='/notifications') && !authenticated) {
+  if ((learner || detail || pathWithoutLocale==='/notifications') && !authenticated) {
     return NextResponse.redirect(
       new URL(`/${locale}/login`, request.url),
     );

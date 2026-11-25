@@ -18,6 +18,7 @@ import { stagesApi } from '@/store/api/stagesApi';
 import { statsApi } from '@/store/api/statsApi';
 import { usersApi, useGetStudentOnboardingQuery, useRequestEmailVerificationMutation } from '@/store/api/usersApi';
 import { notificationsApi } from '@/store/api/notificationsApi';
+import { WorkspaceBreadcrumbs } from '@/components/ui/WorkspaceBreadcrumbs';
 import { StudentWorkspaceNavigation } from './StudentWorkspaceNavigation';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
@@ -146,7 +147,7 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
           </button>
         </div>
       </aside>
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1"><WorkspaceBreadcrumbs/>{children}</div>
     </div>
   );
 }

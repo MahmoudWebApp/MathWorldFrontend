@@ -16,6 +16,7 @@ import { stagesApi } from '@/store/api/stagesApi';
 import { statsApi } from '@/store/api/statsApi';
 import { usersApi } from '@/store/api/usersApi';
 import { notificationsApi } from '@/store/api/notificationsApi';
+import { WorkspaceBreadcrumbs } from '@/components/ui/WorkspaceBreadcrumbs';
 import { AdminWorkspaceNavigation } from '@/components/admin/AdminNavigation';
 
 /**
@@ -133,7 +134,7 @@ export function AdminWorkspaceShell({ children }: { children: React.ReactNode })
           </button>
         </div>
       </aside>
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1"><WorkspaceBreadcrumbs/>{children}</div>
     </div>
   );
 }
