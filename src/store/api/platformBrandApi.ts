@@ -82,7 +82,7 @@ export interface ReviewedBankInfo {HeldCount:number;PublicationEnabled:boolean;B
 export interface ReviewedDraftState {Id:number;ContentKey:string;Revision:number;Status:string;PublishedProblemId?:number;MatchesCandidate:boolean}
 export interface ReviewedBankBatch {Kind:ReviewedBankKind;Number:number;Items:(AmendmentImportRow|EditorialImportRow|ReviewedHintRow)[];Drafts:ReviewedDraftState[];MissingMappings:number}
 export interface HintImportResult {Applied:number;Ready:number;PreviewToken?:string;Items:{ProblemId:number;Status:string;Errors:string[]}[]}
-export interface EditorialBankRow {Id:number;StageId:number;CategoryId:number;TitleAr:string;TitleEn:string;HasStructuredSolution:boolean;HasOpenReview:boolean}
+export interface EditorialBankRow {Id:number;StageId:number;CategoryId:number;TitleAr:string;TitleEn:string;HasStructuredSolution:boolean;HasOpenReview:boolean;OpenReviewId?:number|null}
 export interface ClassificationRow {Id:number;NameAr:string;NameEn:string}
 export interface EditorialClassification {Stages:ClassificationRow[];Tracks:ClassificationRow[];Categories:ClassificationRow[];Skills:(ClassificationRow&{CategoryId:number})[]}
 export const platformBrandApi = createApi({
@@ -113,13 +113,13 @@ export const platformBrandApi = createApi({
       query:body=>({url:'/editorial/problems/amend/import',method:'POST',body}),
       invalidatesTags:(_r,e,arg)=>!e&&arg.Confirm?['EditorialDraft']:[],
     }),
-    getEditorialBank:builder.query<{Total:number;Items:EditorialBankRow[]},{page:number;stageId?:number;categoryId?:number}>({
+    getEditorialBank:builder.query<{Total:number;Items:EditorialBankRow[]},{page:number;stageId?:number;categoryId?:number;trackId?:number;search?:string;status?:string}>({
       query:params=>({url:'/editorial/problems/bank',params}),providesTags:['EditorialDraft'],
     }),
     amendEditorialProblem:builder.mutation<EditorialDraft,number>({
       query:id=>({url:'/editorial/problems/amend/'+id,method:'POST'}),invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
     }),
-    getEditorialDrafts:builder.query<{Total:number;Items:EditorialRow[]},number|{page:number;activeOnly:boolean}>({
+    getEditorialDrafts:builder.query<{Total:number;Items:EditorialRow[]},number|{page:number;activeOnly:boolean;supervisorReviewOnly?:boolean;ownOnly?:boolean}>({
       query:arg=>({url:'/editorial/problems',params:typeof arg==='number'?{page:arg}:arg}),providesTags:['EditorialDraft'],
     }),
     getEditorialDraft:builder.query<EditorialDraft,number>({
