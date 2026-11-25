@@ -5,6 +5,8 @@ import { stagesApi } from './stagesApi';
 import type { DashboardData, ProblemPreview } from './types';
 import type { MasteryStatus } from './problemsApi';
 
+export interface StudentOnboardingState { EmailRequired:boolean; StageRequired:boolean; TrackRequired:boolean; NextStep:'VerifyEmail'|'SelectStage'|'SelectTrack'|'Complete' }
+
 export interface EmailPreferenceInput {
   EmailLearningUpdates: boolean;
   EmailSubscriptionUpdates: boolean;
@@ -615,6 +617,9 @@ export const usersApi = createApi({
     'PremiumCheckoutOrders',
   ],
   endpoints: (builder) => ({
+    getStudentOnboarding: builder.query<StudentOnboardingState,void>({
+      query:()=>'/users/onboarding',keepUnusedDataFor:0,
+    }),
     requestEmailVerification: builder.mutation<{Queued?:boolean;AlreadyVerified?:boolean},'ar'|'en'>({
       query: (Language) => ({url:'/auth/email-verification/request',method:'POST',body:{Language}}),
     }),
@@ -1113,6 +1118,7 @@ export const usersApi = createApi({
 });
 
 export const {
+  useGetStudentOnboardingQuery,
   useGetEmailPreferencesQuery,
   useRequestEmailVerificationMutation,
   useSaveEmailPreferencesMutation,
