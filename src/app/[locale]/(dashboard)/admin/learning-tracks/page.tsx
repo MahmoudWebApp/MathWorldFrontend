@@ -8,7 +8,7 @@ import {useLocale} from 'next-intl';
 import {useSelector} from 'react-redux';
 import type {RootState} from '@/store';
 import {readTrackProposal,MAX_TRACK_PROPOSAL_BYTES} from '@/components/curriculum/trackProposalImport';
-import ReviewedTrackDraftBatchPanel from '@/components/curriculum/ReviewedTrackDraftBatch';
+import {MathWorldLoading} from '@/components/ui/MathWorldLoading';
 import {useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useGetAdminStagesQuery,
   useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
 
@@ -102,7 +102,7 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
     {error&&<p role="alert" className="text-destructive text-sm">{error}</p>}
   </section>;
 }
-function TrackEditor({id,ar}:{id:number;ar:boolean}){const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:true});return <>{isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{data&&!isError&&<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>}</>}
+function TrackEditor({id,ar}:{id:number;ar:boolean}){const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:true});return <>{isFetching&&!data&&<MathWorldLoading/>}{isError&&<button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{data&&!isError&&<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>}</>}
 export default function LearningTracksPage(){
   const ar=useLocale()==='ar';const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
   const {data,isFetching,isError}=useGetAdminTracksQuery(undefined,{skip:!admin});
@@ -120,7 +120,7 @@ export default function LearningTracksPage(){
     <WorkspacePageHeader title={ar?'الصفوف والمساقات التعليمية':'Grades and university courses'} icon={GraduationCap}/>
     {data&&!data.Enabled&&<p role="status" className="text-sm text-muted-foreground">{ar?'عرض المسارات للطلاب معطّل.':'Learner track catalog is disabled.'}</p>}
     <Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}>
-      <TabsList className="w-fit max-w-full"><TabsTrigger value="list">{ar?'الصفوف والمساقات':'Grades and courses'}</TabsTrigger><TabsTrigger value="create" disabled={selected!==null}>{ar?'إضافة صف أو مساق':'Add grade or course'}</TabsTrigger><TabsTrigger value="batch" disabled={selected!==null}>{ar?'الربط الجماعي':'Bulk mapping'}</TabsTrigger></TabsList>
+      <TabsList className="w-fit max-w-full"><TabsTrigger value="list">{ar?'الصفوف والمساقات':'Grades and courses'}</TabsTrigger><TabsTrigger value="create" disabled={selected!==null}>{ar?'إضافة صف أو مساق':'Add grade or course'}</TabsTrigger></TabsList>
       <TabsContent value="list" className="space-y-4">    
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسارات.':'Could not load tracks.'}</p>}
     {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
@@ -139,8 +139,7 @@ export default function LearningTracksPage(){
       <button className={btn} disabled={isLoading||!stageId} type="submit">{ar?'إضافة مسودة':'Create draft'}</button>{error&&<p role="alert" className="text-destructive">{error}</p>}
     </form></section>
 </TabsContent>
-      <TabsContent value="batch">    <ReviewedTrackDraftBatchPanel ar={ar} disabled={selected!==null}/>
-</TabsContent>
+      
     </Tabs>
   </main>;
 }
