@@ -912,5 +912,7 @@ button.bg-primary:disabled {opacity:.5;}
 .mw-workspace-table tbody tr:not(.mw-topic-row):hover { background:color-mix(in srgb,var(--color-primary) 7%,var(--color-card)); }
 .mw-workspace-table td,.mw-workspace-table th { vertical-align:middle; }
 .mw-workspace-panel { background:var(--color-card); }
+.mw-workspace-panel.mw-topic-surface { background:color-mix(in srgb,var(--stage-accent) 9%,var(--color-card)); }
+.dark .mw-workspace-panel.mw-topic-surface { background:color-mix(in srgb,var(--stage-accent) 17%,var(--color-card)); }
 .mw-topic-tabs [role="tab"][data-state="active"] { background-image:none; background-color:var(--stage-accent); }
 .mw-topic-icon-art { display:block; flex:none; object-fit:contain; object-position:center; }
