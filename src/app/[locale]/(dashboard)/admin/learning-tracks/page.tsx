@@ -7,7 +7,6 @@ import {getStageAccent} from '@/lib/stageVisuals';
 import {useLocale} from 'next-intl';
 import {useSelector} from 'react-redux';
 import type {RootState} from '@/store';
-import {readTrackProposal,MAX_TRACK_PROPOSAL_BYTES} from '@/components/curriculum/trackProposalImport';
 import {MathWorldLoading} from '@/components/ui/MathWorldLoading';
 import {Link} from '@/i18n/routing';
 import {useGetAdminCategoriesQuery} from '@/store/api/categoriesApi';
@@ -48,46 +47,26 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
   const [confirm,setConfirm]=useState(false);
   const [confirmPremiumOnly,setConfirmPremiumOnly]=useState(false);
   const premiumOnly=!t.IsPublished&&t.StageId===4&&t.Kind==='course'&&detail.Coverage.Problems>0&&detail.Coverage.FreeProblems===0;
-  const [readingProposal,setReadingProposal]=useState(false);
-  const [proposalNotice,setProposalNotice]=useState(false);
   const {data:inventory,isFetching,isError}=useGetTrackInventoryQuery({stageId:t.StageId,page,categoryId:category});
   const [save,{isLoading:saving}]=useMapTrackMutation();
   const [publish,{isLoading:publishing}]=usePublishTrackMutation();
-  const disabled=t.IsPublished||saving||publishing||readingProposal;
+  const disabled=t.IsPublished||saving||publishing;
   const toggle=(key:keyof TrackMapping,id:number,checked:boolean)=>setMapping(m=>({...m,[key]:checked?[...new Set([...m[key],id])]:m[key].filter(x=>x!==id)}));
   const equal=(a:number[],b:number[])=>a.length===b.length&&a.every(x=>b.includes(x));
   const dirty=!equal(mapping.CategoryIds,detail.CategoryIds)||!equal(mapping.SkillIds,detail.SkillIds)||!equal(mapping.ProblemIds,detail.ProblemIds);
-  async function loadProposal(file:File){
-    if(disabled||dirty)return;
-    setError('');setProposalNotice(false);setReadingProposal(true);
-    try{
-      if(file.size>MAX_TRACK_PROPOSAL_BYTES)throw new Error('InvalidTrackProposal');
-      setMapping(readTrackProposal(await file.text(),t.StageId,t.Code));
-      setProposalNotice(true);setConfirm(false);
-    }catch{
-      setError(ar?'الملف غير صالح أو لا يحتوي على اقتراح مطابق لهذا المسار.':'Invalid file or no matching proposal for this track.');
-    }finally{setReadingProposal(false);}
-  }
   async function saveMapping(){setError('');try{await save({id:t.Id,Revision:t.Revision,...mapping}).unwrap();}catch(e){setError(message(e,ar));}}
   async function publishTrack(){setError('');try{await publish({id:t.Id,Revision:t.Revision,Publish:!t.IsPublished,ConfirmPremiumOnlyCourse:premiumOnly&&confirmPremiumOnly}).unwrap();setConfirm(false);}catch(e){setError(message(e,ar));}}
   const name=(x:{NameAr:string;NameEn:string})=>ar?x.NameAr:x.NameEn;
   return <section className="space-y-4 rounded-2xl border bg-card p-4">
     <div className="flex flex-wrap justify-between gap-2"><h2 className="text-lg font-bold">{name(t)}</h2><span className="text-sm">{t.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</span></div>
-    <MetadataEditor track={t} ar={ar} disabled={dirty||saving||publishing||readingProposal}/>
+    <MetadataEditor track={t} ar={ar} disabled={dirty||saving||publishing}/>
     <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
       {[[ar?'فئات صالحة':'Valid categories',detail.Coverage.Categories],[ar?'مهارات أساسية':'Primary skills',detail.Coverage.Skills],[ar?'مسائل جاهزة':'Ready problems',detail.Coverage.Problems],[ar?'مسائل Free':'Free problems',detail.Coverage.FreeProblems]].map(([label,count])=><div key={label} className="rounded-xl border p-3"><p className="text-muted-foreground">{label}</p><p className="text-xl font-bold">{count}</p></div>)}
     </div>
     <p className="text-sm text-muted-foreground">{ar?'اختر التصنيف بعد مراجعة المحتوى. لا يتم نسخ المسألة أو تخمين الصف تلقائياً. يجب إلغاء نشر المسار قبل تعديل روابطه.':'Review content before assigning it. Problems are not copied or automatically classified. Unpublish a track before editing its mappings.'}</p>
-    {!t.IsPublished&&<details className="rounded-xl border p-3">
-      <summary className="cursor-pointer font-semibold">{ar?'تحميل اقتراح التصنيف':'Load track mapping proposal'}</summary>
-      <p className="my-2 text-sm text-muted-foreground">{ar?'يعبّئ الملف روابط المسار المحدد فقط دون حفظ أو نشر. راجع المسائل والمهارات أولاً؛ قد يكون المحتوى قد تغيّر. احفظ أو ألغِ التغييرات الحالية قبل تحميل ملف آخر.':'Prefills this track only, without saving or publishing. Review the questions and skills against the current catalog; content may have changed. Save or discard pending edits before loading another file.'}</p>
-      <input type="file" accept=".json,application/json" aria-label={ar?'ملف اقتراح التصنيف':'Track proposal file'} disabled={disabled||dirty} onChange={e=>{const f=e.currentTarget.files?.[0];e.currentTarget.value='';if(f)void loadProposal(f);}}/>
-      {readingProposal&&<p role="status">{ar?'جارٍ قراءة الملف…':'Reading proposal…'}</p>}
-      {proposalNotice&&<p role="status" className="mt-2 text-sm">{ar?'تم تحميل اقتراح غير محفوظ. راجع التصنيف ثم احفظ الروابط.':'Unsaved proposal loaded. Review the mapping before saving.'}</p>}
-      {dirty&&<button type="button" className={btn+' mt-2'} disabled={disabled} onClick={()=>{setMapping({CategoryIds:detail.CategoryIds,SkillIds:detail.SkillIds,ProblemIds:detail.ProblemIds});setProposalNotice(false);setError('');}}>{ar?'إلغاء التغييرات':'Discard changes'}</button>}
-    </details>}
+
     <div className="flex flex-wrap gap-2 text-sm"><span>{ar?'الفئات المختارة':'Selected categories'}: {mapping.CategoryIds.length}</span><span>{ar?'المهارات':'Skills'}: {mapping.SkillIds.length}</span><span>{ar?'المسائل':'Problems'}: {mapping.ProblemIds.length}</span></div>
-    {isFetching&&!inventory&&<p role="status">{ar?'جارٍ تحميل المحتوى…':'Loading content…'}</p>}
+    {isFetching&&!inventory&&<MathWorldLoading/>}
     {isError&&<p role="alert">{ar?'تعذّر تحميل المحتوى.':'Could not load content.'}</p>}
     {inventory&&<>
       <h3 className="font-semibold">{ar?'الفئات':'Categories'}</h3>
@@ -100,7 +79,7 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
       <div className="flex items-center gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*100>=inventory.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>
     </>}
     <div className="flex flex-wrap gap-2"><button className={btn} disabled={disabled||!dirty} onClick={()=>void saveMapping()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الروابط':'Save mappings')}</button>
-    <button className={btn} disabled={dirty||saving||publishing||readingProposal} onClick={()=>{setConfirmPremiumOnly(false);setConfirm(true);}}>{t.IsPublished?(ar?'إلغاء النشر':'Unpublish'):(ar?'نشر المسار':'Publish track')}</button></div>
+    <button className={btn} disabled={dirty||saving||publishing} onClick={()=>{setConfirmPremiumOnly(false);setConfirm(true);}}>{t.IsPublished?(ar?'إلغاء النشر':'Unpublish'):(ar?'نشر المسار':'Publish track')}</button></div>
     {confirm&&<div className="rounded-xl border p-3 space-y-2"><p>{ar?(t.IsPublished?'إلغاء إظهار هذا المسار؟':'هل راجعت التصنيف والمحتوى؟ النشر لا يضيف مسائل جديدة.'):(t.IsPublished?'Hide this track?':'Have you reviewed the mapping and content? Publishing does not add new problems.')}</p>{premiumOnly&&<label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={confirmPremiumOnly} onChange={e=>setConfirmPremiumOnly(e.target.checked)}/><span>{ar?'أوافق على إظهار المساق للجميع، مع إتاحة حل مسائله لمشتركي Premium فقط. لن تتغير الفئتان المجانيتان.':'I confirm the course is visible to everyone, but practice is available only to Premium subscribers. The two Free categories remain unchanged.'}</span></label>}<div className="flex gap-2"><button className={btn} disabled={publishing||dirty||(premiumOnly&&!confirmPremiumOnly)} onClick={()=>void publishTrack()}>{ar?'تأكيد':'Confirm'}</button><button className={btn} onClick={()=>setConfirm(false)}>{ar?'إلغاء':'Cancel'}</button></div></div>}
     {error&&<p role="alert" className="text-destructive text-sm">{error}</p>}
   </section>;
