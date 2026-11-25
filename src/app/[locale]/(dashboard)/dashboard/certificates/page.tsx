@@ -17,7 +17,8 @@ export default function CertificatesPage(){
     <header className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-bold">{ar?'شهاداتي التعليمية':'My learning certificates'}</h1><Link className="text-primary" href="/dashboard">{ar?'الرئيسية':'Dashboard'}</Link></header>
     {journey.isError?<button onClick={()=>void journey.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>:!active?<p>{ar?'الشهادات غير متاحة حالياً.':'Certificates are not available.'}</p>:<>
       {list.isFetching&&!list.currentData?<p role="status">{ar?'جارٍ تحميل الشهادات…':'Loading certificates…'}</p>:list.isError?<button onClick={()=>void list.refetch()}>{ar?'إعادة تحميل الشهادات':'Reload certificates'}</button>:<>
-        {list.currentData?.IssuanceEnabled&&plan.currentData?.IsPremium&&j&&<IssuePanel key={j.StageId+':'+(j.TrackId??0)} stageId={j.StageId} trackId={j.TrackId} categories={j.Categories.filter(c=>c.IsLocked===false&&c.TotalProblems>=5)}/>}
+        {list.currentData?.IssuanceEnabled&&plan.isError&&<div role="alert" className="rounded-xl border p-4"><p>{ar?'تعذّر التحقق من الاشتراك.':'Could not verify your subscription.'}</p><button className="text-primary underline" onClick={()=>void plan.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}
+        {list.currentData?.IssuanceEnabled&&!plan.isError&&plan.currentData?.IsPremium&&j&&<IssuePanel key={j.StageId+':'+(j.TrackId??0)} stageId={j.StageId} trackId={j.TrackId} categories={j.Categories.filter(c=>c.IsLocked===false&&c.TotalProblems>=5)}/>}
         <section className="space-y-3"><h2 className="font-bold">{ar?'الشهادات الصادرة':'Issued certificates'}</h2>{list.currentData?.Items.length?list.currentData.Items.map(c=><CertificateCard key={c.Id} c={c}/>):<p className="rounded-xl border p-4 text-muted-foreground">{ar?'لم تصدر لك شهادات بعد.':'No certificates issued yet.'}</p>}</section>
         <Link href="/verify-certificate" className="text-sm text-primary underline">{ar?'التحقق من شهادة':'Verify a certificate'}</Link>
       </>}
@@ -30,7 +31,7 @@ function IssuePanel({stageId,trackId,categories}:{stageId:number;trackId?:number
   const scope:CertificateScope={StageId:stageId,TrackId:trackId,CategoryId:choice==='track'?null:Number(choice)||null};
   const allowed=choice==='track'?!!trackId:categories.some(c=>String(c.CategoryId)===choice);
   const e=useGetCertificateEligibilityQuery(scope,{skip:!allowed,refetchOnMountOrArgChange:true});
-  async function create(){if(!e.currentData?.Eligible||state.isLoading||e.isFetching)return;setNotice('');try{await issue(scope).unwrap();setNotice(ar?'تم إصدار الشهادة وحفظها.':'Certificate issued and saved.')}catch{setNotice(ar?'تعذّر الإصدار. تحقق من الشروط مجدداً.':'Issue failed. Check eligibility again.');void e.refetch();}}
+  async function create(){if(!allowed||e.isError||!e.currentData?.Eligible||state.isLoading||e.isFetching)return;setNotice('');try{await issue(scope).unwrap();setChoice('');setNotice(ar?'تم إصدار الشهادة وحفظها.':'Certificate issued and saved.')}catch{setNotice(ar?'تعذّر الإصدار. تحقق من الشروط مجدداً.':'Issue failed. Check eligibility again.');void e.refetch();}}
   return <section className="rounded-2xl border bg-card p-5 space-y-4">
     <h2 className="font-bold">{ar?'استحقاق شهادة جديدة':'New certificate eligibility'}</h2>
     <p className="text-sm text-muted-foreground">{ar?'أكمل جميع مسائل النطاق المعتمد وأثبت الحل المستقل في كل مهارة.':'Complete every problem in the approved scope and demonstrate independent solving in every skill.'}</p>
