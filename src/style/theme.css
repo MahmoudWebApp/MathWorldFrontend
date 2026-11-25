@@ -3,10 +3,16 @@
 /* ============================================ */
 :root {
   color-scheme: light;
-  --sr-primary: #6d28d9;
-  --sr-secondary: #ec4899;
-  --sr-primary-rgb: 109 40 217;
-  --sr-secondary-rgb: 236 72 153;
+  --sr-primary: #5c24ff;
+  --sr-secondary: #ff2399;
+  --sr-primary-rgb: 92 36 255;
+  --sr-secondary-rgb: 255 35 153;
+  --sr-ink: #09090b;
+  --sr-grad: linear-gradient(90deg,var(--sr-primary),var(--sr-secondary));
+  --color-one: #5C24FF;
+  --color-two: #FF2399;
+  --color-three: #a855f7;
+  --bg-size: 300%;
 }
 
 @theme {

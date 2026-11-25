@@ -2,6 +2,7 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
+import { useLocale } from "next-intl";
 import { Home } from "lucide-react";
 import { DirectionalChevron } from "@/components/ui/DirectionalNavigation";
 import { cn } from "@/lib/utils";
@@ -21,11 +22,12 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({
   items,
   className,
-  surface = false,
+  surface = true,
 }: BreadcrumbsProps) {
+  const ar=useLocale()==="ar";
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={ar?"مسار التنقل":"Breadcrumb"}
       className={cn(
         "min-w-0 text-sm font-medium text-muted-foreground",
         surface &&
@@ -52,7 +54,7 @@ export function Breadcrumbs({
                 isLast ? "flex-1 overflow-hidden" : "max-w-[40vw] shrink-0 overflow-hidden sm:max-w-none",
               )}
             >
-              {item.href ? (
+              {item.href && !isLast ? (
                 <Link
                   href={item.href}
                   className="flex min-w-0 items-center gap-1.5 transition-colors duration-200 hover:text-primary"
@@ -65,6 +67,7 @@ export function Breadcrumbs({
               ) : (
                 <span
                   dir="auto"
+                  aria-current={isLast?"page":undefined}
                   className={cn(labelClassName, "font-bold text-foreground")}
                   title={item.label}
                   aria-label={item.label}

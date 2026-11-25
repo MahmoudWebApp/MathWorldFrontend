@@ -39,8 +39,7 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
   const [resend,{isLoading:resending}]=useRequestEmailVerificationMutation();
   const [emailNotice,setEmailNotice]=useState('');
   const step=onboarding.data?.NextStep;
-  const oldApi=onboarding.isError&&(onboarding.error as {status?:number})?.status===404;
-  const complete=step==='Complete'||oldApi;
+  const complete=step==='Complete';
   useEffect(()=>{if(isStudent&&learnerRoute&&(step==='SelectStage'||step==='SelectTrack')&&pathname!=='/learning-stage')router.replace('/learning-stage');},[isStudent,learnerRoute,step,pathname,router]);
   const { data: subscription, isLoading: membershipLoading, isFetching: membershipFetching,
     isError: membershipError, refetch: reloadMembership } =
@@ -102,7 +101,7 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
     if(step==='VerifyEmail')return <main className="mx-auto max-w-lg space-y-5 rounded-2xl border bg-card p-6 my-10">
       <h1 className="text-2xl font-bold">{ar?'أكد بريدك الإلكتروني أولاً':'Verify your email first'}</h1>
       <p>{ar?'تحقق من رابط التأكيد في بريد حسابك. لا يمكنك اختيار المرحلة أو استخدام وظائف الطالب قبل تأكيد البريد.':'Check the verification link in your account email before choosing a stage or using student features.'}</p>
-      <button type="button" className="rounded-xl bg-primary px-4 py-2 text-primary-foreground" onClick={()=>void onboarding.refetch()}>{ar?'أكدت بريدي — متابعة':'I verified my email — continue'}</button>
+      <button type="button" className="rounded-xl bg-primary px-4 py-2 text-primary-foreground" onClick={async()=>{const r=await onboarding.refetch();setEmailNotice(r.data?.NextStep==='VerifyEmail'?(ar?'لم يُؤكّد البريد بعد. افتح الرابط الوارد إلى بريدك.':'Email is not verified yet. Open the link from your inbox.'):'');}}>{ar?'تحقق من التأكيد وتابع':'Check verification and continue'}</button>
       <button type="button" disabled={resending} className="block rounded-xl border px-4 py-2" onClick={async()=>{try{await resend(ar?'ar':'en').unwrap();setEmailNotice(ar?'تم طلب إرسال الرابط. تحقق من بريدك.':'Link requested. Check your inbox.');}catch{setEmailNotice(ar?'تعذّر إرسال الرابط حالياً. حاول بعد قليل.':'Unable to request a link. Try again shortly.');}}}>{ar?'إعادة إرسال رابط التأكيد':'Resend verification link'}</button>
       {emailNotice&&<p role="status">{emailNotice}</p>}{exit}
     </main>;

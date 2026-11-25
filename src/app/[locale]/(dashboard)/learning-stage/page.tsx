@@ -20,8 +20,8 @@ const labels = {
     description:
       'سنرتب المسائل والتقدم وفق مرحلتك. يمكنك تغيير الاختيار لاحقًا دون فقدان محاولاتك أو نقاطك.',
     selected: 'المرحلة المختارة',
-    save: 'حفظ المرحلة وعرض فئاتي المفتوحة',
-    change: 'حفظ التغيير وعرض فئاتي',
+    save: 'حفظ الاختيار والانتقال للرئيسية',
+    change: 'حفظ التغيير والانتقال للرئيسية',
     loading: 'جاري تحميل المراحل التعليمية...',
     error: 'تعذر تحميل المراحل التعليمية. حاول تحديث الصفحة.',
     submitError: 'تعذر حفظ المرحلة. حاول مجددًا.',
@@ -33,8 +33,8 @@ const labels = {
     description:
       'We will personalize your problems and progress to this stage. You can change it later without losing attempts or points.',
     selected: 'Selected stage',
-    save: 'Save stage and see unlocked topics',
-    change: 'Save changes and see my topics',
+    save: 'Save selection and go to dashboard',
+    change: 'Save changes and go to dashboard',
     loading: 'Loading stages...',
     error: 'Unable to load stages. Please refresh the page.',
     submitError: 'Could not save your stage. Please try again.',
@@ -81,7 +81,7 @@ export default function LearningStagePage() {
       if(requiresTrack&&effectiveTrack!=null) await selectTrack({TrackId:effectiveTrack}).unwrap();
       else await setLearningStage({ StageId: effectiveId }).unwrap();
       // Keep the learner in the private workspace after onboarding or switching stages.
-      window.location.assign(`/${locale}/dashboard/categories`);
+      window.location.assign(`/${locale}/dashboard`);
     } catch (reason) {
       setError(getApiErrorMessage(reason, copy.submitError));
     }

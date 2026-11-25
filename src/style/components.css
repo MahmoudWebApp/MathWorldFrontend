@@ -852,3 +852,11 @@ html:not(.dark) .math-global-background::before {
   mask-image: linear-gradient(to bottom, transparent, black 18%, black 92%);
   -webkit-mask-image: linear-gradient(to bottom, transparent, black 18%, black 92%);
 }
+
+/* Unified primary actions; retain semantic destructive and disabled styling. */
+.sr-wave-button, button.bg-primary:not([role="tab"]), a.bg-primary {background:var(--sr-grad);color:white;}
+button.bg-primary:disabled {opacity:.5;}
+.text-gradient-math, .dark .text-gradient-math {background:linear-gradient(45deg,var(--color-one),var(--color-two),var(--color-three),var(--color-two),var(--color-one)) 0 0 / var(--bg-size) 100%;color:transparent;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:mw-title-wave 12s linear infinite;}
+.dark {--color-three:#c4b5fd;}
+@keyframes mw-title-wave {to{background-position:var(--bg-size) 0;}}
+@media(prefers-reduced-motion:reduce){.text-gradient-math,.dark .text-gradient-math{animation:none;}}

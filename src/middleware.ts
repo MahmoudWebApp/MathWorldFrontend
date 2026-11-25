@@ -8,7 +8,7 @@ const intlMiddleware = createMiddleware(routing);
 
 const ADMIN_PATHS = ['/admin'];
 const AUTH_PATHS = ['/login', '/register'];
-const AUTH_REQUIRED_PATHS = ['/dashboard', '/profile', '/learning-stage', '/social-accounts', '/notifications'];
+const AUTH_REQUIRED_PATHS = ['/dashboard', '/profile', '/learning-stage', '/social-accounts', '/notifications', '/journey', '/daily-challenge', '/premium/report'];
 
 interface JwtPayload {
   exp?: number;
@@ -114,10 +114,12 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  if (
-    startsWithAny(pathWithoutLocale, AUTH_REQUIRED_PATHS) &&
-    !authenticated
-  ) {
+  const detail = /^\/problems\/[^/]+$/.test(pathWithoutLocale);
+  const learner = detail || startsWithAny(pathWithoutLocale, AUTH_REQUIRED_PATHS.filter(p=>p!=='/notifications'));
+  if (authenticated && learner && role !== 'Student') {
+    return NextResponse.redirect(new URL(`/${locale}/${role==='Admin'?'admin':role==='Supervisor'?'supervisor':'login'}`,request.url));
+  }
+  if ((learner || pathWithoutLocale==='/notifications') && !authenticated) {
     return NextResponse.redirect(
       new URL(`/${locale}/login`, request.url),
     );
