@@ -1,4 +1,5 @@
 'use client';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {useEffect,useState} from 'react';
 import {motion} from 'framer-motion';
 import {BookOpenText} from 'lucide-react';
@@ -20,7 +21,7 @@ export function GradeAge({code,ar}:{code:string;ar:boolean}){
 function PublicTrackDetails({id,ar}:{id:number;ar:boolean}){
  const {currentData:data,isFetching,isError,refetch}=useGetPublishedTrackQuery(id,{refetchOnMountOrArgChange:true});
  const [expanded,setExpanded]=useState<number|null>(null);
- if(isFetching&&!data)return <p role="status" className="py-10 text-center">{ar?'جارٍ التحميل…':'Loading…'}</p>;
+ if(isFetching&&!data)return <MathWorldLoading compact mode="tab"/>;
  if(isError)return <p role="alert">{ar?'تعذّر تحميل المسار.':'Could not load track.'} <button onClick={()=>void refetch()} className={btn}>{ar?'إعادة المحاولة':'Retry'}</button></p>;
  if(!data)return null;
  return <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:.22}} className="space-y-5">
@@ -50,7 +51,7 @@ function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
   const [page,setPage]=useState(1);
   const {currentData:data,isFetching,isError,refetch}=useGetTrackPracticeQuery({id,categoryId,page},{refetchOnMountOrArgChange:true});
   return <div className="space-y-2">
-    {isFetching&&!data&&<p role="status">{ar?'جارٍ تحميل المسائل…':'Loading problems…'}</p>}
+    {isFetching&&!data&&<MathWorldLoading compact mode="filter"/>}
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسائل.':'Could not load problems.'} <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&<>
       {data.Items.map(p=><Link key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id} className="flex items-center justify-between gap-2 rounded-xl border p-3 text-sm"><span>{ar?p.TitleAr:p.TitleEn}</span><span className={p.IsSolved?'text-emerald-600':'text-amber-600'}>{p.IsSolved?(ar?'محلولة':'Solved'):(ar?'غير محلولة':'Unsolved')}</span></Link>)}

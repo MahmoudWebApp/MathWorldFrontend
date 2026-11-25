@@ -162,7 +162,7 @@ export default function PremiumAnalyticsPage() {
     }
   };
 
-  const { currentData: report, isLoading, isError, refetch } = useGetPremiumAnalyticsQuery(canFilter?filters:undefined, {
+  const { currentData: report, isLoading, isFetching, isError, refetch } = useGetPremiumAnalyticsQuery(canFilter?filters:undefined, {
     skip: !isStudent || !premium,
     refetchOnMountOrArgChange: true,
   });
@@ -226,12 +226,12 @@ export default function PremiumAnalyticsPage() {
       </div>
 
       {canFilter&&premium&&j&&<section className="premium-report-actions flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4">
-        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'النطاق':'Scope'}<select disabled={!!pendingExport||preparingExport} className="rounded-lg border bg-background p-2" value={scope} onChange={e=>setScope(e.target.value)}>
+        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'النطاق':'Scope'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={scope} onChange={e=>setScope(e.target.value)}>
           <option value="all">{ar?'جميع المراحل':'All stages'}</option><option value="stage">{ar?'المرحلة الحالية':'Current stage'}</option>
           {j.TrackId&&<option value="track">{ar?'الصف أو المساق الحالي':'Current grade or course'}</option>}
           {j.Categories.map(c=><option key={c.CategoryId} value={'category:'+c.CategoryId}>{ar?c.NameAr:c.NameEn}</option>)}
         </select></label>
-        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'الفترة':'Period'}<select disabled={!!pendingExport||preparingExport} className="rounded-lg border bg-background p-2" value={days} onChange={e=>setDays(Number(e.target.value))}>
+        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'الفترة':'Period'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={days} onChange={e=>setDays(Number(e.target.value))}>
           <option value={0}>{ar?'كل الوقت':'All time'}</option>{[7,30,90,365].map(d=><option key={d} value={d}>{d} {ar?'يوم':'days'}</option>)}
         </select></label>
         <p className="basis-full text-xs text-muted-foreground">{ar?'النقاط حسب تاريخ اكتسابها؛ دفتر الأخطاء يعرض الحالة الحالية. زمن الجلسات الموجهة غير مقاس.':'Points follow their original earn date; review errors show current state. Guided-session time is not measured.'}</p>
@@ -270,9 +270,9 @@ export default function PremiumAnalyticsPage() {
             </button>
           </LockedPremiumDialog>
         </div>
-      ) : isLoading ? (
+      ) : isLoading || (isFetching&&!report) ? (
         <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ إعداد التقرير' : 'Preparing report'} className="animate-pulse space-y-4">
-          <MathWorldLoading compact />
+          <MathWorldLoading compact mode="filter" />
           <div className="h-28 rounded-2xl border border-border/60 bg-card/70" />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }, (_, index) => <div key={index} className="h-32 rounded-2xl bg-muted/70" />)}

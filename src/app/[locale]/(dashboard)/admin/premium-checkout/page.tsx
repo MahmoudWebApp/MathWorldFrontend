@@ -1,4 +1,5 @@
 'use client';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -76,20 +77,20 @@ export default function AdminPremiumCheckoutPage() {
         <label className="block space-y-1">
           <span className="text-sm font-semibold">{ar ? 'الحالة' : 'Status'}</span>
           <select value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}
-            className="w-full rounded-xl border bg-background px-3 py-2 sm:max-w-xs">
+            className="mw-filter-field sm:max-w-xs">
             {filters.map(filter => <option key={filter} value={filter}>
               {filter ? states[filter] : (ar ? 'كل الحالات' : 'All statuses')}
             </option>)}
           </select>
         </label>
-        {orders.isLoading ? <p role="status">{ar ? 'جارٍ التحميل…' : 'Loading…'}</p>
+        {orders.isLoading||(orders.isFetching&&!orders.currentData) ? <MathWorldLoading compact mode="filter"/>
           : orders.isError ? <p role="alert" className="text-destructive">
-            {ar ? 'تعذّر تحميل الطلبات.' : 'Could not load orders.'}
+            {ar ? 'تعذّر تحميل الطلبات.' : 'Could not load orders.'} <button className="underline" onClick={()=>void orders.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>
           </p>
-          : !orders.data?.Orders.length ? <p className="text-muted-foreground">
+          : !orders.currentData?.Orders.length ? <p className="text-muted-foreground">
             {ar ? 'ما في طلبات ضمن هالتصفية.' : 'No orders match this filter.'}
           </p> : <div className="space-y-3">
-            {orders.data.Orders.map(order => <article key={order.Id}
+            {orders.currentData.Orders.map(order => <article key={order.Id}
               className="flex flex-wrap items-start justify-between gap-3 rounded-xl border p-3">
               <div className="min-w-0 space-y-1">
                 <p dir="ltr" className="break-all text-sm font-bold">{order.OrderReference}</p>
@@ -108,13 +109,13 @@ export default function AdminPremiumCheckoutPage() {
             </article>)}
           </div>}
         <div className="flex items-center justify-between border-t pt-3 text-sm">
-          <button type="button" disabled={page <= 1 || orders.isLoading}
+          <button type="button" disabled={page <= 1 || orders.isFetching}
             onClick={() => setPage(p => Math.max(1, p - 1))}
             className="font-semibold text-primary disabled:opacity-40">
             {ar ? 'السابق' : 'Previous'}
           </button>
-          <span>{page} / {Math.max(1, Math.ceil((orders.data?.Total ?? 0) / 20))}</span>
-          <button type="button" disabled={!orders.data || orders.isLoading || page * 20 >= orders.data.Total}
+          <span>{page} / {Math.max(1, Math.ceil((orders.currentData?.Total ?? 0) / 20))}</span>
+          <button type="button" disabled={!orders.currentData || orders.isFetching || page * 20 >= orders.currentData.Total}
             onClick={() => setPage(p => p + 1)}
             className="font-semibold text-primary disabled:opacity-40">
             {ar ? 'التالي' : 'Next'}

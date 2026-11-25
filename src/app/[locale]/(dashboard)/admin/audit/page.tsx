@@ -1,4 +1,5 @@
 'use client';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useEffect, useState } from 'react';
@@ -144,12 +145,12 @@ export default function AdminAuditPage() {
           <span className="block text-sm font-semibold">{ar ? 'المستخدم (رقم ID)' : 'User ID'}</span>
           <input type="number" min="1" step="1" placeholder={ar ? 'جميع المسؤولين' : 'All administrators'}
             value={userId} onChange={e => { setUserId(e.target.value); setPage(1); }}
-            className="w-full rounded-xl border bg-background px-3 py-2" />
+            className="mw-filter-field" />
         </label>
         <label className="block space-y-1">
           <span className="block text-sm font-semibold">{ar ? 'نوع العملية' : 'Action'}</span>
           <select value={action} onChange={e => { setAction(e.target.value); setPage(1); }}
-            className="w-full rounded-xl border bg-background px-3 py-2">
+            className="mw-filter-field">
             <option value="">{ar ? 'جميع العمليات' : 'All actions'}</option>
             {actionOptions.map(value => <option key={value} value={value}>{actionName(value)}</option>)}
           </select>
@@ -157,7 +158,7 @@ export default function AdminAuditPage() {
         <label className="block space-y-1">
           <span className="block text-sm font-semibold">{ar ? 'الفترة' : 'Date range'}</span>
           <select value={days} onChange={e => { setDays(Number(e.target.value) as 7 | 30 | 90); setPage(1); }}
-            className="w-full rounded-xl border bg-background px-3 py-2">
+            className="mw-filter-field">
             <option value={7}>{ar ? 'آخر 7 أيام' : 'Last 7 days'}</option>
             <option value={30}>{ar ? 'آخر 30 يوماً' : 'Last 30 days'}</option>
             <option value={90}>{ar ? 'آخر 90 يوماً' : 'Last 90 days'}</option>
@@ -176,15 +177,15 @@ export default function AdminAuditPage() {
     <section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-6">
       <h2 className="text-lg font-bold">{ar ? 'تسلسل الأحداث' : 'Timeline of actions'}</h2>
       {events.isError || summary.isError
-        ? <p role="alert">{ar ? 'تعذّر جلب السجل.' : 'Could not load activity log.'}</p>
-        : events.isLoading
-          ? <p role="status">{ar ? 'جارٍ تحميل الأحداث…' : 'Loading events…'}</p>
-          : !events.data?.Entries.length
+        ? <div role="alert">{ar ? 'تعذّر جلب السجل.' : 'Could not load activity log.'} <button className="underline text-primary" onClick={()=>{void events.refetch();void summary.refetch();}}>{ar?'إعادة المحاولة':'Retry'}</button></div>
+        : events.isLoading || (events.isFetching&&!events.currentData)
+          ? <MathWorldLoading compact mode="filter"/>
+          : !events.currentData?.Entries.length
             ? <p className="py-10 text-center text-muted-foreground">
               {ar ? 'لا يوجد نشاط مسجّل ضمن عوامل التصفية.' : 'No recorded events for these filters.'}
             </p>
             : <ol className="divide-y">
-              {events.data.Entries.map(item =>
+              {events.currentData.Entries.map(item =>
                 <li key={item.Id} className="flex gap-3 py-4">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <ShieldCheck className="h-5 w-5" />
@@ -209,8 +210,8 @@ export default function AdminAuditPage() {
           className="font-semibold text-primary disabled:opacity-40">
           {ar ? 'السابق' : 'Previous'}
         </button>
-        <span>{ar ? 'صفحة' : 'Page'} {page} / {Math.max(1, Math.ceil((events.data?.Total ?? 0) / 30))}</span>
-        <button type="button" disabled={!events.data?.HasMore || events.isFetching}
+        <span>{ar ? 'صفحة' : 'Page'} {page} / {Math.max(1, Math.ceil((events.currentData?.Total ?? 0) / 30))}</span>
+        <button type="button" disabled={!events.currentData?.HasMore || events.isFetching}
           onClick={() => setPage(x => x + 1)}
           className="font-semibold text-primary disabled:opacity-40">
           {ar ? 'التالي' : 'Next'}

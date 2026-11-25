@@ -1,4 +1,5 @@
 'use client';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -13,6 +14,7 @@ export default function AdminUsersPage() {
   const ar = useLocale() === 'ar';
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const searching=searchInput.trim()!==search;
   const [stageId, setStageId] = useState<number | undefined>();
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [tier, setTier] = useState<'' | 'Free' | 'Premium'>('');
@@ -121,7 +123,7 @@ export default function AdminUsersPage() {
     return { start, end };
   };
   const openGrant = (ids: number[]) => {
-    if (granting || isFetching || !data) return;
+    if (granting || searching || isFetching || !data) return;
     const currentRows = data.Learners.filter(u => u.IsActive && ids.includes(u.Id));
     if (!currentRows.length) return;
     setGrantMessage('');
@@ -183,12 +185,12 @@ export default function AdminUsersPage() {
             <span className="sr-only">{label.search}</span>
             <input type="search" maxLength={100} value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)} placeholder={label.search}
-              className="w-full rounded-xl border border-border bg-card py-2.5 pe-3 ps-10 text-sm outline-none focus:border-primary" />
+              className="mw-filter-field mw-filter-search" />
           </label>
           <label>
             <span className="sr-only">{label.stage}</span>
             <select value={stageId ?? ''} onChange={(e) => {setStageId(e.target.value ? Number(e.target.value) : undefined); setPage(1);}}
-              className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm">
+              className="mw-filter-field">
               <option value="">{label.allStages}</option>
               {(stages ?? []).map((stage) =>
                 <option key={stage.Id} value={stage.Id}>{ar ? stage.NameAr : stage.NameEn}</option>)}
@@ -197,7 +199,7 @@ export default function AdminUsersPage() {
           <label>
             <span className="sr-only">{label.status}</span>
             <select value={status} onChange={(e) => {setStatus(e.target.value as typeof status); setPage(1);}}
-              className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm">
+              className="mw-filter-field">
               <option value="all">{label.allStatus}</option>
               <option value="active">{label.active}</option>
               <option value="inactive">{label.disabled}</option>
@@ -206,7 +208,7 @@ export default function AdminUsersPage() {
           <label>
             <span className="sr-only">{label.tier}</span>
             <select value={tier} onChange={(e) => {setTier(e.target.value as typeof tier); setPage(1);}}
-              className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm">
+              className="mw-filter-field">
               <option value="">{label.allTiers}</option>
               <option value="Free">Free</option>
               <option value="Premium">Premium</option>
@@ -220,7 +222,7 @@ export default function AdminUsersPage() {
           <div className="flex flex-wrap items-center gap-3">
             <label className="inline-flex cursor-pointer items-center gap-2">
               <input type="checkbox" checked={allVisibleSelected}
-                onChange={toggleAllVisible} disabled={!eligibleIds.length || granting}
+                onChange={toggleAllVisible} disabled={searching || isFetching || !eligibleIds.length || granting}
                 aria-label={label.selectAll}
                 className="h-4 w-4 accent-primary" />
               <span className="font-medium">{label.selected}: {selectedVisible.length}</span>
@@ -239,7 +241,7 @@ export default function AdminUsersPage() {
           <span className="inline-flex items-center gap-2 font-medium"><Users className="h-4 w-4 text-primary" aria-hidden />
             {label.total}: {data?.Total ?? '—'}
           </span>
-          {isFetching && !isLoading && <span role="status" className="text-muted-foreground">{label.loading}</span>}
+          {(searching||isFetching) && <MathWorldLoading inline mode={searching||search?"search":"filter"}/>}
         </div>
         {confirmedPeriods.length > 0 && (
           <div role="status" className="border-b border-border bg-emerald-500/5 p-4 text-sm text-foreground">
@@ -256,14 +258,8 @@ export default function AdminUsersPage() {
             <p className="text-destructive">{label.error}</p>
             <button type="button" onClick={() => refetch()} className="mt-3 rounded-xl border border-primary/30 px-4 py-2 text-primary">{label.retry}</button>
           </div>
-        ) : isLoading || (!data && isFetching) ? (
-          <div role="status" aria-label={label.loading} aria-busy="true" className="animate-pulse space-y-3 p-5">
-            {Array.from({ length: 6 }, (_, index) => <div key={index} className="flex items-center gap-4 rounded-xl bg-muted/20 p-4">
-              <div className="h-4 w-4 rounded bg-muted" />
-              <div className="h-5 w-1/3 rounded bg-muted" />
-              <div className="ms-auto h-5 w-1/4 rounded bg-muted" />
-            </div>)}
-          </div>
+        ) : searching || isLoading || (!data && isFetching) ? (
+          <MathWorldLoading compact mode={searching||search?'search':'filter'}/>
         ) : !data?.Learners.length ? (
           <div className="p-12 text-center text-muted-foreground">{label.empty}</div>
         ) : (
@@ -273,7 +269,7 @@ export default function AdminUsersPage() {
                 <article key={u.Id} className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4">
                   <div className="flex items-start gap-2">
                     <input type="checkbox" checked={selectedVisible.includes(u.Id)}
-                      disabled={!u.IsActive || granting || isFetching} onChange={() => toggleId(u.Id)}
+                      disabled={!u.IsActive || granting || searching || isFetching} onChange={() => toggleId(u.Id)}
                       aria-label={`${label.select}: ${u.FullName}`}
                       className="mt-1 h-4 w-4 accent-primary" />
                     <div className="min-w-0 flex-1">
@@ -297,7 +293,7 @@ export default function AdminUsersPage() {
                   </dl>
                     </div>
                   </div>
-                  <button type="button" disabled={!u.IsActive || granting || isFetching} onClick={() => openGrant([u.Id])}
+                  <button type="button" disabled={!u.IsActive || granting || searching || isFetching} onClick={() => openGrant([u.Id])}
                     className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/30 px-3 py-2 text-sm font-semibold text-primary disabled:opacity-40">
                     <Crown className="h-4 w-4" aria-hidden />
                     {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
@@ -324,7 +320,7 @@ export default function AdminUsersPage() {
                     <tr key={u.Id} className="border-t border-border hover:bg-muted/20">
                       <td className="px-3 py-3">
                         <input type="checkbox" checked={selectedVisible.includes(u.Id)}
-                          disabled={!u.IsActive || granting || isFetching} onChange={() => toggleId(u.Id)}
+                          disabled={!u.IsActive || granting || searching || isFetching} onChange={() => toggleId(u.Id)}
                           aria-label={`${label.select}: ${u.FullName}`} className="h-4 w-4 accent-primary" />
                       </td>
                       <td className="px-4 py-3">
@@ -340,7 +336,7 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-2">
                           <Link href={`/admin/users/${u.Id}`} className="font-semibold text-primary hover:underline">{label.detail}</Link>
-                          <button type="button" disabled={!u.IsActive || granting || isFetching} onClick={() => openGrant([u.Id])}
+                          <button type="button" disabled={!u.IsActive || granting || searching || isFetching} onClick={() => openGrant([u.Id])}
                             className="text-xs font-semibold text-primary underline-offset-2 hover:underline disabled:opacity-40">
                             {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
                           </button>
