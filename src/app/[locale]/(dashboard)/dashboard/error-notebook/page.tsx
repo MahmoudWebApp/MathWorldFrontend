@@ -135,7 +135,7 @@ export default function ErrorNotebookPage() {
           </p>
         </div>
 
-        <Button variant="outline" className="gap-2" onClick={() => refetch()}>
+        <Button variant="outline" className="gap-2" onClick={() => { void refetch(); void reloadStage(); }}>
           <RefreshCcw className="h-4 w-4" />
           {t('common.retry')}
         </Button>
@@ -162,7 +162,7 @@ export default function ErrorNotebookPage() {
 
         <button
           type="button"
-          onClick={() => setActiveTab('archived')}
+          onClick={() => { setActiveTab('archived'); setDueOnly(false); }}
           className={`rounded-xl border p-4 text-start transition-colors ${
             activeTab === 'archived'
               ? 'border-primary bg-primary/5 text-primary'
@@ -180,7 +180,7 @@ export default function ErrorNotebookPage() {
       </div>
 
       <div className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4">
-        <button type="button" aria-pressed={dueOnly} onClick={() => setDueOnly(value => !value)}
+        <button type="button" aria-pressed={dueOnly} disabled={activeTab === 'archived'} onClick={() => setDueOnly(value => !value)}
           className={`min-h-10 rounded-lg border px-4 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${dueOnly ? 'border-primary bg-primary/10 text-primary' : 'bg-background hover:bg-muted/50'}`}>
           {isArabic ? `المراجعة المستحقة (${dueCount})` : `Due for review (${dueCount})`}
         </button>
@@ -321,7 +321,7 @@ export default function ErrorNotebookPage() {
                     variant="ghost"
                     size="sm"
                     className="gap-2"
-                    disabled={updatingProblemId === problem.Id}
+                    disabled={updatingProblemId !== null}
                     onClick={() => handleArchive(problem)}
                   >
                     {updatingProblemId === problem.Id ? (
