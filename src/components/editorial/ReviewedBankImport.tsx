@@ -89,31 +89,24 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
   function eligible(d:ReviewedDraftState){return d.MatchesCandidate&&['Draft','PendingReview','Approved'].includes(d.Status);}
   // Reconcile a transient failure with persisted state before attempting another write.
   async function publishMatching(current:ReviewedBankBatch,d:ReviewedDraftState){
-    let revision=d.Revision,state=d.Status;
-    const nextStates:Record<string,string>={Draft:'PendingReview',PendingReview:'Approved',Approved:'Published'};
-    while(state!=='Published'){
-      const expected=nextStates[state];
-      if(!expected)throw Error('UnexpectedDraftStatus');
-      const kind=state==='Draft'?'submit':state==='PendingReview'?'review':'publish';
-      let completed=false;
-      for(let attempt=0;attempt<3&&!completed;attempt++){
-        try{
-          const result=await action({id:d.Id,action:kind,Revision:revision,...(kind==='review'?{Confirm:true,Note:note.trim()}:kind==='publish'?{Confirm:true}:{})}).unwrap();
-          if(result.Status!==expected||result.Revision!==revision+1)throw Error('UnexpectedEditorialTransition');
-          revision=result.Revision;state=result.Status;completed=true;
-        }catch(e){
-          const code=(e as {status?:number|string})?.status;
-          if(!(code==='FETCH_ERROR'||code==='TIMEOUT_ERROR'||code===500||code===502||code===503||code===504)||attempt===2||stop.current)throw e;
-          setStatus(ar?'انقطع الاتصال مؤقتاً، جارٍ التحقق من حالة المسألة #'+d.Id:'Temporary connection issue; checking question #'+d.Id);
-          await new Promise<void>(resolve=>window.setTimeout(resolve,1500*(attempt+1)));
-          if(stop.current)throw e;
-          const fresh=await loadCurrent(current);
-          const actual=fresh.Drafts.find(x=>x.Id===d.Id&&x.ContentKey===d.ContentKey);
-          if(fresh.MissingMappings!==0||!actual||!actual.MatchesCandidate)throw e;
-          if(actual.Status===expected&&actual.Revision===revision+1){
-            revision=actual.Revision;state=actual.Status;completed=true;
-          }else if(actual.Status!==state||actual.Revision!==revision)throw e;
-        }
+    const increments=d.Status==='Draft'?3:d.Status==='PendingReview'?2:d.Status==='Approved'?1:0;
+    if(!increments)throw Error('UnexpectedDraftStatus');
+    for(let attempt=0;attempt<3;attempt++){
+      try{
+        const result=await action({id:d.Id,action:'publish',Revision:d.Revision,Confirm:true,DirectApproval:true,Note:note.trim()}).unwrap();
+        if(result.Status!=='Published'||result.Revision!==d.Revision+increments)throw Error('UnexpectedEditorialTransition');
+        return;
+      }catch(e){
+        const code=(e as {status?:number|string})?.status;
+        if(!(code==='FETCH_ERROR'||code==='TIMEOUT_ERROR'||code===500||code===502||code===503||code===504)||attempt===2||stop.current)throw e;
+        setStatus(ar?'انقطع الاتصال مؤقتاً، جارٍ التحقق من حالة المسألة #'+d.Id:'Temporary connection issue; checking question #'+d.Id);
+        await new Promise<void>(resolve=>window.setTimeout(resolve,1500*(attempt+1)));
+        if(stop.current)throw e;
+        const fresh=await loadCurrent(current);
+        const actual=fresh.Drafts.find(x=>x.Id===d.Id&&x.ContentKey===d.ContentKey);
+        if(fresh.MissingMappings!==0||!actual||!actual.MatchesCandidate)throw e;
+        if(actual.Status==='Published'&&actual.Revision===d.Revision+increments&&actual.PublishedProblemId)return;
+        if(!sameDraft(d,actual))throw e;
       }
     }
   }

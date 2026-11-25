@@ -45,14 +45,10 @@ function Wizard({initial,admin,canSubmit,onSaved,onClose}:{initial?:EditorialDra
       let current=draft;
       if(!current||dirty){const saved=await store();if(!saved)return;current=saved;}
       if(!current)return;
-      if(['Draft','NeedsChanges'].includes(current.Status)){
+      if(admin&&['Draft','NeedsChanges','PendingReview','Approved'].includes(current.Status)){
+        current=await action({id:current.Id,Revision:current.Revision,action:'publish',DirectApproval:true,Confirm:true,Note:note.trim()||(ar?'اعتماد مباشر بواسطة الأدمن':'Approved directly by administrator')}).unwrap();setDraft(current);onSaved(current.Id);
+      }else if(!admin&&['Draft','NeedsChanges'].includes(current.Status)){
         current=await action({id:current.Id,Revision:current.Revision,action:'submit'}).unwrap();setDraft(current);onSaved(current.Id);
-      }
-      if(admin&&current.Status==='PendingReview'){
-        current=await action({id:current.Id,Revision:current.Revision,action:'review',Confirm:true,Note:note.trim()||(ar?'اعتماد مباشر بواسطة الأدمن':'Approved directly by administrator')}).unwrap();setDraft(current);onSaved(current.Id);
-      }
-      if(admin&&current.Status==='Approved'){
-        current=await action({id:current.Id,Revision:current.Revision,action:'publish',Confirm:true}).unwrap();setDraft(current);onSaved(current.Id);
       }
       if(current.Status!==(admin?'Published':'PendingReview'))throw Error('UnexpectedEditorialStatus');
       setMessage(admin?(ar?'تم نشر المسألة بنجاح':'Problem published'):(ar?'تم إرسال المسألة للموافقة':'Problem submitted for approval'));setNote('');
