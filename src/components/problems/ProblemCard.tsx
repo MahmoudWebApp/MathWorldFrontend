@@ -30,8 +30,8 @@ export function ProblemCard({ problem }: ProblemCardProps) {
       href={`${inStudentWorkspace ? "/dashboard" : ""}/problems/${problem.Id}`}
       className="group mx-auto block w-full max-w-5xl rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
-      <article className="brand-surface rounded-3xl p-4 transition-[border-color,box-shadow] hover:shadow-md sm:p-5"
-        style={{ borderColor: stageAccent + '30' }}>
+      <article className="brand-surface mw-topic-surface rounded-3xl p-4 hover:shadow-md sm:p-5"
+        style={{ "--stage-accent": stageAccent } as import("react").CSSProperties}>
         <div className="flex flex-row items-start justify-between gap-3 sm:gap-4">
           <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
             <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12"
@@ -69,7 +69,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
                   </Badge>
                 )}
                 {problem.CategoryName && (
-                  <Badge variant="outline" className="border-border bg-background/80 text-muted-foreground">
+                  <Badge variant="outline" className="mw-topic-action">
                     {problem.CategoryName}
                   </Badge>
                 )}
