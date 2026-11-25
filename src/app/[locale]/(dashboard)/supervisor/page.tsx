@@ -17,6 +17,7 @@ export default function SupervisorWorkspace(){
   const staff=useSelector((s:RootState)=>s.auth.user?.Role==='Supervisor'&&s.auth.isAuthenticated);
   const {data,isFetching,isError,refetch}=useGetSupervisorPermissionsQuery(undefined,{skip:!staff,refetchOnMountOrArgChange:true,refetchOnFocus:true,refetchOnReconnect:true,pollingInterval:30000,skipPollingIfUnfocused:true});
   if(!staff)return <main className="p-6 text-center"><a className="text-primary underline" href={ar?'/ar/login':'/en/login'}>{ar?'تسجيل الدخول':'Sign in'}</a></main>;
+  if(isFetching&&!data)return <MathWorldLoading className="min-h-[65vh]"/>;
   return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6">
     <WorkspacePageHeader title={ar?'مساحة المشرف':'Supervisor workspace'} icon={ShieldCheck}/>
     {isFetching&&!data&&<MathWorldLoading/>}

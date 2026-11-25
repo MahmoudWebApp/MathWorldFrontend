@@ -93,10 +93,10 @@ export default function AdminAnalyticsPage() {
     correct: day.CorrectAttempts,
   })) ?? [];
 
-  if((isFetching&&!overview)||(tab==='stages'&&stageId>0&&loadingDetail&&!detail))return <MathWorldLoading/>;
+  if((isFetching&&!overview)||(tab==='stages'&&stageId>0&&loadingDetail&&!detail))return <MathWorldLoading className="min-h-[65vh]"/>;
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
-      <WorkspacePageHeader title={labels.title} icon={Activity} actions={<div className="flex flex-wrap gap-2" role="group" aria-label={labels.activity}>
+      <WorkspacePageHeader title={labels.title} icon={Activity} actions={<div className="flex flex-wrap gap-2" role="group" aria-label={isArabic?"فترة النشاط والمحاولات":"Activity and attempts period"}><span className="self-center text-xs font-semibold text-muted-foreground">{isArabic?"فترة النشاط:":"Activity period:"}</span>
         {periods.map((option) => (
           <button
             type="button" key={option} aria-pressed={days === option}
@@ -226,7 +226,7 @@ export default function AdminAnalyticsPage() {
             </div>
           </section>
 
-          {loadingDetail ? (
+          {loadingDetail&&!detail ? (
             <div role="status" aria-busy="true" aria-label={labels.loading} className="grid animate-pulse gap-4 lg:grid-cols-2">
               <div className="h-72 rounded-2xl bg-muted/60" /><div className="h-72 rounded-2xl bg-muted/60" />
             </div>

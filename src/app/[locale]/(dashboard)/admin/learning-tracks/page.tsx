@@ -109,6 +109,7 @@ export default function LearningTracksPage(){
   const [create,{isLoading}]=useCreateTrackMutation();
   async function submit(e:React.FormEvent){e.preventDefault();setError('');try{const t=await create({StageId:stageId,Kind:kind,Code:code,NameAr:nameAr,NameEn:nameEn,DescriptionAr:descAr,DescriptionEn:descEn,SortOrder:sort}).unwrap();setSelected(t.Id);setTab('list');setCode('');setAr('');setEn('');setDescAr('');setDescEn('');}catch(e){setError(message(e,ar));}}
   if(!admin)return null;
+  if(isFetching&&!data)return <MathWorldLoading className="min-h-[65vh]"/>;
   return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6">
     <WorkspacePageHeader title={ar?'المحتوى التعليمي':'Learning content'} icon={GraduationCap} actions={<div className="flex gap-2"><Link className={btn} href="/admin/editorial?tab=requests">{ar?"مسائل بحاجة مراجعة":"Review requests"}</Link><Link className={btn} href="/admin/stages">{ar?"المراحل":"Stages"}</Link></div>}/>
     {data&&!data.Enabled&&<p role="status" className="text-sm text-muted-foreground">{ar?'عرض المسارات للطلاب معطّل.':'Learner track catalog is disabled.'}</p>}
