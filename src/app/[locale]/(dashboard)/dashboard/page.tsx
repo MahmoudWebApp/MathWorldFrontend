@@ -1,5 +1,7 @@
 'use client';
 
+import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
+import { LayoutDashboard } from 'lucide-react';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
@@ -114,7 +116,7 @@ export default function UserDashboardPage() {
   return (
     <main className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 sm:px-6">
       <header>
-        <h1 className="text-gradient-math text-2xl font-extrabold sm:text-3xl">{ar ? 'الرئيسية' : 'Dashboard'}</h1>
+        <WorkspacePageHeader title={ar?'الرئيسية':'Dashboard'} icon={LayoutDashboard}/>
         <p className="mt-2 text-sm text-muted-foreground">
           {isLoading ? (ar ? 'جارٍ تحميل بياناتك…' : 'Loading…')
             : (ar ? `أهلاً بعودتك${user?.FullName ? `، ${user.FullName}` : ''}` : `Welcome back${user?.FullName ? `, ${user.FullName}` : ''}`)}
