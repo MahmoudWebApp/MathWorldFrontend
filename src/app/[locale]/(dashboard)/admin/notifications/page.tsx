@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
@@ -77,18 +78,10 @@ export default function AdminNotificationsPage() {
 
   return (
     <main className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-      <Link href="/admin" className="text-sm font-semibold text-primary hover:underline">
-        {ar ? 'العودة للأدمن' : 'Back to admin'}
-      </Link>
+      
       <div className="space-y-2">
-        <h1 className="flex items-center gap-2 text-3xl font-bold">
-          <BellRing className="h-7 w-7 text-primary" />
-          {ar ? 'إرسال إشعار لطالب' : 'Send a learner notification'}
-        </h1>
-        <p className="text-muted-foreground">
-          {ar ? 'إشعار إلى طالب واحد بالعربية والإنجليزية. البريد يرسل تنبيهاً عاماً لقراءة الإشعار من الحساب، بحسب موافقة الطالب.'
-            : 'Create a bilingual notice for one learner. Optional email alerts link to their private inbox and require consent.'}
-        </p>
+        <WorkspacePageHeader title={ar?'الإشعارات':'Notifications'} icon={BellRing}/>
+        
         {checkingEmail ? (
           <MathWorldLoading compact />
         ) : emailError || !emailStatus ? (

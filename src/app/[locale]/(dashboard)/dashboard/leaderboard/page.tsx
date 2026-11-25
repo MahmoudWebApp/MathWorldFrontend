@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
-import { AlertCircle, ChevronLeft, ChevronRight, Medal, Trophy, Users } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Medal, RefreshCw, Trophy, Users } from 'lucide-react';
 import {
   useGetLearningStageQuery,
   useGetStageLeaderboardQuery,

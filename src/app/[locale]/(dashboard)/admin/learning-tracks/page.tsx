@@ -125,7 +125,7 @@ export default function LearningTracksPage(){
       <button className={btn} disabled={isLoading||!stageId} type="submit">{ar?'إضافة مسودة':'Create draft'}</button>{error&&<p role="alert" className="text-destructive">{error}</p>}
     </form></details>
     <ReviewedTrackDraftBatchPanel ar={ar} disabled={selected!==null}/>
-    <div className="flex justify-between"><h2 className="font-bold">{ar?'المسارات الموجودة':'Existing tracks'}</h2><button className={btn} disabled={isFetching} onClick={()=>void refetch()}>{ar?'تحديث':'Refresh'}</button></div>
+    <div className="flex justify-between"><h2 className="font-bold">{ar?'المسارات الموجودة':'Existing tracks'}</h2></div>
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسارات.':'Could not load tracks.'}</p>}
     {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} className={'rounded-xl border p-3 text-start '+(selected===x.Track.Id?'border-primary bg-primary/10':'bg-card')}><p className="font-bold">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>

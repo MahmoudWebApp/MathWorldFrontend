@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -103,17 +104,9 @@ export default function AdminAuditPage() {
   };
   return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-7 px-4 py-8">
     <header className="space-y-2">
-      <Link href="/admin" className="text-sm font-semibold text-primary underline">
-        {ar ? 'العودة للمراقبة' : 'Back to monitoring'}
-      </Link>
-      <h1 className="flex items-center gap-2 text-3xl font-black">
-        <History className="h-7 w-7 text-primary" />
-        {ar ? 'سجل عمليات الإدارة' : 'Administrator action log'}
-      </h1>
-      <p className="max-w-3xl text-sm text-muted-foreground">
-        {ar ? 'سجل مستقل لعمليات حسابات الإدارة فقط. لعرض تسجيل الطلاب ودخولهم وخروجهم ونشاطهم استخدم صفحة «متابعة الطلاب وسجلهم». لا يتضمن كلمات مرور أو نصوص إجابات.'
-          : 'A separate log of verified administrator operations only. Student registrations, sign-ins, explicit sign-outs and activity belong in Student monitoring. No passwords or answer contents.'}
-      </p>
+      
+      <WorkspacePageHeader title={ar?'سجل الإدارة':'Admin activity'} icon={History}/>
+      
     </header>
     <section className="grid gap-3 sm:grid-cols-2">
       {[
@@ -144,10 +137,7 @@ export default function AdminAuditPage() {
             {exporting ? (ar ? 'جارٍ التصدير…' : 'Exporting…') :
               (ar ? 'تصدير CSV' : 'Export CSV')}
           </button>
-          <button type="button" onClick={() => { void events.refetch(); void summary.refetch(); }}
-            className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
-            <RefreshCw className="h-4 w-4" />{ar ? 'تحديث' : 'Refresh'}
-          </button>
+          
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

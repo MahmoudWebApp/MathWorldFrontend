@@ -37,9 +37,7 @@ export default function AdminPremiumCheckoutPage() {
 
   return (
     <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-6 px-4 py-8">
-      <Link href="/admin" className="text-sm font-semibold text-primary underline">
-        {ar ? 'العودة للأدمن' : 'Back to admin'}
-      </Link>
+      
       <header className="space-y-2">
         <h1 className="text-3xl font-extrabold">
           {ar ? 'طلبات اشتراك Premium' : 'Premium checkout orders'}
@@ -73,10 +71,7 @@ export default function AdminPremiumCheckoutPage() {
       <section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-bold">{ar ? 'سجل الطلبات' : 'Order history'}</h2>
-          <button type="button" onClick={() => { void orders.refetch(); void summary.refetch(); }}
-            className="rounded-lg border px-3 py-2 text-sm font-semibold text-primary">
-            {ar ? 'تحديث' : 'Refresh'}
-          </button>
+          
         </div>
         <label className="block space-y-1">
           <span className="text-sm font-semibold">{ar ? 'الحالة' : 'Status'}</span>

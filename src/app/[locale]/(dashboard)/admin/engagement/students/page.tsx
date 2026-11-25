@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -127,17 +128,9 @@ export default function AdminLearnerActivityPage() {
   ]) ?? []);
   return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-6 px-4 py-8">
     <header className="space-y-2">
-      <Link href="/admin" className="text-sm font-semibold text-primary underline">
-        {ar ? 'لوحة الإدارة' : 'Admin dashboard'}
-      </Link>
-      <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
-        <UserRoundSearch className="h-6 w-6 shrink-0 text-primary"/>
-        {ar ? 'متابعة الطلاب وسجل نشاطهم' : 'Learner monitoring and activity log'}
-      </h1>
-      <p className="max-w-3xl text-sm text-muted-foreground">
-        {ar ? 'مكان واحد لمتابعة تسجيل الطلاب ودخولهم وخروجهم الصريح ونشاطهم، بدون خلطه بعمليات الإدارة.'
-          : 'Track student registrations, sign-ins, explicit sign-outs and activity in one place, separate from admin operations.'}
-      </p>
+      
+      <WorkspacePageHeader title={ar?'متابعة الطلاب':'Student monitoring'} icon={UserRoundSearch}/>
+      
     </header>
     <section className="grid gap-3 rounded-2xl border bg-card p-4 lg:grid-cols-[minmax(0,1fr)_190px_auto_auto]">
       <form className="flex gap-2" onSubmit={event => {
@@ -170,10 +163,7 @@ export default function AdminLearnerActivityPage() {
           className="h-4 w-4 accent-emerald-600" />
         {ar ? 'متصلون خلال آخر 5 دقائق فقط' : 'Seen in the last 5 minutes only'}
       </label>
-      <button type="button" onClick={() => void result.refetch()}
-        className="inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary">
-        <RefreshCw className="h-4 w-4"/>{ar ? 'تحديث' : 'Refresh'}
-      </button>
+      
     </section>
     <section className="overflow-hidden rounded-2xl border bg-card">
       <div className="flex flex-wrap justify-between gap-2 border-b p-4 text-sm">
@@ -304,10 +294,7 @@ export default function AdminLearnerActivityPage() {
             className="rounded-xl border px-3 py-2 text-sm font-semibold">
             {ar ? 'عرض كل الطلاب' : 'All learners'}
           </button>}
-          <button type="button" onClick={() => { void events.refetch(); void result.refetch(); }}
-            className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold">
-            <RefreshCw className="h-4 w-4" />{ar ? 'تحديث' : 'Refresh'}
-          </button>
+          
           <button type="button" disabled={exporting || !token}
             onClick={() => void downloadStudentEvents()}
             className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold text-primary disabled:opacity-50">
