@@ -862,7 +862,7 @@ button.bg-primary:disabled {opacity:.5;}
 @media(prefers-reduced-motion:reduce){.text-gradient-math,.dark .text-gradient-math{animation:none;}}
 
 /* Search and filter controls share one responsive shape in all workspaces. */
-.mw-filter-field { box-sizing:border-box; min-height:44px; width:100%; border-radius:12px; border:1px solid hsl(var(--border)); background: hsl(var(--background)); padding:.625rem .75rem; font-size:.875rem; transition:border-color .15s,box-shadow .15s; }
+.mw-filter-field { box-sizing:border-box; min-height:44px; width:100%; border-radius:12px; border:1px solid var(--color-border); background: var(--color-background); padding:.625rem .75rem; font-size:.875rem; transition:border-color .15s,box-shadow .15s; }
 .mw-filter-field:focus-visible {outline:2px solid var(--sr-primary);outline-offset:2px;}
 .mw-filter-search {padding-inline-start:2.5rem;}
 .mw-filter-bar {display:grid;gap:.75rem;align-items:end;border-radius:1rem;padding:1rem;}
