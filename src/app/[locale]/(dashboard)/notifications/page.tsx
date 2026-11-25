@@ -4,8 +4,6 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { useSelector } from 'react-redux';
-import type { RootState } from '@/store';
 import { BellRing, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   type InboxNotification,
@@ -26,7 +24,7 @@ function safeAppPath(path: string | null): path is string {
 export default function NotificationsPage() {
   const locale = useLocale();
   const ar = locale === 'ar';
-  const role = useSelector((state: RootState) => state.auth.user?.Role);
+
 
   const [skip, setSkip] = useState(0);
   const [actionError, setActionError] = useState('');

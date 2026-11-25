@@ -98,10 +98,10 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
     {error&&<p role="alert" className="text-destructive text-sm">{error}</p>}
   </section>;
 }
-function TrackEditor({id,ar}:{id:number;ar:boolean}){const {data,isFetching,isError}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:true});return <>{isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{data&&!isError&&<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>}</>}
+function TrackEditor({id,ar}:{id:number;ar:boolean}){const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:true});return <>{isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{data&&!isError&&<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>}</>}
 export default function LearningTracksPage(){
   const ar=useLocale()==='ar';const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
-  const {data,isFetching,isError,refetch}=useGetAdminTracksQuery(undefined,{skip:!admin});
+  const {data,isFetching,isError}=useGetAdminTracksQuery(undefined,{skip:!admin});
   const {data:stages}=useGetAdminStagesQuery(undefined,{skip:!admin});
   const [selected,setSelected]=useState<number|null>(null);
   const [stageId,setStage]=useState(0);const [kind,setKind]=useState<LearningTrack['Kind']>('course');
