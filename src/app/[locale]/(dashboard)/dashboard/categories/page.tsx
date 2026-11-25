@@ -5,7 +5,7 @@ import { useGetTrackSelectionQuery,useGetPublishedTracksQuery } from '@/store/ap
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
 import { useState } from 'react';
-import Image from 'next/image';
+import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
 import { Link } from '@/i18n/routing';
 import { BookOpen, ListChecks, Calculator, LockKeyhole, RefreshCw, RotateCcw } from 'lucide-react';
 import { useGetLearningStageQuery, useGetLearningJourneyQuery, useResetPracticeMutation } from '@/store/api/usersApi';
@@ -182,7 +182,7 @@ export default function StudentCategoriesPage() {
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-sm"
                       style={{ backgroundColor: `${accent}18`, borderColor: `${accent}40` }}>
                       {iconUrl && (iconUrl.startsWith('/') || iconUrl.startsWith('https://'))
-                        ? <Image src={iconUrl} alt="" width={36} height={36} unoptimized className="h-9 w-9 object-contain" />
+                        ? <StageTopicArtwork src={iconUrl} size={36} accent={accent}/>
                         : <BookOpen className="h-6 w-6" style={{color:accent}} />}
                     </div>
                     {locked && <LockKeyhole className="h-5 w-5 text-muted-foreground" aria-hidden="true" />}
