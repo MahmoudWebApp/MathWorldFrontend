@@ -16,7 +16,7 @@ export function BrandLogo({ compact = false, className }: BrandLogoProps) {
   const { data } = useGetPublicBrandQuery(undefined, { refetchOnMountOrArgChange: 60 });
   const [failedLogo, setFailedLogo] = useState('');
   const logo = data?.Profile.LogoUrl;
-  const customLogo = logo && data && !(/\/mathworld-mark-(?:transparent-v3\.png|balanced-v4\.(?:svg|png))(?:[?#].*)?$/i.test(logo)) && logo !== failedLogo && isSafeBrandLogo(logo, data.WebsiteUrl) ? logo : null;
+  const customLogo = logo && data && !(/\/mathworld-mark-(?:transparent-v3\.png|balanced-v4\.(?:svg|png)|soft-v5\.png)(?:[?#].*)?$/i.test(logo)) && logo !== failedLogo && isSafeBrandLogo(logo, data.WebsiteUrl) ? logo : null;
   const name = (ar ? data?.Profile.NameAr : data?.Profile.NameEn) || 'MathWorld';
   return (
     <div className={cn(compact ? 'brand-logo-lockup' : 'brand-logo-lockup brand-logo-lockup-large', className)}>
