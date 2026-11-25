@@ -38,7 +38,7 @@ export default function ReviewedTrackDraftBatchPanel({ar,disabled}:{ar:boolean;d
       if(confirm){setPreview(null);setNotice(ar?'تم حفظ روابط المسارات كمسودات: '+result.AppliedTracks:'Draft track mappings saved: '+result.AppliedTracks);}
       else setPreview(result);
     }catch(e){
-      const detail=(e as {data?:{Message?:string;Code?:string;ProblemIds?:number[]}})?.data;
+      const detail=(e as {data?:{message?:string;Message?:string;Code?:string;ProblemIds?:number[]}})?.data;
       const messages:Record<string,string[]>={
         TrackBatchSourceChanged:['تغيّر مصدر بعض المسائل. لم تُحفظ أي روابط.','Some source questions changed. No mappings were saved.'],
         TrackBatchExistingMapping:['يوجد ربط سابق مختلف. لن تتم الكتابة فوقه.','Existing mappings differ. Nothing will be overwritten.'],
@@ -47,7 +47,7 @@ export default function ReviewedTrackDraftBatchPanel({ar,disabled}:{ar:boolean;d
         TrackBatchIdentityMissing:['مسار مطلوب غير موجود.','A required track is missing.'],
         UnpublishOrRefreshTrack:['توجد مسارات منشورة. لن يتم تعديلها.','Published tracks will not be modified.']
       };
-      setError(messages[detail?.Message??'']?.[ar?0:1]??(ar?'تعذّر استكمال الدفعة. لم يتم تأكيد الحفظ.':'Batch request failed; saving was not confirmed.'));
+      setError(messages[detail?.message??detail?.Message??'']?.[ar?0:1]??(ar?'تعذّر استكمال الدفعة. لم يتم تأكيد الحفظ.':'Batch request failed; saving was not confirmed.'));
       setPreview(null);
     }finally{locked.current=false;}
   }

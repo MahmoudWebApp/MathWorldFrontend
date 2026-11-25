@@ -67,7 +67,7 @@ export type ReviewedBankKind='amendments'|'hints'|'new-existing'|'new-missing';
 export interface ReviewedHintRow {ProblemId:number;PrimarySkillKey:string;Question:Bilingual;Hints:Bilingual[];TaxonomyReviewPending:false}
 export interface ReviewedBankInfo {HeldCount:number;PublicationEnabled:boolean;Batches:{Kind:ReviewedBankKind;Number:number;Count:number}[]}
 export interface ReviewedDraftState {Id:number;ContentKey:string;Revision:number;Status:string;PublishedProblemId?:number;MatchesCandidate:boolean}
-export interface ReviewedBankBatch {Kind:ReviewedBankKind;Number:number;Items:(AmendmentImportRow|EditorialImportRow|ReviewedHintRow)[];Drafts:ReviewedDraftState[]}
+export interface ReviewedBankBatch {Kind:ReviewedBankKind;Number:number;Items:(AmendmentImportRow|EditorialImportRow|ReviewedHintRow)[];Drafts:ReviewedDraftState[];MissingMappings:number}
 export interface HintImportResult {Applied:number;Ready:number;PreviewToken?:string;Items:{ProblemId:number;Status:string;Errors:string[]}[]}
 export interface EditorialBankRow {Id:number;StageId:number;CategoryId:number;TitleAr:string;TitleEn:string;HasStructuredSolution:boolean;HasOpenReview:boolean}
 export interface ClassificationRow {Id:number;NameAr:string;NameEn:string}

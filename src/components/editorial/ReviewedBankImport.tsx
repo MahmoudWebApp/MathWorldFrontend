@@ -49,6 +49,7 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
   function select(kind:ReviewedBankKind,number:number){void run(async()=>{setBatch(undefined);setPreview(undefined);setNote('');setBatch(await loadBatch({kind,number},false).unwrap());});}
   function pendingRows(current:ReviewedBankBatch){return current.Items.filter(r=>!current.Drafts.some(d=>d.ContentKey===keyOf(r)));}
   async function execute(current:ReviewedBankBatch,confirm:boolean,p?:Preview){
+    if(current.MissingMappings>0)throw Error(ar?'استكمل ربط المسارات أولاً.':'Complete the track mappings first.');
     const rows=pendingRows(current);
     if(!rows.length)return {ready:0,count:0};
     if(current.Kind==='hints'){
@@ -113,11 +114,12 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
       <div className="max-h-[55vh] space-y-2 overflow-y-auto">{batch.Items.map(row=><Candidate key={keyOf(row)} row={row} ar={ar} draft={batch.Drafts.find(d=>d.ContentKey===keyOf(row))}/>)}</div>
       {batch.Kind==='new-missing'&&<p className="text-sm">{ar?'أنشئ مساقي التحليل العددي والتحسين الرياضي أولاً؛ الخادم يتحقق من الارتباط.':'Create numerical analysis and mathematical optimization first; the server validates track links.'}</p>}
       {batch.Kind==='amendments'&&<p className="text-sm">{ar?'ربط المسائل بالمسارات المراجعة شرط اعتماد الحلول. المسودات المعدلة أو غير المطابقة لا تُعتمد تلقائياً.':'Reviewed track mapping is required. Changed or unmatched drafts are never automatically approved.'}</p>}
+      {batch.MissingMappings>0&&<p role="alert" className="text-sm text-destructive">{ar?'مسائل تحتاج ربطاً أو مساقاً قبل الاستيراد: ':'Questions missing a required mapping or course: '}{batch.MissingMappings}</p>}
       <label className="block text-sm">{ar?'ملاحظة المراجعة (مطلوبة للتأكيد)':'Review note (required for confirmation)'}<textarea className="mt-1 w-full rounded-lg border bg-background p-2" maxLength={2000} value={note} disabled={busy} onChange={e=>setNote(e.target.value)}/></label>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={button} disabled={busy||!pendingRows(batch).length} onClick={validate}>{ar?'معاينة والتحقق':'Validate and preview'}</button>
-        <button type="button" className={button} disabled={busy||!preview?.ready||!note.trim()||(batch.Kind==='hints'&&!preview.token)} onClick={apply}>{batch.Kind==='hints'?(ar?'نشر التلميحات':'Publish hints'):(ar?'استيراد المسودات':'Import drafts')}</button>
-        <button type="button" className={button} disabled={busy||!info?.PublicationEnabled||!count||!note.trim()} onClick={publish}>{ar?'اعتماد ونشر المطابق ('+count+')':'Approve and publish matching ('+count+')'}</button>
+        <button type="button" className={button} disabled={busy||batch.MissingMappings>0||!pendingRows(batch).length} onClick={validate}>{ar?'معاينة والتحقق':'Validate and preview'}</button>
+        <button type="button" className={button} disabled={busy||batch.MissingMappings>0||!preview?.ready||!note.trim()||(batch.Kind==='hints'&&!preview.token)} onClick={apply}>{batch.Kind==='hints'?(ar?'نشر التلميحات':'Publish hints'):(ar?'استيراد المسودات':'Import drafts')}</button>
+        <button type="button" className={button} disabled={busy||batch.MissingMappings>0||!info?.PublicationEnabled||!count||!note.trim()} onClick={publish}>{ar?'اعتماد ونشر المطابق ('+count+')':'Approve and publish matching ('+count+')'}</button>
         <button type="button" className={button} disabled={busy} onClick={()=>select(batch.Kind,batch.Number)}>{ar?'تحديث الحالة':'Refresh status'}</button>
         {busy&&<button type="button" className={button} onClick={()=>{stop.current=true;}}>{ar?'إيقاف بعد العملية الحالية':'Stop after current operation'}</button>}
       </div>
