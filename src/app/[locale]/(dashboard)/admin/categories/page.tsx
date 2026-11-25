@@ -384,7 +384,7 @@ function AdminCategoriesPageContent() {
                     </td>
                     <td className="p-4 font-bold text-start">
                       <Link
-                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}`}
+                        href={`/admin/editorial?stageId=${category.StageId}&categoryId=${category.Id}`}
                         className="inline-flex items-center gap-1.5 mw-topic-ink hover:underline"
                       >
                         {category.NameAr}
@@ -404,14 +404,14 @@ function AdminCategoriesPageContent() {
                     </td>
                     <td className="p-4 space-x-2 rtl:space-x-reverse whitespace-nowrap">
                       <Link
-                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}`}
+                        href={`/admin/editorial?stageId=${category.StageId}&categoryId=${category.Id}`}
                         className="mb-1 inline-flex items-center gap-1 rounded-lg border mw-topic-action px-2.5 py-2 text-xs font-semibold"
                       >
                         {locale === "ar" ? "عرض المسائل" : "View problems"}
                         <DirectionalChevron direction="forward" className="h-4 w-4" />
                       </Link>
                       <Link
-                        href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}&create=1`}
+                        href={`/admin/editorial?stageId=${category.StageId}&categoryId=${category.Id}&create=1`}
                         className="mb-1 inline-flex items-center gap-1 rounded-lg border mw-topic-action px-2.5 py-2 text-xs font-semibold"
                       >
                         {locale === "ar" ? "إضافة مسألة" : "Add problem"}
