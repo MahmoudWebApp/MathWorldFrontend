@@ -1,5 +1,6 @@
 'use client';
 
+import { Tabs,TabsList,TabsTrigger,TabsContent } from '@/components/ui/Tabs';
 import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import { LockKeyhole, ShieldCheck } from 'lucide-react';
@@ -47,10 +48,8 @@ export default function SocialAccountsPage() {
           <ShieldCheck size={27} />
           <h1 className="text-2xl font-bold">{copy.title}</h1>
         </div>
-        <p className="mb-6 leading-relaxed text-muted-foreground">
-          {copy.description}
-        </p>
-        {withinSettings && (
+        <Tabs defaultValue="connections" dir={locale==="ar"?"rtl":"ltr"}><TabsList className="mb-5 flex h-auto w-full flex-wrap justify-start gap-1">{withinSettings&&<TabsTrigger value="stage">{locale==="ar"?"المرحلة التعليمية":"Learning stage"}</TabsTrigger>}<TabsTrigger value="connections">{locale==="ar"?"ربط الحساب":"Connections"}</TabsTrigger>{withinSettings&&<><TabsTrigger value="password">{locale==="ar"?"كلمة المرور":"Password"}</TabsTrigger><TabsTrigger value="email">{locale==="ar"?"البريد الإلكتروني":"Email"}</TabsTrigger></>}</TabsList>
+        {withinSettings&&<TabsContent value="stage">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-card p-4">
             <div>
               <h2 className="font-bold">{locale === 'ar' ? 'المرحلة التعليمية' : 'Learning stage'}</h2>
@@ -60,7 +59,8 @@ export default function SocialAccountsPage() {
               {locale === 'ar' ? 'تغيير المرحلة' : 'Change stage'}
             </Link>
           </div>
-        )}
+        </TabsContent>}
+        <TabsContent value="connections"><p className="mb-6 text-muted-foreground">{copy.description}</p>
         <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm">
           <div className="flex items-start gap-2">
             <LockKeyhole size={18} className="shrink-0 text-primary" />
@@ -91,7 +91,7 @@ export default function SocialAccountsPage() {
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">{copy.inactive}</p>
         )}
-        {withinSettings && <div className="mt-8 space-y-6"><ChangePasswordForm /><EmailPreferencesForm /></div>}
+        </TabsContent>{withinSettings&&<><TabsContent value="password"><ChangePasswordForm/></TabsContent><TabsContent value="email"><EmailPreferencesForm/></TabsContent></>}</Tabs>
         <Link
           href="/dashboard"
           className="mt-9 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"

@@ -1,35 +1,50 @@
 'use client';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
+import {motion} from 'framer-motion';
+import {BookOpenText} from 'lucide-react';
+import {LatexPreview} from '@/components/ui/LatexPreview';
+import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {useLocale} from 'next-intl';
 import {Link} from '@/i18n/routing';
 import {useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackProgressQuery,useGetTrackPracticeQuery} from '@/store/api/stagesApi';
 import {useResetPracticeMutation} from '@/store/api/usersApi';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription,DialogFooter} from '@/components/ui/Dialog';
 const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
+export function GradeAge({code,ar}:{code:string;ar:boolean}){
+ const match=/^grade-(\d+)$/.exec(code);
+ if(!match)return null;
+ const grade=Number(match[1]);
+ if(grade<1||grade>12)return null;
+ return <span className="block text-xs opacity-80">{ar?`العمر التقريبي: ${grade+5}–${grade+6} سنة`:`Typical age: ${grade+5}–${grade+6} years`}</span>;
+}
 function PublicTrackDetails({id,ar}:{id:number;ar:boolean}){
-  const {currentData:data,isFetching,isError,refetch}=useGetPublishedTrackQuery(id,{refetchOnMountOrArgChange:true});
-  const [expanded,setExpanded]=useState<number|null>(null);
-  return <div className="space-y-3 rounded-xl border p-4">
-    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
-    {isError&&<button onClick={()=>void refetch()} className={btn}>{ar?'إعادة المحاولة':'Retry'}</button>}
-    {data&&!isError&&<><p className="text-sm text-muted-foreground">{ar?data.Track.DescriptionAr:data.Track.DescriptionEn}</p>
-      <div className="grid gap-2 sm:grid-cols-2">{data.Categories.map(c=><article key={c.Id} className="rounded-xl border p-3"><div className="flex justify-between gap-2"><h4 className="font-semibold">{ar?c.NameAr:c.NameEn}</h4><span className="text-xs">{c.ProblemsCount} {ar?'مسألة':'problems'}</span></div>
-        <button className="mt-2 text-sm text-primary underline" aria-expanded={expanded===c.Id} onClick={()=>setExpanded(expanded===c.Id?null:c.Id)}>{ar?'عرض المهارات':'View skills'}</button>
-        {expanded===c.Id&&<ul className="mt-2 list-inside list-disc text-sm">{data.Skills.filter(s=>s.CategoryId===c.Id).map(s=><li key={s.Id}>{ar?s.NameAr:s.NameEn}</li>)}</ul>}</article>)}</div>
-      {data.Examples.length>0&&<><h4 className="font-semibold">{ar?'أمثلة من عناوين المسائل':'Example problem titles'}</h4><ul className="list-inside list-disc text-sm">{data.Examples.map(p=><li key={p.Id}>{ar?p.TitleAr:p.TitleEn}</li>)}</ul></>}
-    </>}
-  </div>;
+ const {currentData:data,isFetching,isError,refetch}=useGetPublishedTrackQuery(id,{refetchOnMountOrArgChange:true});
+ const [expanded,setExpanded]=useState<number|null>(null);
+ if(isFetching&&!data)return <p role="status" className="py-10 text-center">{ar?'جارٍ التحميل…':'Loading…'}</p>;
+ if(isError)return <p role="alert">{ar?'تعذّر تحميل المسار.':'Could not load track.'} <button onClick={()=>void refetch()} className={btn}>{ar?'إعادة المحاولة':'Retry'}</button></p>;
+ if(!data)return null;
+ return <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:.22}} className="space-y-5">
+ <p className="text-sm text-muted-foreground">{ar?data.Track.DescriptionAr:data.Track.DescriptionEn}</p>
+ <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{data.Categories.map(c=><article key={c.Id} className="flex min-h-44 flex-col gap-3 rounded-2xl border border-primary/15 bg-card p-5 shadow-sm">
+ <div className="flex items-center justify-between gap-2"><span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary"><BookOpenText size={23}/></span><span className="rounded-lg bg-primary/10 px-2 py-1 text-xs font-bold text-primary">{c.ProblemsCount} {ar?'مسألة':'problems'}</span></div>
+ <h3 className="font-extrabold">{ar?c.NameAr:c.NameEn}</h3><p className="text-sm leading-7 text-muted-foreground">{ar?c.DescriptionAr:c.DescriptionEn}</p>
+ <button className="mt-auto self-start rounded-lg border px-3 py-2 text-xs font-semibold text-primary" onClick={()=>setExpanded(c.Id)}>{ar?'عرض المهارات':'View skills'}</button>
+ </article>)}</div>
+ <Dialog open={expanded!==null} onOpenChange={v=>{if(!v)setExpanded(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'المهارات التعليمية':'Learning skills'}</DialogTitle><DialogDescription>{data.Categories.find(c=>c.Id===expanded)?.[ar?'NameAr':'NameEn']}</DialogDescription></DialogHeader><ul className="max-h-[55vh] space-y-3 overflow-y-auto ps-4">{data.Skills.filter(s=>s.CategoryId===expanded).map(s=><li key={s.Id}><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></li>)}</ul></DialogContent></Dialog>
+ {data.Examples.length>0&&<section className="rounded-2xl border bg-card/80 p-5"><h3 className="mb-3 font-bold">{ar?'أمثلة من عناوين المسائل':'Example problem titles'}</h3><ul className="list-disc space-y-2 ps-5 text-sm leading-7">{data.Examples.map(p=><li key={p.Id}>{(ar?p.TitleAr:p.TitleEn).split(/(\$\$[\s\S]*?\$\$|\$[^$\n]+\$)/g).map((part,i)=>part.startsWith('$$')&&part.endsWith('$$')?<LatexPreview key={i} latex={part.slice(2,-2)}/>:part.startsWith('$')&&part.endsWith('$')?<LatexPreview key={i} latex={part.slice(1,-1)}/>:<span key={i}>{part}</span>)}</li>)}</ul></section>}
+ </motion.div>;
 }
 export function PublicTrackCatalog({stageId}:{stageId:number}){
-  const ar=useLocale()==='ar';const {currentData:data}=useGetPublishedTracksQuery(stageId,{refetchOnMountOrArgChange:true});
-  const [selected,setSelected]=useState<number|null>(null);
-  if(!data?.Enabled||data.Items.length===0)return null;
-  const effective=data.Items.some(x=>x.Id===selected)?selected:null;
-  return <section className="mb-8 space-y-3"><h2 className="text-xl font-bold">{ar?'الصفوف والمساقات':'Grades and courses'}</h2>
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data.Items.map(t=><button key={t.Id} type="button" aria-pressed={effective===t.Id} className={btn+' text-start '+(effective===t.Id?'border-primary bg-primary/10':'')} onClick={()=>setSelected(t.Id)}><span className="block">{ar?t.NameAr:t.NameEn}</span><span className="text-xs text-muted-foreground">{t.ProblemsCount} {ar?'مسألة':'problems'} · {t.SkillsCount} {ar?'مهارة':'skills'}</span></button>)}</div>
-    <div className="flex flex-wrap gap-3">{data.Items.map(t=><Link key={t.Id} href={'/stages/'+stageId+'/tracks/'+t.Id} className="text-sm text-primary underline">{ar?t.NameAr:t.NameEn}</Link>)}</div>
-    {effective!==null&&<><PublicTrackDetails key={effective} id={effective} ar={ar}/><Link className="inline-flex text-primary underline" href={'/stages/'+stageId+'/tracks/'+effective}>{ar?'صفحة الصف أو المساق الكاملة':'Full grade or course page'}</Link></>}
-  </section>;
+ const ar=useLocale()==='ar';const {currentData:data}=useGetPublishedTracksQuery(stageId,{refetchOnMountOrArgChange:true});
+ const [selected,setSelected]=useState<number|null>(null);
+ useEffect(()=>{const m=/^#track-(\d+)$/.exec(window.location.hash);if(m)setSelected(Number(m[1]));},[stageId]);
+ if(!data?.Enabled||!data.Items.length)return null;
+ const effective=data.Items.find(x=>x.Id===selected)?.Id??data.Items[0].Id;
+ return <section className="mb-8 space-y-5"><h2 className="text-xl font-bold">{stageId===4?(ar?'المساقات الجامعية':'University courses'):(ar?'الصفوف الدراسية':'School grades')}</h2>
+ <Tabs dir={ar?'rtl':'ltr'} value={String(effective)} onValueChange={v=>setSelected(Number(v))}>
+ <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 rounded-2xl bg-card p-2 border">{data.Items.map(t=><TabsTrigger key={t.Id} value={String(t.Id)} className="min-h-16 flex-1 flex-col items-start whitespace-normal px-4 py-3 text-start"><span className="font-bold">{ar?t.NameAr:t.NameEn}</span><GradeAge code={t.Code} ar={ar}/><span className="text-xs opacity-80">{t.ProblemsCount} {ar?'مسألة':'problems'} · {t.SkillsCount} {ar?'مهارة':'skills'}</span></TabsTrigger>)}</TabsList>
+ <TabsContent value={String(effective)} className="mt-6"><PublicTrackDetails key={effective} id={effective} ar={ar}/></TabsContent></Tabs>
+ </section>;
 }
 function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
   const [page,setPage]=useState(1);
@@ -37,7 +52,7 @@ function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
   return <div className="space-y-2">
     {isFetching&&!data&&<p role="status">{ar?'جارٍ تحميل المسائل…':'Loading problems…'}</p>}
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسائل.':'Could not load problems.'} <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
-    {data&&!isError&&<><div className="flex justify-end"><button className={btn} onClick={()=>void refetch()}>{ar?'تحديث':'Refresh'}</button></div>
+    {data&&!isError&&<>
       {data.Items.map(p=><Link key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id} className="flex items-center justify-between gap-2 rounded-xl border p-3 text-sm"><span>{ar?p.TitleAr:p.TitleEn}</span><span className={p.IsSolved?'text-emerald-600':'text-amber-600'}>{p.IsSolved?(ar?'محلولة':'Solved'):(ar?'غير محلولة':'Unsolved')}</span></Link>)}
       {data.Total>data.PageSize&&<div className="flex items-center gap-2"><button className={btn} disabled={page<=1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*data.PageSize>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
     </>}
@@ -62,7 +77,7 @@ export function StudentTrackWorkspace({trackId}:{trackId:number}){
     <header className="flex flex-wrap items-center justify-between gap-2"><h1 className="text-2xl font-bold">{ar?data.Track.NameAr:data.Track.NameEn}</h1><Link className={btn} href="/learning-stage">{ar?'تغيير الصف أو المساق':'Change grade or course'}</Link></header>
     <Dialog open={!!target} onOpenChange={open=>{if(!open&&!resetState.isLoading)setTarget(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'تأكيد إعادة التدريب':'Confirm practice restart'}</DialogTitle><DialogDescription>{target?.name}</DialogDescription></DialogHeader><p>{ar?'يعود تقدم التدريب ودفتر الأخطاء في هذا النطاق فقط إلى البداية. النقاط الدائمة والمفضلة والشهادات وتقدم الصفوف الأخرى محفوظة.':'Only practice progress and review errors in this scope reset. Lifetime points, favorites, certificates and other tracks remain.'}</p>{error&&<p role="alert" className="text-destructive">{error}</p>}<DialogFooter><button className={btn} disabled={resetState.isLoading} onClick={()=>setTarget(null)}>{ar?'إلغاء':'Cancel'}</button><button className={btn+' bg-primary text-primary-foreground'} disabled={resetState.isLoading} onClick={()=>void confirm()}>{ar?'تأكيد':'Confirm'}</button></DialogFooter></DialogContent></Dialog>
     {notice&&<p role="status" className="text-primary">{notice}</p>}
-    <section className="rounded-xl border bg-card p-4"><p>{ar?'التقدم':'Progress'}: {stats.Solved} / {stats.ProblemsCount} · {stats.CompletionPercent}%</p><progress className="mt-2 w-full" max={100} value={stats.CompletionPercent}/><button className={btn} onClick={()=>void progress.refetch()}>{ar?'تحديث التقدم':'Refresh progress'}</button>{stats.TrackPracticeIsolationEnabled&&stats.Categories.some(c=>c.Attempted>0)&&<button className={btn} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({name:ar?data.Track.NameAr:data.Track.NameEn})}}>{ar?'إعادة تدريب الصف أو المساق':'Restart grade or course'}</button>}</section>
+    <section className="rounded-xl border bg-card p-4"><p>{ar?'التقدم':'Progress'}: {stats.Solved} / {stats.ProblemsCount} · {stats.CompletionPercent}%</p><progress className="mt-2 w-full" max={100} value={stats.CompletionPercent}/>{stats.TrackPracticeIsolationEnabled&&stats.Categories.some(c=>c.Attempted>0)&&<button className={btn} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({name:ar?data.Track.NameAr:data.Track.NameEn})}}>{ar?'إعادة تدريب الصف أو المساق':'Restart grade or course'}</button>}</section>
     <div className="grid gap-3 sm:grid-cols-2">{data.Categories.map(c=>{const p=byId.get(c.Id);const locked=!p||p.IsLocked;return <article key={c.Id} className="space-y-3 rounded-2xl border bg-card p-4">
       <div className="flex items-center justify-between gap-2"><h2 className="font-bold">{ar?c.NameAr:c.NameEn}</h2><span className="text-sm">{c.ProblemsCount} {ar?'مسألة':'problems'}</span></div>
       <p className="text-sm text-muted-foreground">{ar?c.DescriptionAr:c.DescriptionEn}</p>

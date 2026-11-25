@@ -1,5 +1,6 @@
 'use client';
 
+import { Tabs,TabsList,TabsTrigger,TabsContent } from '@/components/ui/Tabs';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
@@ -65,5 +66,5 @@ export default function AdminSettingsPage(){
   const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
   const {data,isLoading,isError,refetch}=useGetAdminBrandQuery(undefined,{skip:!admin});
   if(!admin)return null;
-  return <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6"><h1 className="text-2xl font-bold">{ar?'إعدادات المنصة':'Platform settings'}</h1><ChangePasswordForm/>{isLoading&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<div role="alert">{ar?'تعذّر تحميل الإعدادات.':'Could not load settings.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}{data&&!isError&&<BrandEditor initial={data} ar={ar}/>}<EmailPreview ar={ar}/><EmailOutboxPanel/></main>;
+  return <main className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6"><h1 className="text-2xl font-bold">{ar?'إعدادات المنصة':'Platform settings'}</h1><Tabs defaultValue="brand" dir={ar?"rtl":"ltr"}><TabsList className="flex h-auto w-full flex-wrap justify-start gap-1"><TabsTrigger value="brand">{ar?"الهوية والتواصل":"Brand and contact"}</TabsTrigger><TabsTrigger value="password">{ar?"كلمة المرور":"Password"}</TabsTrigger><TabsTrigger value="preview">{ar?"قوالب البريد":"Email templates"}</TabsTrigger><TabsTrigger value="outbox">{ar?"إرسال البريد":"Email delivery"}</TabsTrigger></TabsList><TabsContent value="brand">{isLoading&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<div role="alert">{ar?'تعذّر تحميل الإعدادات.':'Could not load settings.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}{data&&!isError&&<BrandEditor initial={data} ar={ar}/>}</TabsContent><TabsContent value="password"><ChangePasswordForm/></TabsContent><TabsContent value="preview"><EmailPreview ar={ar}/></TabsContent><TabsContent value="outbox"><EmailOutboxPanel/></TabsContent></Tabs></main>;
 }

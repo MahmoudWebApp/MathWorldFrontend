@@ -8,6 +8,7 @@ import { BookOpenText, ListChecks, Calculator, Loader2 } from 'lucide-react';
 
 import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
+import { useGetPublishedTracksQuery } from '@/store/api/stagesApi';
 import { useGetStageCategoryAccessQuery } from '@/store/api/categoriesApi';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { PublicTrackCatalog } from '@/components/curriculum/TrackViews';
@@ -27,13 +28,15 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
     skip: stageId <= 0,
     refetchOnMountOrArgChange: true,
   });
+  const tracks=useGetPublishedTracksQuery(stageId,{refetchOnMountOrArgChange:true});
+  const hasTracks=tracks.currentData?.Enabled===true&&tracks.currentData.Items.length>0;
   const categories = (data?.Categories ?? [])
     .map(category => ({ ...category, StageId: stageId }))
     .sort((a, b) => (a.Order ?? 0) - (b.Order ?? 0) || a.Id - b.Id);
 
   return (
     <section className="container mx-auto px-4 pb-16 pt-2 sm:px-6 lg:px-12">
-      <PublicTrackCatalog stageId={stageId}/>
+      {hasTracks?<PublicTrackCatalog stageId={stageId}/>:tracks.isLoading?<div className="py-12 text-center"><Loader2 className="mx-auto h-7 w-7 animate-spin text-primary"/></div>:tracks.isError?<p role="alert">{ar?"تعذّر تحميل الصفوف والمساقات.":"Could not load grades and courses."} <button onClick={()=>void tracks.refetch()} className="underline">{ar?"إعادة المحاولة":"Retry"}</button></p>:<>
       <div className="mb-5">
         <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
           {ar ? 'فئات هذه المرحلة التعليمية' : 'Mathematics topics in this stage'}
@@ -110,7 +113,7 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
       )}
 
       <CategorySkillsDialog stageId={stageId} category={selectedCategory}
-        onClose={() => setSelectedCategory(null)} />
+        onClose={() => setSelectedCategory(null)} /></>}
       {!isAuthenticated && (
         <div className="mt-8 flex justify-center">
           <Link href="/register" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
