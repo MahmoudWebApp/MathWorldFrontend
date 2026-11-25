@@ -8,8 +8,6 @@ import {useGetProblemQuery,useDeleteProblemMutation} from '@/store/api/problemsA
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/Dialog';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {useLocale} from 'next-intl';
-import {HintProposalImport} from './HintProposalImport';
-import {SolutionProposalImport} from './SolutionProposalImport';
 import {LatexPreview} from '@/components/ui/LatexPreview';
 import {useGetEditorialBankQuery,useAmendEditorialProblemMutation,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,type EditorialContent,type EditorialDraft,type Bilingual,type EditorialSolution} from '@/store/api/platformBrandApi';
 
@@ -78,17 +76,10 @@ function Wizard({initial,initialStage=0,initialCategory=0,initialTrack=0,admin,c
       {step===1&&<><PairField label={ar?'العنوان':'Title'} value={content.Title} onChange={v=>patch({Title:v})}/><PairField label={ar?'السؤال (يدعم LaTeX بين علامتي الدولار)':'Question (LaTeX between dollar signs)'} disabled={amendment} value={content.Question} onChange={v=>patch({Question:v})}/><MathPreview value={showPair(content.Question)}/></>}
       {step===2&&content.Options.map((o,i)=><div className="space-y-2 rounded-xl border p-3" key={i}><label className="flex gap-2"><input type="radio" name="correct-option" disabled={amendment} checked={o.IsCorrect} onChange={()=>patch({Options:content.Options.map((x,j)=>({...x,IsCorrect:j===i}))})}/>{ar?'الخيار الصحيح':'Correct option'} {i+1}</label><input aria-label={(ar?'الخيار':'Option')+' '+(i+1)} dir="ltr" className={input} disabled={amendment} value={o.LatexCode} onChange={e=>patch({Options:content.Options.map((x,j)=>j===i?{...x,LatexCode:e.target.value}:x)})}/><LatexPreview latex={o.LatexCode}/>{!o.IsCorrect&&<><label className="block text-sm">{ar?'نوع الخطأ':'Error type'}<input className={input} value={o.ErrorType} onChange={e=>patch({Options:content.Options.map((x,j)=>j===i?{...x,ErrorType:e.target.value}:x)})}/></label><PairField label={ar?'سبب الخطأ':'Reason'} value={o.Reason} onChange={v=>patch({Options:content.Options.map((x,j)=>j===i?{...x,Reason:v}:x)})}/></>}</div>)}
       {step===3&&<>
-        {editable && draft?.SourceProblemId && content.Hints.every(h => !h?.Ar?.trim() && !h?.En?.trim()) ?
-          <HintProposalImport key={draft.Id} ar={ar} problemId={draft.SourceProblemId} question={content.Question}
-            onApply={Hints => patch({Hints})}/> : null}
+        
         <p className="text-sm text-muted-foreground">{ar?'لا تكتب الإجابة النهائية ضمن التلميحات.':'Do not reveal the final answer in hints.'}</p>{content.Hints.map((h,i)=><PairField key={i} label={i===0?(ar?'تلميح القانون أو الفكرة':'Rule or concept hint'):(ar?'تلميح بداية الخطوة':'First-step hint')} value={h} onChange={v=>patch({Hints:content.Hints.map((x,j)=>j===i?v:x)})}/>)}</>}
       {step===4&&<>
-        {editable&&draft?.SourceProblemId&&content.Options.filter(o=>o.IsCorrect).length===1&&
-          !content.Solution.Idea.Ar.trim()&&!content.Solution.Idea.En.trim()&&
-          content.Solution.Steps.every(s=>!s.Ar.trim()&&!s.En.trim())&&
-          <SolutionProposalImport key={draft.Id} ar={ar} source={{problemId:draft.SourceProblemId,stageId:content.StageId,question:content.Question,
-            legacy:{Ar:draft.LegacySolutionAr??'',En:draft.LegacySolutionEn??''},correctOption:content.Options.find(o=>o.IsCorrect)!.LatexCode}}
-            onApply={p=>patchSolution(p)}/>}
+        
         <PairField label={ar?'الفكرة والقانون':'Idea and rule'} value={content.Solution.Idea} onChange={v=>patchSolution({Idea:v})}/><label>{ar?'صيغة القانون LaTeX':'Formula LaTeX'}<input dir="ltr" className={input} value={content.Solution.FormulaLatex} onChange={e=>patchSolution({FormulaLatex:e.target.value})}/></label><LatexPreview latex={content.Solution.FormulaLatex} block/>
         {content.Solution.Steps.map((v,i)=><div key={i} className="rounded-xl border p-3 space-y-2"><PairField label={(ar?'الخطوة ':'Step ')+(i+1)} value={v} onChange={p=>patchSolution({Steps:content.Solution.Steps.map((x,j)=>j===i?p:x)})}/><div className="flex flex-wrap gap-2">{[-1,1].map(d=><button type="button" key={d} className={btn} disabled={i+d<0||i+d>=content.Solution.Steps.length} onClick={()=>{const a=[...content.Solution.Steps];[a[i],a[i+d]]=[a[i+d],a[i]];patchSolution({Steps:a});}}>{d<0?(ar?'للأعلى':'Move up'):(ar?'للأسفل':'Move down')}</button>)}<button className={btn} type="button" disabled={content.Solution.Steps.length===1} onClick={()=>patchSolution({Steps:content.Solution.Steps.filter((_,j)=>i!==j)})}>{ar?'حذف':'Remove'}</button></div></div>)}
         <button type="button" className={btn} disabled={content.Solution.Steps.length>=20} onClick={()=>patchSolution({Steps:[...content.Solution.Steps,pair()]})}>{ar?'إضافة خطوة':'Add step'}</button>
@@ -129,9 +120,9 @@ export function EditorialWorkspace({admin,canSubmit,initialStage=0,initialCatego
   const ar=useLocale()==='ar';const [page,setPage]=useState(1);const [selected,setSelected]=useState<number|'new'|null>(create?'new':null);
   const [stage,setStage]=useState(initialStage);const [category,setCategory]=useState(initialCategory);const [track,setTrack]=useState(initialTrack);
   const [tab,setTab]=useState<string>(admin?initialTab:'requests');
-  const list=useGetEditorialDraftsQuery(admin?{page,activeOnly:true,supervisorReviewOnly:tab==='requests',ownOnly:tab==='own'}:page,{refetchOnMountOrArgChange:true});
+  const list=useGetEditorialDraftsQuery(admin?{page,activeOnly:true,supervisorReviewOnly:tab==='requests',ownOnly:tab==='own'}:page,{refetchOnMountOrArgChange:60,skip:admin&&tab==='published'});
   useEffect(()=>{if(page>1&&list.currentData&&page>Math.max(1,Math.ceil(list.currentData.Total/30)))setPage(Math.max(1,Math.ceil(list.currentData.Total/30)));},[page,list.currentData]);
-  const props={admin,canSubmit,onSaved:()=>{void list.refetch();},onClose:()=>setSelected(null)};
+  const props={admin,canSubmit,onSaved:()=>{if(!admin||tab!=='published')void list.refetch();},onClose:()=>setSelected(null)};
   const requests=<div className="space-y-3">
     {list.isError&&<button className={btn} onClick={()=>void list.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}
     {list.isFetching&&!list.currentData&&<MathWorldLoading compact mode="tab"/>}
