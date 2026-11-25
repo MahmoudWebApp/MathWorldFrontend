@@ -21,6 +21,7 @@ export const metadata: Metadata = {
       { url: '/mathworld-favicon-v4.ico?v=5', sizes: 'any' },
       { url: '/mathworld-favicon-32-v4.png?v=5', sizes: '32x32', type: 'image/png' },
       { url: '/mathworld-favicon-16-v4.png?v=5', sizes: '16x16', type: 'image/png' },
+      { url: '/mathworld-launcher-v6.svg', sizes: 'any', type: 'image/svg+xml' },
     ],
     apple: [{ url: '/mathworld-apple-v4.png?v=5', sizes: '180x180', type: 'image/png' }],
   },
