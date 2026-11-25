@@ -84,30 +84,12 @@ export const ADMIN_NAV_ITEMS = [
     group: 'management',
   },
   {
-    href: '/admin/editorial',
-    icon: GraduationCap,
-    labelAr: 'إدارة المسائل',
-    labelEn: 'Problem management',
-    descriptionAr: 'إنشاء المسائل ومراجعة المسودات واعتمادها',
-    descriptionEn: 'Create problems, review and approve drafts',
-    group: 'content',
-  },
-  {
     href: '/admin/learning-tracks',
     icon: GraduationCap,
-    labelAr: 'الصفوف والمساقات',
-    labelEn: 'Grades and courses',
-    descriptionAr: 'ربط الفئات والمهارات والمسائل ومراجعة التغطية',
-    descriptionEn: 'Map categories, skills and problems; review coverage',
-    group: 'content',
-  },
-  {
-    href: '/admin/stages',
-    icon: GraduationCap,
-    labelAr: 'المراحل التعليمية',
-    labelEn: 'Educational stages',
-    descriptionAr: 'مرحلة ثم فئة ثم مسائل',
-    descriptionEn: 'Stage → topic → problems',
+    labelAr: 'المحتوى التعليمي',
+    labelEn: 'Learning content',
+    descriptionAr: 'صف أو مساق ثم فئة ثم مسائل',
+    descriptionEn: 'Grade or course → topic → problems',
     group: 'content',
   },
 ] as const;
@@ -122,7 +104,7 @@ function AdminMenuLink({
 }) {
   const active = item.href === '/admin'
     ? pathname === '/admin'
-    : pathname === item.href || pathname.startsWith(item.href + '/');
+    : pathname === item.href || pathname.startsWith(item.href + '/') || (item.group==='content'&&/^\/admin\/(editorial|problems|categories|stages)(\/|$)/.test(pathname));
   const Icon = item.icon;
   return (
     <Link
@@ -175,7 +157,7 @@ export function AdminWorkspaceNavigation({ collapsed = false }: { collapsed?: bo
   // than /admin/problems) to avoid two highlighted links at once.
   const selectedHref = [...ADMIN_NAV_ITEMS]
     .filter(item => pathname === item.href ||
-      (item.href !== '/admin' && pathname.startsWith(item.href + '/')))
+      (item.href !== '/admin' && pathname.startsWith(item.href + '/')) || (item.group==='content'&&/^\/admin\/(editorial|problems|categories|stages)(\/|$)/.test(pathname)))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   const groups = [

@@ -233,7 +233,7 @@ export default function AdminUsersPage() {
           <span className="inline-flex items-center gap-2 font-medium"><Users className="h-4 w-4 text-primary" aria-hidden />
             {label.total}: {data?.Total ?? '—'}
           </span>
-          {(searching||isFetching) && <MathWorldLoading inline mode={searching||search?"search":"filter"}/>}
+
         </div>
         {confirmedPeriods.length > 0 && (
           <div role="status" className="border-b border-border bg-emerald-500/5 p-4 text-sm text-foreground">
@@ -250,7 +250,7 @@ export default function AdminUsersPage() {
             <p className="text-destructive">{label.error}</p>
             <button type="button" onClick={() => refetch()} className="mt-3 rounded-xl border border-primary/30 px-4 py-2 text-primary">{label.retry}</button>
           </div>
-        ) : searching || isLoading || (!data && isFetching) ? (
+        ) : searching || isLoading || isFetching ? (
           <MathWorldLoading compact mode={searching||search?'search':'filter'}/>
         ) : !data?.Learners.length ? (
           <div className="p-12 text-center text-muted-foreground">{label.empty}</div>
@@ -273,7 +273,7 @@ export default function AdminUsersPage() {
                       <p className="mt-1 break-all text-xs text-muted-foreground" dir="ltr">{u.Email}</p>
                     </div>
                     <span className={`shrink-0 rounded-md px-2 py-1 text-xs ${
-                      u.IsActive ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
+                      u.IsActive ? 'mw-status-active' : 'bg-destructive/10 text-destructive'
                     }`}>{u.IsActive ? label.active : label.disabled}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
@@ -297,7 +297,7 @@ export default function AdminUsersPage() {
               ))}
             </div>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[680px] text-sm">
+              <table className="mw-workspace-table w-full min-w-[680px] text-sm">
                 <thead className="bg-muted/40 text-muted-foreground">
                   <tr>
                     <th scope="col" className="px-3 py-3">
@@ -321,15 +321,15 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="px-4 py-3">{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</td>
                       <td className="px-4 py-3"><span className={`rounded-lg px-2 py-1 text-xs ${
-                        u.IsActive ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'
+                        u.IsActive ? 'mw-status-active' : 'bg-destructive/10 text-destructive'
                       }`}>{u.IsActive ? label.active : label.disabled}</span></td>
-                      <td className="px-4 py-3">{u.SubscriptionType}</td>
+                      <td className="px-4 py-3"><span className={u.SubscriptionType==='Premium'?'mw-status-active rounded-lg px-2 py-1 text-xs font-bold':'rounded-lg border px-2 py-1 text-xs font-semibold'}>{u.SubscriptionType}</span></td>
                       <td className="px-4 py-3 text-muted-foreground">{expiry(u)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-2">
-                          <Link href={`/admin/users/${u.Id}`} className="font-semibold text-primary hover:underline">{label.detail}</Link>
+                          <Link href={`/admin/users/${u.Id}`} className="mw-admin-action">{label.detail}</Link>
                           <button type="button" disabled={!u.IsActive || granting || searching || isFetching} onClick={() => openGrant([u.Id])}
-                            className="text-xs font-semibold text-primary underline-offset-2 hover:underline disabled:opacity-40">
+                            className="mw-admin-action mw-admin-action-primary disabled:opacity-40">
                             {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
                           </button>
                         </div>

@@ -8,12 +8,12 @@
   "theme_color": "#5c24ff",
   "icons": [
     {
-      "src": "/mathworld-pwa-192-v4.png",
+      "src": "/mathworld-pwa-192-v4.png?v=5",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/mathworld-pwa-512-v4.png",
+      "src": "/mathworld-pwa-512-v4.png?v=5",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -1,4 +1,5 @@
 'use client';
+import {MathWorldLoading} from '@/components/ui/MathWorldLoading';
 import {Settings,ExternalLink,Trash2,Plus} from 'lucide-react';
 import {socialLinks} from '@/components/layout/socialLinks';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
@@ -36,8 +37,8 @@ function BrandEditor({initial,ar}:{initial:BrandView;ar:boolean}) {
   }
   return <form onSubmit={submit} className="space-y-5 rounded-2xl border bg-card p-5">
     <h2 className="text-lg font-bold">{ar?'الهوية وبيانات التواصل':'Brand and contact details'}</h2>
-    <label className="block text-sm">{ar?'الموقع الرسمي':'Official website'}<input className={inputClass} dir="ltr" readOnly value={initial.WebsiteUrl}/></label>
-    <div className="grid gap-3 sm:grid-cols-2">{fields.map(field=><label className="block space-y-1 text-sm" key={field.key}>{ar?field.ar:field.en}<input className={inputClass} dir={field.key.endsWith("Url")||field.key==="SupportEmail"||field.key==="Phone"||field.key.endsWith("En")?"ltr":"auto"} value={profile[field.key]??''} onChange={e=>setProfile(p=>({...p,[field.key]:e.target.value}))}/></label>)}</div>
+    <label className="grid gap-2 text-sm">{ar?'الموقع الرسمي':'Official website'}<input className={inputClass} dir="ltr" readOnly value={initial.WebsiteUrl}/></label>
+    <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">{fields.map(field=><label className="grid min-w-0 gap-2 text-sm font-medium" key={field.key}>{ar?field.ar:field.en}<input className={inputClass} dir={field.key.endsWith("Url")||field.key==="SupportEmail"||field.key==="Phone"||field.key.endsWith("En")?"ltr":"auto"} value={profile[field.key]??''} onChange={e=>setProfile(p=>({...p,[field.key]:e.target.value}))}/></label>)}</div>
     <h3 className="font-bold">{ar?'روابط التواصل الاجتماعي':'Social links'}</h3>
     <div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[680px] text-sm">
       <thead><tr>{[ar?'المنصة':'Platform',ar?'الرابط':'Link',ar?'الترتيب':'Order',ar?'منشور':'Published',ar?'حذف':'Remove'].map(label=><th key={label} className="px-3 py-3 text-start">{label}</th>)}</tr></thead>
@@ -83,5 +84,5 @@ export default function AdminSettingsPage(){
   const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
   const {data,isLoading,isError,refetch}=useGetAdminBrandQuery(undefined,{skip:!admin});
   if(!admin)return null;
-  return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6"><WorkspacePageHeader title={ar?'إعدادات المنصة':'Platform settings'} icon={Settings}/><Tabs defaultValue="brand" dir={ar?"rtl":"ltr"}><TabsList className="flex h-auto w-fit max-w-full flex-wrap justify-start gap-1"><TabsTrigger value="brand">{ar?"الهوية والتواصل":"Brand and contact"}</TabsTrigger><TabsTrigger value="password">{ar?"كلمة المرور":"Password"}</TabsTrigger><TabsTrigger value="preview">{ar?"قوالب البريد":"Email templates"}</TabsTrigger><TabsTrigger value="outbox">{ar?"إرسال البريد":"Email delivery"}</TabsTrigger></TabsList><TabsContent value="brand">{isLoading&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<div role="alert">{ar?'تعذّر تحميل الإعدادات.':'Could not load settings.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}{data&&!isError&&<BrandEditor initial={data} ar={ar}/>}</TabsContent><TabsContent value="password"><ChangePasswordForm/></TabsContent><TabsContent value="preview"><EmailPreview ar={ar}/></TabsContent><TabsContent value="outbox"><EmailOutboxPanel/></TabsContent></Tabs></main>;
+  return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6"><WorkspacePageHeader title={ar?'إعدادات المنصة':'Platform settings'} icon={Settings}/><Tabs defaultValue="brand" dir={ar?"rtl":"ltr"}><TabsList className="flex h-auto w-fit max-w-full flex-wrap justify-start gap-1"><TabsTrigger value="brand">{ar?"الهوية والتواصل":"Brand and contact"}</TabsTrigger><TabsTrigger value="password">{ar?"كلمة المرور":"Password"}</TabsTrigger><TabsTrigger value="preview">{ar?"قوالب البريد":"Email templates"}</TabsTrigger><TabsTrigger value="outbox">{ar?"إرسال البريد":"Email delivery"}</TabsTrigger></TabsList><TabsContent value="brand">{isLoading&&<MathWorldLoading/>}{isError&&<div role="alert">{ar?'تعذّر تحميل الإعدادات.':'Could not load settings.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>}{data&&!isError&&<BrandEditor initial={data} ar={ar}/>}</TabsContent><TabsContent value="password"><ChangePasswordForm/></TabsContent><TabsContent value="preview"><EmailPreview ar={ar}/></TabsContent><TabsContent value="outbox"><EmailOutboxPanel/></TabsContent></Tabs></main>;
 }

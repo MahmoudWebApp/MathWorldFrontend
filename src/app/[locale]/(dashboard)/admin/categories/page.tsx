@@ -25,7 +25,7 @@ import {
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
-import { FileSpreadsheet,Shapes } from "lucide-react";
+import { Shapes } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 // Tooltip components are configured globally.
 import {
@@ -34,7 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/Tooltip";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { StageFreeCategoryAccessEditor } from "@/components/admin/StageFreeCategoryAccessEditor";
+import { StageTopicArtwork } from "@/components/stages/StageTopicArtwork";
 import { getApiErrorMessage } from "@/lib/authSession";
 
 export default function AdminCategoriesPage() {
@@ -294,13 +294,7 @@ function AdminCategoriesPageContent() {
         className="mb-6"
       />
       <WorkspacePageHeader title={t("admin.categories.title")} icon={Shapes} actions={<div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/admin/categories/import"
-            className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
-          >
-            <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
-            {locale === "ar" ? "فحص فئات CSV" : "Preview category CSV"}
-          </Link>
+
         <Button
           onClick={openCreateModal}
           className="gap-2"
@@ -311,9 +305,7 @@ function AdminCategoriesPageContent() {
         </Button>
         </div>}/>
 
-      {/* Free access stays exactly two categories, explicitly chosen and
-          audited by web administrators for each educational stage. */}
-      <StageFreeCategoryAccessEditor stageId={selectedStageId} locale={locale} />
+
 
       {deleteError && (
         <div role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -350,24 +342,16 @@ function AdminCategoriesPageContent() {
                       {/* Render image URLs and text symbols safely. */}
                       {category.Icon ? (
                         isImageUrl(category.Icon) ? (
-                          <>
-                            {/* A native image is used because icon URLs can be dynamic. */}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={category.Icon}
-                              alt={category.NameAr}
-                              className="mw-topic-icon-art w-10 h-10 rounded-lg border mx-auto shadow-sm"
-                            />
-                          </>
+                          <StageTopicArtwork src={category.Icon} accent={getStageAccent({Id:category.StageId})} size={40} className="mx-auto rounded-lg"/>
                         ) : (
-                          <div className="w-10 h-10 flex items-center justify-center text-2xl mx-auto border rounded-lg bg-primary/10 shadow-sm">
+                          <div className="w-10 h-10 flex items-center justify-center text-2xl mx-auto border rounded-lg mw-topic-action shadow-sm">
                             {category.Icon}
                           </div>
                         )
                       ) : (
                         <ImageIcon
                           aria-hidden="true"
-                          className="h-5 w-5 text-muted-foreground mx-auto"
+                          className="h-5 w-5 mw-topic-ink mx-auto"
                         />
                       )}
                     </td>
