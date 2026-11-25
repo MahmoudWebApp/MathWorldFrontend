@@ -25,19 +25,23 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const stageAccent = getStageAccent({ Id: stageId });
   const [selectedCategory, setSelectedCategory] = useState<{ Id: number; NameAr: string; NameEn: string } | null>(null);
-  const { data, isLoading, isError, refetch } = useGetStageCategoryAccessQuery(stageId, {
-    skip: stageId <= 0,
-    refetchOnMountOrArgChange: true,
-  });
-  const tracks=useGetPublishedTracksQuery(stageId,{refetchOnMountOrArgChange:true});
+  const validStage=Number.isSafeInteger(stageId)&&stageId>0;
+  const tracks=useGetPublishedTracksQuery(stageId,{skip:!validStage,refetchOnMountOrArgChange:120});
   const hasTracks=tracks.currentData?.Enabled===true&&tracks.currentData.Items.length>0;
+  // Only fetch the legacy topic list after the current stage catalog confirms
+  // there are no published tracks. A failed catalog request is not an empty catalog.
+  const legacy=validStage&&!!tracks.currentData&&!tracks.isError&&!hasTracks;
+  const { currentData:data, isLoading, isFetching, isError, refetch } = useGetStageCategoryAccessQuery(stageId, {
+    skip:!legacy,
+    refetchOnMountOrArgChange:120,
+  });
   const categories = (data?.Categories ?? [])
     .map(category => ({ ...category, StageId: stageId }))
     .sort((a, b) => (a.Order ?? 0) - (b.Order ?? 0) || a.Id - b.Id);
 
   return (
     <section className="container mx-auto px-4 pb-16 pt-2 sm:px-6 lg:px-12">
-      {hasTracks?<PublicTrackCatalog stageId={stageId}/>:tracks.isLoading?<MathWorldLoading compact mode="tab"/>:tracks.isError?<p role="alert">{ar?"تعذّر تحميل الصفوف والمساقات.":"Could not load grades and courses."} <button onClick={()=>void tracks.refetch()} className="underline">{ar?"إعادة المحاولة":"Retry"}</button></p>:<>
+      {!validStage?<p role="alert">{ar?'المرحلة غير متاحة.':'Stage unavailable.'}</p>:hasTracks?<PublicTrackCatalog stageId={stageId}/>:tracks.isLoading||(!tracks.currentData&&tracks.isFetching)?<MathWorldLoading compact mode="tab"/>:tracks.isError?<p role="alert">{ar?"تعذّر تحميل الصفوف والمساقات.":"Could not load grades and courses."} <button onClick={()=>void tracks.refetch()} className="underline">{ar?"إعادة المحاولة":"Retry"}</button></p>:<>
       <div className="mb-5">
         <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
           {ar ? 'فئات هذه المرحلة التعليمية' : 'Mathematics topics in this stage'}
@@ -45,7 +49,7 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
 
       </div>
 
-      {isLoading ? (
+      {isLoading || (isFetching&&!data) ? (
         <MathWorldLoading compact/>
       ) : isError ? (
         <div role="alert" className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">

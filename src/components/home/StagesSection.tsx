@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 
@@ -10,6 +10,7 @@ import { sortStagesByOrder } from "@/lib/stageVisuals";
 import { StagePremiumCard } from "@/components/stages/StagePremiumCard";
 import { AccentHeadingText } from "@/components/ui/AccentHeadingText";
 import { Button } from "@/components/ui/Button";
+import { MathWorldLoading } from "@/components/ui/MathWorldLoading";
 
 /** Stage cards are readable, keyboard accessible, and motion-light. */
 export function StagesSection() {
@@ -17,14 +18,13 @@ export function StagesSection() {
   const locale = useLocale();
   const authLoading = useSelector((state: RootState) => state.auth.isLoading);
   const { data: stages, isLoading, isError, refetch } = useGetStagesQuery(locale, {
-    refetchOnMountOrArgChange: true,
+    refetchOnMountOrArgChange: 120,
   });
 
   if (isLoading || authLoading) {
     return (
       <section className="flex min-h-72 items-center justify-center py-16" aria-busy="true">
-        <Loader2 aria-hidden="true" className="h-8 w-8 animate-spin text-primary" />
-        <span className="sr-only">{t("common.loading")}</span>
+        <MathWorldLoading compact/>
       </section>
     );
   }

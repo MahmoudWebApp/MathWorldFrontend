@@ -54,7 +54,7 @@ function PublicTrackDetails({id,ar}:{id:number;ar:boolean}){
  </motion.div>;
 }
 export function PublicTrackCatalog({stageId}:{stageId:number}){
- const ar=useLocale()==='ar';const {currentData:data}=useGetPublishedTracksQuery(stageId,{refetchOnMountOrArgChange:true});
+ const ar=useLocale()==='ar';const {currentData:data}=useGetPublishedTracksQuery(stageId,{refetchOnMountOrArgChange:120});
  const [selected,setSelected]=useState<number|null>(null);
  useEffect(()=>{const m=/^#track-(\d+)$/.exec(window.location.hash);if(m)setSelected(Number(m[1]));},[stageId]);
  if(!data?.Enabled||!data.Items.length)return null;
