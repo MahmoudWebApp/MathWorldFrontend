@@ -335,7 +335,7 @@ function AdminCategoriesPageContent() {
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[620px] text-center">
+            <table className="mw-workspace-table w-full min-w-[620px] text-center">
               <thead className="bg-muted/50 border-b">
                 <tr>
                   <th className="p-4">{t("admin.categories.icon")}</th>
@@ -367,7 +367,7 @@ function AdminCategoriesPageContent() {
                             <img
                               src={category.Icon}
                               alt={category.NameAr}
-                              className="w-10 h-10 rounded-lg object-cover border mx-auto shadow-sm"
+                              className="mw-topic-icon-art w-10 h-10 rounded-lg border mx-auto shadow-sm"
                             />
                           </>
                         ) : (
