@@ -1,4 +1,6 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
+import {UsersRound} from 'lucide-react';
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -94,8 +96,8 @@ export default function SupervisorsPage(){
   }
   if(!admin)return null;
   return <main className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
-    <div><h1 className="text-2xl font-bold">{ar?'إدارة المشرفين':'Supervisor management'}</h1>
-    <p className="text-sm text-muted-foreground">{ar?'الأدمن وحده يعتمد المحتوى ويدير صلاحيات المشرفين. امنح كل مشرف الوظائف التي يحتاجها فقط.':'Only the administrator approves content and manages staff permissions. Grant each supervisor only the access they need.'}</p></div>
+    <div><WorkspacePageHeader title={ar?'المشرفون':'Supervisors'} icon={UsersRound}/>
+    </div>
     <form className="space-y-3 rounded-2xl border bg-card p-4" onSubmit={submit}>
       <h2 className="font-bold">{ar?'إضافة مشرف':'Add supervisor'}</h2>
       <div className="grid gap-3 sm:grid-cols-2">

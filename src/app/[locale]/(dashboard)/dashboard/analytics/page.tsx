@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useLocale } from 'next-intl';
 import { BrandLogo } from '@/components/layout/BrandLogo';
@@ -194,20 +195,11 @@ export default function PremiumAnalyticsPage() {
           .premium-report-letterhead .brand-wordmark { color: #6D28D9 !important; -webkit-text-fill-color: #6D28D9 !important; }
         }
       `}</style>
-      <div className="premium-report-actions">
-        <Link href="/dashboard" className="text-sm font-semibold text-primary hover:underline">
-          {ar ? 'العودة للوحة الطالب' : 'Back to dashboard'}
-        </Link>
-      </div>
+      
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="flex items-center gap-2 text-3xl font-extrabold">
-            <BarChart3 className="h-7 w-7 text-primary" />
-            {reportAr ? 'تقرير تقدمي في الرياضيات' : 'My mathematics progress report'}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {reportAr ? 'بيانات حقيقية من المحاولات المحفوظة في حسابك.' : 'Verified aggregates from your saved answer attempts.'}
-          </p>
+        <div className="min-w-0 flex-1">
+          <WorkspacePageHeader title={reportAr?'التقارير والإحصائيات':'Reports and analytics'} icon={BarChart3}/>
+          
         </div>
         {report && (
           <div className="premium-report-actions flex flex-wrap items-center gap-2">

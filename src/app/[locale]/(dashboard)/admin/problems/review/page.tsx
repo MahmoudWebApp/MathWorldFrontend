@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -82,10 +83,7 @@ export default function CurriculumReviewPage() {
     <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-2">
-          <h1 className="flex items-center gap-2 text-3xl font-bold">
-            <ClipboardList className="h-7 w-7 text-primary" aria-hidden="true" />
-            {ar ? 'مراجعة دفعات المسائل' : 'Curriculum editorial queue'}
-          </h1>
+          <WorkspacePageHeader title={ar?'طلبات المراجعة':'Review requests'} icon={ClipboardList}/>
           <p className="max-w-3xl text-sm text-muted-foreground">
             {ar ? 'المسائل لا تصبح متاحة للطلاب إلا بعد مراجعة موثقة واعتماد ثم نشر بتأكيد مستقل.'
               : 'Questions become visible only after a recorded review, approval and separately confirmed publication.'}

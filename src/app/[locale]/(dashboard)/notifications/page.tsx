@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useState } from 'react';
@@ -77,18 +78,11 @@ export default function NotificationsPage() {
 
   return (
     <main className="container mx-auto max-w-4xl space-y-6 px-4 py-8">
-      <Link href={backPath} className="text-sm font-semibold text-primary hover:underline">
-        {ar ? (role === 'Admin' ? 'العودة لإدارة المنصة' : 'العودة للوحة التحكم') : (role === 'Admin' ? 'Back to admin' : 'Back to dashboard')}
-      </Link>
+      
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="flex items-center gap-3 text-2xl font-bold sm:text-3xl">
-            <BellRing className="h-7 w-7 text-primary" aria-hidden="true" />
-            {ar ? 'كل الإشعارات' : 'All notifications'}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {ar ? 'إشعارات آخر 30 يوماً، من الأحدث إلى الأقدم.' : 'Notifications from the last 30 days, newest first.'}
-          </p>
+        <div className="min-w-0 flex-1">
+          <WorkspacePageHeader title={ar?'الإشعارات':'Notifications'} icon={BellRing}/>
+          
         </div>
         {inbox && inbox.UnreadCount > 0 && (
           <button type="button" disabled={markingAll || isFetching}
