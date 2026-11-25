@@ -177,7 +177,7 @@ export default function StudentCategoriesPage() {
               const totalCount = progress?.TotalProblems ?? category.ProblemsCount ?? 0;
               const completion = totalCount > 0 ? Math.min(100, Math.round(100 * solvedCount / totalCount)) : 0;
               const card = (
-                <div className="flex h-full min-h-52 flex-col rounded-2xl border bg-card p-4 transition-shadow hover:shadow-md" style={{ borderColor: `${accent}33` }}>
+                <div className="flex h-full min-h-52 flex-col rounded-2xl border mw-topic-surface p-4 hover:shadow-md" style={{ "--stage-accent": accent } as import("react").CSSProperties}>
                   <div className="mb-4 flex items-start justify-between gap-2">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-sm"
                       style={{ backgroundColor: `${accent}18`, borderColor: `${accent}40` }}>
@@ -199,7 +199,7 @@ export default function StudentCategoriesPage() {
                       <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completion}
                         aria-label={ar ? `تقدمك في ${name}` : `Your progress in ${name}`}
                         className="h-1.5 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-emerald-600" style={{ width: `${completion}%` }} />
+                        <div className="h-full rounded-full " style={{ width: `${completion}%`, backgroundColor: accent }} />
                       </div>
                     </div>
                   )}
@@ -221,7 +221,7 @@ export default function StudentCategoriesPage() {
                         </span>
                       ) : (
                         <Link href={`/dashboard/problems?categoryId=${category.Id}&stageId=${stageId}`}
-                          className="flex min-h-11 items-center justify-center gap-1 rounded-xl bg-primary px-2 py-2 text-center text-xs font-bold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                          className="flex min-h-11 items-center justify-center gap-1 rounded-xl mw-topic-action-solid px-2 py-2 text-center text-xs font-bold transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                           <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
                           {ar ? 'عرض المسائل' : 'View questions'}
                         </Link>
@@ -230,7 +230,7 @@ export default function StudentCategoriesPage() {
                         title={(progress?.AttemptedProblems ?? 0) <= 0
                           ? (ar ? 'ابدأ بحل مسألة أولاً' : 'Solve a question first') : undefined}
                         onClick={() => { setResetError(''); setTarget({ scope: 'category', categoryId: category.Id, name, attempted: progress?.AttemptedProblems ?? 0 }); }}
-                        className="flex min-h-11 items-center justify-center gap-1 rounded-xl border border-amber-500/40 px-2 py-2 text-center text-xs font-bold text-foreground transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40">
+                        className="flex min-h-11 items-center justify-center gap-1 rounded-xl border mw-topic-action px-2 py-2 text-center text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40">
                         <RotateCcw className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {ar ? 'إعادة التدريب' : 'Restart practice'}
                       </button>
@@ -243,7 +243,7 @@ export default function StudentCategoriesPage() {
               const skillsButton = (
                 <button type="button" onClick={() => setSkillsCategory({
                   Id: category.Id, NameAr: category.NameAr, NameEn: category.NameEn,
-                })} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border bg-card/90 px-3 py-2 text-xs font-bold hover:bg-muted">
+                })} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border mw-topic-action px-3 py-2 text-xs font-bold" style={{ "--stage-accent": accent } as import("react").CSSProperties}>
                   <ListChecks className="h-4 w-4" style={{ color: accent }} aria-hidden="true" />
                   {ar ? 'عرض المهارات' : 'View skills'}
                 </button>
