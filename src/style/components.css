@@ -881,3 +881,25 @@ button.bg-primary:disabled {opacity:.5;}
 .mw-stage-progress::-webkit-progress-bar { background:var(--color-muted); border-radius:999px; }
 .mw-stage-progress::-webkit-progress-value { background:var(--stage-accent); border-radius:999px; }
 .mw-stage-progress::-moz-progress-bar { background:var(--stage-accent); border-radius:999px; }
+
+/* Educational topic surfaces: same stage accent across public and workspace UI. */
+.mw-topic-surface {
+  background: color-mix(in srgb, var(--stage-accent) 9%, var(--color-card));
+  border-color: color-mix(in srgb, var(--stage-accent) 36%, transparent);
+  transition: background-color .18s, border-color .18s, box-shadow .18s;
+}
+.mw-topic-surface:hover, .mw-topic-surface:focus-within {
+  background: color-mix(in srgb, var(--stage-accent) 14%, var(--color-card));
+  border-color: color-mix(in srgb, var(--stage-accent) 65%, transparent);
+}
+.dark .mw-topic-surface { background: color-mix(in srgb, var(--stage-accent) 17%, var(--color-card)); }
+.dark .mw-topic-surface:hover, .dark .mw-topic-surface:focus-within { background: color-mix(in srgb, var(--stage-accent) 24%, var(--color-card)); }
+.mw-topic-action { color: color-mix(in srgb, var(--stage-accent) 78%, var(--color-foreground)); border-color: color-mix(in srgb, var(--stage-accent) 45%, transparent); background: color-mix(in srgb, var(--stage-accent) 8%, var(--color-card)); }
+.mw-topic-action:not(:disabled):hover { background: color-mix(in srgb, var(--stage-accent) 20%, var(--color-card)); }
+.mw-topic-action-solid { background: var(--stage-accent); color: white; border-color: var(--stage-accent); }
+.mw-topic-action-solid:not(:disabled):hover { background: color-mix(in srgb, var(--stage-accent) 86%, black); }
+.mw-topic-tabs [role="tab"][data-state="active"] { background: var(--stage-accent); color: white; }
+.mw-topic-tabs [role="tab"][data-state="inactive"]:hover { background: color-mix(in srgb, var(--stage-accent) 14%, var(--color-card)); }
+.mw-topic-row { background: color-mix(in srgb, var(--stage-accent) 5%, var(--color-card)); }
+.mw-topic-row:hover { background: color-mix(in srgb, var(--stage-accent) 13%, var(--color-card)); }
+.mw-topic-ink { color: color-mix(in srgb, var(--stage-accent) 78%, var(--color-foreground)); }

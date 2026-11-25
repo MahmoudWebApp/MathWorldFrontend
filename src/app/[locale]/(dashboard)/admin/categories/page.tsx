@@ -12,6 +12,7 @@ import {
   useDeleteCategoryMutation,
   type CategoryDto,
 } from "@/store/api/categoriesApi";
+import { getStageAccent } from "@/lib/stageVisuals";
 import { useGetAdminStagesQuery } from "@/store/api/stagesApi";
 import {
   Add,
@@ -353,7 +354,8 @@ function AdminCategoriesPageContent() {
                 {filteredCategories?.map((category) => (
                   <tr
                     key={category.Id}
-                    className="border-b hover:bg-muted/20 transition-colors"
+                    className="border-b mw-topic-row transition-colors"
+                    style={{ "--stage-accent": getStageAccent({Id:category.StageId}) } as import("react").CSSProperties}
                   >
                     <td className="p-4">
                       {/* Render image URLs and text symbols safely. */}
@@ -383,34 +385,34 @@ function AdminCategoriesPageContent() {
                     <td className="p-4 font-bold text-start">
                       <Link
                         href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}`}
-                        className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                        className="inline-flex items-center gap-1.5 mw-topic-ink hover:underline"
                       >
                         {category.NameAr}
                         <DirectionalChevron direction="forward" className="h-4 w-4" />
                       </Link>
                     </td>
                     <td
-                      className="p-4 text-muted-foreground text-start"
+                      className="p-4 mw-topic-ink text-start"
                       dir="ltr"
                     >
                       {category.NameEn}
                     </td>
                     <td className="p-4">
-                      <span className="bg-muted px-3 py-1 rounded-full text-sm font-semibold">
+                      <span className="mw-topic-action px-3 py-1 rounded-full text-sm font-semibold">
                         {category.Order ?? "-"}
                       </span>
                     </td>
                     <td className="p-4 space-x-2 rtl:space-x-reverse whitespace-nowrap">
                       <Link
                         href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}`}
-                        className="mb-1 inline-flex items-center gap-1 rounded-lg border border-primary/20 px-2.5 py-2 text-xs font-semibold text-primary hover:bg-primary/10"
+                        className="mb-1 inline-flex items-center gap-1 rounded-lg border mw-topic-action px-2.5 py-2 text-xs font-semibold"
                       >
                         {locale === "ar" ? "عرض المسائل" : "View problems"}
                         <DirectionalChevron direction="forward" className="h-4 w-4" />
                       </Link>
                       <Link
                         href={`/admin/problems?stageId=${category.StageId}&categoryId=${category.Id}&create=1`}
-                        className="mb-1 inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-2 text-xs font-semibold text-foreground hover:bg-muted"
+                        className="mb-1 inline-flex items-center gap-1 rounded-lg border mw-topic-action px-2.5 py-2 text-xs font-semibold"
                       >
                         {locale === "ar" ? "إضافة مسألة" : "Add problem"}
                       </Link>

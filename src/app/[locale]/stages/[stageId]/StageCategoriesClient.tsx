@@ -71,8 +71,8 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
             return (
               <article
                 key={category.Id}
-                className="relative flex min-h-52 flex-col overflow-hidden rounded-2xl border bg-card/90 p-5 shadow-sm"
-                style={{ borderColor: `${stageAccent}45` }}
+                className="relative flex min-h-52 flex-col overflow-hidden rounded-2xl border mw-topic-surface p-5 shadow-sm"
+                style={{ "--stage-accent": stageAccent } as import("react").CSSProperties}
               >
                 <span className="absolute inset-x-0 top-0 h-1" style={{ background: stageAccent }} aria-hidden="true" />
                 <div
@@ -99,7 +99,7 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
                   </span>
                   <button type="button"
                     onClick={() => setSelectedCategory({ Id: category.Id, NameAr: category.NameAr, NameEn: category.NameEn })}
-                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-bold text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border mw-topic-action px-3 py-2 text-xs font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                     <ListChecks className="h-4 w-4" style={{ color: stageAccent }} aria-hidden="true" />
                     {ar ? 'عرض المهارات' : 'View skills'}
                   </button>
