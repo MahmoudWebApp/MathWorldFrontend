@@ -27,13 +27,13 @@ function TopicIcon({icon,accent}:{icon:string;accent:string}){
  // The SVG artwork already has its stage-coloured background and white
  // mathematical glyph. A CSS mask destroys the internal glyph.
  const safe=path&&(/^\/category-icons\/[a-zA-Z0-9_-]+\.svg$/.test(path)||/^https:\/\/[^\s]+\.(?:svg|png|webp|jpg|jpeg)(?:\?[^\s]*)?$/i.test(path));
- return <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl" style={{backgroundColor:accent+'12',color:accent}}>{safe?<Image src={path} width={42} height={42} alt="" unoptimized className="h-10 w-10 object-contain"/>:<BookOpenText size={25} aria-hidden="true"/>}</span>;
+ return <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl" style={{backgroundColor:accent+'12',color:accent}}>{safe?<Image src={path} width={42} height={42} alt="" unoptimized className="mw-topic-icon-art h-10 w-10"/>:<BookOpenText size={25} aria-hidden="true"/>}</span>;
 }
 function TopicCount({count,ar,accent}:{count:number;ar:boolean;accent:string}){
  return <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold" style={{color:accent,backgroundColor:accent+'16'}}><Calculator size={15} aria-hidden="true"/><span className="tabular-nums">{count}</span>{ar?'مسألة':'problems'}</span>;
 }
 function TopicHeading({name,icon,count,accent,ar}:{name:string;icon:string;count:number;accent:string;ar:boolean}){
- return <div className="flex items-center justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><TopicIcon icon={icon} accent={accent}/><h3 className="min-w-0 break-words text-base font-extrabold sm:text-lg" style={{color:accent}}>{name}</h3></div><TopicCount count={count} accent={accent} ar={ar}/></div>;
+ return <div className="flex flex-wrap items-start justify-between gap-2"><div className="flex min-w-0 flex-1 items-start gap-3"><TopicIcon icon={icon} accent={accent}/><h3 className="min-w-0 break-words pt-1 text-base font-extrabold sm:text-lg" style={{color:accent}}>{name}</h3></div><TopicCount count={count} accent={accent} ar={ar}/></div>;
 }
 function PublicTrackDetails({id,ar}:{id:number;ar:boolean}){
  const {currentData:data,isFetching,isError,refetch}=useGetPublishedTrackQuery(id,{refetchOnMountOrArgChange:true});
