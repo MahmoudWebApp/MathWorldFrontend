@@ -3,7 +3,7 @@ import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {useEffect,useState} from 'react';
 import {motion} from 'framer-motion';
 import {BookOpenText, Calculator, ListChecks, LockKeyhole, RotateCcw, GraduationCap} from 'lucide-react';
-import Image from 'next/image';
+import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
 import type {CSSProperties} from 'react';
 import {getStageAccent} from '@/lib/stageVisuals';
 import {LockedPremiumDialog} from '@/components/premium/LockedPremiumDialog';
@@ -27,7 +27,7 @@ function TopicIcon({icon,accent}:{icon:string;accent:string}){
  // The SVG artwork already has its stage-coloured background and white
  // mathematical glyph. A CSS mask destroys the internal glyph.
  const safe=path&&(/^\/category-icons\/[a-zA-Z0-9_-]+\.svg$/.test(path)||/^https:\/\/[^\s]+\.(?:svg|png|webp|jpg|jpeg)(?:\?[^\s]*)?$/i.test(path));
- return <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl" style={{backgroundColor:accent+'12',color:accent}}>{safe?<Image src={path} width={42} height={42} alt="" unoptimized className="mw-topic-icon-art h-10 w-10"/>:<BookOpenText size={25} aria-hidden="true"/>}</span>;
+ return <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl" style={{backgroundColor:accent+'12',color:accent}}>{safe?<StageTopicArtwork src={path} size={40} accent={accent}/>:<BookOpenText size={25} aria-hidden="true"/>}</span>;
 }
 function TopicCount({count,ar,accent}:{count:number;ar:boolean;accent:string}){
  return <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold" style={{color:accent,backgroundColor:accent+'16'}}><Calculator size={15} aria-hidden="true"/><span className="tabular-nums">{count}</span>{ar?'مسألة':'problems'}</span>;
