@@ -5,7 +5,7 @@ import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Search, SlidersHorizontal, Users, Crown } from 'lucide-react';
+import { Search, Users, Crown } from 'lucide-react';
 import { useGetAdminLearnersQuery, useGrantAnnualPremiumMutation, type AdminLearnerFilters, type AdminLearnerSummary } from '@/store/api/usersApi';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
