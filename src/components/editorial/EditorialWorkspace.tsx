@@ -3,19 +3,15 @@ import { BookOpen } from 'lucide-react';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
-import {useEffect,useRef, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useGetProblemQuery,useDeleteProblemMutation} from '@/store/api/problemsApi';
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@/components/ui/Dialog';
-import {Link} from '@/i18n/routing';
-import {combineEditorialFiles, MAX_BATCH_BYTES, type BatchIssue} from './editorialBatchFiles';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {useLocale} from 'next-intl';
-import {ReviewedBankImport} from './ReviewedBankImport';
-import {AmendmentBatchImport} from './AmendmentBatchImport';
 import {HintProposalImport} from './HintProposalImport';
 import {SolutionProposalImport} from './SolutionProposalImport';
 import {LatexPreview} from '@/components/ui/LatexPreview';
-import {useImportEditorialBatchMutation,type EditorialImportRow,type EditorialImportResult,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,type EditorialContent,type EditorialDraft,type Bilingual,type EditorialSolution} from '@/store/api/platformBrandApi';
+import {useGetEditorialBankQuery,useAmendEditorialProblemMutation,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,type EditorialContent,type EditorialDraft,type Bilingual,type EditorialSolution} from '@/store/api/platformBrandApi';
 
 const input='w-full rounded-xl border bg-background p-2.5 text-sm';
 const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
@@ -107,56 +103,6 @@ function Wizard({initial,initialStage=0,initialCategory=0,admin,canSubmit,onSave
   </section>;
 }
 function Existing({id,...props}:{id:number;admin:boolean;canSubmit:boolean;onSaved:(id:number)=>void;onClose:()=>void}){const {currentData,isError,refetch}=useGetEditorialDraftQuery(id,{refetchOnMountOrArgChange:true});const ar=useLocale()==='ar';if(isError)return <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>;if(!currentData)return <p role="status">{ar?'جارٍ تحميل المسودة…':'Loading draft…'}</p>;return <Wizard key={id} initial={currentData} {...props}/>;}
-function BatchImport(){
-  const ar=useLocale()==='ar';const [rows,setRows]=useState<EditorialImportRow[]|null>(null);
-  const [result,setResult]=useState<EditorialImportResult|null>(null);const [issues,setIssues]=useState<BatchIssue[]>([]);
-  const [error,setError]=useState('');const [names,setNames]=useState<string[]>([]);
-  const [reading,setReading]=useState(false);const latest=useRef(0);
-  const [run,{isLoading}]=useImportEditorialBatchMutation();
-  const busy=reading||isLoading;
-  async function load(files:File[]){
-    const request=++latest.current;
-    setRows(null);setResult(null);setIssues([]);setError('');setNames([]);
-    if(!files.length){setReading(false);return;}
-    setReading(true);
-    try{
-      if(files.length>50||files.reduce((total,file)=>total+file.size,0)>MAX_BATCH_BYTES)throw Error('BatchLimit');
-      const parsed=combineEditorialFiles(await Promise.all(files.map(async file=>({name:file.name,text:await file.text()}))));
-      if(request!==latest.current)return;
-      setRows(parsed);setNames(files.map(file=>file.name));
-    }catch(e){
-      if(request!==latest.current)return;
-      const code=e instanceof Error?e.message:'';
-      setError(code==='DuplicateContentKey'?(ar?'تكرر معرف محتوى بين الملفات.':'Duplicate content key across files.'):
-        code==='BatchLimit'?(ar?'الحد الإجمالي 50 مسألة وأقل من 1.9 ميغابايت للدفعة.':'Combined limit: 50 problems and less than 1.9 MB.'):
-        (ar?'ملف غير صالح: يجب أن يحتوي كل ملف على Items صالحة.':'Invalid file: each file must contain valid Items.'));
-    }finally{if(request===latest.current)setReading(false);}
-  }
-  async function submit(confirm:boolean){
-    if(!rows||busy)return;
-    if(confirm&&!(result?.Ready&&result.Ready>0))return;
-    setError('');setIssues([]);setResult(null);
-    try{
-      const value=await run({Items:rows,Confirm:confirm}).unwrap();
-      setResult(value);if(confirm)setRows(null);
-    }catch(e){
-      const data=(e as {data?:{message?:string;editorialBatchIssues?:BatchIssue[]}}).data;
-      setIssues(data?.editorialBatchIssues??[]);
-      setError(data?.message==='EditorialBatchInvalid'?(ar?'الدفعة غير صالحة؛ لم تُحفظ أي مسودة. راجع أسباب الرفض أدناه.':'Batch validation failed; no drafts were saved. Review the errors below.'):(ar?'تعذّر استيراد الدفعة. أعد المعاينة للتحقق قبل المحاولة مجدداً.':'Could not import batch. Preview again before retrying.'));
-    }
-  }
-  const batchErrors:Record<string,[string,string]>={SkillNotFound:['المهارة غير موجودة','Skill not found'],ImportClassificationMismatch:['التصنيف غير مطابق للمهارة','Classification does not match skill'],QuestionAlreadyExistsInBatch:['السؤال مكرر ضمن الدفعة','Duplicate question in batch'],QuestionAlreadyExistsInDraft:['السؤال موجود في مسودة أخرى','Question already exists in another draft'],DraftTooLarge:['المسودة كبيرة جداً','Draft too large']};
-  return <details className="rounded-xl border p-4"><summary className="cursor-pointer font-bold">{ar?'استيراد دفعة مسودات':'Import draft batch'}</summary><div className="mt-3 space-y-3">
-    <p className="text-sm text-muted-foreground">{ar?'اختر ملفاً أو عدة ملفات JSON (حتى 50 مسألة إجمالاً). تُراجع جميع الملفات معاً؛ المعاينة لا تحفظ شيئاً، والتأكيد ينشئ مسودات فقط دون نشر.':'Choose one or more JSON files (up to 50 problems total). All files are validated together; preview writes nothing and confirmation creates drafts only, never publishes.'}</p>
-    <input type="file" multiple accept=".json,application/json" disabled={isLoading} aria-label={ar?'ملفات المسودات':'Draft files'} onChange={e=>void load(Array.from(e.target.files??[]))}/>
-    {reading&&<p role="status">{ar?'جارٍ قراءة الملفات…':'Reading files…'}</p>}
-    {names.length>0&&<p className="break-words text-sm">{names.join(' · ')}{rows?' · '+rows.length+' '+(ar?'مسألة':'problems'):''}</p>}
-    <div className="flex flex-wrap gap-2"><button className={btn} disabled={!rows||busy} onClick={()=>void submit(false)}>{ar?'تحقق ومعاينة':'Validate and preview'}</button><button className={btn} disabled={!rows||busy||!(result?.Ready&&result.Ready>0)} onClick={()=>{if(window.confirm(ar?'إنشاء المسودات دون نشر؟':'Create drafts without publishing?'))void submit(true);}}>{ar?'إنشاء المسودات':'Create drafts'}</button></div>
-    {result&&<div className="text-sm space-y-1" role="status"><p>{ar?'الجاهزة للإنشاء':'Ready to create'}: {result.Ready??0} · {ar?'المُنشأة':'Created'}: {result.Created}</p>{result.Items.map(row=><p key={row.ContentKey}>{row.ContentKey} · {row.Status==='AlreadyExists'?(ar?'موجودة مسبقاً':'Already exists'):(ar?'صالحة':'Validated')}</p>)}</div>}
-    {error&&<p role="alert" className="text-destructive">{error}</p>}
-    {issues.filter(row=>row.Status==='Invalid').map(row=><div key={row.ContentKey} className="rounded-lg border p-2 text-sm"><p className="font-semibold" dir="ltr">{row.ContentKey}</p><ul className="list-inside list-disc text-destructive">{row.Errors.map((code,index)=><li key={index}>{batchErrors[code]?.[ar?0:1]??errors[code]?.[ar?0:1]??code}</li>)}</ul></div>)}
-  </div></details>;
-}
 function BankReview({onOpen,stage,category,setStage,setCategory}:{onOpen:(id:number)=>void;stage:number;category:number;setStage:(id:number)=>void;setCategory:(id:number)=>void}){
   const ar=useLocale()==='ar';const [page,setPage]=useState(1);const [error,setError]=useState('');const [preview,setPreview]=useState<number|null>(null);
   const detail=useGetProblemQuery({Id:preview??0},{skip:preview===null});const [remove,{isLoading:deleting}]=useDeleteProblemMutation();
@@ -169,7 +115,7 @@ function BankReview({onOpen,stage,category,setStage,setCategory}:{onOpen:(id:num
     <div className="grid gap-2 sm:grid-cols-2"><select aria-label={ar?'المرحلة':'Stage'} className={input} value={stage} onChange={e=>{setStage(Number(e.target.value));setCategory(0);setPage(1);}}><option value={0}>{ar?'كل المراحل':'All stages'}</option>{inventory.data?.Stages.map(x=><option key={x.Id} value={x.Id}>{ar?x.NameAr:x.NameEn}</option>)}</select><select aria-label={ar?'الفئة':'Category'} className={input} value={category} disabled={!stage} onChange={e=>{setCategory(Number(e.target.value));setPage(1);}}><option value={0}>{ar?'كل الفئات':'All categories'}</option>{inventory.currentData?.Categories.map(x=><option key={x.Id} value={x.Id}>{ar?x.NameAr:x.NameEn}</option>)}</select></div>
     {bank.isError&&<button className={btn} onClick={()=>void bank.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{bank.isFetching&&!bank.currentData&&<MathWorldLoading compact mode="filter"/>}
     {bank.currentData&&<div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[620px] text-sm"><thead><tr><th className="p-3 text-start">ID</th><th className="p-3 text-start">{ar?'المسألة':'Problem'}</th><th className="p-3 text-start">{ar?'الحالة':'Status'}</th><th className="p-3 text-end">{ar?'الإجراء':'Action'}</th></tr></thead><tbody>
-      {bank.currentData.Items.map(row=><tr key={row.Id} className="border-b mw-topic-row" style={{'--stage-accent':getStageAccent({Id:row.StageId})} as import('react').CSSProperties}><td className="p-3 tabular-nums text-muted-foreground">#{row.Id}</td><td className="p-3 font-semibold"><MathPreview value={ar?row.TitleAr:row.TitleEn}/></td><td className="p-3"><span className="inline-flex rounded-lg px-2 py-1 text-xs font-semibold bg-card">{row.HasOpenReview?(ar?'مراجعة مفتوحة':'Review open'):row.HasStructuredSolution?(ar?'حل منظم':'Structured solution'):(ar?'يحتاج مراجعة':'Needs review')}</span></td><td className="p-3 text-end"><div className="flex flex-wrap justify-end gap-1"><button type="button" className={btn} onClick={()=>setPreview(row.Id)}>{ar?'عرض':'View'}</button><button className={btn+' mw-topic-action whitespace-nowrap'} disabled={isLoading||row.HasOpenReview} onClick={()=>void open(row.Id)}>{row.HasOpenReview?(ar?'في قائمة المراجعة':'In review queue'):(ar?'مراجعة':'Review')}</button>{!row.HasStructuredSolution&&!row.HasOpenReview&&<button type="button" className={btn+' text-destructive'} disabled={deleting} onClick={()=>void deleteLegacy(row.Id)}>{ar?'حذف':'Delete'}</button>}</div></td></tr>)}
+      {bank.currentData.Items.map(row=><tr key={row.Id} className="border-b mw-topic-row" style={{'--stage-accent':getStageAccent({Id:row.StageId})} as import('react').CSSProperties}><td className="p-3 tabular-nums text-muted-foreground">#{row.Id}</td><td className="p-3 font-semibold"><MathPreview value={ar?row.TitleAr:row.TitleEn}/></td><td className="p-3"><span className="inline-flex rounded-lg px-2 py-1 text-xs font-semibold bg-card">{row.HasOpenReview?(ar?'مراجعة مفتوحة':'Review open'):row.HasStructuredSolution?(ar?'حل منظم':'Structured solution'):(ar?'يحتاج مراجعة':'Needs review')}</span></td><td className="p-3 text-end"><div className="flex flex-wrap justify-end gap-1"><button type="button" className={btn} onClick={()=>setPreview(row.Id)}>{ar?'عرض':'View'}</button><button className={btn+' mw-topic-action whitespace-nowrap'} disabled={isLoading||row.HasOpenReview} onClick={()=>void open(row.Id)}>{row.HasOpenReview?(ar?'في قائمة المراجعة':'In review queue'):(ar?'تعديل':'Edit')}</button>{!row.HasStructuredSolution&&!row.HasOpenReview&&<button type="button" className={btn+' text-destructive'} disabled={deleting} onClick={()=>void deleteLegacy(row.Id)}>{ar?'حذف':'Delete'}</button>}</div></td></tr>)}
       {!bank.currentData.Items.length&&<tr><td colSpan={4} className="p-6 text-center text-muted-foreground">{ar?'لا توجد مسائل مطابقة':'No matching problems'}</td></tr>}
     </tbody></table></div>}
     {error&&<p role="alert" className="text-destructive">{error}</p>}
@@ -197,6 +143,6 @@ export function EditorialWorkspace({admin,canSubmit,initialStage=0,initialCatego
     {(list.currentData?.Total??0)>30&&<div className="flex items-center gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*30>=(list.currentData?.Total??0)} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
   </div>;
   return <div className="space-y-4">{embedded?<div className="flex justify-end"><button className={btn+' sr-wave-button text-white'} disabled={selected!==null} onClick={()=>setSelected('new')}>{ar?'إضافة مسألة':'Add problem'}</button></div>:<WorkspacePageHeader title={admin?(ar?'إدارة المسائل':'Problem management'):(ar?'مسائلي':'My problems')} icon={BookOpen} actions={<button className={btn+' sr-wave-button text-white'} disabled={selected!==null} onClick={()=>setSelected('new')}>{ar?'إضافة مسألة':'Add problem'}</button>}/>}
-  {selected==='new'?<Wizard {...props} initialStage={stage} initialCategory={category}/>:typeof selected==='number'?<Existing key={selected} id={selected} {...props}/>:admin?<Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}><TabsList className="flex h-auto w-fit max-w-full flex-wrap justify-start gap-1"><TabsTrigger value="published">{ar?'المسائل المنشورة':'Published problems'}</TabsTrigger><TabsTrigger value="requests">{ar?'بحاجة للمراجعة':'Needs review'}</TabsTrigger><TabsTrigger value="import">{ar?'استيراد جماعي':'Bulk import'}</TabsTrigger></TabsList><TabsContent value="published"><BankReview stage={stage} category={category} setStage={setStage} setCategory={setCategory} onOpen={id=>setSelected(id)}/></TabsContent><TabsContent value="requests">{requests}</TabsContent><TabsContent value="import" className="space-y-4"><ReviewedBankImport onChanged={()=>void list.refetch()}/><div className="flex flex-wrap gap-2"><Link className={btn} href="/admin/problems/import">{ar?'معاينة CSV':'CSV preview'}</Link><Link className={btn} href="/admin/problems/guide">{ar?'دليل المسائل':'Problem guide'}</Link></div><details className="rounded-xl border p-4"><summary className="cursor-pointer font-semibold">{ar?'استيراد ملفات مخصصة':'Import custom files'}</summary><div className="mt-3 space-y-3"><BatchImport/><AmendmentBatchImport/></div></details></TabsContent></Tabs>:requests}
+  {selected==='new'?<Wizard {...props} initialStage={stage} initialCategory={category}/>:typeof selected==='number'?<Existing key={selected} id={selected} {...props}/>:admin?<Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}><TabsList className="flex h-auto w-fit max-w-full flex-wrap justify-start gap-1"><TabsTrigger value="published">{ar?'المسائل':'Problems'}</TabsTrigger><TabsTrigger value="requests">{ar?'بحاجة للمراجعة':'Needs review'}</TabsTrigger></TabsList><TabsContent value="published"><BankReview stage={stage} category={category} setStage={setStage} setCategory={setCategory} onOpen={id=>setSelected(id)}/></TabsContent><TabsContent value="requests">{requests}</TabsContent></Tabs>:requests}
   </div>;
 }
