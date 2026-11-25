@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -69,14 +70,9 @@ export default function AdminEngagementPage() {
 
   return <main dir={ar ? 'rtl' : 'ltr'} className="mx-auto max-w-6xl space-y-7 px-4 py-8 sm:px-6">
     <header className="space-y-2">
-      <Link href="/admin" className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:underline">
-        <DirectionalArrow direction="back" className="h-4 w-4" /> {ar ? 'لوحة الإدارة' : 'Admin overview'}
-      </Link>
-      <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{ar ? 'نشاط المستويات والفئات' : 'Stage & category engagement'}</h1>
-      <p className="text-sm text-muted-foreground">
-        {ar ? 'مقارنة نشاط الطلاب والفئات ضمن كل مرحلة خلال الفترة المحددة.'
-          : 'Compare learner and category activity in each stage for the selected period.'}
-      </p>
+      
+      <WorkspacePageHeader title={ar?'نشاط المراحل والفئات':'Stage and topic activity'} icon={Shapes}/>
+      
     </header>
 
     <div className="grid gap-3 sm:grid-cols-2">

@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { Tabs,TabsList,TabsTrigger,TabsContent } from '@/components/ui/Tabs';
 import { useLocale } from 'next-intl';
@@ -44,10 +45,7 @@ export default function SocialAccountsPage() {
   return (
     <main className="container mx-auto min-h-[70vh] max-w-3xl px-4 py-12">
       <section className="brand-surface math-card rounded-3xl p-6 md:p-10">
-        <div className="mb-6 flex items-center gap-3 text-primary">
-          <ShieldCheck size={27} />
-          <h1 className="text-2xl font-bold">{copy.title}</h1>
-        </div>
+        <WorkspacePageHeader title={copy.title} icon={ShieldCheck}/>
         <Tabs defaultValue="connections" dir={locale==="ar"?"rtl":"ltr"}><TabsList className="mb-5 flex h-auto w-full flex-wrap justify-start gap-1">{withinSettings&&<TabsTrigger value="stage">{locale==="ar"?"المرحلة التعليمية":"Learning stage"}</TabsTrigger>}<TabsTrigger value="connections">{locale==="ar"?"ربط الحساب":"Connections"}</TabsTrigger>{withinSettings&&<><TabsTrigger value="password">{locale==="ar"?"كلمة المرور":"Password"}</TabsTrigger><TabsTrigger value="email">{locale==="ar"?"البريد الإلكتروني":"Email"}</TabsTrigger></>}</TabsList>
         {withinSettings&&<TabsContent value="stage">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-card p-4">
@@ -60,7 +58,7 @@ export default function SocialAccountsPage() {
             </Link>
           </div>
         </TabsContent>}
-        <TabsContent value="connections"><p className="mb-6 text-muted-foreground">{copy.description}</p>
+        <TabsContent value="connections">
         <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm">
           <div className="flex items-start gap-2">
             <LockKeyhole size={18} className="shrink-0 text-primary" />

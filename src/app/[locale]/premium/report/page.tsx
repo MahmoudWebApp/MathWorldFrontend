@@ -1,4 +1,5 @@
 'use client';
+import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
@@ -60,18 +61,10 @@ export default function PremiumProgressReportPage() {
 
   return (
     <main className="container mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-8 print:max-w-none print:px-0 print:py-0 print:text-black">
-      <Link href="/dashboard/upgrade" className="text-sm font-semibold text-primary hover:underline print:hidden">
-        {ar ? 'العودة لمميزات الحساب' : 'Back to account benefits'}
-      </Link>
+      
       <header>
-        <h1 className="flex items-center gap-3 text-2xl font-bold md:text-3xl">
-          <BarChart3 className="h-7 w-7 text-primary" aria-hidden="true" />
-          {ar ? 'تقرير تقدمي التعليمي' : 'My learning progress report'}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {ar ? 'تحليل تفصيلي حسب الفئة، مع تصدير CSV يمكن فتحه في Excel.'
-            : 'Category-by-category progress, with a CSV export that opens in Excel.'}
-        </p>
+        <WorkspacePageHeader title={ar?'تقرير التقدم':'Progress report'} icon={BarChart3}/>
+        
       </header>
 
       {!premium ? (
@@ -152,12 +145,7 @@ export default function PremiumProgressReportPage() {
                     <Printer className="h-4 w-4" aria-hidden />
                     {ar ? 'طباعة أو حفظ PDF' : 'Print / Save as PDF'}
                   </button>
-                  <button type="button" disabled={isFetching}
-                    onClick={() => void refetch()}
-                    className="inline-flex items-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold disabled:opacity-50">
-                    <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} aria-hidden />
-                    {ar ? 'تحديث' : 'Refresh'}
-                  </button>
+                  
                   <button type="button" onClick={downloadCsv}
                     className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
                     <Download className="h-4 w-4" aria-hidden />
