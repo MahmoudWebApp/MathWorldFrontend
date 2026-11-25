@@ -73,14 +73,9 @@ export default function UserDashboardPage() {
 
   // Do not show placeholder statistics or a generic stage before the actual
   // learner stage, progress and entitlement requests have resolved.
-  if ((stageId<=0&&(isLoading||isFetching)) || (user?.Role === 'Student' && stageId > 0 &&
+  if (((isLoading||isFetching)&&!dashboard) || (user?.Role === 'Student' && stageId > 0 &&
       (journeyLoading || (journeyFetching&&!journey) || planLoading))) {
-    return <main className="mx-auto w-full max-w-7xl animate-pulse space-y-5 px-4 py-6 sm:px-6" aria-busy="true">
-      <MathWorldLoading compact />
-      <div className="h-9 w-48 rounded-xl bg-muted" />
-      <div className="h-52 rounded-3xl border bg-card/75" />
-      <div className="grid gap-4 lg:grid-cols-2"><div className="h-72 rounded-3xl border bg-card/75" /><div className="h-72 rounded-3xl border bg-card/75" /></div>
-    </main>;
+    return <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6" aria-busy="true"><MathWorldLoading className="min-h-[60vh]"/></main>;
   }
 
   // A failed/empty API response is unknown, not a zero-progress or Free user.
@@ -115,13 +110,12 @@ export default function UserDashboardPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-5 px-4 py-6 sm:px-6">
-      <header>
+      <div>
         <WorkspacePageHeader title={ar?'الرئيسية':'Dashboard'} icon={LayoutDashboard}/>
         <p className="mt-2 text-sm text-muted-foreground">
-          {isLoading ? (ar ? 'جارٍ تحميل بياناتك…' : 'Loading…')
-            : (ar ? `أهلاً بعودتك${user?.FullName ? `، ${user.FullName}` : ''}` : `Welcome back${user?.FullName ? `, ${user.FullName}` : ''}`)}
+          {ar ? `أهلاً بعودتك${user?.FullName ? `، ${user.FullName}` : ''}` : `Welcome back${user?.FullName ? `, ${user.FullName}` : ''}`}
         </p>
-      </header>
+      </div>
 
       <section className="rounded-3xl border border-primary/20 bg-card p-5 sm:p-7" aria-label={ar ? 'ملخص التقدم' : 'Progress summary'}>
         <div className="flex flex-wrap items-center justify-between gap-3">
