@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useLocale } from 'next-intl';
 import { usePathname, useRouter, Link } from '@/i18n/routing';
@@ -16,7 +16,7 @@ import { categoriesApi, useGetStudentSubscriptionQuery } from '@/store/api/categ
 import { problemsApi } from '@/store/api/problemsApi';
 import { stagesApi } from '@/store/api/stagesApi';
 import { statsApi } from '@/store/api/statsApi';
-import { usersApi } from '@/store/api/usersApi';
+import { usersApi, useGetStudentOnboardingQuery, useRequestEmailVerificationMutation } from '@/store/api/usersApi';
 import { notificationsApi } from '@/store/api/notificationsApi';
 import { StudentWorkspaceNavigation } from './StudentWorkspaceNavigation';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
@@ -35,9 +35,16 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
     pathname === '/learning-stage' || pathname === '/social-accounts' || pathname === '/notifications';
   const securedRoute = learnerRoute || pathname === '/admin' || pathname.startsWith('/admin/') ||
     pathname === '/supervisor' || pathname.startsWith('/supervisor/');
+  const onboarding = useGetStudentOnboardingQuery(undefined,{skip:!isStudent||!learnerRoute,refetchOnMountOrArgChange:true,pollingInterval:15000,skipPollingIfUnfocused:true});
+  const [resend,{isLoading:resending}]=useRequestEmailVerificationMutation();
+  const [emailNotice,setEmailNotice]=useState('');
+  const step=onboarding.data?.NextStep;
+  const oldApi=onboarding.isError&&(onboarding.error as {status?:number})?.status===404;
+  const complete=step==='Complete'||oldApi;
+  useEffect(()=>{if(isStudent&&learnerRoute&&(step==='SelectStage'||step==='SelectTrack')&&pathname!=='/learning-stage')router.replace('/learning-stage');},[isStudent,learnerRoute,step,pathname,router]);
   const { data: subscription, isLoading: membershipLoading, isFetching: membershipFetching,
     isError: membershipError, refetch: reloadMembership } =
-    useGetStudentSubscriptionQuery(undefined, { skip: !isStudent || !learnerRoute });
+    useGetStudentSubscriptionQuery(undefined, { skip: !isStudent || !learnerRoute || !complete });
 
   const signOut = async () => {
     try {
@@ -89,6 +96,19 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
     );
   }
   if (!isStudent || !learnerRoute) return <>{children}</>;
+  if (!complete) {
+    const ar=locale==='ar';
+    const exit=<button type="button" className="text-sm font-semibold text-destructive underline" onClick={()=>void signOut()}>{ar?'تسجيل الخروج':'Sign out'}</button>;
+    if(step==='VerifyEmail')return <main className="mx-auto max-w-lg space-y-5 rounded-2xl border bg-card p-6 my-10">
+      <h1 className="text-2xl font-bold">{ar?'أكد بريدك الإلكتروني أولاً':'Verify your email first'}</h1>
+      <p>{ar?'تحقق من رابط التأكيد في بريد حسابك. لا يمكنك اختيار المرحلة أو استخدام وظائف الطالب قبل تأكيد البريد.':'Check the verification link in your account email before choosing a stage or using student features.'}</p>
+      <button type="button" className="rounded-xl bg-primary px-4 py-2 text-primary-foreground" onClick={()=>void onboarding.refetch()}>{ar?'أكدت بريدي — متابعة':'I verified my email — continue'}</button>
+      <button type="button" disabled={resending} className="block rounded-xl border px-4 py-2" onClick={async()=>{try{await resend(ar?'ar':'en').unwrap();setEmailNotice(ar?'تم طلب إرسال الرابط. تحقق من بريدك.':'Link requested. Check your inbox.');}catch{setEmailNotice(ar?'تعذّر إرسال الرابط حالياً. حاول بعد قليل.':'Unable to request a link. Try again shortly.');}}}>{ar?'إعادة إرسال رابط التأكيد':'Resend verification link'}</button>
+      {emailNotice&&<p role="status">{emailNotice}</p>}{exit}
+    </main>;
+    if(step==='SelectStage'||step==='SelectTrack')return <><div className="mx-auto max-w-5xl px-4 pt-4 text-end">{exit}</div>{pathname==='/learning-stage'?children:<MathWorldLoading compact/>}</>;
+    return <main className="mx-auto max-w-lg space-y-4 px-4 py-10">{onboarding.isError?<><p role="alert">{ar?'تعذّر التحقق من جاهزية حسابك.':'Could not check your account setup.'}</p><button type="button" onClick={()=>void onboarding.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>{exit}</>:<MathWorldLoading compact/>}</main>;
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-[1600px] items-start">

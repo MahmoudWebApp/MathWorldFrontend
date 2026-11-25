@@ -8,6 +8,7 @@ import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { useGetStagesQuery,useGetPublishedTracksQuery,useGetTrackSelectionQuery,useSelectTrackMutation } from '@/store/api/stagesApi';
 import {
   useGetLearningStageQuery,
+  useGetStudentOnboardingQuery,
   useSetLearningStageMutation,
 } from '@/store/api/usersApi';
 import { getApiErrorMessage } from '@/lib/authSession';
@@ -52,6 +53,8 @@ export default function LearningStagePage() {
     isLoading: loadingChoice,
     isError: choiceError,
   } = useGetLearningStageQuery();
+  const onboarding=useGetStudentOnboardingQuery(undefined);
+  const mandatoryTrack=onboarding.data?.TrackRequired===true;
   const [setLearningStage, { isLoading: saving }] =
     useSetLearningStageMutation();
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -63,11 +66,11 @@ export default function LearningStagePage() {
   const catalog=useGetPublishedTracksQuery(effectiveId??0,{skip:effectiveId==null,refetchOnMountOrArgChange:true});
   const previous=useGetTrackSelectionQuery(undefined,{refetchOnMountOrArgChange:true});
   const options=catalog.currentData?.Items??[];
-  const requiresTrack=catalog.currentData?.Enabled===true&&options.length>0;
+  const requiresTrack=mandatoryTrack||(catalog.currentData?.Enabled===true&&options.length>0);
   const effectiveTrack=options.find(x=>x.Id===(trackChoice??previous.data?.TrackId))?.Id??null;
   const checkingTracks=effectiveId!=null&&(catalog.isLoading||catalog.isFetching);
   // A 404 from the old API is the only permitted compatibility fallback.
-  const catalogUnavailable=catalog.isError&&(catalog.error as {status?:number})?.status!==404;
+  const catalogUnavailable=catalog.isError&&(mandatoryTrack||(catalog.error as {status?:number})?.status!==404);
 
   const save = async () => {
     if (effectiveId == null || saving || savingTrack || checkingTracks || catalogUnavailable || (requiresTrack&&effectiveTrack==null)) {
@@ -148,7 +151,8 @@ export default function LearningStagePage() {
 
             {checkingTracks&&<p className="mt-4 text-sm text-muted-foreground" role="status">{isArabic?'جارٍ تحميل الصفوف والمساقات…':'Loading grades and courses…'}</p>}
             {catalogUnavailable&&<p role="alert" className="mt-4 text-sm text-destructive">{isArabic?'تعذّر تحميل المسارات.':'Could not load learning tracks.'} <button className="underline" onClick={()=>void catalog.refetch()}>{isArabic?'إعادة المحاولة':'Retry'}</button></p>}
-            {requiresTrack&&<fieldset className="mt-6 space-y-2"><legend className="font-bold">{isArabic?'اختر الصف أو المساق':'Choose grade or course'}</legend>
+            {mandatoryTrack&&effectiveId!=null&&!checkingTracks&&!catalogUnavailable&&options.length===0&&<p role="alert" className="mt-4 text-sm text-destructive">{isArabic?'لا تتوفر صفوف أو مساقات منشورة لهذه المرحلة حالياً.':'No published grades or courses are available for this stage yet.'}</p>}
+            {requiresTrack&&options.length>0&&<fieldset className="mt-6 space-y-2"><legend className="font-bold">{isArabic?'اختر الصف أو المساق':'Choose grade or course'}</legend>
               <div className="grid gap-2 sm:grid-cols-2">{options.map(track=><button type="button" key={track.Id} aria-pressed={effectiveTrack===track.Id} onClick={()=>setTrackChoice(track.Id)} className={'rounded-xl border p-3 text-start '+(effectiveTrack===track.Id?'border-primary bg-primary/10':'bg-card')}><span className="font-semibold">{isArabic?track.NameAr:track.NameEn}</span><span className="ms-2 text-xs text-muted-foreground">{track.ProblemsCount} {isArabic?'مسألة':'problems'}</span>{track.FreeProblemsCount===0&&<span className="block mt-1 text-xs text-muted-foreground">{isArabic?'التدريب لمشتركي Premium':'Premium practice only'}</span>}</button>)}</div>
             </fieldset>}
             {error && (
