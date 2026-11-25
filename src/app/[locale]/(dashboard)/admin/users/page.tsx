@@ -329,7 +329,7 @@ export default function AdminUsersPage() {
                         <div className="flex flex-col items-start gap-2">
                           <Link href={`/admin/users/${u.Id}`} className="inline-flex rounded-lg border border-primary/25 px-3 py-2 font-semibold text-primary hover:bg-primary/10">{label.detail}</Link>
                           <button type="button" disabled={!u.IsActive || granting || searching || isFetching} onClick={() => openGrant([u.Id])}
-                            className="text-xs font-semibold text-primary underline-offset-2 hover:underline disabled:opacity-40">
+                            className="rounded-lg border border-primary/25 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10 disabled:opacity-40">
                             {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
                           </button>
                         </div>
