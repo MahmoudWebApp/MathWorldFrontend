@@ -1,6 +1,8 @@
 'use client';
 
 import {useRef,useState} from 'react';
+import {useDispatch} from 'react-redux';
+import {platformBrandApi} from '@/store/api/platformBrandApi';
 import {useLocale} from 'next-intl';
 import {HeldWordingImport} from './HeldWordingImport';
 import {LatexPreview} from '@/components/ui/LatexPreview';
@@ -40,6 +42,8 @@ function Candidate({row,ar,draft}:{row:Row;ar:boolean;draft?:ReviewedDraftState}
 }
 export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
   const ar=useLocale()==='ar';const lang=ar?0:1;
+  const dispatch=useDispatch();
+  const refreshAfterPublication=()=>{dispatch(platformBrandApi.util.invalidateTags(['EditorialDraft']));};
   const [loadInfo]=useLazyGetReviewedBankInfoQuery();const [loadBatch]=useLazyGetReviewedBankBatchQuery();
   const [importAmendments]=useImportEditorialAmendmentsMutation();const [importNew]=useImportEditorialBatchMutation();
   const [importHints]=useImportReviewedHintsMutation();const [action]=useEditorialActionMutation();
@@ -93,7 +97,7 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
     if(!increments)throw Error('UnexpectedDraftStatus');
     for(let attempt=0;attempt<3;attempt++){
       try{
-        const result=await action({id:d.Id,action:'publish',Revision:d.Revision,Confirm:true,DirectApproval:true,Note:note.trim()}).unwrap();
+        const result=await action({id:d.Id,action:'publish',Revision:d.Revision,Confirm:true,DirectApproval:true,DeferRefresh:true,Note:note.trim()}).unwrap();
         if(result.Status!=='Published'||result.Revision!==d.Revision+increments)throw Error('UnexpectedEditorialTransition');
         return;
       }catch(e){
@@ -127,7 +131,7 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
           await publishMatching(current,d);
           done++;
         }
-      }finally{await refresh(current);onChanged();}
+      }finally{try{await refresh(current);}finally{refreshAfterPublication();}}
       setStatus((ar?'مسودات نُشرت فعلياً: ':'Drafts published: ')+done+'/'+selected.length);
     });
   }
@@ -220,7 +224,7 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
           }catch(e){issue=messageOf(e,ar);if(shouldStop(e))throw e;}
           finally{latest=await loadCurrent(plan.batch);replacePlan({batch:latest,ready:0,issue});}
         }
-      }finally{onChanged();}
+      }finally{refreshAfterPublication();}
       setStatus((ar?'مسائل نُشرت فعلياً: ':'Questions actually published: ')+done+'/'+total+(ar?' · أعد المعاينة لتحديث الحالة':' · Preview again to refresh status'));
     });
   }

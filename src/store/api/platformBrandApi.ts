@@ -125,9 +125,9 @@ export const platformBrandApi = createApi({
       query:({id,...body})=>({url:'/editorial/problems'+(id?'/'+id:''),method:id?'PUT':'POST',body}),
       invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
     }),
-    editorialAction:builder.mutation<EditorialDraft,{id:number;action:'submit'|'review'|'publish'|'withdraw';Revision:number;Note?:string;Confirm?:boolean;DirectApproval?:boolean}>({
-      query:({id,action,...body})=>({url:'/editorial/problems/'+id+'/'+action,method:'POST',body}),
-      invalidatesTags:(_r,e)=>e?[]:['EditorialDraft','SupervisorPermissions'],
+    editorialAction:builder.mutation<EditorialDraft,{id:number;action:'submit'|'review'|'publish'|'withdraw';Revision:number;Note?:string;Confirm?:boolean;DirectApproval?:boolean;DeferRefresh?:boolean}>({
+      query:({id,action,DeferRefresh:_deferRefresh,...body})=>({url:'/editorial/problems/'+id+'/'+action,method:'POST',body}),
+      invalidatesTags:(_r,e,arg)=>e||arg.DeferRefresh?[]:['EditorialDraft','SupervisorPermissions'],
     }),
     getSupervisors: builder.query<{Total:number;Items:SupervisorAccount[]}, number>({
       query: page => ({url:'/admin/supervisors',params:{page}}), providesTags:['Supervisors'],
