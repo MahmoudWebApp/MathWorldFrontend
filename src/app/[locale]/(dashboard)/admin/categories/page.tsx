@@ -25,7 +25,7 @@ import {
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
-import { FileSpreadsheet,Shapes } from "lucide-react";
+import { Shapes } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 // Tooltip components are configured globally.
 import {
@@ -34,12 +34,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/Tooltip";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { StageFreeCategoryAccessEditor } from "@/components/admin/StageFreeCategoryAccessEditor";
+import { StageTopicArtwork } from "@/components/stages/StageTopicArtwork";
+import { MathWorldLoading } from "@/components/ui/MathWorldLoading";
 import { getApiErrorMessage } from "@/lib/authSession";
 
 export default function AdminCategoriesPage() {
   return (
-    <Suspense fallback={<div role="status" aria-busy="true" className="animate-pulse grid gap-4 p-8 md:grid-cols-2">{Array.from({ length: 4 }, (_, index) => <div key={index} className="h-44 rounded-xl bg-muted/70" />)}</div>}>
+    <Suspense fallback={<MathWorldLoading/>}>
       <AdminCategoriesPageContent />
     </Suspense>
   );
@@ -247,12 +248,7 @@ function AdminCategoriesPageContent() {
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  if (isLoading || isLoadingStages)
-    return (
-      <div role="status" aria-busy="true" aria-label={t("common.loading")} className="animate-pulse grid gap-4 px-4 py-8 md:grid-cols-2 md:px-16 lg:px-24">
-        {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-44 rounded-xl border border-border/60 bg-card/70" />)}
-      </div>
-    );
+  if (isLoading || isLoadingStages) return <MathWorldLoading/>;
 
   if (categoriesError || stagesError) return (
     <div className="container mx-auto px-4 py-12 text-center" role="alert">
@@ -294,13 +290,7 @@ function AdminCategoriesPageContent() {
         className="mb-6"
       />
       <WorkspacePageHeader title={t("admin.categories.title")} icon={Shapes} actions={<div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/admin/categories/import"
-            className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
-          >
-            <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
-            {locale === "ar" ? "فحص فئات CSV" : "Preview category CSV"}
-          </Link>
+
         <Button
           onClick={openCreateModal}
           className="gap-2"
@@ -311,9 +301,7 @@ function AdminCategoriesPageContent() {
         </Button>
         </div>}/>
 
-      {/* Free access stays exactly two categories, explicitly chosen and
-          audited by web administrators for each educational stage. */}
-      <StageFreeCategoryAccessEditor stageId={selectedStageId} locale={locale} />
+
 
       {deleteError && (
         <div role="alert" className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -350,15 +338,7 @@ function AdminCategoriesPageContent() {
                       {/* Render image URLs and text symbols safely. */}
                       {category.Icon ? (
                         isImageUrl(category.Icon) ? (
-                          <>
-                            {/* A native image is used because icon URLs can be dynamic. */}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={category.Icon}
-                              alt={category.NameAr}
-                              className="mw-topic-icon-art w-10 h-10 rounded-lg border mx-auto shadow-sm"
-                            />
-                          </>
+                          <StageTopicArtwork src={category.Icon} accent={getStageAccent({Id:category.StageId})} size={40} className="rounded-lg mx-auto"/>
                         ) : (
                           <div className="w-10 h-10 flex items-center justify-center text-2xl mx-auto border rounded-lg bg-primary/10 shadow-sm">
                             {category.Icon}
