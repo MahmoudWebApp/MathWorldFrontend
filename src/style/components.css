@@ -903,3 +903,14 @@ button.bg-primary:disabled {opacity:.5;}
 .mw-topic-row { background: color-mix(in srgb, var(--stage-accent) 5%, var(--color-card)); }
 .mw-topic-row:hover { background: color-mix(in srgb, var(--stage-accent) 13%, var(--color-card)); }
 .mw-topic-ink { color: color-mix(in srgb, var(--stage-accent) 78%, var(--color-foreground)); }
+
+/* Consistent dashboard surfaces; readable over the decorative math background. */
+.mw-workspace-heading { align-items:center; }
+.mw-workspace-table { width:100%; border-collapse:separate; border-spacing:0; background:var(--color-card); }
+.mw-workspace-table thead th { background:color-mix(in srgb,var(--color-primary) 6%,var(--color-card)); font-weight:700; }
+.mw-workspace-table tbody tr:nth-child(even):not(.mw-topic-row) { background:color-mix(in srgb,var(--color-primary) 3%,var(--color-card)); }
+.mw-workspace-table tbody tr:not(.mw-topic-row):hover { background:color-mix(in srgb,var(--color-primary) 7%,var(--color-card)); }
+.mw-workspace-table td,.mw-workspace-table th { vertical-align:middle; }
+.mw-workspace-panel { background:var(--color-card); }
+.mw-topic-tabs [role="tab"][data-state="active"] { background-image:none; background-color:var(--stage-accent); }
+.mw-topic-icon-art { display:block; flex:none; object-fit:contain; object-position:center; }
