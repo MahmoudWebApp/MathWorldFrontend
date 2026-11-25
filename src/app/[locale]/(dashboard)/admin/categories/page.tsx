@@ -25,7 +25,8 @@ import {
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet,Shapes } from "lucide-react";
+import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 // Tooltip components are configured globally.
 import {
   Tooltip,
@@ -292,18 +293,7 @@ function AdminCategoriesPageContent() {
         ]}
         className="mb-6"
       />
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            {t("admin.categories.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {locale === "ar"
-              ? "اختر فئة من المستوى لعرض مسائلها وإضافة مسائل جديدة ضمنها."
-              : "Choose a category in this stage to view its questions and add new ones."}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <WorkspacePageHeader title={t("admin.categories.title")} icon={Shapes} actions={<div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin/categories/import"
             className="inline-flex items-center gap-2 rounded-xl border border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
@@ -319,8 +309,7 @@ function AdminCategoriesPageContent() {
           <Add className="h-4 w-4" />
           {t("admin.categories.addNew")}
         </Button>
-        </div>
-      </div>
+        </div>}/>
 
       {/* Free access stays exactly two categories, explicitly chosen and
           audited by web administrators for each educational stage. */}
