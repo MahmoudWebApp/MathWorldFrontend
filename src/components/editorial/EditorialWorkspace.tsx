@@ -103,10 +103,10 @@ function Wizard({initial,initialStage=0,initialCategory=0,admin,canSubmit,onSave
   </section>;
 }
 function Existing({id,...props}:{id:number;admin:boolean;canSubmit:boolean;onSaved:(id:number)=>void;onClose:()=>void}){const {currentData,isError,refetch}=useGetEditorialDraftQuery(id,{refetchOnMountOrArgChange:true});const ar=useLocale()==='ar';if(isError)return <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>;if(!currentData)return <MathWorldLoading/>;return <Wizard key={id} initial={currentData} {...props}/>;}
-function BankReview({onOpen,stage,category,setStage,setCategory}:{onOpen:(id:number)=>void;stage:number;category:number;setStage:(id:number)=>void;setCategory:(id:number)=>void}){
+function BankReview({onOpen,stage,category,setStage,setCategory,initialTrack}:{onOpen:(id:number)=>void;stage:number;category:number;setStage:(id:number)=>void;setCategory:(id:number)=>void;initialTrack:number}){
   const ar=useLocale()==='ar';const [page,setPage]=useState(1);const [error,setError]=useState('');const [preview,setPreview]=useState<number|null>(null);
   const detail=useGetProblemQuery({Id:preview??0},{skip:preview===null});const [remove,{isLoading:deleting}]=useDeleteProblemMutation();
-  const [track,setTrack]=useState(0);const [search,setSearch]=useState('');const [term,setTerm]=useState('');
+  const [track,setTrack]=useState(initialTrack);const [search,setSearch]=useState('');const [term,setTerm]=useState('');
   useEffect(()=>{const timer=setTimeout(()=>{setTerm(search.trim());setPage(1);},350);return()=>clearTimeout(timer);},[search]);
   const inventory=useGetEditorialClassificationQuery(stage);
   const bank=useGetEditorialBankQuery({page,stageId:stage||undefined,categoryId:category||undefined,trackId:track||undefined,search:term||undefined},{refetchOnMountOrArgChange:60});
@@ -127,7 +127,7 @@ function BankReview({onOpen,stage,category,setStage,setCategory}:{onOpen:(id:num
     <div className="flex gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*30>=(bank.currentData?.Total??0)} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>
   </section>;
 }
-export function EditorialWorkspace({admin,canSubmit,initialStage=0,initialCategory=0,create=false,initialTab='published',embedded=false}:{admin:boolean;canSubmit:boolean;initialStage?:number;initialCategory?:number;create?:boolean;initialTab?:'published'|'requests';embedded?:boolean}){
+export function EditorialWorkspace({admin,canSubmit,initialStage=0,initialCategory=0,initialTrack=0,create=false,initialTab='published',embedded=false}:{admin:boolean;canSubmit:boolean;initialStage?:number;initialCategory?:number;initialTrack?:number;create?:boolean;initialTab?:'published'|'requests';embedded?:boolean}){
   const ar=useLocale()==='ar';const [page,setPage]=useState(1);const [selected,setSelected]=useState<number|'new'|null>(create?'new':null);
   const [stage,setStage]=useState(initialStage);const [category,setCategory]=useState(initialCategory);
   const [tab,setTab]=useState<string>(admin?initialTab:'requests');
@@ -145,6 +145,6 @@ export function EditorialWorkspace({admin,canSubmit,initialStage=0,initialCatego
     {(list.currentData?.Total??0)>30&&<div className="flex items-center gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*30>=(list.currentData?.Total??0)} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
   </div>;
   return <div className="space-y-4">{embedded?<div className="flex justify-end"><button className={btn+' sr-wave-button text-white'} disabled={selected!==null} onClick={()=>setSelected('new')}>{ar?'إضافة مسألة':'Add problem'}</button></div>:<WorkspacePageHeader title={admin?(ar?'إدارة المسائل':'Problem management'):(ar?'مسائلي':'My problems')} icon={BookOpen} actions={<button className={btn+' sr-wave-button text-white'} disabled={selected!==null} onClick={()=>setSelected('new')}>{ar?'إضافة مسألة':'Add problem'}</button>}/>}
-  {selected==='new'?<Wizard {...props} initialStage={stage} initialCategory={category}/>:typeof selected==='number'?<Existing key={selected} id={selected} {...props}/>:admin?<Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}><TabsList className="flex h-auto w-fit max-w-full flex-wrap justify-start gap-1"><TabsTrigger value="published">{ar?'المسائل':'Problems'}</TabsTrigger><TabsTrigger value="requests">{ar?'بحاجة للمراجعة':'Needs review'}</TabsTrigger></TabsList><TabsContent value="published"><BankReview stage={stage} category={category} setStage={setStage} setCategory={setCategory} onOpen={id=>setSelected(id)}/></TabsContent><TabsContent value="requests">{requests}</TabsContent></Tabs>:requests}
+  {selected==='new'?<Wizard {...props} initialStage={stage} initialCategory={category}/>:typeof selected==='number'?<Existing key={selected} id={selected} {...props}/>:admin?<Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}><TabsList className="flex h-auto w-fit max-w-full flex-wrap justify-start gap-1"><TabsTrigger value="published">{ar?'المسائل':'Problems'}</TabsTrigger><TabsTrigger value="requests">{ar?'بحاجة للمراجعة':'Needs review'}</TabsTrigger></TabsList><TabsContent value="published"><BankReview initialTrack={initialTrack} stage={stage} category={category} setStage={setStage} setCategory={setCategory} onOpen={id=>setSelected(id)}/></TabsContent><TabsContent value="requests">{requests}</TabsContent></Tabs>:requests}
   </div>;
 }
