@@ -104,7 +104,6 @@ export default function SupervisorsPage(){
         <label className="text-sm">{ar?'الاسم الكامل':'Full name'}<input className={input} required minLength={2} maxLength={150} value={name} onChange={e=>setName(e.target.value)}/></label>
         <label className="text-sm">{ar?'البريد الإلكتروني':'Email'}<input className={input} type="email" required maxLength={254} value={email} onChange={e=>setEmail(e.target.value)}/></label>
       </div>
-      <p className="text-sm text-muted-foreground">{ar?'لا تُنشأ كلمة مرور معروفة للأدمن. يعيّنها المشرف بنفسه عبر دعوة قصيرة الصلاحية.':'The administrator does not receive a password. The supervisor sets it using a short-lived invitation.'}</p>
       <button type="submit" className="rounded-xl bg-primary px-4 py-2.5 text-primary-foreground disabled:opacity-50" disabled={isLoading}>{isLoading?(ar?'جارٍ الإنشاء…':'Creating…'):(ar?'إنشاء حساب':'Create account')}</button>
       {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     </form>

@@ -204,7 +204,7 @@ export default function UserDashboardPage() {
 
       {!isPremium && user?.Role === 'Student' && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4">
-          <p className="text-sm font-semibold">{ar ? 'اكتشف مميزات Premium، بدون عرض أسعار.' : 'Explore Premium benefits, with no prices displayed.'}</p>
+          <p className="text-sm font-semibold">{ar ? 'مميزات Premium' : 'Premium benefits'}</p>
           <Link href="/dashboard/upgrade" className="rounded-xl border border-primary/25 px-4 py-2 text-sm font-bold text-primary">
             {ar ? 'مميزات الحساب' : 'Account benefits'}
           </Link>

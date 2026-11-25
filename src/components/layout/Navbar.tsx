@@ -172,7 +172,7 @@ function NavbarContent() {
       />
 
       <header className="sticky top-0 z-50 w-full border-b border-brand-primary/10 bg-background/85 glass supports-[backdrop-filter]:bg-background/55 dark:border-brand-primary/20">
-        <nav className="container mx-auto flex h-16 min-w-0 items-center justify-between gap-1.5 px-3 sm:gap-3 sm:px-6 lg:px-12">
+        <nav className="mx-auto flex h-16 w-full max-w-[1920px] min-w-0 items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
           
           <Link
             href={portalArea ? portalLanding : '/'}

@@ -121,7 +121,7 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
           title={locale === 'ar' ? (collapsed ? 'فتح القائمة' : 'طي القائمة') : (collapsed ? 'Expand menu' : 'Collapse menu')}
           className="mb-3 flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/70 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          {collapsed ? <PanelRightOpen className="h-5 w-5" /> : <PanelRightClose className="h-5 w-5" />}
+          {collapsed ? <PanelRightOpen className="h-5 w-5 ltr:rotate-180" /> : <PanelRightClose className="h-5 w-5 ltr:rotate-180" />}
           {!collapsed && <span className="text-xs font-bold">{locale === 'ar' ? 'طي القائمة' : 'Collapse'}</span>}
         </button>
         {membershipLoading || (membershipFetching && !subscription) ? (

@@ -10,11 +10,11 @@ import type { RootState } from '@/store';
 import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm';
 import { EmailOutboxPanel } from '@/components/admin/EmailOutboxPanel';
 import { getApiErrorMessage } from '@/lib/authSession';
-import { useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery,emailTemplateLabels, type BrandView, type BrandProfile, type PlatformSocialLink } from '@/store/api/platformBrandApi';
+import { useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery,emailTemplateLabels, defaultSocialLinks, type BrandView, type BrandProfile, type PlatformSocialLink } from '@/store/api/platformBrandApi';
 
 const inputClass='w-full rounded-xl border bg-background p-2.5 text-sm';
 function BrandEditor({initial,ar}:{initial:BrandView;ar:boolean}) {
-  const [profile,setProfile]=useState<BrandProfile>(()=>structuredClone(initial.Profile));
+  const [profile,setProfile]=useState<BrandProfile>(()=>structuredClone({...initial.Profile,SocialLinks:initial.Revision===0&&!initial.Profile.SocialLinks.length?defaultSocialLinks:initial.Profile.SocialLinks}));
   const [revision,setRevision]=useState(initial.Revision);
   const [save,{isLoading}]=useUpdateBrandMutation();
   const [status,setStatus]=useState('');

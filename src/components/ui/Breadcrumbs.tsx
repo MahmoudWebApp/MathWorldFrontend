@@ -61,7 +61,7 @@ export function Breadcrumbs({
                   title={item.label}
                   aria-label={item.label}
                 >
-                  {index === 0 && <Home className="order-last h-4 w-4 shrink-0" aria-hidden="true" />}
+                  {index === 0 && <Home className="h-4 w-4 shrink-0" aria-hidden="true" />}
                   <span dir="auto" className={labelClassName}>{item.label}</span>
                 </Link>
               ) : (

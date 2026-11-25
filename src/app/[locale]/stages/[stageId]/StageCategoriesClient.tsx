@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
-import { BookOpenText, ListChecks, Calculator, Loader2 } from 'lucide-react';
+import { BookOpenText, ListChecks, Calculator } from 'lucide-react';
 
 import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
@@ -12,6 +12,7 @@ import { useGetPublishedTracksQuery } from '@/store/api/stagesApi';
 import { useGetStageCategoryAccessQuery } from '@/store/api/categoriesApi';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { PublicTrackCatalog } from '@/components/curriculum/TrackViews';
+import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { CategorySkillsDialog } from '@/components/curriculum/CategorySkillsDialog';
 
 /**
@@ -36,23 +37,16 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
 
   return (
     <section className="container mx-auto px-4 pb-16 pt-2 sm:px-6 lg:px-12">
-      {hasTracks?<PublicTrackCatalog stageId={stageId}/>:tracks.isLoading?<div className="py-12 text-center"><Loader2 className="mx-auto h-7 w-7 animate-spin text-primary"/></div>:tracks.isError?<p role="alert">{ar?"تعذّر تحميل الصفوف والمساقات.":"Could not load grades and courses."} <button onClick={()=>void tracks.refetch()} className="underline">{ar?"إعادة المحاولة":"Retry"}</button></p>:<>
+      {hasTracks?<PublicTrackCatalog stageId={stageId}/>:tracks.isLoading?<MathWorldLoading compact mode="tab"/>:tracks.isError?<p role="alert">{ar?"تعذّر تحميل الصفوف والمساقات.":"Could not load grades and courses."} <button onClick={()=>void tracks.refetch()} className="underline">{ar?"إعادة المحاولة":"Retry"}</button></p>:<>
       <div className="mb-5">
         <h2 className="text-xl font-extrabold text-foreground sm:text-2xl">
           {ar ? 'فئات هذه المرحلة التعليمية' : 'Mathematics topics in this stage'}
         </h2>
-        <p className="mt-1 text-sm leading-7 text-muted-foreground">
-          {ar
-            ? 'كل فئة تجمع مهارات مترابطة ومسائل تتدرج في الفهم والتطبيق.'
-            : 'Each topic groups related skills and exercises that progress from understanding to application.'}
-        </p>
+
       </div>
 
       {isLoading ? (
-        <div className="flex min-h-36 items-center justify-center" role="status">
-          <Loader2 aria-hidden="true" className="h-7 w-7 animate-spin text-primary" />
-          <span className="sr-only">{ar ? 'جارٍ تحميل الفئات' : 'Loading topics'}</span>
-        </div>
+        <MathWorldLoading compact/>
       ) : isError ? (
         <div role="alert" className="rounded-xl border border-border bg-card p-5 text-sm text-muted-foreground">
           {ar ? 'تعذر تحميل الفئات حالياً.' : 'Could not load the topics right now.'}

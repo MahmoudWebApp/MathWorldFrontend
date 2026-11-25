@@ -26,8 +26,8 @@ export function BrandLogo({ compact = false, className }: BrandLogoProps) {
           <img src={customLogo} alt={name} onError={() => setFailedLogo(customLogo)} className={cn('object-contain', compact ? 'h-11 w-11' : 'h-16 w-16')} />
         ) : <BrandMark className={compact ? 'h-11 w-11' : 'h-16 w-16'} />}
       </span>
-      <span className={cn('brand-wordmark font-extrabold tracking-tight', compact ? 'hidden text-[1.08rem] min-[430px]:inline' : 'text-2xl')} dir="auto">
-        {name.toLowerCase()==='mathworld'?<span dir="ltr" aria-label="MathWorld"><span style={{color:'#5C24FF'}}>Math</span><span style={{color:'#FF2399'}}>World</span></span>:<span style={{color:'var(--sr-primary)'}}>{name}</span>}
+      <span className={cn('brand-wordmark font-extrabold tracking-tight', compact ? 'hidden text-[1.2rem] min-[430px]:inline' : 'text-2xl')} dir="auto">
+        {name.toLowerCase()==='mathworld'?<span dir="ltr" aria-label="MathWorld"><span className="brand-word-math">Math</span><span className="brand-word-world">World</span></span>:<span style={{color:'var(--sr-primary)'}}>{name}</span>}
       </span>
     </div>
   );

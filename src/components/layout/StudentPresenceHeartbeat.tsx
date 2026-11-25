@@ -13,25 +13,41 @@ export function StudentPresenceHeartbeat({ token }: { token: string }) {
     const sessionId = crypto.randomUUID();
     let lastSent = 0;
     let stopped = false;
-    const report = () => {
-      if (stopped || document.visibilityState !== 'visible') return;
+    let inFlight = false;
+    let failureDelay = 0;
+    let disabled = false;
+    const report = async () => {
+      if (stopped || disabled || inFlight || document.visibilityState !== 'visible') return;
       // Avoid bursts when a browser fires focus and visibilitychange together.
-      if (Date.now() - lastSent < 25_000) return;
+      if (Date.now() - lastSent < Math.max(25_000, failureDelay)) return;
       lastSent = Date.now();
-      void fetch(`${API_BASE_URL}/users/presence/heartbeat`, {
+      inFlight = true;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 15000);
+      try {
+      const response = await fetch(`${API_BASE_URL}/users/presence/heartbeat`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         cache: 'no-store',
+        redirect: 'error',
+        signal: controller.signal,
         body: JSON.stringify({ SessionId: sessionId }),
-      }).catch(() => {
-        // Presence is optional telemetry. Never interrupt math practice.
       });
+      if (response.status === 401 || response.status === 403) disabled = true;
+      if (!response.ok) throw new Error('Presence unavailable');
+      failureDelay = 0;
+      } catch {
+        failureDelay = Math.min(Math.max(failureDelay * 2, 120000), 300000);
+      } finally {
+        window.clearTimeout(timeout);
+        inFlight = false;
+      }
     };
 
-    report();
+    void report();
     const interval = window.setInterval(report, 60_000);
     document.addEventListener('visibilitychange', report);
     window.addEventListener('focus', report);
@@ -41,7 +57,7 @@ export function StudentPresenceHeartbeat({ token }: { token: string }) {
       document.removeEventListener('visibilitychange', report);
       window.removeEventListener('focus', report);
       // Best effort only; network and tab shutdown may prevent delivery.
-      void fetch(`${API_BASE_URL}/users/presence/sessions/${sessionId}`, {
+      if (!disabled && failureDelay === 0) void fetch(`${API_BASE_URL}/users/presence/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
         keepalive: true,

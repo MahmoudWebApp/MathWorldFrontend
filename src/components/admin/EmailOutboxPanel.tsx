@@ -69,7 +69,6 @@ export function EmailOutboxPanel() {
         <h3 className="font-semibold">{ar?'جاهزية إعداد البريد':'Email configuration readiness'}</h3>
         {data.Readiness.Missing.length>0?<ul className="list-disc space-y-1 ps-5">{data.Readiness.Missing.map(code=><li key={code}>{label(readinessLabels[code],code)}</li>)}</ul>:<p>{ar?'الإعدادات المحلية مكتملة.':'Local configuration is complete.'}</p>}
         <p>{ar?'استعادة حساب الإدارة':'Admin account recovery'}: {data.Readiness.AdminRecoveryConfigured?(ar?'مهيأة محلياً':'Locally configured'):(ar?'غير جاهزة':'Not ready')}</p>
-        <p className="text-muted-foreground">{ar?'هذا فحص إعدادات فقط. يجب تأكيد قبول المزوّد ووصول رسالة اختبار فعلية قبل اعتماد الإرسال.':'Configuration checks only. Confirm provider acceptance and actual test-email receipt before enabling live delivery.'}</p>
       </section>}
       <div className="rounded-xl border p-3 text-sm">
         <p>{ar?'استهلاك محاولات الإرسال ضمن النافذة الاحتياطية':'Reserved-window sending attempts'}: {data.ReservedAttempts} / {data.AttemptLimit}</p>
@@ -77,7 +76,6 @@ export function EmailOutboxPanel() {
       </div>
       <div className="flex flex-wrap gap-2">{data.Counts.map(item=><span className="rounded-lg border px-3 py-1.5 text-sm" key={item.State}>{label(states[item.State],item.State)}: {item.Count}</span>)}</div>
       <div className="space-y-2 rounded-xl border p-3">
-        <p className="text-sm text-muted-foreground">{ar?'رسالة اختبار إلى بريد حساب الإدارة فقط، بشرط أن يكون ضمن قائمة الاختبار المسموحة.':'Test email to your own admin account only, provided its email is allowlisted.'}</p>
         <div className="flex flex-wrap gap-2">
           {data.TestTemplates&&<select aria-label={ar?'قالب الاختبار':'Test template'} className="rounded-xl border bg-background p-2" value={data.TestTemplates.includes(template)?template:'test'} onChange={e=>setTemplate(e.target.value)}>{data.TestTemplates.map(key=><option key={key} value={key}>{label(emailTemplateLabels[key],key)}</option>)}</select>}
           <select aria-label={ar?'لغة رسالة الاختبار':'Test email language'} className="rounded-xl border bg-background p-2" value={language} onChange={e=>setLanguage(e.target.value)}><option value="ar">العربية</option><option value="en">English</option></select>

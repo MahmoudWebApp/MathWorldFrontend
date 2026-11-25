@@ -44,6 +44,13 @@ export function isSafeBrandLogo(value: string, origin: string): boolean {
   if (!safeHttps(value) || !safeHttps(origin)) return false;
   try { return new URL(value).origin === new URL(origin).origin; } catch { return false; }
 }
+// Generic platform homepages until the administrator configures the real accounts.
+export const defaultSocialLinks: PlatformSocialLink[] = [
+  {Platform:'YouTube',LabelAr:'يوتيوب',LabelEn:'YouTube',Url:'https://www.youtube.com/',IsEnabled:true,DisplayOrder:0},
+  {Platform:'TikTok',LabelAr:'تيك توك',LabelEn:'TikTok',Url:'https://www.tiktok.com/',IsEnabled:true,DisplayOrder:1},
+  {Platform:'Facebook',LabelAr:'فيسبوك',LabelEn:'Facebook',Url:'https://www.facebook.com/',IsEnabled:true,DisplayOrder:2},
+  {Platform:'Instagram',LabelAr:'إنستغرام',LabelEn:'Instagram',Url:'https://www.instagram.com/',IsEnabled:true,DisplayOrder:3},
+];
 export function publishedSocialLinks(profile?: BrandProfile): PlatformSocialLink[] {
   return (profile?.SocialLinks ?? []).filter(link => link.IsEnabled && safeHttps(link.Url)).sort((a,b) => a.DisplayOrder-b.DisplayOrder);
 }

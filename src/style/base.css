@@ -38,8 +38,8 @@
 
   /* Consistent keyboard focus on all Arabic and English touch/desktop UI. */
   :where(a, button, input, textarea, select, [role="button"], [tabindex]):focus-visible {
-    outline: 3px solid var(--color-ring);
-    outline-offset: 3px;
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
   }
 
   /* Prevent permanently clipped text at enlarged system font sizes. */

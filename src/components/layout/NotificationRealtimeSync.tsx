@@ -20,7 +20,7 @@ export function NotificationRealtimeSync({ token }: { token: string }) {
     let running = false;
     let controller: AbortController | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
-    let backoffMs = 1000;
+    let backoffMs = 5000;
     let lastRefresh = 0;
 
     const refresh = () => {
@@ -34,7 +34,7 @@ export function NotificationRealtimeSync({ token }: { token: string }) {
       if (stopped || running || document.visibilityState !== 'visible') return;
       running = true;
       controller = new AbortController();
-      let stableConnection = false;
+      let connectedAt = 0;
       try {
         const response = await fetch(`${API_BASE_URL}/notifications/v2/stream`, {
           method: 'GET',
@@ -57,8 +57,7 @@ export function NotificationRealtimeSync({ token }: { token: string }) {
             !response.headers.get('content-type')?.includes('text/event-stream')) {
           throw new Error('Notification stream unavailable');
         }
-        stableConnection = true;
-        backoffMs = 1000;
+        connectedAt = Date.now();
         refresh(); // Reconcile messages that arrived while disconnected.
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -85,8 +84,11 @@ export function NotificationRealtimeSync({ token }: { token: string }) {
         running = false;
         controller = null;
         if (!stopped && document.visibilityState === 'visible') {
-          retryTimer = setTimeout(() => void connect(), backoffMs);
-          if (!stableConnection) backoffMs = Math.min(backoffMs * 2, 30000);
+          // Short-lived streams and server outages must not generate a reconnect storm.
+          if (connectedAt && Date.now() - connectedAt >= 60000) backoffMs = 5000;
+          const delay = backoffMs + Math.floor(Math.random() * 1500);
+          retryTimer = setTimeout(() => void connect(), delay);
+          backoffMs = Math.min(backoffMs * 2, 120000);
         }
       }
     };

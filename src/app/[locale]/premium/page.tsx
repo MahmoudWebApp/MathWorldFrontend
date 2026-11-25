@@ -91,13 +91,13 @@ export default function PremiumBenefitsPage() {
         {inStudentWorkspace ? (ar ? 'العودة لحسابي' : 'Back to dashboard') : (ar ? 'العودة للرئيسية' : 'Back to home')}
       </Link>
       <header className="mb-6">
-        <h1 className="brand-display-title text-3xl font-black md:text-4xl">
+        <h1 className="brand-display-title text-gradient-math text-3xl font-black md:text-4xl">
           {ar ? 'الباقات' : 'Plans'}
         </h1>
         <p className="mt-3 text-muted-foreground">
           {ar
-            ? 'قارن بين مميزات حساب Free وحساب Premium، واختر ما يناسب تعلمك.'
-            : 'Explore what Free and Premium offer for your learning journey.'}
+            ? 'مميزات حساب Free وحساب Premium'
+            : 'Free and Premium benefits'}
         </p>
       </header>
 
