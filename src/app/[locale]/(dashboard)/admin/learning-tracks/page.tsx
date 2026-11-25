@@ -11,7 +11,7 @@ import {useLocale} from 'next-intl';
 import {useSelector} from 'react-redux';
 import type {RootState} from '@/store';
 import {readTrackProposal,MAX_TRACK_PROPOSAL_BYTES} from '@/components/curriculum/trackProposalImport';
-import {MathWorldLoading} from '@/components/ui/MathWorldLoading';
+import { MathWorldLoading, MathWorldSkeleton } from '@/components/ui/MathWorldLoading';
 import {useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useGetAdminStagesQuery,
   useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
 
@@ -109,7 +109,7 @@ function TrackEditor({id,ar}:{id:number;ar:boolean}){
  const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:60});
  const categories=useGetAdminCategoriesQuery();
  const [editing,setEditing]=useState(false);
- if(isFetching&&!data||categories.isLoading)return <MathWorldLoading/>;
+ if(isFetching&&!data||categories.isLoading)return <MathWorldSkeleton/>;
  if(isError||categories.isError||!data)return <button className={btn} onClick={()=>{void refetch();void categories.refetch();}}>{ar?'إعادة المحاولة':'Retry'}</button>;
  const accent=getStageAccent({Id:data.Track.StageId});
  return <section className="space-y-4 rounded-2xl border bg-card p-4">
@@ -137,7 +137,7 @@ function LearningTracksContent(){
   const [create,{isLoading}]=useCreateTrackMutation();
   async function submit(e:React.FormEvent){e.preventDefault();setError('');try{const t=await create({StageId:stageId,Kind:kind,Code:code,NameAr:nameAr,NameEn:nameEn,DescriptionAr:descAr,DescriptionEn:descEn,SortOrder:sort}).unwrap();setSelected(t.Id);setTab('list');setCode('');setAr('');setEn('');setDescAr('');setDescEn('');}catch(e){setError(message(e,ar));}}
   if(!admin)return null;
-  if((isFetching&&!data)||stagesLoading)return <MathWorldLoading className="min-h-[60vh]"/>;
+  if((isFetching&&!data)||stagesLoading)return <MathWorldSkeleton/>;
   if(isError||stagesError)return <div role="alert" className="p-6">{ar?'تعذّر تحميل المحتوى التعليمي.':'Could not load learning content.'} <button className={btn} onClick={()=>{void refetch();void reloadStages();}}>{ar?'إعادة المحاولة':'Retry'}</button></div>;
   if(!stageFilter)return <main className="p-6"><Link href="/admin/stages" className={btn}>{ar?'اختر المرحلة أولاً':'Choose a stage first'}</Link></main>;
   const scopedTrack=selected!==null&&data?.Items.some(x=>x.Track.Id===selected&&x.Track.StageId===stageFilter)?selected:null;

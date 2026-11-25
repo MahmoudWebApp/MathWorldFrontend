@@ -2,7 +2,7 @@
 
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { LayoutDashboard } from 'lucide-react';
-import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
+import { MathWorldLoading, MathWorldSkeleton } from '@/components/ui/MathWorldLoading';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
@@ -75,7 +75,7 @@ export default function UserDashboardPage() {
   // learner stage, progress and entitlement requests have resolved.
   if (((isLoading||isFetching)&&!dashboard) || (user?.Role === 'Student' && stageId > 0 &&
       (journeyLoading || (journeyFetching&&!journey) || planLoading))) {
-    return <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6" aria-busy="true"><MathWorldLoading className="min-h-[60vh]"/></main>;
+    return <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6" aria-busy="true"><MathWorldSkeleton kind="dashboard"/></main>;
   }
 
   // A failed/empty API response is unknown, not a zero-progress or Free user.
