@@ -1,4 +1,5 @@
 'use client';
+import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
 import { useEffect, useState } from 'react';
@@ -159,13 +160,7 @@ export default function AdminUsersPage() {
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="brand-display-title text-gradient-math text-3xl font-bold">{label.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{label.sub}</p>
-        </div>
-
-      </div>
+      <WorkspacePageHeader title={label.title} icon={Users}/>
       <section aria-label={label.search} className="math-card mb-6 rounded-2xl border border-border p-4 md:p-5">
         {stagesError && (
           <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">
@@ -175,10 +170,7 @@ export default function AdminUsersPage() {
             </button>
           </div>
         )}
-        <div className="mb-3 flex items-center gap-2 font-semibold">
-          <SlidersHorizontal className="h-5 w-5 text-primary" aria-hidden />
-          {label.title}
-        </div>
+        
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="relative block">
             <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
