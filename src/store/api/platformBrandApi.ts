@@ -63,12 +63,28 @@ export interface EditorialImportRow {ContentKey:string;PrimarySkillKey:string;Pr
 export interface EditorialImportResult {Created:number;Ready?:number;Items:{ContentKey:string;Status:string;DraftId?:number|null;Errors:string[]}[];DraftIds?:number[]}
 export interface AmendmentImportRow {ProblemId:number;ExpectedOptionIds:number[];ExpectedLegacySolution:Bilingual;PrimarySkillKey:string;Content:Partial<EditorialContent>;Status:'StructuredAmendmentCandidateNotImported'}
 export interface AmendmentImportResult {Created:number;Ready?:number;Items:{ProblemId:number;Status:string;DraftId?:number|null;Errors:string[]}[];DraftIds?:number[]}
+export type ReviewedBankKind='amendments'|'hints'|'new-existing'|'new-missing';
+export interface ReviewedHintRow {ProblemId:number;PrimarySkillKey:string;Question:Bilingual;Hints:Bilingual[];TaxonomyReviewPending:false}
+export interface ReviewedBankInfo {HeldCount:number;PublicationEnabled:boolean;Batches:{Kind:ReviewedBankKind;Number:number;Count:number}[]}
+export interface ReviewedDraftState {Id:number;ContentKey:string;Revision:number;Status:string;PublishedProblemId?:number;MatchesCandidate:boolean}
+export interface ReviewedBankBatch {Kind:ReviewedBankKind;Number:number;Items:(AmendmentImportRow|EditorialImportRow|ReviewedHintRow)[];Drafts:ReviewedDraftState[]}
+export interface HintImportResult {Applied:number;Ready:number;PreviewToken?:string;Items:{ProblemId:number;Status:string;Errors:string[]}[]}
 export interface EditorialBankRow {Id:number;StageId:number;CategoryId:number;TitleAr:string;TitleEn:string;HasStructuredSolution:boolean;HasOpenReview:boolean}
 export interface ClassificationRow {Id:number;NameAr:string;NameEn:string}
 export interface EditorialClassification {Stages:ClassificationRow[];Tracks:ClassificationRow[];Categories:ClassificationRow[];Skills:(ClassificationRow&{CategoryId:number})[]}
 export const platformBrandApi = createApi({
   reducerPath: 'platformBrandApi', baseQuery, tagTypes: ['Brand', 'EmailOutbox', 'Supervisors', 'SupervisorPermissions','EditorialDraft'],
   endpoints: builder => ({
+    getReviewedBankInfo:builder.query<ReviewedBankInfo,void>({
+      query:()=>'/editorial/problems/reviewed-bank',keepUnusedDataFor:0,
+    }),
+    getReviewedBankBatch:builder.query<ReviewedBankBatch,{kind:ReviewedBankKind;number:number}>({
+      query:({kind,number})=>'/editorial/problems/reviewed-bank/'+kind+'/'+number,keepUnusedDataFor:0,
+    }),
+    importReviewedHints:builder.mutation<HintImportResult,{Items:ReviewedHintRow[];Confirm:boolean;PreviewToken?:string;ReviewNote?:string}>({
+      query:body=>({url:'/editorial/problems/hints/import',method:'POST',body}),
+      invalidatesTags:(_r,e,arg)=>!e&&arg.Confirm?['EditorialDraft']:[],
+    }),
     importEditorialBatch:builder.mutation<EditorialImportResult,{Items:EditorialImportRow[];Confirm:boolean}>({
       query:body=>({url:'/editorial/problems/import',method:'POST',body}),
       invalidatesTags:(_r,e,arg)=>!e&&arg.Confirm?['EditorialDraft']:[],
@@ -137,4 +153,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation } = platformBrandApi;
