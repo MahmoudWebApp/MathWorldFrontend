@@ -126,7 +126,7 @@ export const platformBrandApi = createApi({
       invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
     }),
     editorialAction:builder.mutation<EditorialDraft,{id:number;action:'submit'|'review'|'publish'|'withdraw';Revision:number;Note?:string;Confirm?:boolean;DirectApproval?:boolean;DeferRefresh?:boolean}>({
-      query:({id,action,DeferRefresh:_deferRefresh,...body})=>({url:'/editorial/problems/'+id+'/'+action,method:'POST',body}),
+      query:({id,action,Revision,Note,Confirm,DirectApproval})=>({url:'/editorial/problems/'+id+'/'+action,method:'POST',body:{Revision,Note,Confirm,DirectApproval}}),
       invalidatesTags:(_r,e,arg)=>e||arg.DeferRefresh?[]:['EditorialDraft','SupervisorPermissions'],
     }),
     getSupervisors: builder.query<{Total:number;Items:SupervisorAccount[]}, number>({
