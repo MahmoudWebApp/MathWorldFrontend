@@ -2,6 +2,7 @@
 import {useRef, useState} from 'react';
 import {combineEditorialFiles, MAX_BATCH_BYTES, type BatchIssue} from './editorialBatchFiles';
 import {useLocale} from 'next-intl';
+import {ReviewedBankImport} from './ReviewedBankImport';
 import {AmendmentBatchImport} from './AmendmentBatchImport';
 import {HintProposalImport} from './HintProposalImport';
 import {SolutionProposalImport} from './SolutionProposalImport';
@@ -150,7 +151,7 @@ export function EditorialWorkspace({admin,canSubmit}:{admin:boolean;canSubmit:bo
   const props={admin,canSubmit,onSaved:()=>{void list.refetch();},onClose:()=>setSelected(null)};
   return <div className="space-y-4"><div className="flex flex-wrap justify-between items-center gap-2"><h2 className="text-xl font-bold">{admin?(ar?'مسودات المحتوى':'Editorial drafts'):(ar?'مسوداتي':'My drafts')}</h2><button className={btn} disabled={selected!==null} onClick={()=>setSelected('new')}>{ar?'إضافة مسألة':'Add problem'}</button></div>
     {selected===null&&<button className={btn} onClick={()=>setBank(v=>!v)}>{bank?(ar?'إخفاء البنك':'Hide bank'):(ar?'مراجعة المسائل المنشورة':'Review published problems')}</button>}
-    {selected===null&&admin&&<><BatchImport/><AmendmentBatchImport/></>}
+    {selected===null&&admin&&<><ReviewedBankImport onChanged={()=>void list.refetch()}/><BatchImport/><AmendmentBatchImport/></>}
     {selected===null&&bank&&<BankReview onOpen={id=>setSelected(id)}/>}
     {selected==='new'?<Wizard {...props}/>:typeof selected==='number'?<Existing key={selected} id={selected} {...props}/>:<>{list.isError&&<button className={btn} onClick={()=>void list.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{list.isFetching&&!list.data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{list.currentData?.Items.length===0&&<p className="text-sm text-muted-foreground">{ar?'لا توجد مسودات بعد':'No drafts yet'}</p>}{list.currentData?.Items.map(d=><button key={d.Id} className="block w-full rounded-xl border bg-card p-3 text-start" onClick={()=>setSelected(d.Id)}><span className="font-semibold">#{d.Id} · {(ar?d.QuestionTextAr:d.QuestionTextEn)|| (ar?'مسودة جديدة':'New draft')}</span><span className="block text-sm text-muted-foreground">{labels[d.Status]?.[ar?0:1]??d.Status}</span></button>)}{(list.currentData?.Total??0)>30&&<div className="flex gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><button className={btn} disabled={page*30>=(list.currentData?.Total??0)} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}</>}
   </div>;
