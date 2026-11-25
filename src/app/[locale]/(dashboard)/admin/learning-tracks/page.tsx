@@ -1,5 +1,7 @@
 'use client';
 import {useState} from 'react';
+import {Link} from '@/i18n/routing';
+import {useGetAdminCategoriesQuery} from '@/store/api/categoriesApi';
 import {GraduationCap} from 'lucide-react';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
@@ -102,12 +104,27 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
     {error&&<p role="alert" className="text-destructive text-sm">{error}</p>}
   </section>;
 }
-function TrackEditor({id,ar}:{id:number;ar:boolean}){const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:true});return <>{isFetching&&!data&&<MathWorldLoading/>}{isError&&<button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}{data&&!isError&&<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>}</>}
+function TrackEditor({id,ar}:{id:number;ar:boolean}){
+ const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:60});
+ const categories=useGetAdminCategoriesQuery();
+ const [editing,setEditing]=useState(false);
+ if(isFetching&&!data||categories.isLoading)return <MathWorldLoading/>;
+ if(isError||categories.isError||!data)return <button className={btn} onClick={()=>{void refetch();void categories.refetch();}}>{ar?'إعادة المحاولة':'Retry'}</button>;
+ const accent=getStageAccent({Id:data.Track.StageId});
+ return <section className="space-y-4 rounded-2xl border bg-card p-4">
+ <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-bold">{ar?data.Track.NameAr:data.Track.NameEn}</h2><button className={btn} onClick={()=>setEditing(v=>!v)}>{editing?(ar?'عرض الفئات':'View categories'):(ar?'تعديل المساق':'Edit course')}</button></div>
+ {editing?<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>:<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+ {(categories.data??[]).filter(c=>data.CategoryIds.includes(c.Id)).map(c=><Link key={c.Id} href={'/admin/editorial?stageId='+data.Track.StageId+'&trackId='+id+'&categoryId='+c.Id} className="rounded-xl border mw-topic-surface p-4 font-bold mw-topic-ink" style={{'--stage-accent':accent} as import('react').CSSProperties}>{ar?c.NameAr:c.NameEn}</Link>)}
+ {!data.CategoryIds.length&&<p className="text-sm text-muted-foreground">{ar?'لا توجد فئات مرتبطة بعد':'No linked categories yet'}</p>}
+ </div>}
+ </section>;
+}
 export default function LearningTracksPage(){
   const ar=useLocale()==='ar';const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
   const {data,isFetching,isError}=useGetAdminTracksQuery(undefined,{skip:!admin});
   const {data:stages}=useGetAdminStagesQuery(undefined,{skip:!admin});
   const [selected,setSelected]=useState<number|null>(null);
+  const [stageFilter,setStageFilter]=useState(0);
   const [tab,setTab]=useState('list');
   const [stageId,setStage]=useState(0);const [kind,setKind]=useState<LearningTrack['Kind']>('course');
   const [code,setCode]=useState('');const [nameAr,setAr]=useState('');const [nameEn,setEn]=useState('');
@@ -117,15 +134,16 @@ export default function LearningTracksPage(){
   async function submit(e:React.FormEvent){e.preventDefault();setError('');try{const t=await create({StageId:stageId,Kind:kind,Code:code,NameAr:nameAr,NameEn:nameEn,DescriptionAr:descAr,DescriptionEn:descEn,SortOrder:sort}).unwrap();setSelected(t.Id);setTab('list');setCode('');setAr('');setEn('');setDescAr('');setDescEn('');}catch(e){setError(message(e,ar));}}
   if(!admin)return null;
   return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6">
-    <WorkspacePageHeader title={ar?'الصفوف والمساقات التعليمية':'Grades and university courses'} icon={GraduationCap}/>
+    <WorkspacePageHeader title={ar?'المحتوى التعليمي':'Learning content'} icon={GraduationCap} actions={<div className="flex flex-wrap gap-2"><Link className={btn} href="/admin/stages">{ar?'المراحل والفئات':'Stages and categories'}</Link><Link className={btn} href="/admin/editorial?tab=requests">{ar?'مسائل المشرفين للمراجعة':'Supervisor reviews'}</Link></div>}/>
     {data&&!data.Enabled&&<p role="status" className="text-sm text-muted-foreground">{ar?'عرض المسارات للطلاب معطّل.':'Learner track catalog is disabled.'}</p>}
     <Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}>
       <TabsList className="w-fit max-w-full"><TabsTrigger value="list">{ar?'الصفوف والمساقات':'Grades and courses'}</TabsTrigger><TabsTrigger value="create" disabled={selected!==null}>{ar?'إضافة صف أو مساق':'Add grade or course'}</TabsTrigger></TabsList>
       <TabsContent value="list" className="space-y-4">    
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسارات.':'Could not load tracks.'}</p>}
-    {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}
-    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties} className={'rounded-xl border mw-topic-surface p-3 text-start '+(selected===x.Track.Id?'ring-1 ring-[var(--stage-accent)]':'')}><p className="font-bold mw-topic-ink">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>
-    {selected!==null&&<><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق محرر المسار':'Close track editor'}</button><TrackEditor key={selected} id={selected} ar={ar}/></>}
+    {isFetching&&!data&&<MathWorldLoading/>}
+    <select aria-label={ar?'المرحلة':'Stage'} className={field+' max-w-xs'} value={stageFilter} onChange={e=>{setStageFilter(Number(e.target.value));setSelected(null);}}><option value={0}>{ar?'كل المراحل':'All stages'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select>
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{data?.Items.filter(x=>!stageFilter||x.Track.StageId===stageFilter).map(x=><button type="button" key={x.Track.Id} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id} style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties} className={'rounded-xl border mw-topic-surface p-3 text-start '+(selected===x.Track.Id?'ring-1 ring-[var(--stage-accent)]':'')}><p className="font-bold mw-topic-ink">{ar?x.Track.NameAr:x.Track.NameEn}</p><p className="text-xs text-muted-foreground">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')} · {x.ProblemCount} {ar?'مسألة مرتبطة':'mapped problems'}</p></button>)}</div>
+    {selected!==null&&<><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق الصف أو المساق':'Close grade or course'}</button><TrackEditor key={selected} id={selected} ar={ar}/></>}
 </TabsContent>
       <TabsContent value="create">    <section className="rounded-2xl border bg-card p-4"><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submit}>
       <label className="text-sm">{ar?'المرحلة':'Stage'}<select className={field} required value={stageId||''} onChange={e=>setStage(Number(e.target.value))}><option value="">{ar?'اختر':'Select'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select></label>
