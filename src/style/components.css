@@ -916,3 +916,13 @@ button.bg-primary:disabled {opacity:.5;}
 .dark .mw-workspace-panel.mw-topic-surface { background:color-mix(in srgb,var(--stage-accent) 17%,var(--color-card)); }
 .mw-topic-tabs [role="tab"][data-state="active"] { background-image:none; background-color:var(--stage-accent); }
 .mw-topic-icon-art { display:block; flex:none; object-fit:contain; object-position:center; }
+
+/* Owner-approved clean white topic surfaces, stage accents only on details. */
+.mw-topic-surface,.mw-topic-surface:hover,.mw-topic-surface:focus-within,.dark .mw-topic-surface,.dark .mw-topic-surface:hover,.dark .mw-topic-surface:focus-within,.mw-workspace-panel.mw-topic-surface,.dark .mw-workspace-panel.mw-topic-surface {background:var(--color-card);}
+.mw-topic-row,.mw-topic-row:hover {background:var(--color-card);}
+.mw-topic-row td {border-bottom:1px solid var(--color-border);}
+.mw-topic-row:last-child td {border-bottom:0;}
+.brand-wordmark-flow,.dark .brand-wordmark-flow {background:linear-gradient(110deg,#5c24ff 12%,#9333e7 38%,#e626b6 63%,#ff2399 88%,#9333e7 100%) 0 0/200% 100%;background-clip:text;-webkit-background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:mw-brand-flow 8s ease-in-out infinite alternate;}
+@keyframes mw-brand-flow {to {background-position:100% 0;}}
+@media(prefers-reduced-motion:reduce){.brand-wordmark-flow,.dark .brand-wordmark-flow{animation:none;}}
+.mw-form-field {display:flex;flex-direction:column;gap:.5rem;min-width:0;}
