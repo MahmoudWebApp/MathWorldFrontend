@@ -140,15 +140,15 @@ export default function AdminDashboardPage() {
         <div>
           <h2 className="text-lg font-bold">{ar ? 'إدارة المنصة' : 'Manage MathWorld'}</h2>
           <p className="text-sm text-muted-foreground">{ar
-            ? 'الطلاب والاشتراكات بمكان واحد، والمحتوى يبدأ بالمرحلة ثم الفئة ثم المسألة.'
-            : 'Learners and subscriptions share one page; learning content follows stage, category, then question.'}</p>
+            ? 'الطلاب والاشتراكات بمكان واحد، والمحتوى يبدأ بالمرحلة ثم الصف ثم الفئة ثم المسألة.'
+            : 'Learners and subscriptions share one page; learning content follows stage, grade or course, category, then question.'}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { href: '/admin/users', icon: UsersRound, ar: 'إدارة الطلاب والاشتراكات', en: 'Learners & subscriptions',
               subAr: 'حسابات الطلاب وتفعيل أو تجديد Premium', subEn: 'Student accounts, Premium activation and renewal' },
             { href: '/admin/stages', icon: BookOpen, ar: 'المحتوى التعليمي', en: 'Learning content',
-              subAr: 'المراحل ثم الفئات ثم إدارة المسائل', subEn: 'Stages, categories and problems' },
+              subAr: 'المراحل ثم الصفوف والمساقات ثم الفئات ثم المسائل', subEn: 'Stages, grades or courses, categories and problems' },
             { href: '/admin/engagement/students', icon: ClipboardList, ar: 'سجل عمليات الطلاب', en: 'Learner activity log',
               subAr: 'التسجيل والدخول والخروج والأنشطة الفعلية', subEn: 'Registrations, logins, sign-outs and actual activity' },
           ].map(item => {
