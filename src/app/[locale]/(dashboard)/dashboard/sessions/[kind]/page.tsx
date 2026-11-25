@@ -52,7 +52,18 @@ function SessionFlow({scope}:{scope:SessionScope}){
   function clear(){setResult(null);setSelected(null);setHints(null);setError('');pending.current=null;}
   async function reload(){
     if(lock.current)return;lock.current=true;
-    try{const fresh=view?await getById(view.Id,false).unwrap():await current.refetch().unwrap();setSession(fresh);setResetDone(false);clear();}
+    try{
+      let fresh:LearningSessionState|null;
+      try{fresh=view?await getById(view.Id,false).unwrap():await current.refetch().unwrap();}
+      catch(e){
+        if(view&&(status(e)===404||status(e)===409)){
+          try{fresh=await current.refetch().unwrap();}
+          catch(currentError){if(status(currentError)!==404)throw currentError;fresh=null;}
+        }else if(!view&&status(e)===404){fresh=null;}
+        else throw e;
+      }
+      setSession(fresh);setResetDone(fresh===null);starting.current=null;clear();
+    }
     catch(e){setError(message(e));}
     finally{lock.current=false;}
   }
@@ -102,7 +113,7 @@ function SessionFlow({scope}:{scope:SessionScope}){
     {error&&<div role="alert" className="rounded-xl border p-3 text-sm text-destructive">{error}<button className="ms-3 underline" onClick={()=>void reload()} disabled={busy}>{ar?'تحديث الجلسة':'Reload session'}</button></div>}
     {current.isLoading&&!session?<p role="status">{ar?'جارٍ تحميل الجلسة…':'Loading session…'}</p>:unavailable?<div className="rounded-xl border p-4"><p>{message(current.error)}</p><button className={secondary} onClick={()=>void reload()} disabled={busy}>{ar?'إعادة المحاولة':'Retry'}</button></div>:!view?<section className="space-y-4 rounded-2xl border bg-card p-5">
       <p>{ar?'أجب عن كل مسألة بشكل صحيح لتنتقل إلى التالية. يمكنك المتابعة من جهاز آخر.':'Answer correctly to advance. Resume on another device.'}</p>
-      {kind==='practice'&&<label className="flex items-center gap-3">{ar?'عدد المسائل':'Questions'}<select value={count} onChange={e=>setCount(Number(e.target.value))} disabled={busy} className="rounded-lg border bg-background p-2">{[5,6,7,8,9,10].map(n=><option key={n}>{n}</option>)}</select></label>}
+      {kind==='practice'&&<label className="flex items-center gap-3">{ar?'عدد المسائل':'Questions'}<select value={count} onChange={e=>setCount(Number(e.target.value))} disabled={busy||!!starting.current} className="rounded-lg border bg-background p-2">{[5,6,7,8,9,10].map(n=><option key={n}>{n}</option>)}</select></label>}
       <button className={button} disabled={busy||!!preview} onClick={()=>void begin()}>{ar?'ابدأ':'Start'}</button></section>:<>
       <div className="rounded-xl border bg-card p-4"><p className="font-semibold">{ar?'التقدم':'Progress'}: {result?.Completed??view.Completed} / {view.Total}</p><progress className="mt-2 w-full" max={view.Total} value={result?.Completed??view.Completed}/></div>
       {view.IsComplete&&!result?<section className="space-y-3 rounded-2xl border bg-card p-6 text-center"><h2 className="text-xl font-bold">{ar?'أحسنت! اكتملت الجلسة':'Well done! Session complete'}</h2><Link href="/dashboard" className={button}>{ar?'العودة للرئيسية':'Back to dashboard'}</Link>{kind==='practice'&&<button className={secondary} onClick={()=>void begin()} disabled={busy}>{ar?'جلسة جديدة':'New session'}</button>}</section>:q&&<section className="space-y-4 rounded-2xl border bg-card p-5">
