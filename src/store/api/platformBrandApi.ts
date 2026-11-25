@@ -119,8 +119,8 @@ export const platformBrandApi = createApi({
     amendEditorialProblem:builder.mutation<EditorialDraft,number>({
       query:id=>({url:'/editorial/problems/amend/'+id,method:'POST'}),invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
     }),
-    getEditorialDrafts:builder.query<{Total:number;Items:EditorialRow[]},number>({
-      query:page=>({url:'/editorial/problems',params:{page}}),providesTags:['EditorialDraft'],
+    getEditorialDrafts:builder.query<{Total:number;Items:EditorialRow[]},number|{page:number;activeOnly:boolean}>({
+      query:arg=>({url:'/editorial/problems',params:typeof arg==='number'?{page:arg}:arg}),providesTags:['EditorialDraft'],
     }),
     getEditorialDraft:builder.query<EditorialDraft,number>({
       query:id=>'/editorial/problems/'+id,providesTags:(_r,_e,id)=>[{type:'EditorialDraft',id}],
