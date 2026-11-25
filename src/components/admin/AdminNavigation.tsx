@@ -86,8 +86,8 @@ export const ADMIN_NAV_ITEMS = [
   {
     href: '/admin/editorial',
     icon: GraduationCap,
-    labelAr: 'محرر المسائل والمراجعة',
-    labelEn: 'Problem editor and review',
+    labelAr: 'إدارة المسائل',
+    labelEn: 'Problem management',
     descriptionAr: 'إنشاء المسائل ومراجعة المسودات واعتمادها',
     descriptionEn: 'Create problems, review and approve drafts',
     group: 'content',
@@ -139,9 +139,7 @@ function AdminMenuLink({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold">{ar ? item.labelAr : item.labelEn}</span>
-        <span className="mt-0.5 block text-xs text-muted-foreground">
-          {ar ? item.descriptionAr : item.descriptionEn}
-        </span>
+
       </span>
       <DirectionalChevron direction="forward" className="h-4 w-4 shrink-0 text-muted-foreground" />
     </Link>
