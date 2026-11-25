@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Trophy, UsersRound, Shapes, ChevronDown, RefreshCw } from 'lucide-react';
-import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   useGetAdminEngagementOverviewQuery,

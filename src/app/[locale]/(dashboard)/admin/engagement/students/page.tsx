@@ -3,8 +3,7 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
-import { Search, UserRoundSearch, RefreshCw, Download, History } from 'lucide-react';
+import { Search, UserRoundSearch, Download, History } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { API_BASE_URL } from '@/store/api/baseQuery';

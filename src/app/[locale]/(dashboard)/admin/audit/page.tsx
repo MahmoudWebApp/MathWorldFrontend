@@ -3,8 +3,7 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
-import { History, ShieldCheck, RefreshCw, Download } from 'lucide-react';
+import { History, ShieldCheck, Download } from 'lucide-react';
 import { useGetAdminAuditEventsQuery, useGetAdminAuditSummaryQuery } from '@/store/api/statsApi';
 import { StageGeometry } from '@/components/math/StageGeometry';
 import { useSelector } from 'react-redux';

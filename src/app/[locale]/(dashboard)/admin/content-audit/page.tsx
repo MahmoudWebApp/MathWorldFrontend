@@ -3,13 +3,13 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
-import { AlertTriangle, BookOpenCheck, ClipboardCheck, FolderOpen, RefreshCw, Users } from 'lucide-react';
+import { AlertTriangle, BookOpenCheck, ClipboardCheck, FolderOpen, Users } from 'lucide-react';
 import { Link } from '@/i18n/routing';
 import { useGetAdminContentAuditQuery } from '@/store/api/statsApi';
 
 export default function AdminContentAuditPage() {
   const ar = useLocale() === 'ar';
-  const { data, isLoading, isFetching, isError, refetch } =
+  const { data, isLoading, isError, refetch } =
     useGetAdminContentAuditQuery(undefined, { refetchOnMountOrArgChange: true });
   const [stageFilter, setStageFilter] = useState<number | 'all'>('all');
   const fmt = (value: number) => new Intl.NumberFormat(ar ? 'ar' : 'en').format(value);

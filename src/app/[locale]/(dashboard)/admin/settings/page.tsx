@@ -1,4 +1,5 @@
 'use client';
+import {Settings} from 'lucide-react';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { Tabs,TabsList,TabsTrigger,TabsContent } from '@/components/ui/Tabs';

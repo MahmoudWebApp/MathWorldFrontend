@@ -3,7 +3,6 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
 import { CheckCheck, Copy, Gift, ShieldCheck, Trash2 } from 'lucide-react';
 import {
   useGetAdminPremiumCodesQuery,

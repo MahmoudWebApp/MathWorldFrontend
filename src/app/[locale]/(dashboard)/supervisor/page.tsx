@@ -3,7 +3,6 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 import {ShieldCheck} from 'lucide-react';
 
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
-import {Breadcrumbs} from '@/components/ui/Breadcrumbs';
 import {SupervisorStudents,SupervisorReportsPanel} from '@/components/supervisor/SupervisorReadViews';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';

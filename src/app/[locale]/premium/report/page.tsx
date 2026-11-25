@@ -4,7 +4,7 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 import { useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
-import { BarChart3, Download, Printer, RefreshCw, LockKeyhole } from 'lucide-react';
+import { BarChart3, Download, Printer, LockKeyhole } from 'lucide-react';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
@@ -27,7 +27,7 @@ export default function PremiumProgressReportPage() {
     skip: !premium,
   });
   const activeStage = chosenStage ?? stageId ?? undefined;
-  const { data, isLoading, isFetching, error, refetch } =
+  const { data, isLoading, error, refetch } =
     useGetPremiumProgressReportQuery(activeStage, {
       skip: !premium || !activeStage,
       refetchOnMountOrArgChange: true,
