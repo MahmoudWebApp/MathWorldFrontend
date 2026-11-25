@@ -1,5 +1,6 @@
 'use client';
 
+import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetSolvedProblemsQuery } from '@/store/api/usersApi';
@@ -43,42 +44,7 @@ export function SolvedProblemsPage() {
 
   return (
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <Link 
-          href="/dashboard" 
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-4"
-        >
-          <DirectionalArrow direction="back" className="h-4 w-4" />
-          {t('dashboard.user.title')}
-        </Link>
-        
-        <h1 className="text-3xl font-bold mb-2">{t('solved.title')}</h1>
-        <p className="text-muted-foreground">{t('solved.subtitle')}</p>
-      </div>
-
-      {/* Compact summary: keep number and icon together; no empty full-width card. */}
-      <div className="mb-6 flex justify-end">
-      <Card className="w-fit min-w-[190px] max-w-full border shadow-sm">
-        <CardContent className="flex items-center gap-3 px-5 py-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-            <Target className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <div className="text-xl font-extrabold tabular-nums sm:text-2xl">
-              {isLoading ? (
-                <span className="inline-block w-16 h-8 bg-muted animate-pulse rounded" />
-              ) : mounted ? (
-                <AnimatedCounter end={totalCount} duration={1500} />
-              ) : (
-                totalCount
-              )}
-            </div>
-            <div className="whitespace-nowrap text-xs text-muted-foreground">{t('solved.stats.total')}</div>
-          </div>
-        </CardContent>
-      </Card>
-      </div>
+      <WorkspacePageHeader title={t('solved.title')} icon={Target} count={isLoading ? undefined : mounted ? <AnimatedCounter end={totalCount} duration={700}/> : totalCount} />
 
       {/* Problems List */}
       {isLoading ? (

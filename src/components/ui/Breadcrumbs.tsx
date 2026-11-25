@@ -22,16 +22,16 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({
   items,
   className,
-  surface = true,
+  surface = false,
 }: BreadcrumbsProps) {
   const ar=useLocale()==="ar";
   return (
     <nav
       aria-label={ar?"مسار التنقل":"Breadcrumb"}
       className={cn(
-        "min-w-0 text-sm font-medium text-muted-foreground",
+        "min-w-0 text-xs font-medium text-muted-foreground sm:text-sm",
         surface &&
-          "overflow-hidden rounded-xl border border-border/80 bg-card/75 px-3 py-2.5 shadow-sm backdrop-blur-sm sm:px-4",
+          "overflow-hidden rounded-lg border border-border/60 bg-card/60 px-3 py-2",
         className,
       )}
     >
@@ -61,7 +61,7 @@ export function Breadcrumbs({
                   title={item.label}
                   aria-label={item.label}
                 >
-                  {index === 0 && <Home className="h-4 w-4 shrink-0" />}
+                  {index === 0 && <Home className="order-last h-4 w-4 shrink-0" aria-hidden="true" />}
                   <span dir="auto" className={labelClassName}>{item.label}</span>
                 </Link>
               ) : (

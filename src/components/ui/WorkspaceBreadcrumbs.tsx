@@ -14,5 +14,5 @@ export function WorkspaceBreadcrumbs(){
  if(!selected)return null;
  const trail:BreadcrumbItem[]=[{label:ar?'الرئيسية':'Home',href:root},{label:selected.label,...(path!==selected.href?{href:selected.href}:{})}];
  if(path!==selected.href)trail.push({label:ar?'التفاصيل':'Details'});
- return <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6"><Breadcrumbs items={trail}/></div>;
+ return <div className="mx-auto max-w-7xl px-4 pt-4 md:px-16 lg:px-24"><Breadcrumbs items={trail}/></div>;
 }
