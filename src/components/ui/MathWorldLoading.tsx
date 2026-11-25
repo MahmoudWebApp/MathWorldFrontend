@@ -60,3 +60,15 @@ export function MathWorldLoading({
     </div>
   );
 }
+
+/** Layout-preserving skeletons for the first load of known content. */
+export function MathWorldSkeleton({kind='cards',count=6}:{kind?:'cards'|'table'|'dashboard';count?:number}) {
+  const ar=useLocale()==='ar';
+  const shape='rounded bg-muted/80';
+  return <div role="status" aria-busy="true" aria-label={ar?'جارٍ تحميل المحتوى':'Loading content'} className="w-full space-y-4 motion-safe:animate-pulse">
+    {kind==='dashboard'&&<div aria-hidden="true" className="space-y-3 rounded-3xl border bg-card p-6"><div className={shape+' h-8 w-1/2'}/><div className={shape+' h-4 w-2/3'}/><div className={shape+' h-3 w-full'}/></div>}
+    <div aria-hidden="true" className={kind==='table'?'divide-y overflow-hidden rounded-xl border bg-card':'grid grid-cols-2 gap-3 sm:grid-cols-3'}>
+    {Array.from({length:count},(_,i)=>kind==='table'?<div key={i} className="grid grid-cols-[1fr_4fr_2fr_1fr] items-center gap-3 p-4"><div className={shape+' h-4 w-10'}/><div className={shape+' h-4 w-4/5'}/><div className={shape+' h-6 w-20 max-w-full'}/><div className={shape+' h-7 w-full'}/></div>:<div key={i} className="space-y-3 rounded-2xl border bg-card p-4"><div className={shape+' h-10 w-10'}/><div className={shape+' h-5 w-3/4'}/><div className={shape+' h-3 w-full'}/><div className={shape+' h-3 w-2/3'}/></div>)}
+    </div>
+  </div>;
+}
