@@ -16,6 +16,12 @@
       "src": "/mathworld-pwa-512-v4.png?v=5",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/mathworld-launcher-v6.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
