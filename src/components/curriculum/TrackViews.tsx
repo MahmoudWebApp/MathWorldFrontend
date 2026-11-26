@@ -1,4 +1,5 @@
 'use client';
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {useEffect,useState} from 'react';
 import {motion} from 'framer-motion';
@@ -7,7 +8,6 @@ import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
 import type {CSSProperties} from 'react';
 import {getStageAccent} from '@/lib/stageVisuals';
 import {LockedPremiumDialog} from '@/components/premium/LockedPremiumDialog';
-import {LatexPreview} from '@/components/ui/LatexPreview';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {useLocale} from 'next-intl';
 import {Link} from '@/i18n/routing';
@@ -50,7 +50,7 @@ function PublicTrackDetails({id,ar}:{id:number;ar:boolean}){
  <div className="mt-auto border-t border-border/60 pt-3"><button className="inline-flex min-h-10 items-center gap-2 rounded-xl border mw-topic-action px-3 py-2 text-xs font-bold" onClick={()=>setExpanded(c.Id)}><ListChecks size={16} style={{color:accent}}/>{ar?'عرض المهارات':'View skills'}</button></div>
  </article>)}</div>
  <Dialog open={expanded!==null} onOpenChange={v=>{if(!v)setExpanded(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'المهارات التعليمية':'Learning skills'}</DialogTitle><DialogDescription>{data.Categories.find(c=>c.Id===expanded)?.[ar?'NameAr':'NameEn']}</DialogDescription></DialogHeader><ul className="max-h-[55vh] space-y-3 overflow-y-auto ps-4">{data.Skills.filter(s=>s.CategoryId===expanded).map(s=><li key={s.Id}><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></li>)}</ul></DialogContent></Dialog>
- {data.Examples.length>0&&<section className="rounded-2xl border bg-card/80 p-5"><h3 className="mb-3 font-bold">{ar?'أمثلة من عناوين المسائل':'Example problem titles'}</h3><ul className="list-disc space-y-2 ps-5 text-sm leading-7">{data.Examples.map(p=><li key={p.Id}>{(ar?p.TitleAr:p.TitleEn).split(/(\$\$[\s\S]*?\$\$|\$[^$\n]+\$)/g).map((part,i)=>part.startsWith('$$')&&part.endsWith('$$')?<LatexPreview key={i} latex={part.slice(2,-2)}/>:part.startsWith('$')&&part.endsWith('$')?<LatexPreview key={i} latex={part.slice(1,-1)}/>:<span key={i}>{part}</span>)}</li>)}</ul></section>}
+ {data.Examples.length>0&&<section className="rounded-2xl border bg-card/80 p-5"><h3 className="mb-3 font-bold">{ar?'أمثلة من عناوين المسائل':'Example problem titles'}</h3><ul className="list-disc space-y-2 ps-5 text-sm leading-7">{data.Examples.map(p=><li key={p.Id}><ProblemTitle text={ar?p.TitleAr:p.TitleEn}/></li>)}</ul></section>}
  </motion.div>;
 }
 export function PublicTrackCatalog({stageId}:{stageId:number}){
@@ -73,7 +73,7 @@ function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
     {isFetching&&!data&&<MathWorldLoading compact mode="filter"/>}
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسائل.':'Could not load problems.'} <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&<>
-      {data.Items.map(p=><Link key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id} className="flex items-center justify-between gap-2 rounded-xl border mw-topic-surface p-3 text-sm"><span>{ar?p.TitleAr:p.TitleEn}</span><span className={p.IsSolved?'text-emerald-600':'text-amber-600'}>{p.IsSolved?(ar?'محلولة':'Solved'):(ar?'غير محلولة':'Unsolved')}</span></Link>)}
+      {data.Items.map(p=><Link key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id} className="flex items-center justify-between gap-2 rounded-xl border mw-topic-surface p-3 text-sm"><ProblemTitle text={ar?p.TitleAr:p.TitleEn}/><span className={p.IsSolved?'text-emerald-600':'text-amber-600'}>{p.IsSolved?(ar?'محلولة':'Solved'):(ar?'غير محلولة':'Unsolved')}</span></Link>)}
       {data.Total>data.PageSize&&<div className="flex items-center gap-2"><button className={btn} disabled={page<=1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*data.PageSize>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
     </>}
   </div>;

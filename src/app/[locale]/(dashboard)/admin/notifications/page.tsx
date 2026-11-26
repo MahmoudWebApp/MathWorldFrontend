@@ -4,11 +4,12 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
 import { BellRing, Send } from 'lucide-react';
-import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
-import { useGetAdminEmailStatusQuery, useSendAdminEmailMutation, useSendAdminNotificationMutation } from '@/store/api/notificationsApi';
+import { useGetAdminEmailStatusQuery, useSendAdminEmailMutation, useSendAdminNotificationMutation,useSendAdminBroadcastMutation } from '@/store/api/notificationsApi';
 
 export default function AdminNotificationsPage() {
   const ar = useLocale() === 'ar';
+  const [audience,setAudience]=useState<'one'|'all'>('one');
+  const [broadcast,{isLoading:broadcasting}]=useSendAdminBroadcastMutation();
   const [learnerId, setLearnerId] = useState('');
   const [channel, setChannel] = useState<'inapp' | 'email'>('inapp');
   const [titleAr, setTitleAr] = useState('');
@@ -19,16 +20,16 @@ export default function AdminNotificationsPage() {
   const [error, setError] = useState('');
   const [send, { isLoading }] = useSendAdminNotificationMutation();
   const [sendEmail, { isLoading: sendingEmail }] = useSendAdminEmailMutation();
-  const { data: emailStatus, isLoading: checkingEmail, isError: emailError, refetch: retryEmail } = useGetAdminEmailStatusQuery();
+  const { data: emailStatus, isLoading: checkingEmail, isError: emailError, } = useGetAdminEmailStatusQuery();
   const emailReady = emailStatus?.IsConfigured === true;
-  const sending = isLoading || sendingEmail;
+  const sending = isLoading || sendingEmail || broadcasting;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setResult('');
     setError('');
     const id = Number(learnerId.trim());
-    if (!/^[0-9]+$/.test(learnerId.trim()) || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647 ||
+    if ((audience==='one'&&(!/^[0-9]+$/.test(learnerId.trim()) || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647)) ||
       !titleAr.trim() || !titleEn.trim() || !bodyAr.trim() || !bodyEn.trim()) {
       setError(ar ? 'أدخل رقم طالب صحيح وكل النصوص بالعربية والإنجليزية.'
         : 'Enter a valid learner ID and both languages.');
@@ -39,7 +40,7 @@ export default function AdminNotificationsPage() {
         : 'Optional email is not configured. Check Brevo and the delivery queue.');
       return;
     }
-    const confirmed = window.confirm(ar
+    const confirmed = audience==='all'?window.confirm(ar?'سيصل الإشعار لجميع الطلاب النشطين داخل الموقع والتطبيق. تأكيد الإرسال الجماعي؟':'Send this in-app notice to all active students?'):window.confirm(ar
       ? `تأكيد إرسال ${channel === 'email' ? 'بريد إلكتروني' : 'إشعار داخل التطبيق'} إلى الطالب رقم ${id} فقط؟ لا يمكن سحب الرسالة بعد الإرسال.\n\n${titleAr.trim()}`
       : `Send a ${channel === 'email' ? 'single-student email' : 'single-student in-app notification'} to learner #${id}? This action cannot be undone.\n\n${titleEn.trim()}`);
     if (!confirmed) return;
@@ -52,7 +53,10 @@ export default function AdminNotificationsPage() {
         BodyEn: bodyEn.trim(),
         TargetPath: '/dashboard',
       };
-      if (channel === 'email') {
+      if(audience==='all'){
+        const result=await broadcast({TitleAr:payload.TitleAr,TitleEn:payload.TitleEn,BodyAr:payload.BodyAr,BodyEn:payload.BodyEn,TargetPath:payload.TargetPath}).unwrap();
+        setResult(ar?'تم إرسال الإشعار إلى '+result.Sent+' طالب.':'Notice sent to '+result.Sent+' students.');
+      } else if (channel === 'email') {
         const delivery = await sendEmail(payload).unwrap();
         if (delivery.Queued === true) {
           setResult(ar ? `تم إنشاء إشعار للطالب رقم ${id} وإضافة رسالة البريد إلى الطابور. وصولها غير مؤكد بعد.`
@@ -81,27 +85,10 @@ export default function AdminNotificationsPage() {
       <div className="space-y-2">
         <WorkspacePageHeader title={ar?'الإشعارات':'Notifications'} icon={BellRing}/>
         
-        {checkingEmail ? (
-          <MathWorldLoading compact />
-        ) : emailError || !emailStatus ? (
-          <div role="alert" className="space-y-2 rounded-xl border border-destructive/25 bg-card p-3 text-sm">
-            <p>{ar ? 'تعذّر جلب حالة خدمة البريد. لا يمكن افتراض أن البريد غير مهيأ.'
-              : 'Email service status could not be verified. No configuration status is assumed.'}</p>
-            <button type="button" onClick={() => void retryEmail()}
-              className="font-bold text-primary underline">{ar ? 'إعادة المحاولة' : 'Retry'}</button>
-          </div>
-        ) : (
-          <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
-            {ar
-              ? (emailReady ? 'طابور البريد مهيأ. الإرسال يخضع لتأكيد البريد وموافقة الطالب. SMS والبريد الجماعي غير مفعّلين.'
-                : 'البريد الاختياري يحتاج إعداد Brevo وتفعيل الطابور. الإشعارات داخل التطبيق متاحة؛ SMS والبريد الجماعي غير مفعّلين.')
-              : (emailReady ? 'Email queue configured; verified address and learner consent required. SMS and bulk email remain disabled.'
-                : 'Configure Brevo and the optional email queue first. In-app notices work; SMS and bulk email remain disabled.')}
-          </p>
-        )}
       </div>
       <form onSubmit={(event) => void onSubmit(event)}
         className="space-y-5 rounded-2xl border bg-card p-5 sm:p-6">
+        <fieldset className="space-y-2"><legend className="font-semibold">{ar?'نطاق الإرسال':'Recipients'}</legend><div className="flex flex-wrap gap-4"><label className="flex items-center gap-2"><input type="radio" checked={audience==='one'} onChange={()=>setAudience('one')}/>{ar?'طالب محدد':'One student'}</label><label className="flex items-center gap-2"><input type="radio" checked={audience==='all'} onChange={()=>{setAudience('all');setChannel('inapp')}}/>{ar?'جميع الطلاب':'All students'}</label></div></fieldset>
         <fieldset className="space-y-2">
           <legend className="font-semibold">{ar ? 'طريقة الإرسال' : 'Delivery channel'}</legend>
           <div className="flex flex-wrap gap-4">
@@ -112,7 +99,7 @@ export default function AdminNotificationsPage() {
             </label>
             <label className="inline-flex items-center gap-2 text-sm">
               <input type="radio" checked={channel === 'email'}
-                disabled={!emailReady || checkingEmail}
+                disabled={audience==='all'||!emailReady || checkingEmail}
                 onChange={() => setChannel('email')} />
               {ar ? 'إشعار مع بريد إلكتروني' : 'Notice with email'}
               {!emailReady && <span className="text-xs text-muted-foreground">
@@ -122,23 +109,23 @@ export default function AdminNotificationsPage() {
             </label>
           </div>
         </fieldset>
-        <label className="block space-y-2">
+        {audience==='one'&&<label className="block space-y-2">
           <span className="font-semibold">{ar ? 'رقم الطالب' : 'Learner ID'}</span>
           <input type="text" inputMode="numeric" pattern="[0-9]+" autoComplete="off" required value={learnerId}
             onChange={(e) => setLearnerId(e.target.value)}
             className="w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary"
             placeholder={ar ? 'رقم المستخدم في لوحة الأدمن' : 'User ID from admin dashboard'} />
-        </label>
+        </label>}
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-2">
             <span className="font-semibold">عنوان الإشعار (عربي)</span>
-            <input dir="rtl" required maxLength={160} value={titleAr}
+            <input dir="rtl" required maxLength={audience==='all'?140:160} value={titleAr}
               onChange={e => setTitleAr(e.target.value)}
               className="w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary" />
           </label>
           <label className="block space-y-2">
             <span className="font-semibold">Notification title (English)</span>
-            <input dir="ltr" required maxLength={160} value={titleEn}
+            <input dir="ltr" required maxLength={audience==='all'?140:160} value={titleEn}
               onChange={e => setTitleEn(e.target.value)}
               className="w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary" />
           </label>
@@ -155,7 +142,7 @@ export default function AdminNotificationsPage() {
               className="w-full resize-y rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary" />
           </label>
         </div>
-        {learnerId.trim() && (titleAr.trim() || titleEn.trim()) && (
+        {audience==='one'&&learnerId.trim() && (titleAr.trim() || titleEn.trim()) && (
           <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
             <p className="font-semibold">{ar ? 'معاينة المستلم والعنوان قبل الإرسال' : 'Preview recipient and title before sending'}</p>
             <p dir="ltr">Learner ID: {learnerId}</p>

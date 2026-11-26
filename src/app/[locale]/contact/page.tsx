@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import {ContactForm} from '@/components/contact/ContactForm';
 import { ContactHero } from '@/components/contact/ContactHero';
 import { ContactLinks } from '@/components/contact/ContactLinks';
 
@@ -20,6 +21,7 @@ export default function ContactPage() {
   return (
     <div className="flex flex-col">
       <ContactHero />
+      <ContactForm />
       <ContactLinks />
     </div>
   );

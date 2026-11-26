@@ -24,7 +24,7 @@ export function StudentAchievementsPanel({ compact = false }: { compact?: boolea
     <section className="space-y-4 rounded-3xl border border-primary/15 bg-card p-5 sm:p-6">
       <header className="flex items-center justify-between gap-3 border-b border-border/60 pb-4">
         {compact?<h2 className="text-lg font-extrabold">{ar?'الشارات والإنجازات':'Badges & achievements'}</h2>:<h1 className="text-gradient-math text-2xl font-extrabold sm:text-3xl">{ar?'الشارات والإنجازات':'Badges & achievements'}</h1>}
-        <span className="flex shrink-0 items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-primary">
+        <span className="flex shrink-0 items-center gap-2 rounded-xl bg-amber-500/10 px-3 py-2 text-amber-600 dark:text-amber-300">
           {data&&<strong dir="ltr" className="tabular-nums" aria-label={ar?'الشارات المكتسبة من المتاحة':'Earned out of available badges'}>{data.EarnedCount} / {available.length}</strong>}
           <Medal className="h-6 w-6" aria-hidden="true"/>
         </span>
@@ -54,11 +54,11 @@ export function StudentAchievementsPanel({ compact = false }: { compact?: boolea
                 <div className={`flex h-full min-h-32 flex-col items-center rounded-2xl border p-3 text-center ${locked
                   ? 'border-border bg-muted/20 text-muted-foreground'
                   : badge.Earned
-                    ? 'border-primary/25 bg-primary/5'
+                    ? 'border-amber-400/35 bg-amber-500/5'
                     : 'border-border bg-card'}`}>
                   <span className={`mb-2 flex h-10 w-10 items-center justify-center rounded-full ${badge.Earned && !locked
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'}`}>
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-300'
+                    : 'bg-amber-500/10 text-amber-500/75'}`}>
                     {locked ? <LockKeyhole className="h-5 w-5" aria-hidden="true" />
                       : badge.Earned ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
                       : <Medal className="h-5 w-5" aria-hidden="true" />}
@@ -75,7 +75,7 @@ export function StudentAchievementsPanel({ compact = false }: { compact?: boolea
                         aria-valuemin={0} aria-valuemax={badge.RequiredSolved}
                         aria-valuenow={badge.CurrentProgress}
                         className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-emerald-600"
+                        <div className={'h-full rounded-full '+(badge.Earned?'bg-emerald-500':'bg-amber-500')}
                           style={{ width: `${badge.RequiredSolved > 0 ? Math.min(100, 100 * badge.CurrentProgress / badge.RequiredSolved) : 0}%` }} />
                       </div>
                     </>

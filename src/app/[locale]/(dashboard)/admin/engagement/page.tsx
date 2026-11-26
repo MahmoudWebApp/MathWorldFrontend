@@ -10,6 +10,7 @@ import {
   useGetAdminEngagementOverviewQuery,
   useGetAdminEngagementStageQuery,
 } from '@/store/api/statsApi';
+import {useGetAdminTracksQuery} from '@/store/api/stagesApi';
 import { StageGeometry } from '@/components/math/StageGeometry';
 
 const variants = [
@@ -23,6 +24,8 @@ export default function AdminEngagementPage() {
   const ar = useLocale() === 'ar';
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const [stageId, setStageId] = useState<number | null>(null);
+  const [trackId,setTrackId]=useState(0);
+  const tracks=useGetAdminTracksQuery();
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   useEffect(() => {
@@ -40,7 +43,7 @@ export default function AdminEngagementPage() {
   });
   const resolvedId = stageId && overview.data?.Stages.some(s => s.StageId === stageId)
     ? stageId : (overview.data?.Stages[0]?.StageId ?? 0);
-  const stage = useGetAdminEngagementStageQuery({stageId: resolvedId, days}, {
+  const stage = useGetAdminEngagementStageQuery({stageId: resolvedId, days,...(trackId?{trackId}:{})}, {
     skip: resolvedId <= 0, refetchOnMountOrArgChange: 90,
     refetchOnFocus: true, refetchOnReconnect: true,
   });
@@ -49,7 +52,7 @@ export default function AdminEngagementPage() {
   // A stage with dozens of topics must not produce an unreadable 72px/row
   // chart, nor bury the leaderboard below an endless list of cards.
   const selectedStage = stage.currentData?.StageId === resolvedId &&
-    stage.currentData?.WindowDays === days ? stage.currentData : undefined;
+    stage.currentData?.WindowDays === days && (stage.currentData?.TrackId??0)===trackId ? stage.currentData : undefined;
   const rankedCategories = [...(selectedStage?.Categories ?? [])]
     .sort((a, b) => b.ActiveSolvers - a.ActiveSolvers ||
       b.AttemptsInWindow - a.AttemptsInWindow || a.CategoryId - b.CategoryId);
@@ -116,7 +119,7 @@ export default function AdminEngagementPage() {
     <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
       {(overview.data?.Stages ?? []).map((item, index) => {
         const style = variants[index % variants.length];
-        return <button key={item.StageId} type="button" onClick={() => { setStageId(item.StageId); setShowAllCategories(false); }}
+        return <button key={item.StageId} type="button" onClick={() => { setStageId(item.StageId); setTrackId(0);setShowAllCategories(false); }}
           aria-pressed={item.StageId === resolvedId}
           className={`relative min-w-0 overflow-hidden rounded-2xl border p-4 text-start transition-all hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${style.surface} ${item.StageId === resolvedId ? style.border + ' ring-2 ring-primary/40' : 'border-border'}`}>
           <StageGeometry variant={index} className={`pointer-events-none absolute -end-6 -top-8 h-24 w-24 opacity-20 ${style.text}`} />
@@ -130,6 +133,7 @@ export default function AdminEngagementPage() {
       })}
     </div>
 
+    <div className="rounded-xl border bg-card p-4"><label className="block text-sm font-semibold">{ar?'الصف أو المستوى':'Grade or level'}<select className="mw-filter-field mt-2 w-full" value={trackId} onChange={e=>{setTrackId(Number(e.target.value));setShowAllCategories(false)}}><option value={0}>{ar?'كل الصفوف والمستويات':'All grades and levels'}</option>{tracks.data?.Items.filter(x=>x.Track.StageId===resolvedId).map(x=><option key={x.Track.Id} value={x.Track.Id}>{ar?x.Track.NameAr:x.Track.NameEn}</option>)}</select></label>{trackId>0&&<p className="mt-2 text-xs text-muted-foreground">{ar?'الإحصاءات التفصيلية لهذا الصف تعتمد على تقدم التدريب المرتبط به؛ ملخص المرحلة أعلى الصفحة يبقى إجمالياً.':'Grade details use scoped practice progress; the stage summary above remains aggregate.'}</p>}</div>
     {stage.isError && <div role="alert" className="rounded-2xl border p-5">
       <RefreshCw aria-hidden="true" className="mb-2 h-5 w-5 text-primary" />
       {ar ? 'تعذّر تحميل إحصائيات هذا المستوى.' : 'Could not load stage details.'}

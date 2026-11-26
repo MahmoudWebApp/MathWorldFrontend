@@ -156,6 +156,7 @@ export default function UserDashboardPage() {
         </Link>
       </section>
 
+      {isPremium&&stageId>0&&journey?.LearningSessionsEnabled!==true&&<Link href="/dashboard/daily-challenge" className="flex items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-card p-4 sm:p-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary"><Target className="h-6 w-6"/></span><div><h2 className="font-bold">{ar?'تحدي اليوم':'Daily challenge'}</h2><p className="text-sm text-muted-foreground">{ar?'ابدأ تحدي اليوم أو تابع إنجازك':'Start or continue today’s challenge'}</p></div></div><span className="rounded-xl sr-wave-button px-4 py-2 text-sm font-bold text-white">{ar?'فتح التحدي':'Open challenge'}</span></Link>}
       {journey?.LearningSessionsEnabled === true && stageId > 0 && <LearningSessionCards stageId={stageId} trackId={trackId} premium={isPremium}/>}
       {journey?.CertificatesEnabled===true&&<Link href="/dashboard/certificates" className="flex items-center justify-between rounded-2xl border bg-card p-4 font-semibold"><span>{ar?'شهاداتي التعليمية':'My learning certificates'}</span><span className="text-primary">{ar?'عرض':'View'}</span></Link>}
       <div className="grid gap-5 lg:grid-cols-2">

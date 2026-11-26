@@ -7,15 +7,12 @@ import { DirectionalChevron } from "@/components/ui/DirectionalNavigation";
 import { MathWorldLoading } from "@/components/ui/MathWorldLoading";
 import {
   useGetAdminStagesQuery,
-  useCreateStageMutation,
   useUpdateStageMutation,
-  useDeleteStageMutation,
   type Stage,
 } from "@/store/api/stagesApi";
-import { Add, Edit, Trash, CloseCircle } from "iconsax-reactjs";
+import { Edit, CloseCircle } from "iconsax-reactjs";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
 import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 import { GraduationCap } from "lucide-react";
 import { getStageAccent } from "@/lib/stageVisuals";
@@ -25,9 +22,7 @@ export default function AdminStagesPage() {
   const t = useTranslations();
   const ar = useLocale() === "ar";
   const { data: stages, isLoading, isError, refetch } = useGetAdminStagesQuery();
-  const [createStage] = useCreateStageMutation();
   const [updateStage] = useUpdateStageMutation();
-  const [deleteStage] = useDeleteStageMutation();
 
   const [formData, setFormData] = useState({
     Id: 0,
@@ -38,15 +33,13 @@ export default function AdminStagesPage() {
     Order: 1,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      if (isEditing) {
+      {
         await updateStage({
           Id: formData.Id,
           Data: {
@@ -56,14 +49,6 @@ export default function AdminStagesPage() {
             DescriptionEn: formData.DescriptionEn,
             Order: formData.Order,
           },
-        }).unwrap();
-      } else {
-        await createStage({
-          NameAr: formData.NameAr,
-          NameEn: formData.NameEn,
-          DescriptionAr: formData.DescriptionAr,
-          DescriptionEn: formData.DescriptionEn,
-          Order: formData.Order,
         }).unwrap();
       }
       setIsModalOpen(false);
@@ -77,34 +62,8 @@ export default function AdminStagesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    setDeletingId(id);
-    try {
-      await deleteStage(id).unwrap();
-      await refetch();
-    } catch (error) {
-      console.error("Failed to delete stage", error);
-      alert(t("common.errorDeleting"));
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const openModal = (stage: Stage | null = null) => {
-    if (stage) {
-      setFormData({
-        Id: stage.Id,
-        NameAr: stage.NameAr,
-        NameEn: stage.NameEn,
-        DescriptionAr: stage.DescriptionAr ?? "",
-        DescriptionEn: stage.DescriptionEn ?? "",
-        Order: stage.Order || 1,
-      });
-      setIsEditing(true);
-    } else {
-      resetForm();
-      setIsEditing(false);
-    }
+  const openModal = (stage: Stage) => {
+    setFormData({Id:stage.Id,NameAr:stage.NameAr,NameEn:stage.NameEn,DescriptionAr:stage.DescriptionAr??"",DescriptionEn:stage.DescriptionEn??"",Order:stage.Order||1});
     setIsModalOpen(true);
   };
 
@@ -141,7 +100,7 @@ export default function AdminStagesPage() {
   return (
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
 
-      <WorkspacePageHeader title={t("admin.stages.title")} icon={GraduationCap} actions={<Button onClick={() => openModal()} className="gap-2"><Add className="h-4 w-4" />{t("admin.stages.addNew")}</Button>}/>
+      <WorkspacePageHeader title={t("admin.stages.title")} icon={GraduationCap}/>
 
       <Card>
         <CardContent className="p-0">
@@ -197,27 +156,7 @@ export default function AdminStagesPage() {
                           <Edit className="h-4 w-4 mw-topic-ink" />
                         </Button>
 
-                        <PopoverConfirm
-                          onConfirm={() => handleDelete(stage.Id)}
-                          onCancel={() => setDeletingId(null)}
-                          title={t("common.confirmDeleteTitle")}
-                          description={t("admin.stages.confirmDelete")}
-                          confirmText={t("common.delete")}
-                          cancelText={t("common.cancel")}
-                          isLoading={deletingId === stage.Id}
-                          align="end"
-                          side="right"
-                          trigger={
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              title={t("common.delete")}
-                              className="hover:bg-red-50 dark:hover:bg-red-900/20"
-                            >
-                              <Trash className="h-4 w-4 text-red-500" />
-                            </Button>
-                          }
-                        />
+
                       </td>
                     </tr>
                   ))
@@ -249,7 +188,7 @@ export default function AdminStagesPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">
-                {isEditing ? t("admin.stages.edit") : t("admin.stages.add")}
+                {t("admin.stages.edit")}
               </h2>
               <Button
                 variant="ghost"

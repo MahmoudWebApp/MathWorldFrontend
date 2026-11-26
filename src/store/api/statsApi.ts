@@ -152,6 +152,8 @@ export interface AdminEngagementCategory {
 
 export interface AdminEngagementStageDetail {
   StageId: number;
+  TrackId?: number|null;
+  ScoreBasis?: string;
   NameAr: string;
   NameEn: string;
   WindowDays: number;
@@ -165,6 +167,7 @@ export interface AdminEngagementStudent {
   CreatedAt: string;
   LastLoginAt: string | null;
   CurrentStageId: number | null;
+  CurrentTrackId?: number|null;
   IsActive: boolean;
   LastPracticeAt: string | null;
   LastExplicitSignOutAtUtc?: string | null;
@@ -319,16 +322,16 @@ export const statsApi = createApi({
       query: days => ({ url: '/admin/engagement/overview', params: { days } }),
       providesTags: ['Stats'],
     }),
-    getAdminEngagementStage: builder.query<AdminEngagementStageDetail, { stageId: number; days: number }>({
-      query: ({stageId, days}) => ({url: `/admin/engagement/stages/${stageId}`, params: { days }}),
+    getAdminEngagementStage: builder.query<AdminEngagementStageDetail, { stageId: number; days: number;trackId?:number }>({
+      query: ({stageId, days,trackId}) => ({url: `/admin/engagement/stages/${stageId}`, params: { days,...(trackId?{trackId}:{}) }}),
       providesTags: ['Stats'],
     }),
     getAdminEngagementStudents: builder.query<AdminEngagementStudentPage, {
-      page: number; stageId?: number; search?: string; onlineOnly?: boolean;
+      page: number; stageId?: number; trackId?:number; search?: string; onlineOnly?: boolean;
     }>({
-      query: ({page, stageId, search, onlineOnly}) => ({
+      query: ({page, stageId, trackId,search, onlineOnly}) => ({
         url: '/admin/engagement/students',
-        params: { page, ...(stageId ? {stageId} : {}), ...(search ? {search} : {}),
+        params: { page, ...(stageId ? {stageId} : {}), ...(trackId?{trackId}:{}), ...(search ? {search} : {}),
           ...(onlineOnly ? { onlineOnly: true } : {}) },
       }),
       providesTags: ['Stats'],

@@ -2,10 +2,11 @@
 import {Suspense,useState} from 'react';
 import {useSearchParams} from 'next/navigation';
 import {Link} from '@/i18n/routing';
-import {useGetAdminCategoriesQuery} from '@/store/api/categoriesApi';
+import {Breadcrumbs} from '@/components/ui/Breadcrumbs';
+import {DirectionalChevron,DirectionalArrow} from '@/components/ui/DirectionalNavigation';
 import {GraduationCap} from 'lucide-react';
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
-import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {getStageAccent} from '@/lib/stageVisuals';
 import {useLocale} from 'next-intl';
 import {useSelector} from 'react-redux';
@@ -13,7 +14,7 @@ import type {RootState} from '@/store';
 import {readTrackProposal,MAX_TRACK_PROPOSAL_BYTES} from '@/components/curriculum/trackProposalImport';
 import { MathWorldLoading, MathWorldSkeleton } from '@/components/ui/MathWorldLoading';
 import {useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useGetAdminStagesQuery,
-  useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
+  useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
 
 const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
 const field='w-full rounded-xl border bg-background p-2.5 text-sm';
@@ -96,7 +97,7 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
       <h3 className="font-semibold">{ar?'المهارات':'Skills'}</h3>
       <div className="max-h-64 overflow-y-auto space-y-1">{inventory.Skills.map(s=><label key={s.Id} className="flex items-center gap-2 rounded-lg border p-2 text-sm"><input type="checkbox" disabled={disabled} checked={mapping.SkillIds.includes(s.Id)} onChange={e=>toggle('SkillIds',s.Id,e.target.checked)}/><span>{name(s)} <span className="text-muted-foreground">{!s.IsPublished?(ar?'(غير منشورة)':'(unpublished)'):''}</span></span></label>)}</div>
       <h3 className="font-semibold">{ar?'المسائل':'Problems'} ({inventory.Total})</h3>
-      <div className="max-h-96 overflow-y-auto space-y-1">{inventory.Problems.map(p=><label key={p.Id} className="flex items-center gap-2 rounded-lg border p-2 text-sm"><input type="checkbox" disabled={disabled||!p.PrimarySkillId} checked={mapping.ProblemIds.includes(p.Id)} onChange={e=>toggle('ProblemIds',p.Id,e.target.checked)}/><span>#{p.Id} · {(ar?p.TitleAr:p.TitleEn)|| (ar?'بلا عنوان':'Untitled')} <span className="text-xs text-muted-foreground">{p.PrimarySkillId?(ar?'مهارة':'Skill')+' #'+p.PrimarySkillId:(ar?'بلا مهارة أساسية':'No primary skill')} · {ar?'المسارات':'Tracks'}: {p.AssignedTrackCount}</span></span></label>)}</div>
+      <div className="max-h-96 overflow-y-auto space-y-1">{inventory.Problems.map(p=><label key={p.Id} className="flex items-center gap-2 rounded-lg border p-2 text-sm"><input type="checkbox" disabled={disabled||!p.PrimarySkillId} checked={mapping.ProblemIds.includes(p.Id)} onChange={e=>toggle('ProblemIds',p.Id,e.target.checked)}/><span>#{p.Id} · <ProblemTitle text={(ar?p.TitleAr:p.TitleEn)|| (ar?'بلا عنوان':'Untitled')}/> <span className="text-xs text-muted-foreground">{p.PrimarySkillId?(ar?'مهارة':'Skill')+' #'+p.PrimarySkillId:(ar?'بلا مهارة أساسية':'No primary skill')} · {ar?'المسارات':'Tracks'}: {p.AssignedTrackCount}</span></span></label>)}</div>
       <div className="flex items-center gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*100>=inventory.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>
     </>}
     <div className="flex flex-wrap gap-2"><button className={btn} disabled={disabled||!dirty} onClick={()=>void saveMapping()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الروابط':'Save mappings')}</button>
@@ -107,14 +108,11 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
 }
 function TrackEditor({id,ar}:{id:number;ar:boolean}){
  const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:60});
- const categories=useGetAdminCategoriesQuery();
- const [editing,setEditing]=useState(false);
- if(isFetching&&!data||categories.isLoading)return <MathWorldSkeleton/>;
- if(isError||categories.isError||!data)return <button className={btn} onClick={()=>{void refetch();void categories.refetch();}}>{ar?'إعادة المحاولة':'Retry'}</button>;
- const accent=getStageAccent({Id:data.Track.StageId});
+ if(isFetching&&!data)return <MathWorldSkeleton/>;
+ if(isError||!data)return <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>;
  return <section className="space-y-4 rounded-2xl border bg-card p-4">
- <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-bold">{ar?data.Track.NameAr:data.Track.NameEn}</h2><button className={btn} onClick={()=>setEditing(v=>!v)}>{editing?(ar?'عرض الفئات':'View categories'):(ar?'تعديل المستوى':'Edit level')}</button></div>
- {editing?<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>:<div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[540px] text-sm"><thead><tr>{['ID',ar?'الاسم بالعربية':'Arabic name',ar?'الاسم بالإنجليزية':'English name',ar?'الإجراءات':'Actions'].map(label=><th key={label} className="p-3 text-start">{label}</th>)}</tr></thead><tbody>{(categories.data??[]).filter(c=>data.CategoryIds.includes(c.Id)).map(c=><tr key={c.Id} className="border-b mw-topic-row" style={{'--stage-accent':accent} as import('react').CSSProperties}><td className="p-3">{c.Id}</td><td className="p-3 font-bold mw-topic-ink">{c.NameAr}</td><td className="p-3">{c.NameEn}</td><td className="p-3"><Link href={'/admin/editorial?stageId='+data.Track.StageId+'&trackId='+id+'&categoryId='+c.Id} className={btn+' mw-topic-ink'}>{ar?'عرض المسائل':'View problems'}</Link></td></tr>)}{!data.CategoryIds.length&&<tr><td colSpan={4} className="p-6 text-center text-muted-foreground">{ar?'لا توجد فئات مرتبطة بعد':'No linked categories yet'}</td></tr>}</tbody></table></div>}
+ <h2 className="text-lg font-bold">{ar?data.Track.NameAr:data.Track.NameEn}</h2>
+ <MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>
  </section>;
 }
 function LearningTracksContent(){
@@ -124,44 +122,23 @@ function LearningTracksContent(){
   const ar=useLocale()==='ar';const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
   const {data,isFetching,isError,refetch}=useGetAdminTracksQuery(undefined,{skip:!admin});
   const {data:stages,isLoading:stagesLoading,isError:stagesError,refetch:reloadStages}=useGetAdminStagesQuery(undefined,{skip:!admin});
-  const [selected,setSelected]=useState<number|null>(Number.isSafeInteger(requestedTrack)&&requestedTrack>0?requestedTrack:null);
+  const selected=Number.isSafeInteger(requestedTrack)&&requestedTrack>0?requestedTrack:null;
   const stageFilter=stages?.some(s=>s.Id===requestedStage)?requestedStage:0;
-  const [tab,setTab]=useState('list');
-  const [stageId,setStage]=useState(Number.isSafeInteger(requestedStage)&&requestedStage>0?requestedStage:0);const [kind,setKind]=useState<LearningTrack['Kind']>('course');
-  const [code,setCode]=useState('');const [nameAr,setAr]=useState('');const [nameEn,setEn]=useState('');
-  const [descAr,setDescAr]=useState('');const [descEn,setDescEn]=useState('');
-  const [sort,setSort]=useState(1);const [error,setError]=useState('');
-  const [create,{isLoading}]=useCreateTrackMutation();
-  async function submit(e:React.FormEvent){e.preventDefault();setError('');try{const t=await create({StageId:stageId,Kind:kind,Code:code,NameAr:nameAr,NameEn:nameEn,DescriptionAr:descAr,DescriptionEn:descEn,SortOrder:sort}).unwrap();setSelected(t.Id);setTab('list');setCode('');setAr('');setEn('');setDescAr('');setDescEn('');}catch(e){setError(message(e,ar));}}
   if(!admin)return null;
   if((isFetching&&!data)||stagesLoading)return <MathWorldSkeleton/>;
   if(isError||stagesError)return <div role="alert" className="p-6">{ar?'تعذّر تحميل المحتوى التعليمي.':'Could not load learning content.'} <button className={btn} onClick={()=>{void refetch();void reloadStages();}}>{ar?'إعادة المحاولة':'Retry'}</button></div>;
   if(!stageFilter)return <main className="p-6"><Link href="/admin/stages" className={btn}>{ar?'اختر المرحلة أولاً':'Choose a stage first'}</Link></main>;
   const scopedTrack=selected!==null&&data?.Items.some(x=>x.Track.Id===selected&&x.Track.StageId===stageFilter)?selected:null;
+  const stage=stages?.find(s=>s.Id===stageFilter);
+  const stageName=stage?(ar?stage.NameAr:stage.NameEn):'';
+  const trail=[{label:ar?'لوحة الإدارة':'Administration',href:'/admin'},{label:ar?'المراحل التعليمية':'Educational stages',href:'/admin/stages'},{label:stageName}];
+  if(scopedTrack!==null)return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6"><Breadcrumbs items={[...trail.slice(0,2),{label:stageName,href:'/admin/learning-tracks?stageId='+stageFilter},{label:ar?'إدارة الارتباطات':'Manage mappings'}]}/><WorkspacePageHeader title={ar?'إدارة الارتباطات':'Manage mappings'} icon={GraduationCap} actions={<Link className={btn+' inline-flex items-center gap-2'} href={'/admin/categories?stageId='+stageFilter+'&trackId='+scopedTrack}><DirectionalArrow direction="back" className="h-4 w-4"/>{ar?'العودة للفئات':'Back to categories'}</Link>}/><TrackEditor key={scopedTrack} id={scopedTrack} ar={ar}/></main>;
   return <main className="mx-auto w-full max-w-7xl space-y-4 p-4 sm:p-6">
-    <WorkspacePageHeader title={ar?(stages?.find(s=>s.Id===stageFilter)?.NameAr??'الصفوف والمستويات'):(stages?.find(s=>s.Id===stageFilter)?.NameEn??'Grades and levels')} icon={GraduationCap} actions={<div className="flex flex-wrap gap-2"><Link className={btn} href="/admin/stages">{ar?'المراحل':'Stages'}</Link><Link className={btn} href={'/admin/categories?stageId='+stageFilter}>{ar?'تعريفات فئات المرحلة':'Stage category definitions'}</Link></div>}/>
+    <Breadcrumbs items={trail}/>
+    <WorkspacePageHeader title={stageName} icon={GraduationCap} actions={<Link className={btn+' inline-flex items-center gap-2'} href="/admin/stages"><DirectionalArrow direction="back" className="h-4 w-4"/>{ar?'العودة للمراحل':'Back to stages'}</Link>}/>
     {data&&!data.Enabled&&<p role="status" className="text-sm text-muted-foreground">{ar?'عرض المسارات للطلاب معطّل.':'Learner track catalog is disabled.'}</p>}
-    <Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}>
-      <TabsList className="w-fit max-w-full"><TabsTrigger value="list">{ar?'الصفوف والمستويات':'Grades and levels'}</TabsTrigger><TabsTrigger value="create" disabled={selected!==null}>{ar?'إضافة صف أو مستوى':'Add grade or level'}</TabsTrigger></TabsList>
-      <TabsContent value="list" className="space-y-4">    
+    <div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[680px] text-sm"><thead><tr>{['ID',ar?'الاسم بالعربية':'Arabic name',ar?'الاسم بالإنجليزية':'English name',ar?'الترتيب':'Order',ar?'المسائل':'Problems',ar?'الحالة':'Status',ar?'الإجراءات':'Actions'].map(label=><th key={label} className="p-3 text-start">{label}</th>)}</tr></thead><tbody>{data?.Items.filter(x=>x.Track.StageId===stageFilter).map(x=><tr key={x.Track.Id} className="border-b mw-topic-row" style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties}><td className="p-3">{x.Track.Id}</td><td className="p-3 font-bold mw-topic-ink">{x.Track.NameAr}</td><td className="p-3">{x.Track.NameEn}</td><td className="p-3">{x.Track.SortOrder}</td><td className="p-3">{x.ProblemCount}</td><td className="p-3">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</td><td className="p-3"><Link className={btn+' mw-topic-action inline-flex items-center gap-2'} href={'/admin/categories?stageId='+stageFilter+'&trackId='+x.Track.Id}>{ar?'عرض الفئات':'View categories'}<DirectionalChevron direction="forward" className="h-4 w-4"/></Link><Link className={btn+' ms-2 inline-flex'} href={'/admin/learning-tracks?stageId='+stageFilter+'&trackId='+x.Track.Id+'&edit=1'}>{ar?'تعديل':'Edit'}</Link></td></tr>)}</tbody></table></div>
 
-    <div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[680px] text-sm"><thead><tr>{['ID',ar?'الاسم بالعربية':'Arabic name',ar?'الاسم بالإنجليزية':'English name',ar?'الترتيب':'Order',ar?'المسائل':'Problems',ar?'الحالة':'Status',ar?'الإجراءات':'Actions'].map(label=><th key={label} className="p-3 text-start">{label}</th>)}</tr></thead><tbody>{data?.Items.filter(x=>x.Track.StageId===stageFilter).map(x=><tr key={x.Track.Id} className="border-b mw-topic-row" style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties}><td className="p-3">{x.Track.Id}</td><td className="p-3 font-bold mw-topic-ink">{x.Track.NameAr}</td><td className="p-3">{x.Track.NameEn}</td><td className="p-3">{x.Track.SortOrder}</td><td className="p-3">{x.ProblemCount}</td><td className="p-3">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</td><td className="p-3"><button type="button" className={btn+' mw-topic-ink'} onClick={()=>setSelected(x.Track.Id)} aria-pressed={selected===x.Track.Id}>{ar?'عرض الفئات':'View categories'}</button></td></tr>)}</tbody></table></div>
-    {scopedTrack!==null&&<><button type="button" className={btn} onClick={()=>setSelected(null)}>{ar?'إغلاق الصف أو المستوى':'Close grade or level'}</button><TrackEditor key={scopedTrack} id={scopedTrack} ar={ar}/></>}
-</TabsContent>
-      <TabsContent value="create">    <section className="rounded-2xl border bg-card p-4"><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submit}>
-      <label className="text-sm">{ar?'المرحلة':'Stage'}<select className={field} required value={stageId||''} disabled onChange={e=>setStage(Number(e.target.value))}><option value="">{ar?'اختر':'Select'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select></label>
-      <label className="text-sm">{ar?'النوع':'Kind'}<select className={field} value={kind} onChange={e=>setKind(e.target.value as LearningTrack['Kind'])}><option value="grade">{ar?'صف':'Grade'}</option><option value="course">{ar?'مستوى':'Level'}</option></select></label>
-      <label className="text-sm">{ar?'الرمز الثابت':'Stable code'}<input className={field} required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} value={code} onChange={e=>setCode(e.target.value)}/></label>
-      <label className="text-sm">{ar?'الترتيب':'Order'}<input className={field} type="number" min={0} max={10000} value={sort} onChange={e=>setSort(Number(e.target.value))}/></label>
-      <label className="text-sm">{ar?'الاسم بالعربية':'Arabic name'}<input className={field} required maxLength={150} value={nameAr} onChange={e=>setAr(e.target.value)}/></label>
-      <label className="text-sm">{ar?'الاسم بالإنجليزية':'English name'}<input className={field} required maxLength={150} value={nameEn} onChange={e=>setEn(e.target.value)}/></label>
-      <label className="text-sm">{ar?'الوصف بالعربية':'Arabic description'}<textarea className={field} maxLength={1500} value={descAr} onChange={e=>setDescAr(e.target.value)}/></label>
-      <label className="text-sm">{ar?'الوصف بالإنجليزية':'English description'}<textarea className={field} maxLength={1500} value={descEn} onChange={e=>setDescEn(e.target.value)}/></label>
-      <button className={btn} disabled={isLoading||!stageId} type="submit">{ar?'إضافة مسودة':'Create draft'}</button>{error&&<p role="alert" className="text-destructive">{error}</p>}
-    </form></section>
-</TabsContent>
-      
-    </Tabs>
   </main>;
 }
 

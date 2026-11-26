@@ -9,6 +9,8 @@ import { Search, UserRoundSearch, Download, History } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { API_BASE_URL } from '@/store/api/baseQuery';
+import {DataBadge,StageDataBadge} from '@/components/admin/AdminDataBadges';
+import {useGetAdminTracksQuery} from '@/store/api/stagesApi';
 import { useGetAdminEngagementOverviewQuery, useGetAdminEngagementStudentsQuery, useGetAdminAuditEventsQuery } from '@/store/api/statsApi';
 
 export default function AdminLearnerActivityPage() {
@@ -19,6 +21,8 @@ export default function AdminLearnerActivityPage() {
   const searching=searchInput.trim()!==term;
   useEffect(()=>{const timer=window.setTimeout(()=>{setTerm(searchInput.trim());setPage(1);},300);return ()=>window.clearTimeout(timer);},[searchInput]);
   const [stageId, setStageId] = useState(0);
+  const [trackId,setTrackId]=useState(0);
+  const tracks=useGetAdminTracksQuery();
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
@@ -44,7 +48,7 @@ export default function AdminLearnerActivityPage() {
     pollingInterval: 120_000,
   });
   const result = useGetAdminEngagementStudentsQuery({
-    page, ...(stageId ? { stageId } : {}), ...(term ? { search: term } : {}),
+    page, ...(stageId ? { stageId } : {}), ...(trackId?{trackId}:{}), ...(term ? { search: term } : {}),
     ...(onlineOnly ? { onlineOnly: true } : {}),
   }, { refetchOnMountOrArgChange: 60, pollingInterval: 120_000, skipPollingIfUnfocused: true });
   const events = useGetAdminAuditEventsQuery({
@@ -150,12 +154,12 @@ export default function AdminLearnerActivityPage() {
       <label className="block">
         <span className="sr-only">{ar ? 'تصفية حسب المستوى' : 'Filter by stage'}</span>
         <select className="mw-filter-field" value={stageId}
-          onChange={e => { setStageId(Number(e.target.value)); setPage(1); }}>
+          onChange={e => { setStageId(Number(e.target.value));setTrackId(0); setPage(1); }}>
           <option value={0}>{ar ? 'كل المستويات' : 'All stages'}</option>
           {(stages.data?.Stages ?? []).map(stage => <option key={stage.StageId} value={stage.StageId}>
             {ar ? stage.NameAr : stage.NameEn}
           </option>)}
-        </select>
+        </select><select aria-label={ar?'الصف أو المستوى':'Grade or level'} className="mw-filter-field" value={trackId} disabled={!stageId} onChange={e=>{setTrackId(Number(e.target.value));setPage(1)}}><option value={0}>{ar?'كل الصفوف والمستويات':'All grades and levels'}</option>{tracks.data?.Items.filter(x=>x.Track.StageId===stageId).map(x=><option key={x.Track.Id} value={x.Track.Id}>{ar?x.Track.NameAr:x.Track.NameEn}</option>)}</select>
       </label>
       <label className="flex cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2.5 text-sm font-semibold">
         <input type="checkbox" checked={onlineOnly}
@@ -184,7 +188,7 @@ export default function AdminLearnerActivityPage() {
                     <button type="button" onClick={() => chooseStudent(student.Id)}
                       className="text-start font-bold text-primary hover:underline">{student.FullName}</button>
                     <p className="text-xs text-muted-foreground">#{student.Id}
-                      {' · '}{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}
+                      {' · '}{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}
                     </p>
                   </div>
                   <span className={student.IsOnline
@@ -237,26 +241,22 @@ export default function AdminLearnerActivityPage() {
                     {' · '}{student.IsActive ? (ar ? 'مفعّل' : 'Active') : (ar ? 'معطّل' : 'Disabled')}
                   </span>
                   {student.IsOnline && <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 motion-safe:animate-pulse" aria-hidden="true" />
                     {ar ? 'اتصل خلال 5 دقائق' : 'Seen within 5 min'}
                   </span>}
                 </td>
-                <td className="p-3">{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}</td>
-                <td className="p-3">{date(student.CreatedAt)}</td>
-                <td className="p-3">{date(student.LastLoginAt)}</td>
-                <td className="p-3">{date(student.LastExplicitSignOutAtUtc ?? null)}</td>
-                <td className="p-3">{date(student.LastPracticeAt)}</td>
-                <td className="p-3">{date(student.LastHeartbeatAtUtc)}</td>
-                <td className="p-3 text-end font-bold tabular-nums">{n(student.Attempts)}</td>
+                <td className="p-3"><StageDataBadge id={student.CurrentStageId}>{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}</StageDataBadge></td>
+                <td className="p-3"><DataBadge tone={(student.CreatedAt)?'purple':'neutral'}>{date(student.CreatedAt)}</DataBadge></td>
+                <td className="p-3"><DataBadge tone={(student.LastLoginAt)?'green':'neutral'}>{date(student.LastLoginAt)}</DataBadge></td>
+                <td className="p-3"><DataBadge tone={(student.LastExplicitSignOutAtUtc ?? null)?'amber':'neutral'}>{date(student.LastExplicitSignOutAtUtc ?? null)}</DataBadge></td>
+                <td className="p-3"><DataBadge tone={(student.LastPracticeAt)?'blue':'neutral'}>{date(student.LastPracticeAt)}</DataBadge></td>
+                <td className="p-3"><DataBadge tone={(student.LastHeartbeatAtUtc)?'green':'neutral'}>{date(student.LastHeartbeatAtUtc)}</DataBadge></td>
+                <td className="p-3 text-end font-bold tabular-nums"><DataBadge tone="blue">{n(student.Attempts)}</DataBadge></td>
               </tr>)}
             </tbody>
           </table>
           </div>
         </>}
-      <p className="border-t px-4 py-3 text-xs text-muted-foreground">
-        {ar ? 'آخر خروج مؤكد يعني أن الطالب ضغط تسجيل الخروج؛ إغلاق التطبيق أو المتصفح لا يثبت خروجه. وجود اتصال حديث لا يضمن أن الطالب يشاهد الصفحة بنفس اللحظة؛ يتوقف التحديث في الخلفية وينتهي اعتباره متصلاً بعد خمس دقائق.'
-          : 'A verified sign-out requires an explicit sign-out action; closing the app is not one. Recent connectivity is not a live socket. Backgrounded clients pause heartbeats and are considered offline after five minutes.'}
-      </p>
       <div className="flex items-center justify-between gap-3 border-t p-4 text-sm">
         <button type="button" disabled={searching || page <= 1 || result.isFetching}
           onClick={() => setPage(x => Math.max(1, x - 1))}

@@ -1,4 +1,5 @@
 'use client';
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { useMemo, useState } from 'react';
@@ -18,7 +19,6 @@ import { Link } from '@/i18n/routing';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
-import { RichText } from '@/components/ui/RichText';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import {
   type ErrorNotebookProblem,
@@ -252,7 +252,7 @@ export default function ErrorNotebookPage() {
                     href={`/dashboard/problems/${problem.Id}?review=1`}
                     className="block text-lg font-semibold transition-colors hover:text-primary"
                   >
-                    <RichText text={problem.Title} isArabic={isArabic} />
+                    <ProblemTitle text={problem.Title}/>
                   </Link>
 
                   <div className="mt-5 grid grid-cols-3 gap-2 text-center text-sm">

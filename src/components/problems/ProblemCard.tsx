@@ -7,7 +7,7 @@ import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Link } from "@/i18n/routing";
 import type { ProblemPreview } from "@/store/api/types";
 import { Badge } from "@/components/ui/Badge";
-import { RichText } from "@/components/ui/RichText";
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
 import { usePathname } from "@/i18n/routing";
 import { getStageAccent } from "@/lib/stageVisuals";
@@ -39,11 +39,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
               <Calculator className="h-6 w-6" />
             </span>
             <div className="min-w-0 flex-1">
-              <RichText
-                text={problem.Title}
-                isArabic={locale === "ar"}
-                className="text-base font-bold leading-7 text-foreground transition-colors sm:text-lg"
-              />
+              <ProblemTitle text={problem.Title} className="text-base font-bold leading-7 text-foreground transition-colors sm:text-lg"/>
               <div className="mt-3 flex flex-wrap gap-2">
                 {typeof problem.IsSolved === "boolean" && typeof problem.HasAttempted === "boolean" &&
                   (problem.IsSolved ? (

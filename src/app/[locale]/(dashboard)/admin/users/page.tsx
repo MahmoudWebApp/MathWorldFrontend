@@ -5,8 +5,10 @@ import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Search, Users, Crown, Trash2 } from 'lucide-react';
+import { Search, Users, Crown, Trash2, Eye } from 'lucide-react';
 import { useGetAdminLearnersQuery, useDeleteAdminLearnerMutation, useGrantAnnualPremiumMutation, type AdminLearnerFilters, type AdminLearnerSummary } from '@/store/api/usersApi';
+import {DataBadge,StageDataBadge} from '@/components/admin/AdminDataBadges';
+import {Tooltip,TooltipTrigger,TooltipContent} from '@/components/ui/Tooltip';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
@@ -294,7 +296,7 @@ export default function AdminUsersPage() {
                       <p className="mt-1 break-all text-xs text-muted-foreground" dir="ltr">{u.Email}</p>
                     </div>
                     <span className={`shrink-0 rounded-md px-2 py-1 text-xs ${
-                      u.IsActive ? 'mw-status-active' : 'bg-destructive/10 text-destructive'
+                      u.IsActive ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'
                     }`}>{u.IsActive ? label.active : label.disabled}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
@@ -341,21 +343,18 @@ export default function AdminUsersPage() {
                         <Link href={`/admin/users/${u.Id}`} className="font-semibold text-primary hover:underline">{u.FullName}</Link>
                         <p className="mt-1 max-w-[230px] truncate text-xs text-muted-foreground" dir="ltr">{u.Email}</p>
                       </td>
-                      <td className="px-4 py-3">{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</td>
+                      <td className="px-4 py-3"><StageDataBadge id={u.CurrentStageId}>{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</StageDataBadge></td>
                       <td className="px-4 py-3"><span className={`rounded-lg px-2 py-1 text-xs ${
                         u.IsActive ? 'mw-status-active' : 'bg-destructive/10 text-destructive'
                       }`}>{u.IsActive ? label.active : label.disabled}</span></td>
-                      <td className="px-4 py-3"><span className={u.SubscriptionType==='Premium'?'mw-status-active rounded-lg px-2 py-1 text-xs font-bold':'rounded-lg border px-2 py-1 text-xs font-semibold'}>{u.SubscriptionType}</span></td>
-                      <td className="px-4 py-3 text-muted-foreground">{expiry(u)}</td>
+                      <td className="px-4 py-3"><span className={u.SubscriptionType==='Premium'?'bg-amber-500/15 text-amber-700 dark:text-amber-300 rounded-lg px-2 py-1 text-xs font-bold':'bg-slate-500/10 text-muted-foreground rounded-lg px-2 py-1 text-xs font-semibold'}>{u.SubscriptionType}</span></td>
+                      <td className="px-4 py-3"><DataBadge tone={u.SubscriptionType==='Premium'?'amber':'neutral'}>{expiry(u)}</DataBadge></td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-col items-start gap-2">
-                          <Link href={`/admin/users/${u.Id}`} className="mw-admin-action">{label.detail}</Link>
-                          <button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-3 py-2 text-sm font-semibold text-destructive disabled:opacity-50"><Trash2 className="h-4 w-4" aria-hidden/>{ar?'حذف الطالب':'Delete learner'}</button>
-                          <button type="button" disabled={!u.IsActive || granting || searching || isFetching} onClick={() => openGrant([u.Id])}
-                            className="mw-admin-action mw-admin-action-primary disabled:opacity-40">
-                            {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
-                          </button>
-                        </div>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+<Tooltip><TooltipTrigger asChild><Link href={'/admin/users/'+u.Id} className="mw-admin-action p-2" aria-label={label.detail}><Eye className="h-4 w-4"/></Link></TooltipTrigger><TooltipContent>{label.detail}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={!u.IsActive||granting||searching||isFetching} onClick={()=>openGrant([u.Id])} className="mw-admin-action p-2 text-amber-600 disabled:opacity-40" aria-label={u.SubscriptionType==='Premium'?label.renew:label.annual}><Crown className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{u.SubscriptionType==='Premium'?label.renew:label.annual}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="mw-admin-action p-2 text-destructive border-destructive/30" aria-label={ar?'حذف الطالب':'Delete learner'}><Trash2 className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{ar?'حذف الطالب':'Delete learner'}</TooltipContent></Tooltip>
+</div>
                       </td>
                     </tr>
                   ))}
