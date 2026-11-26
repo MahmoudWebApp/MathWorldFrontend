@@ -138,8 +138,8 @@ export default function UserDashboardPage() {
         <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
           {stats.map(item => (
             <div key={item.label} className="min-w-0 rounded-2xl bg-muted/40 p-3 sm:p-4">
-              <item.icon className="mb-2 h-5 w-5 text-primary" aria-hidden="true" />
-              <p className="text-lg font-extrabold tabular-nums sm:text-2xl">{item.value}</p>
+              <item.icon className={`mb-2 h-5 w-5 ${item.icon===Trophy?'mw-reward-icon':'text-primary'}`} aria-hidden="true" />
+              <p className={`text-lg font-extrabold tabular-nums sm:text-2xl ${item.icon===Trophy?'mw-reward':''}`}>{item.value}</p>
               <p className="mt-1 text-xs text-muted-foreground">{item.label}</p>
             </div>
           ))}

@@ -108,7 +108,7 @@ export default function StudentLeaderboardPage() {
             <section className="overflow-hidden rounded-2xl border bg-card">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b p-5">
                 <div className="flex items-center gap-2">
-                  <Medal className="h-5 w-5 text-primary" aria-hidden="true" />
+                  <Medal className="h-5 w-5 mw-reward-icon" aria-hidden="true" />
                   <h2 className="font-bold">{ar ? 'ترتيب الطلاب' : 'Learner rankings'}</h2>
                 </div>
                 <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
@@ -140,8 +140,8 @@ export default function StudentLeaderboardPage() {
                   {data.Entries.map(entry => {
                     const podium =
                       entry.Rank === 1 ? {
-                        row: 'border-amber-400/50 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10',
-                        badge: 'border-amber-500/40 bg-amber-200 text-amber-900 dark:bg-amber-500/25 dark:text-amber-200',
+                        row: 'border-reward-gold/50 bg-reward-gold/10',
+                        badge: 'border-reward-gold/50 bg-reward-gold/20 mw-reward',
                         label: ar ? 'المركز الأول' : 'First place',
                       } : entry.Rank === 2 ? {
                         row: 'border-slate-300 bg-slate-100 dark:border-slate-400/40 dark:bg-slate-300/10',
@@ -182,7 +182,7 @@ export default function StudentLeaderboardPage() {
                         </div>
                         <div className="text-end">
                           <strong className="block text-sm text-foreground">{entry.SolvedProblems} {ar ? 'مسألة' : 'solved'}</strong>
-                          <span className="text-xs text-muted-foreground">{entry.Points} {ar ? 'نقطة' : 'points'}</span>
+                          <span className="text-xs font-semibold mw-reward">{entry.Points} {ar ? 'نقطة' : 'points'}</span>
                         </div>
                       </li>
                     );
