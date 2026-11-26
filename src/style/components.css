@@ -259,15 +259,7 @@
 /* ============================================ */
 /* SR brand interaction language                */
 /* ============================================ */
-.sr-title-accent {
-  color: transparent;
-  background-image: linear-gradient(105deg, var(--sr-primary) 0%, var(--sr-primary) 32%, var(--sr-secondary) 88%);
-  background-size: 160% 100%;
-  background-position: 0% 50%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+/* Legacy title class shares the canonical animated gradient below. */
 
 .sr-wave-button {
   position: relative;
@@ -856,10 +848,10 @@ html:not(.dark) .math-global-background::before {
 /* Unified primary actions; retain semantic destructive and disabled styling. */
 .sr-wave-button, button.bg-primary:not([role="tab"]), a.bg-primary {background:var(--sr-grad);color:white;}
 button.bg-primary:disabled {opacity:.5;}
-.text-gradient-math, .dark .text-gradient-math {background:linear-gradient(45deg,var(--color-one),var(--color-two),var(--color-three),var(--color-two),var(--color-one)) 0 0 / var(--bg-size) 100%;color:transparent;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:mw-title-wave 12s linear infinite;}
+.text-gradient-math, .dark .text-gradient-math, .sr-title-accent, .dark .sr-title-accent {background:linear-gradient(45deg,var(--color-one),var(--color-two),var(--color-three),var(--color-two),var(--color-one)) 0 0 / var(--bg-size) 100%;color:transparent;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:mw-title-wave 12s linear infinite;}
 .dark {--color-three:#c4b5fd;}
 @keyframes mw-title-wave {to{background-position:var(--bg-size) 0;}}
-@media(prefers-reduced-motion:reduce){.text-gradient-math,.dark .text-gradient-math{animation:none;}}
+@media(prefers-reduced-motion:reduce){.text-gradient-math,.dark .text-gradient-math,.sr-title-accent,.dark .sr-title-accent{animation:none;}}
 
 /* Search and filter controls share one responsive shape in all workspaces. */
 .mw-filter-field { box-sizing:border-box; min-height:44px; width:100%; border-radius:12px; border:1px solid var(--color-border); background: var(--color-background); padding:.625rem .75rem; font-size:.875rem; transition:border-color .15s,box-shadow .15s; }
@@ -894,8 +886,8 @@ button.bg-primary:disabled {opacity:.5;}
 }
 .dark .mw-topic-surface { background: color-mix(in srgb, var(--stage-accent) 17%, var(--color-card)); }
 .dark .mw-topic-surface:hover, .dark .mw-topic-surface:focus-within { background: color-mix(in srgb, var(--stage-accent) 24%, var(--color-card)); }
-.mw-topic-action { color: color-mix(in srgb, var(--stage-accent) 78%, var(--color-foreground)); border-color: color-mix(in srgb, var(--stage-accent) 45%, transparent); background: color-mix(in srgb, var(--stage-accent) 8%, var(--color-card)); }
-.mw-topic-action:not(:disabled):hover { background: color-mix(in srgb, var(--stage-accent) 20%, var(--color-card)); }
+.mw-topic-action { color: color-mix(in srgb, var(--stage-accent) 78%, var(--color-foreground)); border-color: color-mix(in srgb, var(--stage-accent) 45%, transparent); background: var(--color-card); }
+.mw-topic-action:not(:disabled):hover { background: color-mix(in srgb, var(--stage-accent) 10%, var(--color-card)); border-color: var(--stage-accent); }
 .mw-topic-action-solid { background: var(--stage-accent); color: white; border-color: var(--stage-accent); }
 .mw-topic-action-solid:not(:disabled):hover { background: color-mix(in srgb, var(--stage-accent) 86%, black); }
 .mw-topic-tabs [role="tab"][data-state="active"] { background: var(--stage-accent); color: white; }
@@ -933,7 +925,7 @@ button.bg-primary:disabled {opacity:.5;}
 
 /* Unified animated brand typography and flat primary actions (owner review).
    Keep semantic stage accents, errors and focus indications legible. */
-.text-gradient-math {
+.text-gradient-math, .sr-title-accent, .dark .sr-title-accent {
   background: linear-gradient(45deg,var(--color-one),var(--color-two),var(--color-three),var(--color-two),var(--color-one)) 0 0 / var(--bg-size) 100%;
   background-clip: text;
   -webkit-background-clip: text;
@@ -955,7 +947,7 @@ button:focus-visible,[role="button"]:focus-visible,a.sr-wave-button:focus-visibl
 }
 .sr-wave-button:hover, .mw-admin-action-primary:hover { background-position: 100% 50%; }
 @media (prefers-reduced-motion:reduce) {
-  .text-gradient-math,
+  .text-gradient-math, .sr-title-accent,
   .sr-wave-button,.sr-cta-ring,.mw-admin-action-primary,button.bg-primary,a.bg-primary { animation: none !important; }
 }
 
