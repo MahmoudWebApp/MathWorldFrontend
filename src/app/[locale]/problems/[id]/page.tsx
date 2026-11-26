@@ -1065,11 +1065,11 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
               <CheckCircle className="h-5 w-5" />
               {t("problem.solution")}
             </h3>
-            {structuredSolution ? <div className="space-y-4">
+            {solutionText ? <RichText text={solutionText} isArabic={isArabic} /> : structuredSolution ? <div className="space-y-4">
               <section><h4 className="font-bold">{isArabic?'الفكرة والقانون':'Idea and formula'}</h4><RichText text={structuredSolution.Idea} isArabic={isArabic}/><LatexPreview latex={structuredSolution.FormulaLatex} block/></section>
               <section><h4 className="font-bold">{isArabic?'خطوات الحل':'Solution steps'}</h4><ol className="list-decimal space-y-2 ps-6">{structuredSolution.Steps.map((step,i)=><li key={i}><RichText text={step} isArabic={isArabic}/></li>)}</ol></section>
               {([[isArabic?'التعويض':'Substitution',structuredSolution.Substitution],[isArabic?'النتيجة والوحدة':'Result and unit',structuredSolution.Result+' '+structuredSolution.Unit],[isArabic?'التحقق':'Verification',structuredSolution.Verification],[isArabic?'الخطأ الشائع':'Common error',structuredSolution.CommonError]] as const).map(([label,value])=><section key={label}><h4 className="font-bold">{label}</h4><RichText text={value} isArabic={isArabic}/></section>)}
-            </div>:<RichText text={solutionText} isArabic={isArabic} />}
+            </div>:null}
           </div>
         )}
 
