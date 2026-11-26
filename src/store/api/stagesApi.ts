@@ -119,6 +119,10 @@ export const stagesApi = createApi({
     getTrackProgress:builder.query<TrackProgress,number>({
       query:id=>'/users/learning-tracks/'+id+'/progress',providesTags:['LearningTrack'],
     }),
+    getNextTrackProblem:builder.query<{TrackId:number;CategoryId:number;Problem:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}|null},{id:number;categoryId:number;afterProblemId:number}>({
+      query:({id,categoryId,afterProblemId})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/next',params:{afterProblemId}}),
+      providesTags:['LearningTrack'],
+    }),
     getTrackPractice:builder.query<TrackPractice,{id:number;categoryId:number;page:number}>({
       query:({id,categoryId,page})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page}}),providesTags:['LearningTrack'],
     }),
@@ -209,7 +213,7 @@ export const stagesApi = createApi({
 });
 
 export const {
-  useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackSelectionQuery,useSelectTrackMutation,useGetTrackProgressQuery,useGetTrackPracticeQuery,useGetTrackContinueQuery,
+  useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackSelectionQuery,useSelectTrackMutation,useGetTrackProgressQuery,useGetTrackPracticeQuery,useGetNextTrackProblemQuery,useGetTrackContinueQuery,
   useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useCreateTrackMutation,useReviewedTrackDraftBatchMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,
   useGetStagesQuery,
   useGetLearningJourneyQuery,
