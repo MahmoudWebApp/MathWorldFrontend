@@ -32,3 +32,13 @@ for (const { input, type, expression } of examples) {
 assert.deepEqual(parseMathSegments('No math here.'),
   [{ type: 'text', value: 'No math here.' }]);
 console.log('PASS: Arabic, English, inline/block and double-escaped LaTeX.');
+
+const { default: katex } = await import('katex');
+for (const expression of ['a'+slash+'neq0','x'+slash+'leq2','x'+slash+'geq0','x'+slash+'approx1','x'+slash+'in A','x'+slash+'notin A',slash+'frac{1}{2}',slash+'sqrt{x}']) {
+  const rendered = katex.renderToString(expression, { throwOnError: true });
+  assert(rendered.includes('katex-html') && !rendered.includes('katex-error'), expression);
+}
+const katexCss = fs.readFileSync('node_modules/katex/dist/katex.min.css', 'utf8');
+assert(katexCss.includes('KaTeX_Main'));
+assert(fs.existsSync('node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff2'));
+console.log('PASS: common math symbols and installed KaTeX font asset.');
