@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
-import { useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorActivityQuery, type SupervisorAccount } from '@/store/api/platformBrandApi';
+import { useGetSupervisorsQuery, useCreateSupervisorMutation, useDeleteSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorActivityQuery, type SupervisorAccount } from '@/store/api/platformBrandApi';
 
 const input='w-full rounded-xl border bg-background p-2.5 text-sm';
 const button='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
@@ -36,6 +36,7 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
   const [permissions,setPermissions]=useState(row.Permissions);
   const [update,{isLoading:saving}]=useUpdateSupervisorMutation();
   const [invite,{isLoading:sending}]=useInviteSupervisorMutation();
+  const [remove,{isLoading:deleting}]=useDeleteSupervisorMutation();
   const [message,setMessage]=useState('');
   const [error,setError]=useState('');
   async function save(){
@@ -44,6 +45,13 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
       await update({id:row.Id,IsActive:active,Permissions:permissions,Revision:row.Revision}).unwrap();
       setMessage(ar?'تم الحفظ وإبطال الجلسات السابقة.':'Saved. Previous sessions revoked.');
     }catch(e){setError(errorText(e,ar));}
+  }
+  async function deleteAccount(){
+    if(deleting||saving||sending)return;
+    if(!window.confirm(ar?'حذف حساب المشرف نهائياً: '+row.FullName+'؟ سيحذف حسابه وسجل نشاطه، ولا يمكن التراجع.':'Permanently delete '+row.FullName+'? Their account and activity will be removed; this cannot be undone.'))return;
+    setError('');setMessage('');
+    try{const result=await remove(row.Id).unwrap();if(!result.Deleted)throw Error('DeletionFailed');}
+    catch(e){const code=(e as {data?:{Message?:string}})?.data?.Message;setError(code==='SupervisorHasOpenEditorialWork'?(ar?'يوجد محتوى غير مكتمل للمشرف. راجعه أو اسحبه قبل الحذف.':'Resolve or withdraw the supervisor’s open editorial work before deleting.'):ar?'تعذّر حذف المشرف. قد توجد سجلات محمية.':'Deletion failed; protected records may exist.');}
   }
   async function send(){
     setError('');setMessage('');
@@ -70,6 +78,7 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
     <div className="flex flex-wrap gap-2">
       <button className={button} disabled={saving||sending||(active===row.IsActive&&permissions===row.Permissions)} onClick={()=>void save()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الصلاحيات':'Save permissions')}</button>
       {row.StaffSetupPending&&row.IsActive&&<button className={button} disabled={saving||sending||active!==row.IsActive||permissions!==row.Permissions} onClick={()=>void send()}>{sending?(ar?'جارٍ الإضافة…':'Queuing…'):(ar?'إرسال / إعادة الدعوة':'Send / resend invitation')}</button>}
+      <button type="button" className={button+' text-destructive border-destructive/30'} disabled={deleting||saving||sending} onClick={()=>void deleteAccount()}>{deleting?(ar?'جارٍ الحذف…':'Deleting…'):(ar?'حذف المشرف':'Delete supervisor')}</button>
       <button className={button} aria-expanded={showActivity} onClick={()=>setShowActivity(v=>!v)}>{showActivity?(ar?'إخفاء السجل':'Hide history'):(ar?'سجل النشاط':'Activity history')}</button>
     </div>
     {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}

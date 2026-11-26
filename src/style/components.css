@@ -930,3 +930,34 @@ button.bg-primary:disabled {opacity:.5;}
 .mw-admin-action:hover {border-color:var(--color-primary);background:color-mix(in srgb,var(--color-primary) 6%,var(--color-card));}
 .mw-admin-action-primary,.mw-status-active {background:linear-gradient(105deg,#5c24ff,#a627db 55%,#ff2399);color:#fff;border-color:transparent;}
 .mw-admin-action-primary:hover {background:linear-gradient(105deg,#4f1fdc,#a027ce 55%,#dc187f);color:#fff;}
+
+/* Unified animated brand typography and flat primary actions (owner review).
+   Keep semantic stage accents, errors and focus indications legible. */
+.text-gradient-math,
+:where(h1,h2,h3,h4,h5,h6):not(.mw-topic-ink):not(.sr-only):not(.text-white):not(.text-destructive) {
+  background: linear-gradient(45deg,var(--color-one),var(--color-two),var(--color-three),var(--color-two),var(--color-one)) 0 0 / var(--bg-size) 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: mw-title-wave 12s linear infinite;
+}
+.sr-wave-button, .sr-cta-ring, .mw-admin-action-primary,
+button.bg-primary:not([role="tab"]), a.bg-primary,
+button[role="tab"][data-state="active"]:not(.mw-topic-action) {
+  background: linear-gradient(105deg,#5c24ff 0%,#a627db 35%,#ff2399 65%,#a627db 85%,#5c24ff 100%) 0 0 / 220% 100%;
+  color: #fff;
+  animation: sr-gradient-drift 9s ease-in-out infinite;
+}
+button, [role="button"], a.sr-wave-button, a.sr-cta-ring, a.bg-primary,
+.mw-admin-action, .sr-wave-button:hover, .sr-cta-ring:hover,
+.dark .sr-cta-ring { box-shadow: none !important; }
+button:focus-visible,[role="button"]:focus-visible,a.sr-wave-button:focus-visible,a.sr-cta-ring:focus-visible,a.bg-primary:focus-visible {
+  outline: 2px solid var(--sr-primary); outline-offset: 3px;
+}
+.sr-wave-button:hover, .mw-admin-action-primary:hover { background-position: 100% 50%; }
+@media (prefers-reduced-motion:reduce) {
+  .text-gradient-math, :where(h1,h2,h3,h4,h5,h6),
+  .sr-wave-button,.sr-cta-ring,.mw-admin-action-primary,button.bg-primary,a.bg-primary,
+  button[role="tab"][data-state="active"] { animation: none !important; }
+}
