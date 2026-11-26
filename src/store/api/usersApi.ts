@@ -359,6 +359,7 @@ export interface AdminSubscriptionHistory {
 
 export interface PremiumCategoryStatistics {
   TotalProblems?: number;
+  MasteredProblems?: number;
   StageId: number;
   CategoryId: number;
   StageNameAr: string;

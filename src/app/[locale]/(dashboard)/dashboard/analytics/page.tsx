@@ -373,7 +373,8 @@ export default function PremiumAnalyticsPage() {
                       <th className="p-3 text-start">{reportAr ? 'الفئة' : 'Category'}</th>
                       <th className="p-3 text-end">{reportAr ? 'المحلولة' : 'Solved'}</th>
                       <th className="p-3 text-end">{reportAr ? 'المحاولات' : 'Attempts'}</th>
-                      <th className="p-3 text-end">{reportAr ? 'الصحيحة' : 'Correct'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'الدقة' : 'Accuracy'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'الإتقان الحالي' : 'Current mastery'}</th>
                       <th className="p-3 text-end">{reportAr ? 'دفتر الأخطاء' : 'Error notebook'}</th>
                       <th className="p-3 text-end">{reportAr ? 'النقاط' : 'Points'}</th>
                     </tr>
@@ -385,7 +386,8 @@ export default function PremiumAnalyticsPage() {
                         <td className="p-3 font-medium">{reportAr ? category.CategoryNameAr : category.CategoryNameEn}</td>
                         <td className="p-3 text-end tabular-nums">{category.SolvedProblems}{category.TotalProblems!==undefined?` / ${category.TotalProblems}`:''}</td>
                         <td className="p-3 text-end tabular-nums">{category.Attempts}</td>
-                        <td className="p-3 text-end tabular-nums">{category.CorrectAttempts}</td>
+                        <td className="p-3 text-end tabular-nums">{category.Attempts?`${Math.round(category.CorrectAttempts/category.Attempts*100)}%`:'—'}</td>
+                        <td className="p-3 text-end tabular-nums">{category.MasteredProblems===undefined?'—':<><span className={category.TotalProblems&&category.MasteredProblems>=category.TotalProblems?'text-green-600 dark:text-green-400':'text-foreground'}>{category.MasteredProblems}{category.TotalProblems!==undefined?` / ${category.TotalProblems}`:''}</span>{!!category.TotalProblems&&<span className="block text-xs text-muted-foreground">{Math.round(category.MasteredProblems/category.TotalProblems*100)}%</span>}</>}</td>
                         <td className="p-3 text-end tabular-nums">{category.ErrorNotebookProblems}</td>
                         <td className="p-3 text-end font-bold tabular-nums text-amber-600 dark:text-yellow-300">{category.AwardedPoints}</td>
                       </tr>
@@ -394,6 +396,7 @@ export default function PremiumAnalyticsPage() {
                 </table>
               </div>
             )}
+            <p className="text-xs text-muted-foreground">{reportAr?'الإتقان الحالي يستند إلى حالة المسائل المسجلة، وليس إلى دقة المحاولات فقط.':'Current mastery uses recorded problem mastery, not just attempt accuracy.'}</p>
             <p className="text-xs text-muted-foreground print:text-black">
               {reportAr ? 'حمّل التقرير بصيغة Excel أو PDF، أو اطبعه مباشرة.'
                 : 'Download the Excel or PDF report, or print it directly.'}
