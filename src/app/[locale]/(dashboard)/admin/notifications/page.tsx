@@ -54,8 +54,7 @@ export default function AdminNotificationsPage() {
         TargetPath: '/dashboard',
       };
       if(audience==='all'){
-        const {learnerId:_,...body}=payload;
-        const result=await broadcast(body).unwrap();
+        const result=await broadcast({TitleAr:payload.TitleAr,TitleEn:payload.TitleEn,BodyAr:payload.BodyAr,BodyEn:payload.BodyEn,TargetPath:payload.TargetPath}).unwrap();
         setResult(ar?'تم إرسال الإشعار إلى '+result.Sent+' طالب.':'Notice sent to '+result.Sent+' students.');
       } else if (channel === 'email') {
         const delivery = await sendEmail(payload).unwrap();
@@ -120,13 +119,13 @@ export default function AdminNotificationsPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block space-y-2">
             <span className="font-semibold">عنوان الإشعار (عربي)</span>
-            <input dir="rtl" required maxLength={160} value={titleAr}
+            <input dir="rtl" required maxLength={audience==='all'?140:160} value={titleAr}
               onChange={e => setTitleAr(e.target.value)}
               className="w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary" />
           </label>
           <label className="block space-y-2">
             <span className="font-semibold">Notification title (English)</span>
-            <input dir="ltr" required maxLength={160} value={titleEn}
+            <input dir="ltr" required maxLength={audience==='all'?140:160} value={titleEn}
               onChange={e => setTitleEn(e.target.value)}
               className="w-full rounded-xl border bg-background p-3 outline-none focus:ring-2 focus:ring-primary" />
           </label>
