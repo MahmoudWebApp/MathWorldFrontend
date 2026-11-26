@@ -132,6 +132,10 @@ console.log('PASS: MathWorld learner/admin UX and sitewide public-catalog reques
 const scopedGrades=read('src/app/[locale]/(dashboard)/admin/learning-tracks/page.tsx');
 assert.doesNotMatch(scopedGrades,/useGetTrackInventoryQuery|useMapTrackMutation|toggle\('SkillIds'|toggle\('ProblemIds'/,'Grade editing must not expose manual skill or question mapping.');
 assert.match(scopedGrades,/university-level-1','university-level-2/,'University admin catalog must only show the two levels.');
+assert.match(scopedGrades, /<TooltipTrigger asChild><Link[^>]+aria-label=\{ar\?'عرض الفئات':'View categories'\}><Shapes[^>]+\/><\/Link><\/TooltipTrigger>/,'Grade category action is an icon-only accessible link with tooltip.');
+assert.match(scopedGrades, /<Pencil className="h-4 w-4" aria-hidden="true"\/>/,'Grade edit action uses a labelled icon.');
+assert.match(read('src/app/[locale]/(dashboard)/admin/stages/page.tsx'),/<TooltipTrigger asChild><Link[^>]+aria-label=\{ar\?"عرض الصفوف والمستويات":"View grades and levels"\}><Layers/,'Stage table uses an icon action with tooltip.');
+assert.match(read('src/app/[locale]/(dashboard)/admin/categories/page.tsx'),/<TooltipTrigger asChild><Link[^>]+aria-label=\{locale==="ar"\?"عرض المسائل":"View problems"\}><BookOpenText/,'Category table uses an icon action with tooltip.');
 assert.match(read('src/style/components.css'),/\.text-gradient-math, \.sr-title-accent, \.dark \.sr-title-accent\s*\{[\s\S]*?animation: mw-title-wave/,'Legacy headings must share the canonical animated gradient.');
 const scopedTopics=read('src/app/[locale]/(dashboard)/admin/categories/page.tsx');
 const editor=read('src/components/editorial/EditorialWorkspace.tsx');
