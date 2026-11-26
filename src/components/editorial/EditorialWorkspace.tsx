@@ -17,20 +17,23 @@ const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50
 const pair=():Bilingual=>({Ar:'',En:''});
 const empty=():EditorialContent=>({StageId:0,CategoryId:0,PrimarySkillId:0,SecondarySkillIds:[],TrackIds:[],DifficultyLevel:1,Points:10,Title:pair(),Question:pair(),Options:Array.from({length:4},(_,i)=>({LatexCode:'',IsCorrect:i===0,ErrorType:'',Reason:pair()})),Hints:[pair(),pair()],Solution:{Idea:pair(),FormulaLatex:'',Steps:[pair()],Substitution:pair(),Result:pair(),Unit:pair(),Verification:pair(),CommonError:pair()}});
 function stepError(c:EditorialContent,step:number):string|null {
-  const pairOk=(v:Bilingual)=>!!v.Ar.trim()&&!!v.En.trim();
+  const textOk=(v:string,max:number)=>!!v.trim()&&v.trim().length<=max;
+  const pairOk=(v:Bilingual,max:number)=>textOk(v.Ar,max)&&textOk(v.En,max);
+  const normalize=(v:string)=>v.trim().replace(/\s+/g,' ').toUpperCase();
   if(step===0) {
-    if(!c.StageId||!c.CategoryId||!c.PrimarySkillId||!c.TrackIds.length)return 'ClassificationRequired';
+    if(!c.StageId||!c.CategoryId||!c.PrimarySkillId||!c.TrackIds.length||c.TrackIds.length>50||new Set(c.TrackIds).size!==c.TrackIds.length)return 'ClassificationRequired';
+    if(c.SecondarySkillIds.length>30||c.SecondarySkillIds.includes(c.PrimarySkillId)||new Set(c.SecondarySkillIds).size!==c.SecondarySkillIds.length)return 'InvalidSecondarySkills';
     if(!Number.isInteger(c.DifficultyLevel)||c.DifficultyLevel<1||c.DifficultyLevel>5||!Number.isInteger(c.Points)||c.Points<1||c.Points>100000)return 'InvalidDifficultyOrPoints';
   }
-  if(step===1&&(!pairOk(c.Title)||!pairOk(c.Question)))return 'BilingualQuestionRequired';
+  if(step===1&&(!pairOk(c.Title,250)||!pairOk(c.Question,5000)))return 'BilingualQuestionRequired';
   if(step===2){
-    if(c.Options.length!==4||c.Options.filter(o=>o.IsCorrect).length!==1||c.Options.some(o=>!o.LatexCode.trim())||new Set(c.Options.map(o=>o.LatexCode.trim())).size!==4)return 'FourDistinctOptionsOneCorrect';
-    if(c.Options.some(o=>!o.IsCorrect&&(!o.ErrorType.trim()||!pairOk(o.Reason))))return 'DistractorReasonsRequired';
+    if(c.Options.length!==4||c.Options.filter(o=>o.IsCorrect).length!==1||c.Options.some(o=>!textOk(o.LatexCode,3000))||new Set(c.Options.map(o=>normalize(o.LatexCode))).size!==4)return 'FourDistinctOptionsOneCorrect';
+    if(c.Options.some(o=>!o.IsCorrect&&(!textOk(o.ErrorType,80)||!pairOk(o.Reason,1000))))return 'DistractorReasonsRequired';
   }
-  if(step===3&&(c.Hints.length!==2||!c.Hints.every(pairOk)||c.Hints[0].Ar.trim()===c.Hints[1].Ar.trim()||c.Hints[0].En.trim()===c.Hints[1].En.trim()))return 'TwoDistinctBilingualHintsRequired';
+  if(step===3&&(c.Hints.length!==2||!c.Hints.every(h=>pairOk(h,1000))||normalize(c.Hints[0].Ar)===normalize(c.Hints[1].Ar)||normalize(c.Hints[0].En)===normalize(c.Hints[1].En)))return 'TwoDistinctBilingualHintsRequired';
   if(step===4){
     const v=c.Solution;
-    if(!v.FormulaLatex.trim()||!v.Steps.length||![v.Idea,...v.Steps,v.Substitution,v.Result,v.Unit,v.Verification,v.CommonError].every(pairOk))return 'StructuredSolutionRequired';
+    if(!textOk(v.FormulaLatex,2000)||!v.Steps.length||v.Steps.length>20||![v.Idea,...v.Steps,v.Substitution,v.Verification,v.CommonError].every(x=>pairOk(x,2000))||!pairOk(v.Result,1000)||!pairOk(v.Unit,200))return 'StructuredSolutionRequired';
   }
   return null;
 }
@@ -41,28 +44,33 @@ function EditorialGuide({ar}:{ar:boolean}){
     </ol><div className="mt-3 rounded-lg border p-3 text-sm">{ar?'مثال: حل المعادلة $2x+3=7$؛ اطرح 3 من الطرفين ثم اقسم على 2.':'Example: solve $2x+3=7$; subtract 3 from both sides then divide by 2.'}<MathPreview value={'$2x+3=7$ → $2x=4$ → $x=2$'}/></div></details>;
 }
 const labels:Record<string,[string,string]>={Withdrawn:['مسحوبة','Withdrawn'],Draft:['مسودة','Draft'],NeedsChanges:['تحتاج تعديلات','Needs changes'],PendingReview:['بانتظار المراجعة','Pending review'],Approved:['معتمدة','Approved'],Published:['منشورة','Published']};
-const errors:Record<string,[string,string]>={AmendmentSourceChanged:['تغيّر المصدر، يجب بدء مراجعة جديدة','Source changed; start a new review'],AmendmentQuestionImmutable:['هذه المراجعة تحافظ على نص السؤال والخيارات والنقاط والفئة','This review preserves question, options, points and category'],AmendmentTrackRemoval:['لا يمكن حذف ارتباط مسار قائم','Existing track links must be preserved'],AmendmentSkillRemoval:['لا يمكن حذف المهارة الحالية أو تغيير الأساسية','Existing skills and primary skill must be preserved'],AmendmentAlreadyOpen:['توجد مراجعة مفتوحة لهذه المسألة','An open review already exists'],ClassificationRequired:['اختر المرحلة والفئة والمهارة والمسار','Choose stage, category, skill and track'],InvalidSecondarySkills:['راجع المهارات المساندة','Check secondary skills'],InvalidDifficultyOrPoints:['راجع الصعوبة والنقاط','Check difficulty and points'],BilingualQuestionRequired:['أكمل العنوان والسؤال باللغتين','Complete bilingual title and question'],FourDistinctOptionsOneCorrect:['أربعة خيارات مختلفة وصحيح واحد','Four distinct options, exactly one correct'],DistractorReasonsRequired:['أكمل نوع وسبب كل خطأ','Complete distractor types and reasons'],TwoDistinctBilingualHintsRequired:['أكمل تلميحين مختلفين باللغتين','Complete two distinct bilingual hints'],StructuredSolutionRequired:['أكمل القانون والخطوات وجميع حقول الحل','Complete formula, steps and solution fields'],SolutionTooLong:['طريقة الحل طويلة جداً','Solution is too long'],CategoryStageMismatch:['الفئة لا تتبع المرحلة','Category/stage mismatch'],SkillCategoryMismatch:['المهارة لا تتبع الفئة','Skill/category mismatch'],TrackStageMismatch:['المسار لا يتبع المرحلة','Track/stage mismatch'],QuestionAlreadyExists:['السؤال موجود مسبقاً','Question already exists'],EditorialPublicationDisabled:['النشر معطّل حتى اكتمال إصدار الحل الآمن','Publication disabled pending secure solve release'],DraftChangedOrLocked:['المسودة تغيرت أو أصبحت مقفلة','Draft changed or is locked']};
+const errors:Record<string,[string,string]>={SupervisorSubmissionRequired:['يجب أن يرسل المشرف المسألة للمراجعة أولاً','The supervisor must submit the problem first'],AmendmentSourceChanged:['تغيّر المصدر، يجب بدء مراجعة جديدة','Source changed; start a new review'],AmendmentQuestionImmutable:['هذه المراجعة تحافظ على نص السؤال والخيارات والنقاط والفئة','This review preserves question, options, points and category'],AmendmentTrackRemoval:['لا يمكن حذف ارتباط مسار قائم','Existing track links must be preserved'],AmendmentSkillRemoval:['لا يمكن حذف المهارة الحالية أو تغيير الأساسية','Existing skills and primary skill must be preserved'],AmendmentAlreadyOpen:['توجد مراجعة مفتوحة لهذه المسألة','An open review already exists'],ClassificationRequired:['اختر المرحلة والفئة والمهارة والمسار','Choose stage, category, skill and track'],InvalidSecondarySkills:['راجع المهارات المساندة','Check secondary skills'],InvalidDifficultyOrPoints:['راجع الصعوبة والنقاط','Check difficulty and points'],BilingualQuestionRequired:['أكمل العنوان والسؤال باللغتين','Complete bilingual title and question'],FourDistinctOptionsOneCorrect:['أربعة خيارات مختلفة وصحيح واحد','Four distinct options, exactly one correct'],DistractorReasonsRequired:['أكمل نوع وسبب كل خطأ','Complete distractor types and reasons'],TwoDistinctBilingualHintsRequired:['أكمل تلميحين مختلفين باللغتين','Complete two distinct bilingual hints'],StructuredSolutionRequired:['أكمل القانون والخطوات وجميع حقول الحل','Complete formula, steps and solution fields'],SolutionTooLong:['طريقة الحل طويلة جداً','Solution is too long'],CategoryStageMismatch:['الفئة لا تتبع المرحلة','Category/stage mismatch'],SkillCategoryMismatch:['المهارة لا تتبع الفئة','Skill/category mismatch'],TrackStageMismatch:['المسار لا يتبع المرحلة','Track/stage mismatch'],QuestionAlreadyExists:['السؤال موجود مسبقاً','Question already exists'],EditorialPublicationDisabled:['النشر معطّل حتى اكتمال إصدار الحل الآمن','Publication disabled pending secure solve release'],DraftChangedOrLocked:['المسودة تغيرت أو أصبحت مقفلة','Draft changed or is locked']};
 function PairField({label,value,onChange,disabled=false}:{label:string;value:Bilingual;onChange:(p:Bilingual)=>void;disabled?:boolean}){
   return <fieldset disabled={disabled} className="space-y-1"><legend className="text-sm font-semibold">{label}</legend><div className="grid gap-2 sm:grid-cols-2"><textarea aria-label={label+' AR'} dir="rtl" placeholder="العربية" className={input} value={value.Ar} onChange={e=>onChange({...value,Ar:e.target.value})}/><textarea aria-label={label+' EN'} dir="ltr" placeholder="English" className={input} value={value.En} onChange={e=>onChange({...value,En:e.target.value})}/></div></fieldset>;
 }
 function MathPreview({value}:{value:string}) {
   return <div className="whitespace-pre-wrap break-words">{value.split(/(\$\$[\s\S]*?\$\$|\$[^$\n]+\$)/g).map((p,i)=>p.startsWith('$$')&&p.endsWith('$$')?<LatexPreview key={i} latex={p.slice(2,-2)} block/>:p.startsWith('$')&&p.endsWith('$')?<LatexPreview key={i} latex={p.slice(1,-1)}/>:<span key={i}>{p}</span>)}</div>;
 }
-function Wizard({initial,initialStage=0,initialCategory=0,initialTrack=0,admin,canSubmit,onSaved,onClose}:{initial?:EditorialDraft;initialStage?:number;initialCategory?:number;initialTrack?:number;admin:boolean;canSubmit:boolean;onSaved:(id:number)=>void;onClose:()=>void}){
+function Wizard({initial,initialStage=0,initialCategory=0,initialTrack=0,admin,canSubmit,reviewOnly=false,onSaved,onClose}:{initial?:EditorialDraft;initialStage?:number;initialCategory?:number;initialTrack?:number;admin:boolean;canSubmit:boolean;reviewOnly?:boolean;onSaved:(id:number)=>void;onClose:()=>void}){
   const ar=useLocale()==='ar';const [draft,setDraft]=useState(initial);const [content,setContent]=useState<EditorialContent>(()=>{const base={...empty(),StageId:initialStage,CategoryId:initialCategory,TrackIds:initialTrack?[initialTrack]:[]};const p=initial?.Content;return p?{...base,...p,Title:p.Title??base.Title,Question:p.Question??base.Question,Options:p.Options?.length===4?p.Options.map(o=>({...o,Reason:o.Reason??pair()})):base.Options,Hints:p.Hints?.length===2?p.Hints:base.Hints,Solution:p.Solution?{...base.Solution,...p.Solution,Idea:p.Solution.Idea??base.Solution.Idea,Steps:p.Solution.Steps??base.Solution.Steps,Substitution:p.Solution.Substitution??base.Solution.Substitution,Result:p.Solution.Result??base.Solution.Result,Unit:p.Solution.Unit??base.Solution.Unit,Verification:p.Solution.Verification??base.Solution.Verification,CommonError:p.Solution.CommonError??base.Solution.CommonError}:base.Solution,TrackIds:p.TrackIds??[],SecondarySkillIds:p.SecondarySkillIds??[]}:base;});
   const [step,setStep]=useState(0);const [note,setNote]=useState('');const [message,setMessage]=useState('');const [error,setError]=useState<string[]>([]);const [dirty,setDirty]=useState(false);
   const [save,{isLoading:saving}]=useSaveEditorialDraftMutation();const [action,{isLoading:acting}]=useEditorialActionMutation();
   const inventory=useGetEditorialClassificationQuery(content.StageId);
   const amendment=!!draft?.SourceProblemId;
   const [processing,setProcessing]=useState(false);
-  const busy=saving||acting||processing;const editable=!draft||['Draft','NeedsChanges'].includes(draft.Status);const disabled=!editable||busy;
+  const busy=saving||acting||processing;const editable=!reviewOnly&&(!draft||['Draft','NeedsChanges'].includes(draft.Status));const disabled=!editable||busy;
   const steps=ar?['التصنيف','السؤال','الخيارات','التلميحات','طريقة الحل','المعاينة والمراجعة']:['Classification','Question','Options','Hints','Solution','Preview and review'];
   function patch(p:Partial<EditorialContent>){setContent(c=>({...c,...p}));setDirty(true);setMessage('');}
   function patchSolution(p:Partial<EditorialSolution>){patch({Solution:{...content.Solution,...p}});}
-  function failure(e:unknown){const x=e as {data?:{message?:string;errors?:Record<string,string[]>}};const codes=x.data?.errors?.validation??[x.data?.message??'Request failed'];setError(codes.map(c=>errors[c]?.[ar?0:1]??c));}
+  function failure(e:unknown){
+    const data=(e as {data?:{Message?:string;message?:string;Errors?:string[];errors?:string[]|Record<string,string[]>}})?.data;
+    const details=data?.Errors??data?.errors;
+    const codes=Array.isArray(details)?details:details?.validation??[data?.Message??data?.message??(ar?'تعذّر تنفيذ العملية. حاول مجدداً.':'Request failed. Try again.')];
+    setError(codes.map(c=>errors[c]?.[ar?0:1]??c));
+  }
   async function store(){setError([]);setMessage('');try{const d=await save({id:draft?.Id,Revision:draft?.Revision??0,Content:content}).unwrap();setDraft(d);setDirty(false);setMessage(ar?'تم حفظ المسودة':'Draft saved');onSaved(d.Id);return d;}catch(e){failure(e);return null;}}
   async function completeProblem(){
-    if(busy||!canSubmit||step!==5)return;
+    if(busy||!canSubmit||step!==5||(reviewOnly&&(!draft||!['PendingReview','Approved'].includes(draft.Status))))return;
     for(let i=0;i<5;i++){const code=stepError(content,i);if(code){setStep(i);setError([errors[code]?.[ar?0:1]??code]);return;}}
     setProcessing(true);setError([]);setMessage('');
     try{
@@ -83,7 +91,7 @@ function Wizard({initial,initialStage=0,initialCategory=0,initialTrack=0,admin,c
     setError([]);setStep(i=>Math.min(5,i+1));
   }
   async function returnForChanges(){
-    if(!draft||!admin||busy||step!==5)return;
+    if(!draft||!admin||!reviewOnly||busy||step!==5)return;
     const reason=window.prompt(ar?'سبب الرفض أو طلب التعديل':'Reason for rejection or requested changes');
     if(!reason?.trim())return;
     try{const updated=await action({id:draft.Id,Revision:draft.Revision,action:'review',Confirm:false,Note:reason.trim()}).unwrap();setDraft(updated);onSaved(updated.Id);setMessage(ar?'أعيدت المسألة للمشرف مع سبب الرفض':'Returned to the supervisor with feedback');}catch(e){failure(e);}
@@ -130,12 +138,12 @@ function Wizard({initial,initialStage=0,initialCategory=0,initialTrack=0,admin,c
     <div className="flex flex-wrap gap-2"><button className={btn} disabled={step===0} onClick={()=>setStep(i=>i-1)}>{ar?'السابق':'Previous'}</button><button className={btn} disabled={step===5||busy} onClick={nextStep}>{ar?'التالي':'Next'}</button>{!admin&&editable&&<button className={btn} disabled={busy||(!dirty&&!!draft)} onClick={()=>void store()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ للمتابعة لاحقاً':'Save for later')}</button>}{step===5&&editable&&canSubmit&&<button className={btn+' sr-wave-button text-white'} disabled={busy} onClick={()=>void completeProblem()}>{admin?(ar?'حفظ ونشر':'Save and publish'):(ar?'إرسال للموافقة':'Submit for approval')}</button>}</div>
     {dirty&&<p className="text-sm text-muted-foreground">{admin?(ar?'احفظ وانشر المسألة مباشرة.':'Save and publish directly.'):(ar?'يمكنك حفظ المسألة للمتابعة لاحقاً، أو إرسالها مباشرة.':'Save for later or submit directly.')}</p>}
     {step===5&&admin&&draft&&['PendingReview','Approved'].includes(draft.Status)&&<button className={btn+' sr-wave-button text-white'} disabled={busy} onClick={()=>void completeProblem()}>{ar?'نشر المسألة':'Publish problem'}</button>}
-    {step===5&&admin&&draft&&['PendingReview','Approved'].includes(draft.Status)&&<button className={btn+' text-destructive'} disabled={busy} onClick={()=>void returnForChanges()}>{ar?'رفض وإعادة للمشرف':'Reject and return'}</button>}
-    {draft&&!dirty&&(editable||(admin&&['PendingReview','Approved'].includes(draft.Status)))&&<button className={btn} disabled={busy} onClick={()=>{const reason=window.prompt(ar?'سبب سحب المسودة (سيبقى السجل محفوظاً)':'Reason for withdrawing the draft (history is retained)');if(reason?.trim()){setNote(reason);void action({id:draft.Id,action:'withdraw',Revision:draft.Revision,Note:reason}).unwrap().then(d=>{setDraft(d);setNote('');onSaved(d.Id);}).catch(failure);}}}>{ar?'سحب المسودة':'Withdraw draft'}</button>}
+    {step===5&&admin&&reviewOnly&&draft&&['PendingReview','Approved'].includes(draft.Status)&&<button className={btn+' text-destructive'} disabled={busy} onClick={()=>void returnForChanges()}>{ar?'رفض وإعادة للمشرف':'Reject and return'}</button>}
+    {!reviewOnly&&draft&&!dirty&&(editable||(admin&&['PendingReview','Approved'].includes(draft.Status)))&&<button className={btn} disabled={busy} onClick={()=>{const reason=window.prompt(ar?'سبب سحب المسودة (سيبقى السجل محفوظاً)':'Reason for withdrawing the draft (history is retained)');if(reason?.trim()){setNote(reason);void action({id:draft.Id,action:'withdraw',Revision:draft.Revision,Note:reason}).unwrap().then(d=>{setDraft(d);setNote('');onSaved(d.Id);}).catch(failure);}}}>{ar?'سحب المسودة':'Withdraw draft'}</button>}
     {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error.length>0&&<ul role="alert" className="list-inside list-disc text-sm text-destructive">{error.map((x,i)=><li key={i}>{x}</li>)}</ul>}
   </section>;
 }
-function Existing({id,...props}:{id:number;admin:boolean;canSubmit:boolean;onSaved:(id:number)=>void;onClose:()=>void}){const {currentData,isError,refetch}=useGetEditorialDraftQuery(id,{refetchOnMountOrArgChange:true});const ar=useLocale()==='ar';if(isError)return <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>;if(!currentData)return <MathWorldLoading/>;return <Wizard key={id} initial={currentData} {...props}/>;}
+function Existing({id,...props}:{id:number;admin:boolean;canSubmit:boolean;reviewOnly?:boolean;onSaved:(id:number)=>void;onClose:()=>void}){const {currentData,isError,refetch}=useGetEditorialDraftQuery(id,{refetchOnMountOrArgChange:true});const ar=useLocale()==='ar';if(isError)return <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>;if(!currentData)return <MathWorldLoading/>;return <Wizard key={id} initial={currentData} {...props}/>;}
 function BankReview({onOpen,stage,category,track}:{onOpen:(id:number)=>void;stage:number;category:number;track:number}){
   const ar=useLocale()==='ar';const [page,setPage]=useState(1);const [error,setError]=useState('');const [preview,setPreview]=useState<number|null>(null);
   const detail=useGetProblemQuery({Id:preview??0},{skip:preview===null});const [remove,{isLoading:deleting}]=useDeleteProblemMutation();
@@ -165,7 +173,7 @@ export function EditorialWorkspace({admin,canSubmit,initialStage=0,initialCatego
   const classification=useGetEditorialClassificationQuery(stage,{skip:admin});
   const list=useGetEditorialDraftsQuery(admin?{page,activeOnly:true,supervisorOnly:true}:page,{skip:admin&&initialTab!=='requests',refetchOnMountOrArgChange:60});
   useEffect(()=>{if(page>1&&list.currentData&&page>Math.max(1,Math.ceil(list.currentData.Total/30)))setPage(Math.max(1,Math.ceil(list.currentData.Total/30)));},[page,list.currentData]);
-  const props={admin,canSubmit,onSaved:()=>{if(!list.isUninitialized)void list.refetch();},onClose:()=>setSelected(null)};
+  const props={admin,canSubmit,reviewOnly:admin&&initialTab==='requests',onSaved:()=>{if(!list.isUninitialized)void list.refetch();},onClose:()=>setSelected(null)};
   const requests=<div className="space-y-3">
     {list.isError&&<button className={btn} onClick={()=>void list.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>}
     {list.isFetching&&(list.currentData?<MathWorldLoading inline mode="tab"/>:<MathWorldSkeleton kind="table"/>)}
