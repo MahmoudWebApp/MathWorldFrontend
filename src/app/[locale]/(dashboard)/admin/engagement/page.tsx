@@ -58,6 +58,8 @@ export default function AdminEngagementPage() {
     .sort((a, b) => b.ActiveSolvers - a.ActiveSolvers ||
       b.AttemptsInWindow - a.AttemptsInWindow || a.CategoryId - b.CategoryId);
   const filteredCategories=categoryId?rankedCategories.filter(c=>c.CategoryId===categoryId):rankedCategories;
+  const selectedCategory=rankedCategories.find(c=>c.CategoryId===categoryId);
+  const topStudents=categoryId?(selectedCategory?.TopStudents??[]):(selectedStage?.TopStudents??[]);
   const chartCategories = filteredCategories.slice(0, 8);
   const categoryChart = chartCategories.map(category => ({
     id: category.CategoryId,
@@ -173,13 +175,13 @@ export default function AdminEngagementPage() {
             </div>}
         </div>
         <div className="rounded-3xl border bg-card p-4 sm:p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold"><Trophy className="h-5 w-5 text-amber-500" />
-            {ar ? 'الأكثر حلّاً في المستوى (كل الوقت)' : 'Top solvers in stage (all time)'}
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold"><Trophy className="h-5 w-5 mw-reward-icon" />
+            {categoryId?(ar?'الأكثر حلّاً في الفئة (كل الوقت)':'Top solvers in category (all time)'):trackId?(ar?'الأكثر حلّاً في الصف (كل الوقت)':'Top solvers in grade (all time)'):(ar ? 'الأكثر حلّاً في المرحلة (كل الوقت)' : 'Top solvers in stage (all time)')}
           </h2>
-          {selectedStage.TopStudents.length === 0 ? <p className="text-sm text-muted-foreground">
+          {topStudents.length === 0 ? <p className="text-sm text-muted-foreground">
             {ar ? 'ما في حلول مسجّلة بعد.' : 'No solved problems yet.'}
           </p> : <ol className="space-y-2">
-            {selectedStage.TopStudents.slice(0,10).map(item => <li key={item.UserId}
+            {topStudents.slice(0,10).map(item => <li key={item.UserId}
               className="flex items-center gap-3 rounded-xl bg-muted/40 p-3">
               <span className="w-7 shrink-0 text-center text-sm font-extrabold text-primary">{item.Rank}</span>
               <Link href={`/admin/users/${item.UserId}`} className="min-w-0 flex-1 truncate text-sm font-semibold hover:underline">{item.FullName}</Link>
