@@ -119,6 +119,9 @@ export const platformBrandApi = createApi({
     amendEditorialProblem:builder.mutation<EditorialDraft,number>({
       query:id=>({url:'/editorial/problems/amend/'+id,method:'POST'}),invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
     }),
+    downloadEditorialGuide: builder.mutation<Blob,{lang:'ar'|'en'}>({
+      query:({lang})=>({url:'/editorial/problems/guide.pdf',params:{lang},responseHandler:(r:Response)=>r.blob()}),
+    }),
     getEditorialDrafts:builder.query<{Total:number;Items:EditorialRow[]},number|{page:number;activeOnly:boolean;supervisorOnly?:boolean;ownOnly?:boolean}>({
       query:arg=>({url:'/editorial/problems',params:typeof arg==='number'?{page:arg}:arg}),providesTags:['EditorialDraft'],
     }),
@@ -186,4 +189,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useDeleteSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useDeleteSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useDownloadEditorialGuideMutation,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;
