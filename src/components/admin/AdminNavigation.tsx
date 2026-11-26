@@ -4,7 +4,7 @@ import { useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import {
   ChartNoAxesCombined, ChevronDown,
-  GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, Gift, Settings,
+  ClipboardCheck, GraduationCap, LayoutDashboard, ShieldCheck, UsersRound, BellRing, Gift, Settings,
 } from 'lucide-react';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { cn } from '@/lib/utils';
@@ -88,8 +88,17 @@ export const ADMIN_NAV_ITEMS = [
     icon: GraduationCap,
     labelAr: 'المحتوى التعليمي',
     labelEn: 'Learning content',
-    descriptionAr: 'مرحلة ثم صف أو مساق ثم فئة ثم مسائل',
-    descriptionEn: 'Stage → grade or course → topic → problems',
+    descriptionAr: 'مرحلة ثم صف أو مستوى ثم فئة ثم مسائل',
+    descriptionEn: 'Stage → grade or level → topic → problems',
+    group: 'content',
+  },
+  {
+    href: '/admin/supervisor-reviews',
+    icon: ClipboardCheck,
+    labelAr: 'مراجعة مسائل المشرفين',
+    labelEn: 'Supervisor problem review',
+    descriptionAr: 'قبول المسائل المقدمة أو إعادتها للتعديل',
+    descriptionEn: 'Approve submitted problems or return for changes',
     group: 'content',
   },
 ] as const;
@@ -104,7 +113,7 @@ function AdminMenuLink({
 }) {
   const active = item.href === '/admin'
     ? pathname === '/admin'
-    : pathname === item.href || pathname.startsWith(item.href + '/') || (item.group==='content'&&/^\/admin\/(editorial|problems|categories|stages|learning-tracks)(\/|$)/.test(pathname));
+    : pathname === item.href || pathname.startsWith(item.href + '/') || (item.href==='/admin/stages'&&/^\/admin\/(editorial|problems|categories|stages|learning-tracks)(\/|$)/.test(pathname));
   const Icon = item.icon;
   return (
     <Link
@@ -157,7 +166,7 @@ export function AdminWorkspaceNavigation({ collapsed = false }: { collapsed?: bo
   // than /admin/problems) to avoid two highlighted links at once.
   const selectedHref = [...ADMIN_NAV_ITEMS]
     .filter(item => pathname === item.href ||
-      (item.href !== '/admin' && pathname.startsWith(item.href + '/')) || (item.group==='content'&&/^\/admin\/(editorial|problems|categories|stages|learning-tracks)(\/|$)/.test(pathname)))
+      (item.href !== '/admin' && pathname.startsWith(item.href + '/')) || (item.href==='/admin/stages'&&/^\/admin\/(editorial|problems|categories|stages|learning-tracks)(\/|$)/.test(pathname)))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   const groups = [

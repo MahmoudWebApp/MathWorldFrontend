@@ -175,7 +175,7 @@ function NavbarContent() {
         <nav className="mx-auto flex h-16 w-full max-w-[1920px] min-w-0 items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
           
           <Link
-            href={portalArea ? portalLanding : '/'}
+            href="/"
             className="group flex shrink-0 items-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="MathWorld"
           >

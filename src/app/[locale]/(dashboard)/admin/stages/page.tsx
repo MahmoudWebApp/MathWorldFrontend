@@ -186,7 +186,7 @@ export default function AdminStagesPage() {
                           href={`/admin/learning-tracks?stageId=${stage.Id}`}
                           className="mb-2 inline-flex items-center gap-1.5 rounded-lg border mw-topic-action px-3 py-2 text-xs font-bold sm:mb-0"
                         >
-                          {ar ? "عرض الصفوف والمساقات" : "View grades and courses"}
+                          {ar ? "عرض الصفوف والمستويات" : "View grades and levels"}
                           <DirectionalChevron direction="forward" className="h-4 w-4" />
                         </Link>
                         <Button
