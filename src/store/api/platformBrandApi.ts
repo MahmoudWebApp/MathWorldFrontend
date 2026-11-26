@@ -69,7 +69,7 @@ export interface EditorialOption {LatexCode:string;IsCorrect:boolean;ErrorType:s
 export interface EditorialSolution {Idea:Bilingual;FormulaLatex:string;Steps:Bilingual[];Substitution:Bilingual;Result:Bilingual;Unit:Bilingual;Verification:Bilingual;CommonError:Bilingual;ManualExplanation?:Bilingual|null}
 export interface EditorialContent {StageId:number;CategoryId:number;PrimarySkillId:number;SecondarySkillIds:number[];TrackIds:number[];DifficultyLevel:number;Points:number;Title:Bilingual;Question:Bilingual;Options:EditorialOption[];Hints:Bilingual[];Solution:EditorialSolution;YoutubeSolutionUrl?:string|null}
 export interface EditorialRow {Id:number;OwnerUserId:number;Revision:number;Status:string;TitleAr?:string;TitleEn?:string;QuestionTextAr?:string;QuestionTextEn?:string;ReviewNote?:string;PublishedProblemId?:number;SourceProblemId?:number|null}
-export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>;LegacySolutionAr?:string|null;LegacySolutionEn?:string|null}
+export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>;AllowOptionalSolutionFields?:boolean;LegacySolutionAr?:string|null;LegacySolutionEn?:string|null}
 export interface EditorialImportRow {ContentKey:string;PrimarySkillKey:string;ProposedTrackCodes:string[];Content:EditorialContent}
 export interface EditorialImportResult {Created:number;Ready?:number;Items:{ContentKey:string;Status:string;DraftId?:number|null;Errors:string[]}[];DraftIds?:number[]}
 export interface AmendmentImportRow {ProblemId:number;ExpectedOptionIds:number[];ExpectedLegacySolution:Bilingual;PrimarySkillKey:string;Content:Partial<EditorialContent>;Status:'StructuredAmendmentCandidateNotImported'}
