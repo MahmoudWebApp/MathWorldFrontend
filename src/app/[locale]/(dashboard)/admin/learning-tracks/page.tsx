@@ -4,7 +4,6 @@ import {useSearchParams} from 'next/navigation';
 import {Link} from '@/i18n/routing';
 import {Breadcrumbs} from '@/components/ui/Breadcrumbs';
 import {DirectionalChevron,DirectionalArrow} from '@/components/ui/DirectionalNavigation';
-import {useGetAdminCategoriesQuery} from '@/store/api/categoriesApi';
 import {GraduationCap} from 'lucide-react';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 import {getStageAccent} from '@/lib/stageVisuals';
@@ -108,14 +107,11 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
 }
 function TrackEditor({id,ar}:{id:number;ar:boolean}){
  const {data,isFetching,isError,refetch}=useGetAdminTrackQuery(id,{refetchOnMountOrArgChange:60});
- const categories=useGetAdminCategoriesQuery();
- const [editing,setEditing]=useState(true);
- if(isFetching&&!data||categories.isLoading)return <MathWorldSkeleton/>;
- if(isError||categories.isError||!data)return <button className={btn} onClick={()=>{void refetch();void categories.refetch();}}>{ar?'إعادة المحاولة':'Retry'}</button>;
- const accent=getStageAccent({Id:data.Track.StageId});
+ if(isFetching&&!data)return <MathWorldSkeleton/>;
+ if(isError||!data)return <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>;
  return <section className="space-y-4 rounded-2xl border bg-card p-4">
- <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-bold">{ar?data.Track.NameAr:data.Track.NameEn}</h2><button className={btn} onClick={()=>setEditing(v=>!v)}>{editing?(ar?'عرض الفئات':'View categories'):(ar?'تعديل المستوى':'Edit level')}</button></div>
- {editing?<MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>:<div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[540px] text-sm"><thead><tr>{['ID',ar?'الاسم بالعربية':'Arabic name',ar?'الاسم بالإنجليزية':'English name',ar?'الإجراءات':'Actions'].map(label=><th key={label} className="p-3 text-start">{label}</th>)}</tr></thead><tbody>{(categories.data??[]).filter(c=>data.CategoryIds.includes(c.Id)).map(c=><tr key={c.Id} className="border-b mw-topic-row" style={{'--stage-accent':accent} as import('react').CSSProperties}><td className="p-3">{c.Id}</td><td className="p-3 font-bold mw-topic-ink">{c.NameAr}</td><td className="p-3">{c.NameEn}</td><td className="p-3"><Link href={'/admin/editorial?stageId='+data.Track.StageId+'&trackId='+id+'&categoryId='+c.Id} className={btn+' mw-topic-ink'}>{ar?'عرض المسائل':'View problems'}</Link></td></tr>)}{!data.CategoryIds.length&&<tr><td colSpan={4} className="p-6 text-center text-muted-foreground">{ar?'لا توجد فئات مرتبطة بعد':'No linked categories yet'}</td></tr>}</tbody></table></div>}
+ <h2 className="text-lg font-bold">{ar?data.Track.NameAr:data.Track.NameEn}</h2>
+ <MappingEditor key={id+'-'+data.Track.Revision} detail={data} ar={ar}/>
  </section>;
 }
 function LearningTracksContent(){
