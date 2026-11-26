@@ -138,5 +138,8 @@ assert.doesNotMatch(scopedTopics,/"اختيار الصف" : "Choose grade"/);
 assert.doesNotMatch(componentStyle,/:where\(h1,h2,h3,h4,h5,h6\)/);
 assert.match(editor,/<ProblemAuthoringGuide\/>/);
 assert.match(editor,/<ProblemTitle text=\{showPair\(content.Title\)\}/);
-assert.match(editor,/if\(busy\|\|!canSubmit\|\|step!==5/);
+// The new video step precedes the final preview; publication must still be restricted to preview.
+assert.match(editor,/if\(busy\|\|!canSubmit\|\|step!==6/);
+assert.match(editor,/step===5&&c\.YoutubeSolutionUrl/);
+assert.match(editor,/step===6&&editable&&canSubmit/);
 console.log('PASS: scoped admin content, explicit brand headings, original guide, gated editor and math titles.');
