@@ -13,7 +13,7 @@ import {
   type CategoryDto,
 } from "@/store/api/categoriesApi";
 import { getStageAccent } from "@/lib/stageVisuals";
-import { useGetAdminStagesQuery } from "@/store/api/stagesApi";
+import { useGetAdminStagesQuery, useGetAdminTrackQuery } from "@/store/api/stagesApi";
 import {
   Add,
   Edit,
@@ -49,6 +49,9 @@ function AdminCategoriesPageContent() {
   const t = useTranslations();
   const locale = useLocale();
   const searchParams = useSearchParams();
+  const trackId=Number(searchParams.get("trackId"));
+  const validTrack=Number.isSafeInteger(trackId)&&trackId>0;
+  const track=useGetAdminTrackQuery(trackId,{skip:!validTrack});
   const { data: categories, isLoading, isError: categoriesError, refetch } = useGetAdminCategoriesQuery();
   const { data: stages, isLoading: isLoadingStages, isError: stagesError, refetch: refetchStages } = useGetAdminStagesQuery();
 
@@ -115,8 +118,8 @@ function AdminCategoriesPageContent() {
   };
 
   const filteredCategories = selectedStageId
-    ? categories?.filter((cat) => cat.StageId === selectedStageId)
-    : categories;
+    ? categories?.filter((cat) => cat.StageId === selectedStageId && track.currentData?.CategoryIds.includes(cat.Id))
+    : [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,31 +250,31 @@ function AdminCategoriesPageContent() {
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  if (isLoading || isLoadingStages)
+  if (isLoading || isLoadingStages || (validTrack&&track.isLoading))
     return (
       <div role="status" aria-busy="true" aria-label={t("common.loading")} className="animate-pulse grid gap-4 px-4 py-8 md:grid-cols-2 md:px-16 lg:px-24">
         {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-44 rounded-xl border border-border/60 bg-card/70" />)}
       </div>
     );
 
-  if (categoriesError || stagesError) return (
+  if (categoriesError || stagesError || track.isError) return (
     <div className="container mx-auto px-4 py-12 text-center" role="alert">
       <p className="mb-4 font-medium text-destructive">
         {locale === "ar" ? "تعذر تحميل المراحل أو الفئات. تحقق من الاتصال ثم حاول مجدداً." : "Could not load stages or categories. Check your connection and try again."}
       </p>
-      <Button type="button" variant="outline" onClick={() => { void refetch(); void refetchStages(); }}>
+      <Button type="button" variant="outline" onClick={() => { void refetch(); void refetchStages(); if(validTrack)void track.refetch(); }}>
         {locale === "ar" ? "إعادة المحاولة" : "Retry"}
       </Button>
     </div>
   );
 
-  if (!selectedStageId) {
+  if (!selectedStageId || !validTrack || track.currentData?.Track.StageId!==selectedStageId) {
     return (
       <main className="mx-auto max-w-xl space-y-4 px-4 py-12 text-center">
-        <h1 className="text-2xl font-bold">{locale === 'ar' ? 'اختر المرحلة التعليمية أولاً' : 'Choose an educational stage first'}</h1>
+        <h1 className="text-2xl font-bold">{locale === 'ar' ? 'اختر المرحلة والصف أو المستوى أولاً' : 'Choose a stage and grade or level first'}</h1>
         <p className="text-muted-foreground">{locale === 'ar'
-          ? 'لإدارة الفئات، ادخل من المراحل التعليمية واختر المرحلة المطلوبة.'
-          : 'To manage topics, open Educational Stages and choose a stage.'}</p>
+          ? 'لإدارة الفئات، اختر المرحلة ثم الصف أو المستوى المطلوب.'
+          : 'To manage topics, choose the stage and then a grade or level.'}</p>
         <Link href="/admin/stages" className="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 py-2 font-bold text-primary-foreground">
           {locale === 'ar' ? 'المراحل التعليمية' : 'Educational stages'}
         </Link>
@@ -285,23 +288,22 @@ function AdminCategoriesPageContent() {
         items={[
           { label: t("nav.admin"), href: "/admin" },
           { label: t("admin.stages.title"), href: "/admin/stages" },
-          { label: selectedStageId
-              ? (locale === "ar"
-                  ? stages?.find(s => s.Id === selectedStageId)?.NameAr
-                  : stages?.find(s => s.Id === selectedStageId)?.NameEn) || t("admin.categories.title")
-              : t("admin.categories.title") }, 
+          { label: (locale==="ar"?stages?.find(s=>s.Id===selectedStageId)?.NameAr:stages?.find(s=>s.Id===selectedStageId)?.NameEn)??"", href:"/admin/learning-tracks?stageId="+selectedStageId },
+          { label: locale==="ar"?track.currentData.Track.NameAr:track.currentData.Track.NameEn },
+          { label: locale==="ar"?"الفئات":"Categories" },
         ]}
         className="mb-6"
       />
       <WorkspacePageHeader title={t("admin.categories.title")} icon={Shapes} actions={<div className="flex flex-wrap items-center gap-2">
-
+        <Link href={"/admin/learning-tracks?stageId="+selectedStageId+"&trackId="+trackId+"&edit=1"} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold">{locale==="ar"?"إدارة ارتباطات الفئات":"Manage category mappings"}</Link>
+        <Link href={"/admin/learning-tracks?stageId="+selectedStageId} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold"><DirectionalChevron direction="back" className="h-4 w-4"/>{locale==="ar"?"العودة للصفوف والمستويات":"Back to grades and levels"}</Link>
         <Button
           onClick={openCreateModal}
           className="gap-2"
           disabled={!selectedStageId}
         >
           <Add className="h-4 w-4" />
-          {t("admin.categories.addNew")}
+          {locale==="ar"?"تعريف فئة جديدة":"Define new category"}
         </Button>
         </div>}/>
 
@@ -329,7 +331,7 @@ function AdminCategoriesPageContent() {
               <tbody>
                 {filteredCategories?.length === 0 && (
                   <tr><td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
-                    {locale === "ar" ? "لا توجد فئات ضمن هذه المرحلة بعد. يمكنك إضافة فئة جديدة." : "No categories in this stage yet. You can add a new category."}
+                    {locale === "ar" ? "لا توجد فئات مرتبطة بهذا الصف أو المستوى بعد." : "No categories are linked to this grade or level yet."}
                   </td></tr>
                 )}
                 {filteredCategories?.map((category) => (
@@ -357,7 +359,7 @@ function AdminCategoriesPageContent() {
                     </td>
                     <td className="p-4 font-bold text-start">
                       <Link
-                        href={`/admin/learning-tracks?stageId=${category.StageId}`}
+                        href={`/admin/editorial?stageId=${category.StageId}&trackId=${trackId}&categoryId=${category.Id}`}
                         className="inline-flex items-center gap-1.5 mw-topic-ink hover:underline"
                       >
                         {category.NameAr}
@@ -377,10 +379,10 @@ function AdminCategoriesPageContent() {
                     </td>
                     <td className="p-4 space-x-2 rtl:space-x-reverse whitespace-nowrap">
                       <Link
-                        href={`/admin/learning-tracks?stageId=${category.StageId}`}
+                        href={`/admin/editorial?stageId=${category.StageId}&trackId=${trackId}&categoryId=${category.Id}`}
                         className="mb-1 inline-flex items-center gap-1 rounded-lg border mw-topic-action px-2.5 py-2 text-xs font-semibold"
                       >
-                        {locale === "ar" ? "اختيار الصف" : "Choose grade"}
+                        {locale === "ar" ? "عرض المسائل" : "View problems"}
                         <DirectionalChevron direction="forward" className="h-4 w-4" />
                       </Link>
 
@@ -412,7 +414,7 @@ function AdminCategoriesPageContent() {
                             <PopoverConfirm
                               onConfirm={() => handleDelete(category.Id)}
                               title={t("common.confirmDeleteTitle")}
-                              description={t("admin.categories.confirmDelete")}
+                              description={locale==="ar"?"حذف تعريف الفئة يؤثر على كل الصفوف المرتبطة بها. يمنع الخادم حذف الفئة إذا كانت لها بيانات محمية.":"Deleting this category definition affects all linked grades; protected records prevent deletion."}
                               confirmText={t("common.delete")}
                               cancelText={t("common.cancel")}
                               isLoading={deletingId === category.Id}
@@ -498,6 +500,7 @@ function AdminCategoriesPageContent() {
                   {saveError}
                 </p>
               )}
+              {!isEditing&&<p className="text-sm text-muted-foreground">{locale==="ar"?"بعد حفظ التعريف، اربطه بالصف أو المستوى من إدارة الارتباطات.":"After saving the definition, link it to this grade or level in Manage mappings."}</p>}
               {/* Icon Upload / Preview */}
               <div>
                 <label className="block mb-2 text-sm font-semibold">

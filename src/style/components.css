@@ -933,8 +933,7 @@ button.bg-primary:disabled {opacity:.5;}
 
 /* Unified animated brand typography and flat primary actions (owner review).
    Keep semantic stage accents, errors and focus indications legible. */
-.text-gradient-math,
-:where(h1,h2,h3,h4,h5,h6):not(.mw-topic-ink):not(.sr-only):not(.text-white):not(.text-destructive) {
+.text-gradient-math {
   background: linear-gradient(45deg,var(--color-one),var(--color-two),var(--color-three),var(--color-two),var(--color-one)) 0 0 / var(--bg-size) 100%;
   background-clip: text;
   -webkit-background-clip: text;
@@ -943,8 +942,7 @@ button.bg-primary:disabled {opacity:.5;}
   animation: mw-title-wave 12s linear infinite;
 }
 .sr-wave-button, .sr-cta-ring, .mw-admin-action-primary,
-button.bg-primary:not([role="tab"]), a.bg-primary,
-button[role="tab"][data-state="active"]:not(.mw-topic-action) {
+button.bg-primary:not([role="tab"]), a.bg-primary {
   background: linear-gradient(105deg,#5c24ff 0%,#a627db 35%,#ff2399 65%,#a627db 85%,#5c24ff 100%) 0 0 / 220% 100%;
   color: #fff;
   animation: sr-gradient-drift 9s ease-in-out infinite;
@@ -957,7 +955,8 @@ button:focus-visible,[role="button"]:focus-visible,a.sr-wave-button:focus-visibl
 }
 .sr-wave-button:hover, .mw-admin-action-primary:hover { background-position: 100% 50%; }
 @media (prefers-reduced-motion:reduce) {
-  .text-gradient-math, :where(h1,h2,h3,h4,h5,h6),
-  .sr-wave-button,.sr-cta-ring,.mw-admin-action-primary,button.bg-primary,a.bg-primary,
-  button[role="tab"][data-state="active"] { animation: none !important; }
+  .text-gradient-math,
+  .sr-wave-button,.sr-cta-ring,.mw-admin-action-primary,button.bg-primary,a.bg-primary { animation: none !important; }
 }
+
+.mw-topic-tabs [role="tab"][data-state="active"] {background:var(--stage-accent);color:#fff;animation:none;}
