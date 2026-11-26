@@ -41,7 +41,7 @@ export function RichText({
     >
       {parts.map((part, index) => {
         if (part.type === 'block') {
-          return <LatexPreview key={index} latex={part.value} block className={blockClassName} />;
+          return <LatexPreview key={index} latex={part.value} block={!inline} className={blockClassName} />;
         }
         if (part.type === 'inline') {
           return <LatexPreview key={index} latex={part.value} />;
