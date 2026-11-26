@@ -1,0 +1,4 @@
+import type {ReactNode} from 'react';
+const tones={neutral:'bg-slate-500/10 text-slate-600 dark:text-slate-300',green:'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',blue:'bg-sky-500/10 text-sky-700 dark:text-sky-300',amber:'bg-amber-500/10 text-amber-700 dark:text-amber-300',purple:'bg-violet-500/10 text-violet-700 dark:text-violet-300',red:'bg-red-500/10 text-red-700 dark:text-red-300'} as const;
+export function DataBadge({children,tone='neutral'}:{children:ReactNode;tone?:keyof typeof tones}){return <span className={'inline-flex max-w-full items-center rounded-lg px-2.5 py-1 text-xs font-semibold tabular-nums '+tones[tone]}>{children}</span>}
+export function StageDataBadge({children,id}:{children:ReactNode;id?:number|null}){return <DataBadge tone={id===1?'blue':id===2?'amber':id===3?'green':id===4?'purple':'neutral'}>{children}</DataBadge>}

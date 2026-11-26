@@ -1,6 +1,7 @@
 // components/ui/Breadcrumbs.tsx
 "use client";
 
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import { Link } from "@/i18n/routing";
 import { useLocale } from "next-intl";
 import { Home } from "lucide-react";
@@ -62,7 +63,7 @@ export function Breadcrumbs({
                   aria-label={item.label}
                 >
                   {index === 0 && <Home className="h-4 w-4 shrink-0" aria-hidden="true" />}
-                  <span dir="auto" className={labelClassName}>{item.label}</span>
+                  <span dir="auto" className={labelClassName}><ProblemTitle text={item.label}/></span>
                 </Link>
               ) : (
                 <span
@@ -72,7 +73,7 @@ export function Breadcrumbs({
                   title={item.label}
                   aria-label={item.label}
                 >
-                  {item.label}
+                  <ProblemTitle text={item.label}/>
                 </span>
               )}
 

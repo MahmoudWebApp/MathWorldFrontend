@@ -1,7 +1,9 @@
 'use client';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
-import {UsersRound} from 'lucide-react';
+import {UsersRound,Save,History,Trash2,Mail} from 'lucide-react';
 
+import {DataBadge} from '@/components/admin/AdminDataBadges';
+import {Tooltip,TooltipTrigger,TooltipContent} from '@/components/ui/Tooltip';
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
@@ -62,12 +64,12 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
         : (ar?'أضيفت الدعوة للطابور لكن عامل البريد معطّل.':'Invitation queued, but the mail worker is disabled.'));
     }catch(e){setError(errorText(e,ar));}
   }
-  return <article className="space-y-3 rounded-2xl border bg-card p-4">
-    <div className="flex flex-wrap items-center justify-between gap-2">
+  return <article className="grid gap-4 border-b last:border-b-0 bg-card p-4 lg:grid-cols-[minmax(180px,1fr)_minmax(0,1.8fr)_auto] lg:items-start">
+    <div className="space-y-2">
       <div><h2 className="font-bold">{row.FullName}</h2><p className="break-all text-sm text-muted-foreground">{row.Email}</p></div>
-      <span className="rounded-lg border px-3 py-1 text-sm">{!row.IsActive?(ar?'معطّل':'Disabled'):row.StaffSetupPending?(ar?'بانتظار تعيين كلمة المرور':'Awaiting password setup'):(ar?'مفعّل':'Active')}</span>
+      <DataBadge tone={!row.IsActive?'red':row.StaffSetupPending?'amber':'green'}>{!row.IsActive?(ar?'معطّل':'Disabled'):row.StaffSetupPending?(ar?'بانتظار تعيين كلمة المرور':'Awaiting password setup'):(ar?'مفعّل':'Active')}</DataBadge>
     </div>
-    <div className="flex flex-wrap gap-4 text-sm">
+    <div className="grid gap-2 text-sm sm:grid-cols-2">
       <label className="flex items-center gap-2"><input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} disabled={saving||sending}/>{ar?'الحساب مفعّل':'Account enabled'}</label>
       <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&1)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|1:p&~3)} disabled={saving||sending}/>{ar?'إضافة وتعديل مسائله':'Add/edit own problems'}</label>
       <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&2)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|2:p&~2)} disabled={saving||sending||(permissions&1)===0}/>{ar?'إرسال للمراجعة':'Submit for review'}</label>
@@ -76,13 +78,15 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
       <label className="flex items-center gap-2"><input type="checkbox" checked={(permissions&16)!==0} onChange={e=>setPermissions(p=>e.target.checked?p|16:p&~16)} disabled={saving||sending}/>{ar?'عرض التقارير':'View reports'}</label>
     </div>
     <div className="flex flex-wrap gap-2">
-      <button className={button} disabled={saving||sending||(active===row.IsActive&&permissions===row.Permissions)} onClick={()=>void save()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الصلاحيات':'Save permissions')}</button>
-      {row.StaffSetupPending&&row.IsActive&&<button className={button} disabled={saving||sending||active!==row.IsActive||permissions!==row.Permissions} onClick={()=>void send()}>{sending?(ar?'جارٍ الإضافة…':'Queuing…'):(ar?'إرسال / إعادة الدعوة':'Send / resend invitation')}</button>}
-      <button type="button" className={button+' text-destructive border-destructive/30'} disabled={deleting||saving||sending} onClick={()=>void deleteAccount()}>{deleting?(ar?'جارٍ الحذف…':'Deleting…'):(ar?'حذف المشرف':'Delete supervisor')}</button>
-      <button className={button} aria-expanded={showActivity} onClick={()=>setShowActivity(v=>!v)}>{showActivity?(ar?'إخفاء السجل':'Hide history'):(ar?'سجل النشاط':'Activity history')}</button>
+      <Tooltip><TooltipTrigger asChild><button className={button+' text-emerald-600'} disabled={saving||sending||(active===row.IsActive&&permissions===row.Permissions)} onClick={()=>void save()} aria-label={ar?'حفظ الصلاحيات':'Save permissions'}><Save size={17}/></button></TooltipTrigger><TooltipContent>{ar?'حفظ الصلاحيات':'Save permissions'}</TooltipContent></Tooltip>
+      {row.StaffSetupPending&&row.IsActive&&<Tooltip><TooltipTrigger asChild><button className={button} disabled={saving||sending||active!==row.IsActive||permissions!==row.Permissions} onClick={()=>void send()} aria-label={ar?'إرسال الدعوة':'Send invitation'}><Mail size={17}/></button></TooltipTrigger><TooltipContent>{ar?'إرسال الدعوة':'Send invitation'}</TooltipContent></Tooltip>}
+      <Tooltip><TooltipTrigger asChild><button className={button} aria-expanded={showActivity} onClick={()=>setShowActivity(v=>!v)} aria-label={ar?'سجل النشاط':'Activity history'}><History size={17}/></button></TooltipTrigger><TooltipContent>{ar?'سجل النشاط':'Activity history'}</TooltipContent></Tooltip>
+      <Tooltip><TooltipTrigger asChild><button type="button" className={button+' text-destructive border-destructive/30'} disabled={deleting||saving||sending} onClick={()=>void deleteAccount()} aria-label={ar?'حذف المشرف':'Delete supervisor'}><Trash2 size={17}/></button></TooltipTrigger><TooltipContent>{ar?'حذف المشرف':'Delete supervisor'}</TooltipContent></Tooltip>
     </div>
+    <div className="lg:col-span-3 empty:hidden">
     {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     {showActivity&&<StaffActivity id={row.Id} ar={ar}/>}
+    </div>
   </article>;
 }
 export default function SupervisorsPage(){
@@ -119,7 +123,7 @@ export default function SupervisorsPage(){
     <div className="flex items-center justify-between"><h2 className="text-lg font-bold">{ar?'المشرفون':'Supervisors'} {data?('('+data.Total+')'):''}</h2></div>
     {isFetching&&!data&&<p role="status">{ar?'جارٍ التحميل…':'Loading…'}</p>}{isError&&<p role="alert">{ar?'تعذّر تحميل المشرفين.':'Could not load supervisors.'} <button className="underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&<>{data.Items.length===0&&<p className="text-muted-foreground">{ar?'لا يوجد مشرفون حالياً.':'No supervisors yet.'}</p>}
-      {data.Items.map(row=><StaffRow key={row.Id+'-'+row.Revision} row={row} ar={ar}/>)}
+      <div className="overflow-hidden rounded-2xl border bg-card"><div className="hidden grid-cols-[minmax(180px,1fr)_minmax(0,1.8fr)_auto] gap-4 bg-muted/50 p-4 text-sm font-bold lg:grid"><span>{ar?'المشرف والحالة':'Supervisor and status'}</span><span>{ar?'الصلاحيات':'Permissions'}</span><span>{ar?'الإجراءات':'Actions'}</span></div>{data.Items.map(row=><StaffRow key={row.Id+'-'+row.Revision} row={row} ar={ar}/>)}</div>
       {data.Total>50&&<div className="flex gap-2 items-center"><button className={button} disabled={page<=1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={button} disabled={page*50>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
     </>}
   </main>;

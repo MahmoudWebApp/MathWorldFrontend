@@ -17,7 +17,8 @@ import { useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQu
 const socialNames:Record<string,string>={YouTube:'يوتيوب',TikTok:'تيك توك',Facebook:'فيسبوك',Instagram:'إنستغرام',GitHub:'غيت هب','X (Twitter)':'إكس',LinkedIn:'لينكد إن'};
 const inputClass='w-full rounded-xl border bg-background p-2.5 text-sm';
 function BrandEditor({initial,ar}:{initial:BrandView;ar:boolean}) {
-  const [profile,setProfile]=useState<BrandProfile>(()=>structuredClone({...initial.Profile,SocialLinks:initial.Revision===0&&!initial.Profile.SocialLinks.length?defaultSocialLinks:initial.Profile.SocialLinks}));
+  const email=useSelector((s:RootState)=>s.auth.user?.Email);
+  const [profile,setProfile]=useState<BrandProfile>(()=>structuredClone({...initial.Profile,SupportEmail:initial.Profile.SupportEmail||email||'',DescriptionAr:initial.Profile.DescriptionAr||'منصة عالم الرياضيات التعليمية لتدريب الطلاب وتطوير مهاراتهم في الرياضيات لجميع المراحل الدراسية.',DescriptionEn:initial.Profile.DescriptionEn||'MathWorld is an interactive educational platform for practicing mathematics and building problem-solving skills across all grade levels.',TermsUrl:initial.Profile.TermsUrl||'https://math-world-frontend.vercel.app/ar/terms',SocialLinks:initial.Revision===0&&!initial.Profile.SocialLinks.length?defaultSocialLinks:initial.Profile.SocialLinks}));
   const [revision,setRevision]=useState(initial.Revision);
   const [save,{isLoading}]=useUpdateBrandMutation();
   const [status,setStatus]=useState('');
@@ -38,7 +39,7 @@ function BrandEditor({initial,ar}:{initial:BrandView;ar:boolean}) {
   return <form onSubmit={submit} className="space-y-5 rounded-2xl border bg-card p-5">
     <h2 className="text-lg font-bold">{ar?'الهوية وبيانات التواصل':'Brand and contact details'}</h2>
     <label className="grid gap-2 text-sm">{ar?'الموقع الرسمي':'Official website'}<input className={inputClass} dir="ltr" readOnly value={initial.WebsiteUrl}/></label>
-    <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">{fields.map(field=><label className="grid min-w-0 gap-2 text-sm font-medium" key={field.key}>{ar?field.ar:field.en}<input className={inputClass} dir={field.key.endsWith("Url")||field.key==="SupportEmail"||field.key==="Phone"||field.key.endsWith("En")?"ltr":"auto"} value={profile[field.key]??''} onChange={e=>setProfile(p=>({...p,[field.key]:e.target.value}))}/></label>)}</div>
+    <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">{fields.map(field=><label className="grid min-w-0 gap-2 text-sm font-medium" key={field.key}>{ar?field.ar:field.en}<input className={inputClass} dir={field.key.endsWith("Url")||field.key==="SupportEmail"||field.key==="Phone"||field.key.endsWith("En")?"ltr":"auto"} placeholder={field.key==='Phone'?(ar?'رقم هاتف الدعم (اختياري)':'Optional support phone'):field.key.startsWith('ContactAddress')?(ar?'عنوان التواصل (اختياري)':'Optional contact address'):undefined} value={profile[field.key]??''} onChange={e=>setProfile(p=>({...p,[field.key]:e.target.value}))}/></label>)}</div>
     <h3 className="font-bold">{ar?'روابط التواصل الاجتماعي':'Social links'}</h3>
     <div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[680px] text-sm">
       <thead><tr>{[ar?'المنصة':'Platform',ar?'الرابط':'Link',ar?'الترتيب':'Order',ar?'منشور':'Published',ar?'حذف':'Remove'].map(label=><th key={label} className="px-3 py-3 text-start">{label}</th>)}</tr></thead>

@@ -690,9 +690,9 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             {points > 0 && (
               <Badge
                 variant="outline"
-                className="gap-1 border-primary/30 bg-primary/5 text-primary"
+                className="gap-1 border-amber-400/35 bg-amber-500/10 text-amber-700 dark:text-amber-300"
               >
-                <Star className="h-4 w-4 fill-primary/20 text-primary/70" />
+                <Star className="h-4 w-4 fill-amber-400/30 text-amber-500" />
                 <span className="font-semibold">{points}</span>
               </Badge>
             )}
@@ -732,7 +732,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             className={
               isFavorite
                 ? "text-red-500 hover:text-red-600"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-red-500 hover:text-red-600"
             }
           >
             <Heart
