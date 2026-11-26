@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { Link, usePathname, useRouter } from "@/i18n/routing";
-import { useGetDailyChallengeQuery, useGetTrackPracticeQuery } from "@/store/api/stagesApi";
+import { useGetDailyChallengeQuery, useGetNextTrackProblemQuery } from "@/store/api/stagesApi";
 import type { RootState } from "@/store";
 import {
   type AdminProblemOption,
@@ -158,16 +158,10 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const trackId = Number(searchParams.get('trackId') ?? 0);
   const fromTrack = learnerWorkspace && Number.isSafeInteger(trackId) && trackId > 0;
   const trackCategoryId = Number(searchParams.get('categoryId') ?? 0);
-  const practicePage = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
   const scopedPractice = fromTrack && Number.isSafeInteger(trackCategoryId) && trackCategoryId > 0;
-  const practice = useGetTrackPracticeQuery({id:trackId,categoryId:trackCategoryId,page:practicePage},{skip:!scopedPractice});
-  const practiceItems = practice.currentData?.Items ?? [];
-  const practiceIndex = practiceItems.findIndex(item=>item.Id===problemId);
-  const following = practiceIndex>=0 ? practiceItems.slice(practiceIndex+1).find(item=>!item.IsSolved) : undefined;
-  const hasNextPage = practiceIndex>=0 && !!practice.currentData && practicePage*practice.currentData.PageSize<practice.currentData.Total;
-  const nextPage = useGetTrackPracticeQuery({id:trackId,categoryId:trackCategoryId,page:practicePage+1},{skip:!scopedPractice||!hasNextPage||!!following});
-  const nextPractice = following ?? nextPage.currentData?.Items.find(item=>!item.IsSolved);
-  const nextPracticeUrl = nextPractice ? '/dashboard/problems/'+nextPractice.Id+'?trackId='+trackId+'&categoryId='+trackCategoryId+'&page='+(following?practicePage:practicePage+1) : null;
+  const nextQuery = useGetNextTrackProblemQuery({id:trackId,categoryId:trackCategoryId,afterProblemId:problemId},{skip:!scopedPractice||!Number.isSafeInteger(problemId)||problemId<=0});
+  const nextPractice = nextQuery.currentData?.TrackId===trackId && nextQuery.currentData?.CategoryId===trackCategoryId ? nextQuery.currentData.Problem : null;
+  const nextPracticeUrl = nextPractice && nextPractice.Id!==problemId ? '/dashboard/problems/'+nextPractice.Id+'?trackId='+trackId+'&categoryId='+trackCategoryId : null;
   const trackBackUrl = scopedPractice ? '/dashboard/categories/'+trackId+'/'+trackCategoryId : '/dashboard/categories';
   const challengeStageId = Number(searchParams.get('stageId') ?? 0);
   const challengeDate = searchParams.get('daily') ?? '';
