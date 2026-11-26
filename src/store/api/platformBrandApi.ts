@@ -113,6 +113,9 @@ export const platformBrandApi = createApi({
       query:body=>({url:'/editorial/problems/amend/import',method:'POST',body}),
       invalidatesTags:(_r,e,arg)=>!e&&arg.Confirm?['EditorialDraft']:[],
     }),
+    getPublishedEditorialPreview:builder.query<{Id:number;TitleAr:string;TitleEn:string;QuestionTextAr:string;QuestionTextEn:string;DetailedSolutionAr:string;DetailedSolutionEn:string;YoutubeSolutionUrl?:string|null;Options:{Id:number;LatexCode:string;IsCorrect:boolean}[];Hints:Bilingual[]},number>({
+      query:id=>'/editorial/problems/bank/'+id+'/preview',keepUnusedDataFor:0,
+    }),
     getEditorialBank:builder.query<{Total:number;Items:EditorialBankRow[]},{page:number;stageId?:number;categoryId?:number;trackId?:number;search?:string}>({
       query:params=>({url:'/editorial/problems/bank',params}),providesTags:['EditorialDraft'],
     }),
@@ -189,4 +192,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useDeleteSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useDownloadEditorialGuideMutation,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useDeleteSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useDownloadEditorialGuideMutation,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetPublishedEditorialPreviewQuery,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;
