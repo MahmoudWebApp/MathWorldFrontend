@@ -3,7 +3,8 @@
 import { BookOpenCheck, RefreshCw } from 'lucide-react';
 import { useLocale } from 'next-intl';
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import * as Popover from '@radix-ui/react-popover';
+import type { ReactElement,ReactNode } from 'react';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useGetPublishedStageSkillsQuery } from '@/store/api/curriculumApi';
 
@@ -12,30 +13,26 @@ import { useGetPublishedStageSkillsQuery } from '@/store/api/curriculumApi';
  * CurriculumSkills already has CategoryId and both languages; duplicating the
  * relationship in a string field on Categories would create two sources of truth.
  */
-export function CategorySkillsDialog({
-  stageId, category, onClose,
-}: {
-  stageId: number;
-  category: { Id: number; NameAr: string; NameEn: string } | null;
-  onClose: () => void;
-}) {
-  const ar = useLocale() === 'ar';
-  const { data: skills, isLoading, isFetching, isError, refetch } =
-    useGetPublishedStageSkillsQuery(stageId, { skip: !category || stageId <= 0 });
-  const published = (skills ?? []).filter(skill => skill.CategoryId === category?.Id);
-
-  return (
-    <Dialog open={!!category} onOpenChange={open => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <div className="mb-1 flex items-center gap-2 text-primary">
-            <BookOpenCheck className="h-6 w-6" aria-hidden="true" />
-            <DialogTitle>{ar ? 'المهارات التعليمية' : 'Learning skills'}</DialogTitle>
-          </div>
-          <DialogDescription>
-            {ar ? category?.NameAr : category?.NameEn}
-          </DialogDescription>
-        </DialogHeader>
+export function SkillsPopover({trigger,title,children}:{trigger:ReactElement;title:string;children:ReactNode}){
+  const ar=useLocale()==='ar';
+  return <Popover.Root modal={false}>
+    <Popover.Trigger asChild>{trigger}</Popover.Trigger>
+    <Popover.Portal><Popover.Content dir={ar?'rtl':'ltr'} side="bottom" align="start" sideOffset={9} collisionPadding={12} className="z-[70] w-[min(88vw,430px)] max-h-[min(70vh,var(--radix-popover-content-available-height))] overflow-y-auto rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-xl outline-none">
+      <Popover.Arrow className="fill-popover stroke-border" width={16} height={8}/>
+      <div className="mb-3 space-y-1 border-b pb-3"><h3 className="flex items-center gap-2 font-bold text-primary"><BookOpenCheck className="h-5 w-5"/>{ar?'المهارات التعليمية':'Learning skills'}</h3><p className="text-sm text-muted-foreground">{title}</p></div>
+      {children}
+    </Popover.Content></Popover.Portal>
+  </Popover.Root>;
+}
+export function CategorySkillsPopover({stageId,category,trigger}:{stageId:number;category:{Id:number;NameAr:string;NameEn:string};trigger:ReactElement}){
+  const ar=useLocale()==='ar';
+  return <SkillsPopover trigger={trigger} title={ar?category.NameAr:category.NameEn}><PublishedSkills stageId={stageId} categoryId={category.Id}/></SkillsPopover>;
+}
+function PublishedSkills({stageId,categoryId}:{stageId:number;categoryId:number}){
+  const ar=useLocale()==='ar';
+  const {currentData:skills,isLoading,isFetching,isError,refetch}=useGetPublishedStageSkillsQuery(stageId,{skip:stageId<=0});
+  const published=(skills??[]).filter(skill=>skill.CategoryId===categoryId);
+  return <div className="space-y-3">
         {isLoading || (isFetching && !skills) ? (
           <MathWorldLoading compact />
         ) : isError || !skills ? (
@@ -79,7 +76,5 @@ export function CategorySkillsDialog({
           {ar ? 'المهارات أهداف تعلّم، مو نسب إتقان أو شهادات اعتماد. تقدّمك بينحسب من محاولاتك الفعلية.' :
             'These are learning objectives, not mastery claims or accreditation. Progress uses actual attempts.'}
         </p>
-      </DialogContent>
-    </Dialog>
-  );
+    </div>;
 }
