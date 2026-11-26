@@ -61,7 +61,7 @@ export function FavoritesProblemsPage() {
 
   return (
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
-      <WorkspacePageHeader title={t('favorites.title')} icon={Heart} count={isLoading || stageLoading ? undefined : mounted ? <AnimatedCounter end={totalCount} duration={700}/> : totalCount} />
+      <WorkspacePageHeader title={t('favorites.title')} icon={Heart} iconTone="favorite" count={isLoading || stageLoading ? undefined : mounted ? <AnimatedCounter end={totalCount} duration={700}/> : totalCount} />
 
       {/* Problems List */}
       {isLoading ? (

@@ -69,7 +69,7 @@ export interface EditorialOption {LatexCode:string;IsCorrect:boolean;ErrorType:s
 export interface EditorialSolution {Idea:Bilingual;FormulaLatex:string;Steps:Bilingual[];Substitution:Bilingual;Result:Bilingual;Unit:Bilingual;Verification:Bilingual;CommonError:Bilingual;ManualExplanation?:Bilingual|null}
 export interface EditorialContent {StageId:number;CategoryId:number;PrimarySkillId:number;SecondarySkillIds:number[];TrackIds:number[];DifficultyLevel:number;Points:number;Title:Bilingual;Question:Bilingual;Options:EditorialOption[];Hints:Bilingual[];Solution:EditorialSolution;YoutubeSolutionUrl?:string|null}
 export interface EditorialRow {Id:number;OwnerUserId:number;Revision:number;Status:string;TitleAr?:string;TitleEn?:string;QuestionTextAr?:string;QuestionTextEn?:string;ReviewNote?:string;PublishedProblemId?:number;SourceProblemId?:number|null}
-export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>;LegacySolutionAr?:string|null;LegacySolutionEn?:string|null}
+export interface EditorialDraft extends EditorialRow {Content:Partial<EditorialContent>;AllowOptionalSolutionFields?:boolean;LegacySolutionAr?:string|null;LegacySolutionEn?:string|null}
 export interface EditorialImportRow {ContentKey:string;PrimarySkillKey:string;ProposedTrackCodes:string[];Content:EditorialContent}
 export interface EditorialImportResult {Created:number;Ready?:number;Items:{ContentKey:string;Status:string;DraftId?:number|null;Errors:string[]}[];DraftIds?:number[]}
 export interface AmendmentImportRow {ProblemId:number;ExpectedOptionIds:number[];ExpectedLegacySolution:Bilingual;PrimarySkillKey:string;Content:Partial<EditorialContent>;Status:'StructuredAmendmentCandidateNotImported'}
@@ -113,11 +113,17 @@ export const platformBrandApi = createApi({
       query:body=>({url:'/editorial/problems/amend/import',method:'POST',body}),
       invalidatesTags:(_r,e,arg)=>!e&&arg.Confirm?['EditorialDraft']:[],
     }),
+    getPublishedEditorialPreview:builder.query<{Id:number;TitleAr:string;TitleEn:string;QuestionTextAr:string;QuestionTextEn:string;DetailedSolutionAr:string;DetailedSolutionEn:string;YoutubeSolutionUrl?:string|null;Options:{Id:number;LatexCode:string;IsCorrect:boolean}[];Hints:Bilingual[]},number>({
+      query:id=>'/editorial/problems/bank/'+id+'/preview',keepUnusedDataFor:0,
+    }),
     getEditorialBank:builder.query<{Total:number;Items:EditorialBankRow[]},{page:number;stageId?:number;categoryId?:number;trackId?:number;search?:string}>({
       query:params=>({url:'/editorial/problems/bank',params}),providesTags:['EditorialDraft'],
     }),
     amendEditorialProblem:builder.mutation<EditorialDraft,number>({
       query:id=>({url:'/editorial/problems/amend/'+id,method:'POST'}),invalidatesTags:(_r,e)=>e?[]:['EditorialDraft'],
+    }),
+    downloadEditorialGuide: builder.mutation<Blob,{lang:'ar'|'en'}>({
+      query:({lang})=>({url:'/editorial/problems/guide.pdf',params:{lang},responseHandler:(r:Response)=>r.blob()}),
     }),
     getEditorialDrafts:builder.query<{Total:number;Items:EditorialRow[]},number|{page:number;activeOnly:boolean;supervisorOnly?:boolean;ownOnly?:boolean}>({
       query:arg=>({url:'/editorial/problems',params:typeof arg==='number'?{page:arg}:arg}),providesTags:['EditorialDraft'],
@@ -186,4 +192,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useDeleteSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useDeleteSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useDownloadEditorialGuideMutation,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetPublishedEditorialPreviewQuery,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;

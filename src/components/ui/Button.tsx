@@ -18,7 +18,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'inline-flex items-center justify-center rounded-xl font-medium transition-[background-color,color,border-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 motion-safe:active:scale-[.97] motion-reduce:transition-none',
           {
             'sr-wave-button text-white hover:-translate-y-0.5': variant === 'default',
-            'sr-outline-button border border-brand-primary/20 bg-background/80 hover:border-brand-secondary/45 hover:bg-accent hover:text-accent-foreground': variant === 'outline',
+            'sr-outline-button border border-primary/70 bg-white font-semibold text-primary shadow-sm hover:border-primary hover:bg-primary/5 hover:text-primary dark:bg-card dark:hover:bg-primary/15 motion-safe:hover:-translate-y-0.5': variant === 'outline',
             'hover:bg-accent hover:text-accent-foreground': variant === 'ghost',
             'bg-destructive text-destructive-foreground hover:bg-destructive/90': variant === 'destructive',
           },

@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations,useLocale } from "next-intl";
+import { useState } from "react";
+import { useDownloadEditorialGuideMutation } from "@/store/api/platformBrandApi";
 import {
   BookOpen,
   CheckCircle2,
@@ -33,6 +35,19 @@ function RuleBox({ type, title, code }: { type: "correct" | "wrong"; title: stri
 
 export default function DataEntryGuidePage() {
   const t = useTranslations("admin.guide");const ar=useLocale()==='ar';
+  const [download,{isLoading:downloading}]=useDownloadEditorialGuideMutation();
+  const [downloadError,setDownloadError]=useState(false);
+  async function savePdf(){
+    setDownloadError(false);
+    try{
+      const blob=await download({lang:ar?'ar':'en'}).unwrap();
+      if(blob.type!=='application/pdf'||(await blob.slice(0,5).text())!=='%PDF-')throw Error('Invalid PDF');
+      const url=URL.createObjectURL(blob),link=document.createElement('a');
+      link.href=url;link.download='mathworld-authoring-guide-'+(ar?'ar':'en')+'.pdf';link.click();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+    }catch{setDownloadError(true);}
+  }
+
 
   return (
     <div className="mx-auto space-y-6 max-w-5xl">
@@ -42,10 +57,12 @@ export default function DataEntryGuidePage() {
           <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
         </div>
         <p className="text-muted-foreground text-lg leading-relaxed">{t("subtitle")}</p>
+        <button type="button" disabled={downloading} onClick={()=>void savePdf()} className="sr-wave-button rounded-xl px-4 py-2 font-semibold text-white disabled:opacity-50">{downloading?(ar?'جارٍ تجهيز الدليل…':'Preparing guide…'):(ar?'تنزيل دليل إضافة المسائل PDF':'Download authoring guide PDF')}</button>
+        {downloadError&&<p role="alert" className="text-sm text-destructive">{ar?'تعذّر تحميل الدليل. حاول مجدداً.':'Could not download the guide. Please retry.'}</p>}
       </div>
 
       <div className="grid gap-8">
-        <Card><CardHeader><CardTitle className="text-xl">{ar?'خطوات إعداد المسألة':'Editorial workflow'}</CardTitle></CardHeader><CardContent><ol className="list-decimal space-y-2 ps-5 text-sm leading-7">{(ar?['حدد المرحلة والصف أو المستوى والفئة والمهارة.','أدخل عنواناً وسؤالاً باللغتين، واستخدم LaTeX في العنوان أيضاً.','أضف أربعة خيارات مختلفة وحدد الصحيح وأسباب الأخطاء.','أضف تلميحين متدرجين لا يكشفان الإجابة.','أكمل القانون وخطوات الحل والتعويض والنتيجة والوحدة والتحقق والخطأ الشائع.','راجع المسألة كاملة: ينشر الأدمن مباشرة، ويرسل المشرف للمراجعة.']:['Select stage, grade or level, category and skill.','Enter a bilingual title and question, including LaTeX in titles.','Provide four distinct options, one correct answer and distractor reasons.','Add two progressive hints without revealing the answer.','Complete formula, steps, substitution, result, unit, verification and common error.','Review the whole problem: administrators publish directly and supervisors submit for review.']).map(line=><li key={line}>{line}</li>)}</ol></CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-xl">{ar?'خطوات إعداد المسألة':'Editorial workflow'}</CardTitle></CardHeader><CardContent><ol className="list-decimal space-y-2 ps-5 text-sm leading-7">{(ar?['حدد المرحلة والصف أو المستوى والفئة والمهارة.','أدخل عنواناً وسؤالاً باللغتين، واستخدم LaTeX في العنوان أيضاً.','أضف أربعة خيارات مختلفة وحدد الصحيح وأسباب الأخطاء.','أضف تلميحين متدرجين لا يكشفان الإجابة.','أكمل الفكرة والخطوات والنتيجة، والحقول الأخرى عند انطباقها؛ الاستيراد الجماعي يتطلب العقد الصارم.','راجع المسألة كاملة: ينشر الأدمن مباشرة، ويرسل المشرف للمراجعة.']:['Select stage, grade or level, category and skill.','Enter a bilingual title and question, including LaTeX in titles.','Provide four distinct options, one correct answer and distractor reasons.','Add two progressive hints without revealing the answer.','Complete the idea, steps and result, and other fields when applicable; bulk imports retain strict validation.','Review the whole problem: administrators publish directly and supervisors submit for review.']).map(line=><li key={line}>{line}</li>)}</ol></CardContent></Card>
         {/* Section 1: Latex Rules */}
         <Card className="border-t-4 border-t-primary shadow-md">
           <CardHeader className="bg-muted/20 pb-4">

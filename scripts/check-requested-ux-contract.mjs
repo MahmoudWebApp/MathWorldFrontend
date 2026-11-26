@@ -50,10 +50,11 @@ assert.equal((categories.match(/await resetPractice\(/g) ?? []).length, 1,
   'There must be exactly one practice-reset API call and no direct card action.');
 
 assert.match(categories, /<LockedPremiumDialog topicName=\{name\}>/, 'Locked categories must stay gated');
-assert.match(categories, /<CategorySkillsDialog stageId=\{stageId\}/, 'Learner topics show API-owned category skill descriptions.');
-assert.match(categories, /onClick=\{\(\) => setSkillsCategory/, 'Category skills open separately from Premium access.');
+assert.match(categories, /<CategorySkillsPopover stageId=\{stageId\}/, 'Learner topics show API-owned category skill descriptions.');
+assert.match(categories, /const skillsButton = \([\s\S]*?<CategorySkillsPopover stageId=\{stageId\} category=\{category\} trigger=/, 'Skills have a separate anchored trigger.');
+assert.match(categories, /<\/LockedPremiumDialog>\s*\{skillsButton\}/, 'Locked topics expose public skills outside the Premium gate.');
 const publicCategories = read('src/app/[locale]/stages/[stageId]/StageCategoriesClient.tsx');
-assert.match(publicCategories, /<CategorySkillsDialog stageId=\{stageId\}/,
+assert.match(publicCategories, /<CategorySkillsPopover stageId=\{stageId\}/,
   'Public topic cards must expose the same per-category skills popup.');
 assert.match(publicCategories, /color: stageAccent/, 'Public question counts use their stage color.');
 
@@ -138,5 +139,12 @@ assert.doesNotMatch(scopedTopics,/"اختيار الصف" : "Choose grade"/);
 assert.doesNotMatch(componentStyle,/:where\(h1,h2,h3,h4,h5,h6\)/);
 assert.match(editor,/<ProblemAuthoringGuide\/>/);
 assert.match(editor,/<ProblemTitle text=\{showPair\(content.Title\)\}/);
-assert.match(editor,/if\(busy\|\|!canSubmit\|\|step!==5/);
+// The new video step precedes the final preview; publication must still be restricted to preview.
+assert.match(editor,/if\(busy\|\|!canSubmit\|\|step!==6/);
+assert.match(editor,/step===5&&c\.YoutubeSolutionUrl/);
+assert.match(editor,/step===6&&editable&&canSubmit/);
 console.log('PASS: scoped admin content, explicit brand headings, original guide, gated editor and math titles.');
+
+const skillsPopover=read('src/components/curriculum/CategorySkillsDialog.tsx');
+assert.match(skillsPopover,/Popover\.Root modal=\{false\}/);
+assert.match(skillsPopover,/Popover\.Arrow/);

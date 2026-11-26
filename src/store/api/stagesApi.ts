@@ -18,6 +18,7 @@ export interface LearningTrack {
 }
 export interface TrackMapping { CategoryIds:number[]; SkillIds:number[]; ProblemIds:number[] }
 export interface TrackDetail extends TrackMapping {
+  FreeCategoryIds?:number[];
   Track:LearningTrack; Coverage:{Categories:number;Skills:number;Problems:number;FreeProblems:number};
 }
 export interface TrackInventory {

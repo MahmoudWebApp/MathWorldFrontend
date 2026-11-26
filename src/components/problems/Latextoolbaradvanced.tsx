@@ -513,7 +513,7 @@ export function LatexToolbarAdvanced({
     >
       {/* ── Level tabs ── */}
       <div
-        className="flex gap-1 border-b border-border/50 pb-2 overflow-x-auto scrollbar-none"
+        className="flex flex-wrap gap-2 border-b border-border/50 pb-2 min-w-0"
         role="tablist"
         aria-label={isAr ? "المستويات" : "Math levels"}
       >
@@ -525,7 +525,7 @@ export function LatexToolbarAdvanced({
             aria-selected={activeLevel.id === level.id}
             onClick={() => handleLevelChange(level)}
             className={cn(
-              "px-3 py-1.5 text-xs rounded-md transition-colors whitespace-nowrap font-medium",
+              "px-3 py-1.5 text-xs rounded-md transition-colors whitespace-normal break-words font-medium",
               activeLevel.id === level.id
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -538,7 +538,7 @@ export function LatexToolbarAdvanced({
 
       {/* ── Category tabs ── */}
       <div
-        className="flex gap-1 overflow-x-auto scrollbar-none"
+        className="flex flex-wrap gap-2 min-w-0"
         role="tablist"
         aria-label={isAr ? "الفئات" : "Categories"}
       >
@@ -550,7 +550,7 @@ export function LatexToolbarAdvanced({
             aria-selected={activeCat.id === cat.id}
             onClick={() => setActiveCat(cat)}
             className={cn(
-              "px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap",
+              "px-2.5 py-1 text-xs rounded-md transition-colors whitespace-normal break-words",
               activeCat.id === cat.id
                 ? "bg-secondary text-secondary-foreground font-medium"
                 : "text-muted-foreground hover:bg-muted/60"
