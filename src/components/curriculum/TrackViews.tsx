@@ -14,6 +14,7 @@ import {Link} from '@/i18n/routing';
 import {useGetPublishedTracksQuery,useGetPublishedTrackQuery,useGetTrackProgressQuery,useGetTrackPracticeQuery} from '@/store/api/stagesApi';
 import {useResetPracticeMutation} from '@/store/api/usersApi';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogDescription,DialogFooter} from '@/components/ui/Dialog';
+import {SkillsPopover} from '@/components/curriculum/CategorySkillsDialog';
 const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
 export function GradeAge({code,ar}:{code:string;ar:boolean}){
  const match=/^grade-(\d+)$/.exec(code);
@@ -37,19 +38,17 @@ function TopicHeading({name,icon,count,accent,ar}:{name:string;icon:string;count
 }
 function PublicTrackDetails({id,ar}:{id:number;ar:boolean}){
  const {currentData:data,isFetching,isError,refetch}=useGetPublishedTrackQuery(id,{refetchOnMountOrArgChange:true});
- const [expanded,setExpanded]=useState<number|null>(null);
  if(isFetching&&!data)return <MathWorldLoading compact mode="tab"/>;
  if(isError)return <p role="alert">{ar?'تعذّر تحميل المسار.':'Could not load track.'} <button onClick={()=>void refetch()} className={btn}>{ar?'إعادة المحاولة':'Retry'}</button></p>;
  if(!data)return null;
  const accent=getStageAccent({Id:data.Track.StageId});
  return <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} transition={{duration:.22}} className="space-y-5">
- <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{data.Categories.map(c=><article key={c.Id} className="relative flex min-h-44 flex-col gap-3 overflow-hidden rounded-2xl border mw-topic-surface p-5 shadow-sm hover:shadow-md" style={{"--stage-accent":accent} as CSSProperties}>
+ <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[...data.Categories].sort((a,b)=>Number(b.IsFree)-Number(a.IsFree)).map(c=><article key={c.Id} className="relative flex min-h-44 flex-col gap-3 overflow-hidden rounded-2xl border mw-topic-surface p-5 shadow-sm hover:shadow-md" style={{"--stage-accent":accent} as CSSProperties}>
  <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{backgroundColor:accent}}/>
  <TopicHeading name={ar?c.NameAr:c.NameEn} icon={c.Icon} count={c.ProblemsCount} accent={accent} ar={ar}/>
  <p className="text-sm leading-7 text-muted-foreground">{ar?c.DescriptionAr:c.DescriptionEn}</p>
- <div className="mt-auto border-t border-border/60 pt-3"><button className="inline-flex min-h-10 items-center gap-2 rounded-xl border mw-topic-action px-3 py-2 text-xs font-bold" onClick={()=>setExpanded(c.Id)}><ListChecks size={16} style={{color:accent}}/>{ar?'عرض المهارات':'View skills'}</button></div>
+ <div className="mt-auto border-t border-border/60 pt-3"><SkillsPopover title={ar?c.NameAr:c.NameEn} trigger={<button className="inline-flex min-h-10 items-center gap-2 rounded-xl border mw-topic-action px-3 py-2 text-xs font-bold"><ListChecks size={16} style={{color:accent}}/>{ar?'عرض المهارات':'View skills'}</button>}><ul className="max-h-[55vh] space-y-3 overflow-y-auto ps-4">{data.Skills.filter(s=>s.CategoryId===c.Id).map(s=><li key={s.Id}><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></li>)}</ul></SkillsPopover></div>
  </article>)}</div>
- <Dialog open={expanded!==null} onOpenChange={v=>{if(!v)setExpanded(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'المهارات التعليمية':'Learning skills'}</DialogTitle><DialogDescription>{data.Categories.find(c=>c.Id===expanded)?.[ar?'NameAr':'NameEn']}</DialogDescription></DialogHeader><ul className="max-h-[55vh] space-y-3 overflow-y-auto ps-4">{data.Skills.filter(s=>s.CategoryId===expanded).map(s=><li key={s.Id}><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></li>)}</ul></DialogContent></Dialog>
  {data.Examples.length>0&&<section className="rounded-2xl border bg-card/80 p-5"><h3 className="mb-3 font-bold">{ar?'أمثلة من عناوين المسائل':'Example problem titles'}</h3><ul className="list-disc space-y-2 ps-5 text-sm leading-7">{data.Examples.map(p=><li key={p.Id}><ProblemTitle text={ar?p.TitleAr:p.TitleEn}/></li>)}</ul></section>}
  </motion.div>;
 }
@@ -81,7 +80,7 @@ function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
 export function StudentTrackWorkspace({trackId}:{trackId:number}){
   const ar=useLocale()==='ar';const detail=useGetPublishedTrackQuery(trackId,{refetchOnMountOrArgChange:true});
   const progress=useGetTrackProgressQuery(trackId,{refetchOnMountOrArgChange:true});
-  const [category,setCategory]=useState<number|null>(null);const [skills,setSkills]=useState<number|null>(null);
+  const [category,setCategory]=useState<number|null>(null);
   const data=detail.currentData;const stats=progress.currentData;
   const [target,setTarget]=useState<{categoryId?:number;name:string}|null>(null);
   const [reset,resetState]=useResetPracticeMutation();
@@ -99,14 +98,13 @@ export function StudentTrackWorkspace({trackId}:{trackId:number}){
     <Dialog open={!!target} onOpenChange={open=>{if(!open&&!resetState.isLoading)setTarget(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'تأكيد إعادة التدريب':'Confirm practice restart'}</DialogTitle><DialogDescription>{target?.name}</DialogDescription></DialogHeader><p>{ar?'يعود تقدم التدريب ودفتر الأخطاء في هذا النطاق فقط إلى البداية. النقاط الدائمة والمفضلة والشهادات وتقدم الصفوف الأخرى محفوظة.':'Only practice progress and review errors in this scope reset. Lifetime points, favorites, certificates and other tracks remain.'}</p>{error&&<p role="alert" className="text-destructive">{error}</p>}<DialogFooter><button className={btn} disabled={resetState.isLoading} onClick={()=>setTarget(null)}>{ar?'إلغاء':'Cancel'}</button><button className={btn+' bg-primary text-primary-foreground'} disabled={resetState.isLoading} onClick={()=>void confirm()}>{ar?'تأكيد':'Confirm'}</button></DialogFooter></DialogContent></Dialog>
     {notice&&<p role="status" className="text-primary">{notice}</p>}
     <section className="rounded-xl border bg-card p-4"><p className="flex flex-wrap items-center justify-between gap-2 font-semibold"><span>{ar?'التقدم':'Progress'}</span><span dir="ltr" className="tabular-nums" style={{color:accent}}>{stats.Solved} / {stats.ProblemsCount} · {stats.CompletionPercent}%</span></p><progress aria-label={ar?'تقدم المسار':'Track progress'} className="mw-stage-progress mt-3 w-full" max={100} value={stats.CompletionPercent}/>{stats.TrackPracticeIsolationEnabled&&stats.Categories.some(c=>c.Attempted>0)&&<button className={btn} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({name:ar?data.Track.NameAr:data.Track.NameEn})}}>{ar?'إعادة تدريب الصف أو المستوى':'Restart grade or level'}</button>}</section>
-    <div className="grid gap-3 sm:grid-cols-2">{data.Categories.map(c=>{const p=byId.get(c.Id);const locked=!p||p.IsLocked;return <article key={c.Id} className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border mw-topic-surface p-5 shadow-sm">
+    <div className="grid gap-3 sm:grid-cols-2">{[...data.Categories].sort((a,b)=>Number(b.IsFree)-Number(a.IsFree)).map(c=>{const p=byId.get(c.Id);const locked=!p||p.IsLocked;return <article key={c.Id} className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border mw-topic-surface p-5 shadow-sm">
       <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{backgroundColor:accent}}/><TopicHeading name={ar?c.NameAr:c.NameEn} icon={c.Icon} count={c.ProblemsCount} accent={accent} ar={ar}/>
       <p className="text-sm text-muted-foreground">{ar?c.DescriptionAr:c.DescriptionEn}</p>
       <div className="mt-auto flex items-center gap-3 text-xs text-muted-foreground"><span>{ar?'محلولة':'Solved'}: <b dir="ltr">{p?.Solved??0}/{c.ProblemsCount}</b></span><progress aria-label={ar?'تقدم الفئة':'Topic progress'} className="mw-stage-progress min-w-0 flex-1" max={Math.max(1,c.ProblemsCount)} value={p?.Solved??0}/></div>
-      <div className="flex flex-wrap gap-2 border-t border-border/60 pt-3"><button className={btn+' mw-topic-action inline-flex items-center gap-2'} onClick={()=>setSkills(c.Id)}><ListChecks size={16} style={{color:accent}}/>{ar?'عرض المهارات':'View skills'}</button>
+      <div className="flex flex-wrap gap-2 border-t border-border/60 pt-3"><SkillsPopover title={ar?c.NameAr:c.NameEn} trigger={<button className={btn+' mw-topic-action inline-flex items-center gap-2'}><ListChecks size={16} style={{color:accent}}/>{ar?'عرض المهارات':'View skills'}</button>}><ul className="max-h-[55vh] space-y-3 overflow-y-auto">{data.Skills.filter(s=>s.CategoryId===c.Id).map(s=><li key={s.Id} className="flex gap-2"><ListChecks size={17} className="mt-1 shrink-0" style={{color:accent}}/><div><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></div></li>)}</ul></SkillsPopover>
       {locked?<LockedPremiumDialog topicName={ar?c.NameAr:c.NameEn}><button className={btn+' mw-topic-action inline-flex items-center gap-2'}><LockKeyhole size={16}/>{ar?'ترقية الحساب':'Upgrade account'}</button></LockedPremiumDialog>:<button className={btn+' mw-topic-action-solid inline-flex items-center gap-2'} aria-expanded={category===c.Id} onClick={()=>setCategory(category===c.Id?null:c.Id)}><BookOpenText size={16}/>{ar?'عرض المسائل':'View problems'}</button>}{!locked&&stats.TrackPracticeIsolationEnabled&&(p?.Attempted??0)>0&&<button className={btn+' mw-topic-action'} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({categoryId:c.Id,name:ar?c.NameAr:c.NameEn})}}><RotateCcw size={15} className="me-1 inline"/>{ar?'إعادة تدريب الفئة':'Restart topic'}</button>}</div>
       {!locked&&category===c.Id&&<Practice key={c.Id} id={trackId} categoryId={c.Id} ar={ar}/>}
     </article>;})}</div>
-    <Dialog open={skills!==null} onOpenChange={open=>{if(!open)setSkills(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'المهارات التعليمية':'Learning skills'}</DialogTitle><DialogDescription>{data.Categories.find(c=>c.Id===skills)?.[ar?'NameAr':'NameEn']}</DialogDescription></DialogHeader><ul className="max-h-[55vh] space-y-3 overflow-y-auto">{data.Skills.filter(s=>s.CategoryId===skills).map(s=><li key={s.Id} className="flex gap-2"><ListChecks size={17} className="mt-1 shrink-0" style={{color:accent}}/><div><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></div></li>)}</ul></DialogContent></Dialog>
   </main>;
 }
