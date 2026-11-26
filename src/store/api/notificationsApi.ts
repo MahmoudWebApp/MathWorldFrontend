@@ -137,7 +137,7 @@ export const notificationsApi = createApi({
       query: ({ learnerId, ...body }) => ({
         url: `/admin/notifications/learners/${learnerId}`,
         method: 'POST',
-        body,
+        body: {...body,IncludeOptionalEmail:false},
       }),
     }),
   }),
