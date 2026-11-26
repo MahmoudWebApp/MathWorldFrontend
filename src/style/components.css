@@ -972,9 +972,10 @@ button:focus-visible,[role="button"]:focus-visible,a.sr-wave-button:focus-visibl
 .mw-admin-action.mw-action-view:hover { background:color-mix(in srgb,#2563eb 10%,var(--color-card)); }
 .mw-admin-action.mw-action-premium:hover { background:color-mix(in srgb,var(--color-reward-gold) 14%,var(--color-card)); }
 .mw-admin-action.mw-action-delete:hover { background:color-mix(in srgb,var(--color-destructive) 10%,var(--color-card)); }
-.mw-reward { color:var(--color-reward-gold-ink); }
-.dark .mw-reward { color:var(--color-reward-gold-bright); }
-.mw-reward-icon { color:var(--color-reward-gold); }
+/* Points use the same foreground for the number and its icon. */
+.mw-reward, .mw-reward-icon { color:#A66B00; }
+.dark .mw-reward, .dark .mw-reward-icon { color:#F7C948; }
+.mw-reward-icon.fill-reward-gold-bright { fill:currentColor; }
 
 /* Radix waits for the exit keyframe before unmounting; keyboard focus stays managed. */
 .mw-dialog-overlay[data-state="open"] { animation: mw-overlay-in 160ms ease-out both; }
