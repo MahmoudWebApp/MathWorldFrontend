@@ -671,28 +671,24 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
         ]}
       />
 
-      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div>
+      <div className="mb-8 flex items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0 flex-1">
           <h1
-            className={`brand-display-title mb-3 text-3xl font-bold sm:text-4xl ${
-              isArabic ? "text-right" : "text-left"
-            }`}
+            className="mb-3 break-words text-start text-xl font-bold leading-snug sm:text-2xl"
             style={{ color: stageAccent }}
           >
             <ProblemTitle text={title} className="text-inherit"/>
           </h1>
 
           <div
-            className={`flex flex-wrap items-center gap-2 ${
-              isArabic ? "justify-end" : "justify-start"
-            }`}
+            className="flex flex-wrap items-center justify-start gap-2"
           >
             {points > 0 && (
               <Badge
                 variant="outline"
-                className="gap-1 border-amber-400/35 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                className="gap-1 border-reward-gold/50 bg-reward-gold/10 mw-reward"
               >
-                <Star className="h-4 w-4 fill-amber-400/30 text-amber-500" />
+                <Star className="h-4 w-4 fill-reward-gold-bright mw-reward-icon" />
                 <span className="font-semibold">{points}</span>
               </Badge>
             )}
@@ -729,14 +725,11 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                 ? t("favorites.removeFromFavorites")
                 : t("favorites.addToFavorites")
             }
-            className={
-              isFavorite
-                ? "text-red-500 hover:text-red-600"
-                : "text-red-500 hover:text-red-600"
-            }
+            aria-pressed={isFavorite}
+            className="h-11 w-11 shrink-0 rounded-full border border-red-500/35 text-red-500 hover:bg-red-500/10 hover:text-red-600"
           >
             <Heart
-              className={`h-5 w-5 transition-transform ${
+              className={`h-6 w-6 transition-transform ${
                 isFavorite ? "scale-110 fill-current" : ""
               }`}
             />

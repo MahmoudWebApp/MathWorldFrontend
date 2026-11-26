@@ -299,7 +299,6 @@ function AdminCategoriesPageContent() {
         className="mb-6"
       />
       <WorkspacePageHeader title={t("admin.categories.title")} icon={Shapes} actions={<div className="flex flex-wrap items-center gap-2">
-        <Link href={"/admin/learning-tracks?stageId="+selectedStageId+"&trackId="+trackId+"&edit=1"} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold">{locale==="ar"?"إدارة ارتباطات الفئات":"Manage category mappings"}</Link>
         <Link href={"/admin/learning-tracks?stageId="+selectedStageId} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold"><DirectionalChevron direction="back" className="h-4 w-4"/>{locale==="ar"?"العودة للصفوف والمستويات":"Back to grades and levels"}</Link>
         <Button
           onClick={openCreateModal}
@@ -463,10 +462,10 @@ function AdminCategoriesPageContent() {
             role="dialog"
             aria-modal="true"
             aria-label={isEditing ? t("admin.categories.edit") : t("admin.categories.add")}
-            className="brand-surface max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl p-4 shadow-2xl sm:p-6"
+            className="brand-surface max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex flex-col overflow-hidden rounded-2xl p-4 shadow-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4 pb-3 border-b">
+            <div className="flex shrink-0 items-center justify-between mb-4 pb-3 border-b">
               <h2 className="text-xl font-bold">
                 {isEditing
                   ? t("admin.categories.edit")
@@ -498,7 +497,8 @@ function AdminCategoriesPageContent() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pe-1">
               {saveError && (
                 <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
                   {saveError}
@@ -587,6 +587,7 @@ function AdminCategoriesPageContent() {
                 )}
               </div>
 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block mb-2 text-sm font-semibold">
                   {t("admin.categories.nameAr")}{" "}
@@ -640,6 +641,7 @@ function AdminCategoriesPageContent() {
                   onChange={event => setFormData({ ...formData, DescriptionEn: event.target.value })} />
               </div>
 
+              </div>
               <div>
                 <label className="block mb-2 text-sm font-semibold">
                   {t("admin.categories.order")}
@@ -660,7 +662,8 @@ function AdminCategoriesPageContent() {
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t">
+              </div>
+              <div className="mt-4 flex shrink-0 justify-end gap-3 border-t pt-4">
                 <Button
                   variant="ghost"
                   type="button"

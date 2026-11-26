@@ -74,9 +74,9 @@ export function ProblemCard({ problem }: ProblemCardProps) {
           </div>
           <div className="flex shrink-0 flex-col items-end gap-3 pt-0 sm:gap-4">
             {typeof problem.Points === "number" ? (
-              <span className="inline-flex items-center gap-1.5 text-sm font-bold text-amber-600 dark:text-amber-300"
+              <span className="inline-flex items-center gap-1.5 text-sm font-bold mw-reward"
                 aria-label={(locale === "ar" ? "النقاط: " : "Points: ") + problem.Points}>
-                <Star aria-hidden="true" className="h-4 w-4 fill-amber-400/15" />
+                <Star aria-hidden="true" className="h-4 w-4 fill-reward-gold-bright mw-reward-icon" />
                 <span className="tabular-nums">{problem.Points}</span>
               </span>
             ) : <span aria-hidden="true" />}

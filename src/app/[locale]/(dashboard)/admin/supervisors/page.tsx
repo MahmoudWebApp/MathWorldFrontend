@@ -5,6 +5,7 @@ import {UsersRound,Save,History,Trash2,Mail} from 'lucide-react';
 import {DataBadge} from '@/components/admin/AdminDataBadges';
 import {Tooltip,TooltipTrigger,TooltipContent} from '@/components/ui/Tooltip';
 import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
@@ -34,6 +35,7 @@ function StaffActivity({id,ar}:{id:number;ar:boolean}) {
 }
 function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
   const [showActivity,setShowActivity]=useState(false);
+  const [deleteOpen,setDeleteOpen]=useState(false);
   const [active,setActive]=useState(row.IsActive);
   const [permissions,setPermissions]=useState(row.Permissions);
   const [update,{isLoading:saving}]=useUpdateSupervisorMutation();
@@ -50,7 +52,6 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
   }
   async function deleteAccount(){
     if(deleting||saving||sending)return;
-    if(!window.confirm(ar?'حذف حساب المشرف نهائياً: '+row.FullName+'؟ سيحذف حسابه وسجل نشاطه، ولا يمكن التراجع.':'Permanently delete '+row.FullName+'? Their account and activity will be removed; this cannot be undone.'))return;
     setError('');setMessage('');
     try{const result=await remove(row.Id).unwrap();if(!result.Deleted)throw Error('DeletionFailed');}
     catch(e){const code=(e as {data?:{Message?:string}})?.data?.Message;setError(code==='SupervisorHasOpenEditorialWork'?(ar?'يوجد محتوى غير مكتمل للمشرف. راجعه أو اسحبه قبل الحذف.':'Resolve or withdraw the supervisor’s open editorial work before deleting.'):ar?'تعذّر حذف المشرف. قد توجد سجلات محمية.':'Deletion failed; protected records may exist.');}
@@ -81,8 +82,20 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
       <Tooltip><TooltipTrigger asChild><button className={button+' text-emerald-600'} disabled={saving||sending||(active===row.IsActive&&permissions===row.Permissions)} onClick={()=>void save()} aria-label={ar?'حفظ الصلاحيات':'Save permissions'}><Save size={17}/></button></TooltipTrigger><TooltipContent>{ar?'حفظ الصلاحيات':'Save permissions'}</TooltipContent></Tooltip>
       {row.StaffSetupPending&&row.IsActive&&<Tooltip><TooltipTrigger asChild><button className={button} disabled={saving||sending||active!==row.IsActive||permissions!==row.Permissions} onClick={()=>void send()} aria-label={ar?'إرسال الدعوة':'Send invitation'}><Mail size={17}/></button></TooltipTrigger><TooltipContent>{ar?'إرسال الدعوة':'Send invitation'}</TooltipContent></Tooltip>}
       <Tooltip><TooltipTrigger asChild><button className={button} aria-expanded={showActivity} onClick={()=>setShowActivity(v=>!v)} aria-label={ar?'سجل النشاط':'Activity history'}><History size={17}/></button></TooltipTrigger><TooltipContent>{ar?'سجل النشاط':'Activity history'}</TooltipContent></Tooltip>
-      <Tooltip><TooltipTrigger asChild><button type="button" className={button+' text-destructive border-destructive/30'} disabled={deleting||saving||sending} onClick={()=>void deleteAccount()} aria-label={ar?'حذف المشرف':'Delete supervisor'}><Trash2 size={17}/></button></TooltipTrigger><TooltipContent>{ar?'حذف المشرف':'Delete supervisor'}</TooltipContent></Tooltip>
+      <Tooltip><TooltipTrigger asChild><button type="button" className={button+' text-destructive border-destructive/30'} disabled={deleting||saving||sending} onClick={()=>setDeleteOpen(true)} aria-label={ar?'حذف المشرف':'Delete supervisor'}><Trash2 size={17}/></button></TooltipTrigger><TooltipContent>{ar?'حذف المشرف':'Delete supervisor'}</TooltipContent></Tooltip>
     </div>
+    <Dialog open={deleteOpen} onOpenChange={open=>{if(!deleting)setDeleteOpen(open)}}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>{ar?'حذف المشرف نهائياً':'Permanently delete supervisor'}</DialogTitle>
+          <DialogDescription>{ar?'سيُحذف حساب المشرف وسجل نشاطه المرتبط به. لا يمكن التراجع.':'The supervisor account and its associated activity history will be deleted. This cannot be undone.'}</DialogDescription>
+        </DialogHeader>
+        <p className="break-words font-semibold">{row.FullName}</p>
+        <DialogFooter>
+          <button type="button" className={button} disabled={deleting} onClick={()=>setDeleteOpen(false)}>{ar?'إلغاء':'Cancel'}</button>
+          <button type="button" className={button+' bg-destructive text-destructive-foreground'} disabled={deleting||saving||sending} onClick={async()=>{await deleteAccount();setDeleteOpen(false)}}>{deleting?(ar?'جارٍ الحذف…':'Deleting…'):(ar?'تأكيد الحذف':'Confirm deletion')}</button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     <div className="lg:col-span-3 empty:hidden">
     {message&&<p role="status" className="text-sm text-primary">{message}</p>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     {showActivity&&<StaffActivity id={row.Id} ar={ar}/>}

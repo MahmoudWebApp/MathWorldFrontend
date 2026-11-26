@@ -351,9 +351,9 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-3"><DataBadge tone={u.SubscriptionType==='Premium'?'amber':'neutral'}>{expiry(u)}</DataBadge></td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 whitespace-nowrap">
-<Tooltip><TooltipTrigger asChild><Link href={'/admin/users/'+u.Id} className="mw-admin-action p-2" aria-label={label.detail}><Eye className="h-4 w-4"/></Link></TooltipTrigger><TooltipContent>{label.detail}</TooltipContent></Tooltip>
-<Tooltip><TooltipTrigger asChild><button type="button" disabled={!u.IsActive||granting||searching||isFetching} onClick={()=>openGrant([u.Id])} className="mw-admin-action p-2 text-amber-600 disabled:opacity-40" aria-label={u.SubscriptionType==='Premium'?label.renew:label.annual}><Crown className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{u.SubscriptionType==='Premium'?label.renew:label.annual}</TooltipContent></Tooltip>
-<Tooltip><TooltipTrigger asChild><button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="mw-admin-action p-2 text-destructive border-destructive/30" aria-label={ar?'حذف الطالب':'Delete learner'}><Trash2 className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{ar?'حذف الطالب':'Delete learner'}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><Link href={'/admin/users/'+u.Id} className="mw-admin-action mw-action-view p-2" aria-label={label.detail}><Eye className="h-4 w-4"/></Link></TooltipTrigger><TooltipContent>{label.detail}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={!u.IsActive||granting||searching||isFetching} onClick={()=>openGrant([u.Id])} className="mw-admin-action mw-action-premium p-2 disabled:opacity-40" aria-label={u.SubscriptionType==='Premium'?label.renew:label.annual}><Crown className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{u.SubscriptionType==='Premium'?label.renew:label.annual}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="mw-admin-action mw-action-delete p-2" aria-label={ar?'حذف الطالب':'Delete learner'}><Trash2 className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{ar?'حذف الطالب':'Delete learner'}</TooltipContent></Tooltip>
 </div>
                       </td>
                     </tr>
