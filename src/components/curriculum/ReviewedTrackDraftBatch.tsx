@@ -1,4 +1,5 @@
 'use client';
+import {useConfirmDialog} from '@/components/ui/useConfirmDialog';
 import {useRef,useState} from 'react';
 import {useReviewedTrackDraftBatchMutation,useGetAdminTracksQuery,useCreateTrackMutation,type CreateTrackInput,type ReviewedTrackDraftBatch} from '@/store/api/stagesApi';
 const proposed:CreateTrackInput[]=[
@@ -6,13 +7,14 @@ const proposed:CreateTrackInput[]=[
   {StageId:4,Code:'mathematical-optimization',Kind:'course',NameAr:'التحسين الرياضي',NameEn:'Mathematical Optimization',DescriptionAr:'دراسة التحدب والقيم المثلى المقيدة وغير المقيدة.',DescriptionEn:'Study convexity and constrained and unconstrained optima.',SortOrder:7}
 ];
 export default function ReviewedTrackDraftBatchPanel({ar,disabled}:{ar:boolean;disabled:boolean}){
+  const {ask,dialog}=useConfirmDialog();
   const [run,{isLoading}]=useReviewedTrackDraftBatchMutation();
   const tracks=useGetAdminTracksQuery();
   const [create]=useCreateTrackMutation();
   const [creating,setCreating]=useState(false);const locked=useRef(false);
   const missing=tracks.currentData?proposed.filter(p=>!tracks.currentData!.Items.some(x=>x.Track.StageId===p.StageId&&x.Track.Code===p.Code)):[];
   async function createMissing(){
-    if(disabled||isLoading||locked.current||!missing.length||!window.confirm(ar?'إنشاء المساقات الناقصة كمسودات غير منشورة؟':'Create missing courses as unpublished drafts?'))return;
+    if(disabled||isLoading||locked.current||!missing.length||!await ask(ar?'إنشاء المساقات الناقصة كمسودات غير منشورة؟':'Create missing courses as unpublished drafts?'))return;
     locked.current=true;setCreating(true);setPreview(null);setError('');setNotice('');
     try{
       const latest=await tracks.refetch().unwrap();
@@ -51,7 +53,7 @@ export default function ReviewedTrackDraftBatchPanel({ar,disabled}:{ar:boolean;d
       setPreview(null);
     }finally{locked.current=false;}
   }
-  return <section className="space-y-3 rounded-2xl border bg-card p-4">
+  return <section className="space-y-3 rounded-2xl border bg-card p-4">{dialog}
     <h2 className="font-bold">{ar?'دفعة ربط الصفوف والمساقات المراجعة':'Reviewed grade and course mapping batch'}</h2>
     <p className="text-sm text-muted-foreground">{ar?'يعرض الخادم العدد الفعلي للمسائل والمسارات المرشحة عند المعاينة، ويتحقق من المصدر الحالي، ويستثني المسائل المعلقة فقط. لا نشر تلقائي ولا تغيير لصلاحيات Free.':'Preview shows the actual number of candidate questions and tracks. The server rechecks the current source, excluding held items only. No automatic publication or Free-access changes.'}</p>
     {disabled&&<p className="text-sm text-muted-foreground">{ar?'أغلق محرر المسار قبل تشغيل الدفعة.':'Close the track editor before running the batch.'}</p>}

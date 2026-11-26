@@ -9,6 +9,8 @@ on:
       - '**/*.ts'
       - '**/*.tsx'
       - 'scripts/check-requested-ux-contract.mjs'
+      - 'scripts/check-native-dialogs.mjs'
+      - 'scripts/check-math-rendering.mjs'
       - 'package.json'
       - 'pnpm-lock.yaml'
       - '.github/workflows/frontend-build.yml'
@@ -41,6 +43,10 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Typecheck
         run: pnpm typecheck
+      - name: Prevent native browser dialogs
+        run: node scripts/check-native-dialogs.mjs
+      - name: Verify common math rendering and font assets
+        run: pnpm qa:math
       - name: Check grouped editorial import
         run: node scripts/check-editorial-batch-import.mjs
       - name: Check stage-bound mapping proposal import

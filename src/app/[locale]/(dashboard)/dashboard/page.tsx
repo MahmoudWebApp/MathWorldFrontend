@@ -1,4 +1,5 @@
 'use client';
+import {motion,useReducedMotion} from 'framer-motion';
 
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { LayoutDashboard } from 'lucide-react';
@@ -22,6 +23,7 @@ import { getStageAccent } from '@/lib/stageVisuals';
 export default function UserDashboardPage() {
   const locale = useLocale();
   const ar = locale === 'ar';
+  const reduced=useReducedMotion();
   const router = useRouter();
   const user=useSelector((state:RootState)=>state.auth.user);
   const { currentData: dashboardData, isLoading, isFetching, isError, refetch } = useGetDashboardQuery(locale, {
@@ -136,12 +138,12 @@ export default function UserDashboardPage() {
           {ar ? 'إعادة تحميل التقدم' : 'Reload progress'}
         </button>}
         <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-          {stats.map(item => (
-            <div key={item.label} className="min-w-0 rounded-2xl bg-muted/40 p-3 sm:p-4">
+          {stats.map((item,index) => (
+            <motion.div key={item.label} initial={reduced?false:{opacity:.82,y:5}} animate={{opacity:1,y:0}} transition={{duration:reduced?0:.2,delay:reduced?0:index*.06}} className="min-w-0 rounded-2xl bg-muted/40 p-3 sm:p-4">
               <item.icon className={`mb-2 h-5 w-5 ${item.icon===Trophy?'mw-reward-icon':'text-primary'}`} aria-hidden="true" />
               <p className={`text-lg font-extrabold tabular-nums sm:text-2xl ${item.icon===Trophy?'mw-reward':''}`}>{item.value}</p>
               <p className="mt-1 text-xs text-muted-foreground">{item.label}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
         <Link href={nextProblemId

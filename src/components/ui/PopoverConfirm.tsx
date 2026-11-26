@@ -21,7 +21,7 @@ export function PopoverConfirm({onConfirm,onCancel,title,description,confirmText
  function close(next:boolean){if(loading)return;setOpen(next);if(!next)onCancel?.();}
  async function confirm(){if(loading)return;setBusy(true);try{await onConfirm();setOpen(false)}catch{notify(ar?'تعذّر تنفيذ العملية.':'Action failed.','error')}finally{setBusy(false)}}
  return <Dialog open={open} onOpenChange={close}>
-   <DialogTrigger asChild>{trigger}</DialogTrigger>
+   <span className="inline-flex" onClick={event=>event.stopPropagation()}><DialogTrigger asChild>{trigger}</DialogTrigger></span>
    <DialogContent className="max-w-lg" onClick={e=>e.stopPropagation()}>
      <DialogHeader className="pe-8">
        <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 shrink-0 text-destructive"/>{title??(ar?'تأكيد الحذف':'Confirm deletion')}</DialogTitle>
