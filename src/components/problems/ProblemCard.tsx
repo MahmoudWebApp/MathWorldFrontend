@@ -73,7 +73,7 @@ export function ProblemCard({ problem, compact=false }: ProblemCardProps) {
               </div>
             </div>
           </div>
-          <div className={"flex shrink-0 items-end pt-0 "+(compact?"ms-auto flex-row flex-wrap items-center gap-2":"flex-col gap-3 sm:gap-4")}>
+          <div className={compact?"ms-auto flex shrink-0 flex-row flex-wrap items-center gap-2":"flex shrink-0 flex-col items-end gap-3 pt-0 sm:gap-4"}>
             {typeof problem.Points === "number" ? (
               <span className="inline-flex items-center gap-1.5 text-sm font-bold mw-reward"
                 aria-label={(locale === "ar" ? "النقاط: " : "Points: ") + problem.Points}>
