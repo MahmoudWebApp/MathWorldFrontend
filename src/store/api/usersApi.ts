@@ -649,6 +649,7 @@ export const usersApi = createApi({
     saveEmailPreferences: builder.mutation<EmailPreferences, {userId:number; preferences:EmailPreferenceInput}>({
       query: ({preferences}) => ({url:'/users/email-preferences',method:'PUT',body:preferences}),
     }),
+    getCustomExamAvailability: builder.query<{Enabled:boolean},void>({query:()=>'/users/custom-exams/availability',keepUnusedDataFor:0}),
     getCustomExamSetup: builder.query<CustomExamSetup,void>({query:()=>'/users/custom-exams/setup',keepUnusedDataFor:0}),
     getCustomExams: builder.query<{Items:CustomExamSummary[]},void>({query:()=>'/users/custom-exams',keepUnusedDataFor:0}),
     getCustomExam: builder.query<CustomExam,string>({query:id=>'/users/custom-exams/'+encodeURIComponent(id),keepUnusedDataFor:0}),
@@ -1155,6 +1156,7 @@ export const {
   useGetEmailPreferencesQuery,
   useRequestEmailVerificationMutation,
   useSaveEmailPreferencesMutation,
+  useGetCustomExamAvailabilityQuery,
   useGetCustomExamSetupQuery,
   useGetCustomExamsQuery,
   useLazyGetCustomExamQuery,
