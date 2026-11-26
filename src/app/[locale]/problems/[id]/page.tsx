@@ -978,8 +978,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                             )}
                           </Badge>
                           {localAnswerResult.PointsEarned > 0 && (
-                            <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                              +{localAnswerResult.PointsEarned}{" "}
+                            <Badge className="gap-1 bg-reward-gold/10 mw-reward">
+                              <Star className="h-4 w-4 fill-current mw-reward-icon" aria-hidden="true" />+{localAnswerResult.PointsEarned}{" "}
                               {t("dashboard.user.totalPoints")}
                             </Badge>
                           )}
