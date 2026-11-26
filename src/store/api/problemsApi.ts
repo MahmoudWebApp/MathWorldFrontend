@@ -376,6 +376,7 @@ export const problemsApi = createApi({
     deleteProblem: builder.mutation<void, number>({
       query: (Id) => ({
         url: `/admin/problems/${Id}`,
+        params: { confirmReviewedDeletion: true },
         method: 'DELETE',
       }),
       invalidatesTags: ['Problem'],

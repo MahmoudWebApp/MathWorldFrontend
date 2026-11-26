@@ -5,8 +5,8 @@ import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { Search, Users, Crown } from 'lucide-react';
-import { useGetAdminLearnersQuery, useGrantAnnualPremiumMutation, type AdminLearnerFilters, type AdminLearnerSummary } from '@/store/api/usersApi';
+import { Search, Users, Crown, Trash2 } from 'lucide-react';
+import { useGetAdminLearnersQuery, useDeleteAdminLearnerMutation, useGrantAnnualPremiumMutation, type AdminLearnerFilters, type AdminLearnerSummary } from '@/store/api/usersApi';
 import { useGetAdminStagesQuery } from '@/store/api/stagesApi';
 import { DirectionalArrow } from '@/components/ui/DirectionalNavigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
@@ -27,6 +27,26 @@ export default function AdminUsersPage() {
   const [confirmedPeriods, setConfirmedPeriods] = useState<Array<{ name: string; from: string; to: string }>>([]);
   const [previewNow, setPreviewNow] = useState<Date>(new Date());
   const [grantAnnualPremium, { isLoading: granting }] = useGrantAnnualPremiumMutation();
+  const [deleteLearner,{isLoading:deleting}]=useDeleteAdminLearnerMutation();
+  const [deleteTarget,setDeleteTarget]=useState<AdminLearnerSummary|null>(null);
+  const [deleteError,setDeleteError]=useState('');
+  const [deleteNotice,setDeleteNotice]=useState('');
+  const openDelete=(u:AdminLearnerSummary)=>{setDeleteError('');setDeleteNotice('');setDeleteTarget(u);};
+  async function confirmDelete(){
+    if(!deleteTarget||deleting)return;
+    try{
+      const result=await deleteLearner(deleteTarget.Id).unwrap();
+      if(!result.Deleted)throw Error('DeletionFailed');
+      setSelectedIds(ids=>ids.filter(id=>id!==deleteTarget.Id));
+      setDeleteTarget(null);
+      setDeleteNotice(ar?'تم حذف حساب الطالب نهائياً':'Learner account permanently deleted');
+      if(data?.Learners.length===1&&page>1)setPage(p=>p-1);else void refetch();
+    }catch(e){
+      const code=(e as {data?:{Message?:string;message?:string}})?.data;
+      const reason=code?.Message??code?.message;
+      setDeleteError(reason==='LearnerHasProtectedBillingHistory'||reason==='LearnerHasProtectedHistory'?(ar?'لا يمكن حذف الحساب لارتباطه بسجلات محمية أو مالية.':'This account has protected or billing history.'):(ar?'تعذّر حذف الحساب. لم يتم تأكيد الحذف.':'Deletion could not be confirmed.'));
+    }
+  }
 
   // Selection is limited to the visible page, never silently grant hidden
   // learners from a previous search or stage filter.
@@ -161,6 +181,7 @@ export default function AdminUsersPage() {
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
       <WorkspacePageHeader title={label.title} icon={Users}/>
+      {deleteNotice&&<p role="status" className="text-sm text-primary">{deleteNotice}</p>}
       <section aria-label={label.search} className="math-card mb-6 rounded-2xl border border-border p-4 md:p-5">
         {stagesError && (
           <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">
@@ -293,6 +314,7 @@ export default function AdminUsersPage() {
                   <Link href={`/admin/users/${u.Id}`} className="inline-flex items-center gap-2 rounded-lg border border-primary/20 px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
                     {label.detail}<DirectionalArrow direction="forward" className="h-4 w-4" />
                   </Link>
+                  <button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-3 py-2 text-sm font-semibold text-destructive disabled:opacity-50"><Trash2 className="h-4 w-4" aria-hidden/>{ar?'حذف الطالب':'Delete learner'}</button>
                 </article>
               ))}
             </div>
@@ -328,6 +350,7 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-2">
                           <Link href={`/admin/users/${u.Id}`} className="mw-admin-action">{label.detail}</Link>
+                          <button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-3 py-2 text-sm font-semibold text-destructive disabled:opacity-50"><Trash2 className="h-4 w-4" aria-hidden/>{ar?'حذف الطالب':'Delete learner'}</button>
                           <button type="button" disabled={!u.IsActive || granting || searching || isFetching} onClick={() => openGrant([u.Id])}
                             className="mw-admin-action mw-admin-action-primary disabled:opacity-40">
                             {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
@@ -355,6 +378,12 @@ export default function AdminUsersPage() {
           </>
         )}
       </section>
+      <Dialog open={deleteTarget!==null} onOpenChange={open=>{if(!open&&!deleting)setDeleteTarget(null)}}>
+        <DialogContent><DialogHeader><DialogTitle>{ar?'حذف حساب الطالب نهائياً':'Permanently delete learner account'}</DialogTitle><DialogDescription>{ar?'سيحذف الحساب وتقدمه ومحاولاته وإشعاراته ومنحه اليدوية. لا يمكن التراجع. الحسابات المرتبطة بسجل مالي محمي لا تُحذف.':'This deletes the account, progress, attempts, notifications and manual grants. This cannot be undone. Protected billing records prevent deletion.'}</DialogDescription></DialogHeader>
+        <p className="font-bold break-words">{deleteTarget?.FullName} · #{deleteTarget?.Id}</p><p dir="ltr" className="text-sm break-all">{deleteTarget?.Email}</p>
+        {deleteError&&<p role="alert" className="text-destructive text-sm">{deleteError}</p>}
+        <DialogFooter><button type="button" disabled={deleting} className="rounded-lg border px-3 py-2" onClick={()=>setDeleteTarget(null)}>{label.cancel}</button><button type="button" disabled={deleting} onClick={()=>void confirmDelete()} className="rounded-lg border border-destructive bg-destructive/10 text-destructive px-3 py-2 font-bold">{deleting?label.loading:(ar?'تأكيد الحذف النهائي':'Confirm permanent deletion')}</button></DialogFooter></DialogContent>
+      </Dialog>
       <Dialog open={pendingLearners.length > 0} onOpenChange={open => { if (!open && !granting) setPendingLearners([]); }}>
         <DialogContent>
           <DialogHeader>

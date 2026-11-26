@@ -1063,6 +1063,10 @@ export const usersApi = createApi({
       ],
     }),
 
+    deleteAdminLearner: builder.mutation<{Deleted:boolean;LearnerId:number}, number>({
+      query: (id) => ({url: `/admin/learners/${id}`, method: 'DELETE', params: {confirm: true}}),
+      invalidatesTags: ['AdminLearners', 'Dashboard'],
+    }),
     getAdminLearners: builder.query<AdminLearnerDirectory, AdminLearnerFilters>({
       query: ({ Search, StageId, IsActive, Subscription, IncludeActivity = true, Page = 1, PageSize = 10 }) => ({
         url: '/admin/learners',
@@ -1184,6 +1188,7 @@ export const {
   useCheckFavoriteQuery,
   useGetAdminUsersQuery,
   useGetAdminLearnersQuery,
+  useDeleteAdminLearnerMutation,
   useGetAdminLearnerDetailQuery,
   useSetAdminLearnerSubscriptionMutation,
   useGetAdminLearnerAttemptsQuery,
