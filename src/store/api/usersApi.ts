@@ -440,6 +440,10 @@ export interface StageLeaderboardQuery {
 
 export interface MathBadge {
   Key: string;
+  Unit?: string;
+  Icon?: string;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
   TitleAr: string;
   TitleEn: string;
   RequiredSolved: number;
