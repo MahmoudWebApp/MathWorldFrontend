@@ -49,7 +49,6 @@ import { LockedPremiumDialog } from "@/components/premium/LockedPremiumDialog";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
-import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
 import { getStageAccent } from "@/lib/stageVisuals";
@@ -665,7 +664,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
               ]
             : []),
           {
-            label: getBreadcrumbProblemLabel(title),
+            label: isArabic ? 'المسألة' : 'Problem',
             truncate: true,
           },
         ]}
@@ -673,12 +672,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
 
       <div className="mb-8 flex items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">
-          <h1
-            className="mb-3 break-words text-start text-xl font-bold leading-snug sm:text-2xl"
-            style={{ color: stageAccent }}
-          >
-            <ProblemTitle text={title} className="text-inherit"/>
-          </h1>
+          <h1 className="sr-only">{isArabic ? 'نص المسألة' : 'Problem statement'}</h1>
 
           <div
             className="flex flex-wrap items-center justify-start gap-2"
