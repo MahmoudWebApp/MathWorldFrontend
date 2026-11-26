@@ -9,7 +9,7 @@ export function Pagination({page,pageSize,total,onPageChange,disabled=false}:{pa
     <span className="text-xs tabular-nums text-muted-foreground">{ar?'عرض':'Showing'} {total===0?0:Math.min((page-1)*pageSize+1,total)}–{Math.min(page*pageSize,total)} {ar?'من أصل':'of'} {total}</span>
     <div className="flex flex-wrap items-center gap-1">
       <button type="button" className={base} disabled={disabled||page<=1} onClick={()=>onPageChange(page-1)}><DirectionalArrow direction="back" className="h-4 w-4"/>{ar?'السابق':'Previous'}</button>
-      {pages.map((n,i)=><span key={n} className="inline-flex items-center gap-1">{i>0&&n>pages[i-1]+1&&<span className="px-1">…</span>}<button type="button" className={base+(n===page?' bg-primary text-primary-foreground hover:bg-primary':'')} aria-current={n===page?'page':undefined} aria-label={(ar?'صفحة ':'Page ')+n} disabled={disabled||n===page} onClick={()=>onPageChange(n)}>{n}</button></span>)}
+      {pages.map((n,i)=><span key={n} className="inline-flex items-center gap-1">{i>0&&n>pages[i-1]+1&&<span className="px-1">…</span>}<button type="button" className={base+(n===page?' bg-primary text-primary-foreground hover:bg-primary':'')} aria-current={n===page?'page':undefined} aria-label={(ar?'صفحة ':'Page ')+n} disabled={disabled} onClick={()=>{if(n!==page)onPageChange(n)}}>{n}</button></span>)}
       <button type="button" className={base} disabled={disabled||page>=last} onClick={()=>onPageChange(page+1)}>{ar?'التالي':'Next'}<DirectionalArrow direction="forward" className="h-4 w-4"/></button>
     </div>
   </nav>;

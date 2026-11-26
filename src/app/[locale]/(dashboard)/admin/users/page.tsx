@@ -1,4 +1,5 @@
 'use client';
+import {Pagination} from '@/components/ui/Pagination';
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
@@ -361,19 +362,7 @@ export default function AdminUsersPage() {
                 </tbody>
               </table>
             </div>
-            <div className="flex items-center justify-between gap-3 border-t border-border p-4 text-sm">
-              <span className="text-muted-foreground">{label.page} {data.Page} / {Math.max(data.TotalPages, 1)}</span>
-              <div className="flex gap-2">
-                <button type="button" disabled={isFetching || page <= 1} onClick={() => setPage((v) => v - 1)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">
-                  <DirectionalArrow direction="back" className="h-4 w-4" />{label.previous}
-                </button>
-                <button type="button" disabled={isFetching || page >= data.TotalPages} onClick={() => setPage((v) => v + 1)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">
-                  {label.next}<DirectionalArrow direction="forward" className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+            <div className="p-4"><Pagination page={data.Page} pageSize={data.PageSize} total={data.Total} onPageChange={setPage} disabled={isFetching}/></div>
           </>
         )}
       </section>
