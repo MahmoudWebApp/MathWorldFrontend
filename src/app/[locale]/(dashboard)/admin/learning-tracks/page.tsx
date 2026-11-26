@@ -5,6 +5,7 @@ import {Link} from '@/i18n/routing';
 import {Breadcrumbs} from '@/components/ui/Breadcrumbs';
 import {DirectionalChevron,DirectionalArrow} from '@/components/ui/DirectionalNavigation';
 import {GraduationCap} from 'lucide-react';
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 import {getStageAccent} from '@/lib/stageVisuals';
 import {useLocale} from 'next-intl';
@@ -96,7 +97,7 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
       <h3 className="font-semibold">{ar?'المهارات':'Skills'}</h3>
       <div className="max-h-64 overflow-y-auto space-y-1">{inventory.Skills.map(s=><label key={s.Id} className="flex items-center gap-2 rounded-lg border p-2 text-sm"><input type="checkbox" disabled={disabled} checked={mapping.SkillIds.includes(s.Id)} onChange={e=>toggle('SkillIds',s.Id,e.target.checked)}/><span>{name(s)} <span className="text-muted-foreground">{!s.IsPublished?(ar?'(غير منشورة)':'(unpublished)'):''}</span></span></label>)}</div>
       <h3 className="font-semibold">{ar?'المسائل':'Problems'} ({inventory.Total})</h3>
-      <div className="max-h-96 overflow-y-auto space-y-1">{inventory.Problems.map(p=><label key={p.Id} className="flex items-center gap-2 rounded-lg border p-2 text-sm"><input type="checkbox" disabled={disabled||!p.PrimarySkillId} checked={mapping.ProblemIds.includes(p.Id)} onChange={e=>toggle('ProblemIds',p.Id,e.target.checked)}/><span>#{p.Id} · {(ar?p.TitleAr:p.TitleEn)|| (ar?'بلا عنوان':'Untitled')} <span className="text-xs text-muted-foreground">{p.PrimarySkillId?(ar?'مهارة':'Skill')+' #'+p.PrimarySkillId:(ar?'بلا مهارة أساسية':'No primary skill')} · {ar?'المسارات':'Tracks'}: {p.AssignedTrackCount}</span></span></label>)}</div>
+      <div className="max-h-96 overflow-y-auto space-y-1">{inventory.Problems.map(p=><label key={p.Id} className="flex items-center gap-2 rounded-lg border p-2 text-sm"><input type="checkbox" disabled={disabled||!p.PrimarySkillId} checked={mapping.ProblemIds.includes(p.Id)} onChange={e=>toggle('ProblemIds',p.Id,e.target.checked)}/><span>#{p.Id} · <ProblemTitle text={(ar?p.TitleAr:p.TitleEn)|| (ar?'بلا عنوان':'Untitled')}/> <span className="text-xs text-muted-foreground">{p.PrimarySkillId?(ar?'مهارة':'Skill')+' #'+p.PrimarySkillId:(ar?'بلا مهارة أساسية':'No primary skill')} · {ar?'المسارات':'Tracks'}: {p.AssignedTrackCount}</span></span></label>)}</div>
       <div className="flex items-center gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*100>=inventory.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>
     </>}
     <div className="flex flex-wrap gap-2"><button className={btn} disabled={disabled||!dirty} onClick={()=>void saveMapping()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الروابط':'Save mappings')}</button>

@@ -1,4 +1,5 @@
 'use client';
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
@@ -177,7 +178,7 @@ export default function AdminAnalyticsPage() {
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {overview.MostMissedProblems.map(item => (
                   <div key={item.ProblemId} className="rounded-xl border border-border/70 bg-muted/20 p-4">
-                    <h3 className="font-semibold">{isArabic ? item.TitleAr : item.TitleEn}</h3>
+                    <h3 className="font-semibold"><ProblemTitle text={isArabic ? item.TitleAr : item.TitleEn}/></h3>
                     <p className="mt-1 text-xs text-muted-foreground">#{item.ProblemId}</p>
                     <p className="mt-3 flex gap-4 text-sm">
                       <span className="text-destructive">{n(item.IncorrectAttemptsInWindow)} {labels.wrong}</span>
