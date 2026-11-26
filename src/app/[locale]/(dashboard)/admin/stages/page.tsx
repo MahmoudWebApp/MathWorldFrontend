@@ -15,7 +15,8 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/Dialog";
 import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Layers } from "lucide-react";
+import {Tooltip,TooltipTrigger,TooltipContent} from "@/components/ui/Tooltip";
 import { getStageAccent } from "@/lib/stageVisuals";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
 
@@ -149,20 +150,8 @@ export default function AdminStagesPage() {
                         </span>
                       </td>
                       <td className="p-4 space-x-2 rtl:space-x-reverse">
-                        <Link
-                          href={`/admin/learning-tracks?stageId=${stage.Id}`}
-                          className="mb-2 inline-flex items-center gap-1.5 rounded-lg border mw-topic-action px-3 py-2 text-xs font-bold sm:mb-0"
-                        >
-                          {ar ? "عرض الصفوف والمستويات" : "View grades and levels"}
-                          <DirectionalChevron direction="forward" className="h-4 w-4" />
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openModal(stage)}
-                        >
-                          <Edit className="h-4 w-4 mw-topic-ink" />
-                        </Button>
+                        <Tooltip><TooltipTrigger asChild><Link href={`/admin/learning-tracks?stageId=${stage.Id}`} className="mw-admin-action mw-action-view p-2" aria-label={ar?"عرض الصفوف والمستويات":"View grades and levels"}><Layers className="h-4 w-4" aria-hidden="true"/></Link></TooltipTrigger><TooltipContent>{ar?"عرض الصفوف والمستويات":"View grades and levels"}</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild><button type="button" className="mw-admin-action p-2" aria-label={t("common.edit")} onClick={()=>openModal(stage)}><Edit className="h-4 w-4 mw-topic-ink" aria-hidden="true"/></button></TooltipTrigger><TooltipContent>{t("common.edit")}</TooltipContent></Tooltip>
 
 
                       </td>
