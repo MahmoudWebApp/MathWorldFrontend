@@ -458,7 +458,7 @@ function ProblemsPageClient() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-12 mb-8">
+            <nav aria-label={locale === "ar" ? "صفحات المسائل" : "Problem pages"} className="flex min-w-0 flex-wrap items-center justify-center gap-2 mt-8 mb-6">
               <Button
                 variant="outline"
                 size="icon"
@@ -470,7 +470,8 @@ function ProblemsPageClient() {
                 <DirectionalChevron direction="back" className="h-5 w-5" />
               </Button>
 
-              <div className="flex items-center gap-1 bg-card/90 border border-brand-primary/15 rounded-full p-1 shadow-sm backdrop-blur-xl">
+              <span className="min-w-20 rounded-full border border-border bg-card px-3 py-2 text-center text-sm tabular-nums sm:hidden" dir="ltr">{currentPage} / {totalPages}</span>
+              <div className="hidden items-center gap-1 bg-card/90 border border-brand-primary/15 rounded-full p-1 shadow-sm backdrop-blur-xl sm:flex">
                 {(() => {
                   const maxVisiblePages = 5;
                   let pagesToShow: number[];
@@ -526,7 +527,7 @@ function ProblemsPageClient() {
               >
                 <DirectionalChevron direction="forward" className="h-5 w-5" />
               </Button>
-            </div>
+            </nav>
           )}
         </>
       )}
