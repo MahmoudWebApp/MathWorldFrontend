@@ -13,6 +13,8 @@ export interface CreateCategoryRequest {
   DescriptionEn?: string;
   Order?: number;
   StageId: number;
+  TrackId?: number;
+  TrackRevision?: number;
   Icon?: File;
 }
 
@@ -127,6 +129,8 @@ export const categoriesApi = createApi({
           formData.append('Order', data.Order.toString());
         }
         formData.append('StageId', data.StageId.toString());
+        if (data.TrackId !== undefined) formData.append('TrackId', String(data.TrackId));
+        if (data.TrackRevision !== undefined) formData.append('TrackRevision', String(data.TrackRevision));
         if (data.Icon) {
           formData.append('Icon', data.Icon);
         }

@@ -145,6 +145,8 @@ function AdminCategoriesPageContent() {
           },
         }).unwrap();
       } else {
+        const scope=track.currentData?.Track;
+        if(!scope||scope.Id!==trackId||scope.StageId!==selectedStageId)throw new Error('TrackChanged');
         await createCategory({
           NameAr: formData.NameAr,
           NameEn: formData.NameEn,
@@ -152,11 +154,13 @@ function AdminCategoriesPageContent() {
           DescriptionEn: formData.DescriptionEn,
           Order: formData.Order,
           StageId: selectedStageId,
+          TrackId: scope.Id,
+          TrackRevision: scope.Revision,
           Icon: formData.Icon || undefined,
         }).unwrap();
       }
       handleCloseModal();
-      refetch();
+      await Promise.all([refetch(),track.refetch()]);
     } catch (error) {
       setSaveError(getApiErrorMessage(error, t("common.errorSaving")));
     }
@@ -186,7 +190,7 @@ function AdminCategoriesPageContent() {
     setDeletingId(id);
     try {
       await deleteCategory(id).unwrap();
-      await refetch();
+      await Promise.all([refetch(),track.refetch()]);
     } catch (error) {
       setDeleteError(getApiErrorMessage(error, t("common.errorDeleting")));
     } finally {
@@ -220,7 +224,7 @@ function AdminCategoriesPageContent() {
       NameEn: "",
       DescriptionAr: "",
       DescriptionEn: "",
-      Order: 0,
+      Order: Math.max(0,...(categories??[]).filter(c=>c.StageId===selectedStageId).map(c=>c.Order))+1,
       StageId: undefined,
       Icon: null,
     });
@@ -303,7 +307,7 @@ function AdminCategoriesPageContent() {
           disabled={!selectedStageId}
         >
           <Add className="h-4 w-4" />
-          {locale==="ar"?"تعريف فئة جديدة":"Define new category"}
+          {locale==="ar"?"إضافة فئة جديدة":"Add category"}
         </Button>
         </div>}/>
 
@@ -500,7 +504,7 @@ function AdminCategoriesPageContent() {
                   {saveError}
                 </p>
               )}
-              {!isEditing&&<p className="text-sm text-muted-foreground">{locale==="ar"?"بعد حفظ التعريف، اربطه بالصف أو المستوى من إدارة الارتباطات.":"After saving the definition, link it to this grade or level in Manage mappings."}</p>}
+              {!isEditing&&<p className="text-sm text-muted-foreground">{locale==="ar"?"ستُربط الفئة بهذا الصف تلقائياً عند الحفظ، ولن تظهر للطلاب حتى تحتوي على مسائل صالحة.":"The category will be linked to this grade automatically and remain hidden from the grade catalog until it has valid problems."}</p>}
               {/* Icon Upload / Preview */}
               <div>
                 <label className="block mb-2 text-sm font-semibold">
