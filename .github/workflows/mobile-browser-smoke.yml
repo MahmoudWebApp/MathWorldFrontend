@@ -1,0 +1,48 @@
+name: Mobile browser responsive smoke (local fixtures)
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/mobile-browser-smoke.cjs'
+      - '.github/workflows/mobile-browser-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  responsive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:4174/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install isolated browser test dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/mathworld-browser" --no-save playwright@1.51.1
+          "$RUNNER_TEMP/mathworld-browser/node_modules/.bin/playwright" install --with-deps chromium
+          echo "PLAYWRIGHT_HOME=$RUNNER_TEMP/mathworld-browser" >> "$GITHUB_ENV"
+      - name: Build and smoke test local site only
+        run: |
+          node scripts/mobile-browser-smoke.cjs --api > /tmp/mathworld-fixture.log 2>&1 &
+          pnpm build
+          pnpm start --hostname 127.0.0.1 --port 4173 > /tmp/mathworld-next.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173/ar >/dev/null; then break; fi
+            sleep 2
+          done
+          node scripts/mobile-browser-smoke.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-responsive-results
+          path: |
+            mobile-browser-results/
+            /tmp/mathworld-next.log
+            /tmp/mathworld-fixture.log
