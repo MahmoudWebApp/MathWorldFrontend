@@ -117,8 +117,11 @@ function AdminCategoriesPageContent() {
     );
   };
 
+  const freeIds=track.currentData?.FreeCategoryIds;
+  const free=new Set(freeIds??[]);
   const filteredCategories = selectedStageId
     ? categories?.filter((cat) => cat.StageId === selectedStageId && track.currentData?.CategoryIds.includes(cat.Id))
+      .sort((a,b)=>Number(free.has(b.Id))-Number(free.has(a.Id))||a.Order-b.Order||a.Id-b.Id)
     : [];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -327,7 +330,7 @@ function AdminCategoriesPageContent() {
                   <th className="p-4">{t("admin.categories.icon")}</th>
                   <th className="p-4">{t("admin.categories.nameAr")}</th>
                   <th className="p-4">{t("admin.categories.nameEn")}</th>
-                  <th className="p-4">{t("admin.categories.order")}</th>
+                  <th className="p-4">{locale==="ar"?"نوع الوصول":"Access"}</th>
                   <th className="p-4">{t("common.actions")}</th>
                 </tr>
               </thead>
@@ -376,9 +379,7 @@ function AdminCategoriesPageContent() {
                       {category.NameEn}
                     </td>
                     <td className="p-4">
-                      <span className="mw-topic-action px-3 py-1 rounded-full text-sm font-semibold">
-                        {category.Order ?? "-"}
-                      </span>
+                      {freeIds===undefined?<span className="text-xs text-muted-foreground">—</span>:<span className={"rounded-full border px-3 py-1 text-xs font-bold "+(free.has(category.Id)?"border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300":"border-primary/25 bg-primary/10 text-primary")}>{free.has(category.Id)?(locale==="ar"?"مجاني":"Free"):"Premium"}</span>}
                     </td>
                     <td className="p-4 space-x-2 rtl:space-x-reverse whitespace-nowrap">
                       <Link
