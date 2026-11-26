@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import {useConfirmDialog} from '@/components/ui/useConfirmDialog';
+import {useToast} from '@/components/ui/Toast';
 import { useUpsertAdminProblemDiagramMutation, useDeleteAdminProblemDiagramMutation } from '@/store/api/problemsApi';
 import { GeometryDiagram, isGeometryScene, type GeometryScene } from '@/components/math/GeometryDiagram';
 import { rightTriangleFixture } from '@/components/math/geometry-fixtures';
@@ -15,6 +17,10 @@ type Props = {
 /** Authenticated Admin problem editor. Backend remains the authority for all writes. */
 export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }: Props) {
   const ar = locale === 'ar';
+  const {ask,dialog}=useConfirmDialog();
+  const notify=useToast();
+  const currentProblem=useRef(problemId);
+  currentProblem.current=problemId;
   const [upsertDiagram] = useUpsertAdminProblemDiagramMutation();
   const [deleteDiagram] = useDeleteAdminProblemDiagramMutation();
   const emptyScene: GeometryScene = {
@@ -52,14 +58,14 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
     // A partial edit is not a valid preview or request.
   }
   const valid = parsed !== null && json.length <= 30000;
-  const useExample = () => {
-    if (!window.confirm(ar ? 'استبدال النص الحالي بمثال المثلث؟' : 'Replace the current draft with the triangle example?')) return;
+  const useExample = async () => {
+    if (!await ask(ar ? 'استبدال النص الحالي بمثال المثلث؟' : 'Replace the current draft with the triangle example?') || currentProblem.current!==problemId) return;
     setJson(JSON.stringify(rightTriangleFixture, null, 2));
     setMessage('');
   };
   const save = async () => {
     if (!parsed || !valid || saving) return;
-    if (!window.confirm(ar ? 'تأكيد حفظ الرسم الهندسي؟' : 'Save this geometry diagram?')) return;
+    if (!await ask(ar ? 'تأكيد حفظ الرسم الهندسي؟' : 'Save this geometry diagram?') || currentProblem.current!==problemId) return;
     setSaving(true);
     setMessage('');
     try {
@@ -67,12 +73,13 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
       setScene(parsed);
       onSaved?.(parsed);
       setMessage(ar ? 'تم حفظ الرسم' : 'Diagram saved');
+      notify(ar?'تم حفظ الرسم':'Diagram saved');
     } catch {
       setMessage(ar ? 'فشل الحفظ. تحقق من صلاحيات الأدمن والاتصال.' : 'Save failed. Check admin permissions and connection.');
     } finally { setSaving(false); }
   };
   const remove = async () => {
-    if (saving || !window.confirm(ar ? 'حذف الرسم فقط دون المسألة؟' : 'Delete only the diagram, not the problem?')) return;
+    if (saving || !await ask(ar ? 'حذف الرسم فقط دون المسألة؟' : 'Delete only the diagram, not the problem?') || currentProblem.current!==problemId) return;
     setSaving(true);
     setMessage('');
     try {
@@ -81,13 +88,14 @@ export function AdminGeometryEditor({ problemId, locale, initialScene, onSaved }
       setJson(JSON.stringify(emptyScene, null, 2));
       onSaved?.(null);
       setMessage(ar ? 'تم حذف الرسم' : 'Diagram removed');
+      notify(ar?'تم حذف الرسم':'Diagram removed');
     } catch {
       setMessage(ar ? 'تعذر حذف الرسم' : 'Could not remove diagram');
     } finally { setSaving(false); }
   };
   return (
     <section dir={ar ? 'rtl' : 'ltr'} className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
-      <h2 className="mb-2 text-lg font-bold">{ar ? 'محرر الرسم الهندسي' : 'Geometry diagram editor'}</h2>
+      {dialog}<h2 className="mb-2 text-lg font-bold">{ar ? 'محرر الرسم الهندسي' : 'Geometry diagram editor'}</h2>
       <p className="mb-3 text-sm text-slate-500">{ar ? 'عدّل وصف الرسم وعناصره بصيغة JSON الآمنة. المعاينة تظهر قبل الحفظ.' : 'Edit the safe JSON scene and preview it before saving.'}</p>
       <button type="button" onClick={useExample} className="mb-3 rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600">
         {ar ? 'تحميل مثال مثلث قائم (دون حفظ)' : 'Load right-triangle example (not saved)'}
