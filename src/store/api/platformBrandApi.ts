@@ -142,6 +142,10 @@ export const platformBrandApi = createApi({
     createSupervisor: builder.mutation<{Id:number;StaffSetupPending:boolean;InvitationQueued:boolean},{FullName:string;Email:string;Language:string}>({
       query: body=>({url:'/admin/supervisors',method:'POST',body}), invalidatesTags:(_r,e)=>e?[]:['Supervisors'],
     }),
+    deleteSupervisor: builder.mutation<{Deleted:boolean;SupervisorId:number},number>({
+      query: id=>({url:'/admin/supervisors/'+id,method:'DELETE',params:{confirm:true}}),
+      invalidatesTags:(_r,e)=>e?[]:['Supervisors','EditorialDraft'],
+    }),
     updateSupervisor: builder.mutation<{Updated:boolean},{id:number;IsActive:boolean;Permissions:number;Revision:number}>({
       query: ({id,...body})=>({url:'/admin/supervisors/'+id,method:'PUT',body}), invalidatesTags:(_r,e)=>e?[]:['Supervisors'],
     }),
@@ -182,4 +186,4 @@ export const platformBrandApi = createApi({
     }),
   }),
 });
-export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;
+export const { useGetPublicBrandQuery, useGetAdminBrandQuery, useUpdateBrandMutation, useLazyGetEmailPreviewQuery, useGetEmailOutboxQuery, useQueueTestEmailMutation, useGetSupervisorsQuery, useCreateSupervisorMutation, useDeleteSupervisorMutation, useUpdateSupervisorMutation, useInviteSupervisorMutation, useGetSupervisorPermissionsQuery, useGetSupervisorStudentsQuery, useGetSupervisorStudentActivityQuery, useGetSupervisorReportsQuery, useGetSupervisorActivityQuery,useGetEditorialDraftsQuery,useGetEditorialDraftQuery,useGetEditorialClassificationQuery,useSaveEditorialDraftMutation,useEditorialActionMutation,useGetEditorialBankQuery,useAmendEditorialProblemMutation,useImportEditorialBatchMutation,useImportEditorialAmendmentsMutation,useLazyGetReviewedBankInfoQuery,useLazyGetReviewedBankBatchQuery,useImportReviewedHintsMutation,useLazyGetHeldWordingQuery,useImportHeldWordingMutation } = platformBrandApi;
