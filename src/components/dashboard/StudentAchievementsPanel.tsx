@@ -75,7 +75,7 @@ export function StudentAchievementsPanel({ compact = false }: { compact?: boolea
                         aria-valuemin={0} aria-valuemax={badge.RequiredSolved}
                         aria-valuenow={badge.CurrentProgress}
                         className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div className={'h-full rounded-full '+(badge.Earned?'bg-emerald-500':'bg-amber-500')}
+                        <div className={'h-full rounded-full '+(badge.RequiredSolved>0&&badge.CurrentProgress>=badge.RequiredSolved?'bg-emerald-500':'bg-amber-500')}
                           style={{ width: `${badge.RequiredSolved > 0 ? Math.min(100, 100 * badge.CurrentProgress / badge.RequiredSolved) : 0}%` }} />
                       </div>
                     </>

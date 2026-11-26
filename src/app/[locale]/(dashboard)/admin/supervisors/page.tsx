@@ -50,7 +50,7 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
   }
   async function deleteAccount(){
     if(deleting||saving||sending)return;
-    if(!window.confirm(ar?'حذف حساب المشرف نهائياً: '+row.FullName+'؟ سيحذف حسابه وسجل نشاطه، ولا يمكن التراجع.':'Permanently delete '+row.FullName+'? Their account and activity will be removed; this cannot be undone.'))return;
+    if(!window.confirm(ar?'حذف حساب المشرف نهائياً: '+row.FullName+'؟ سيحذف حسابه وسجل نشاطه ومسوداته غير المنشورة نهائياً. ستبقى المسائل المنشورة محفوظة، ولا يمكن التراجع.':'Permanently delete '+row.FullName+'? Their account, activity and unpublished drafts will be permanently removed. Published problems will be preserved; this cannot be undone.'))return;
     setError('');setMessage('');
     try{const result=await remove(row.Id).unwrap();if(!result.Deleted)throw Error('DeletionFailed');}
     catch(e){const code=(e as {data?:{Message?:string}})?.data?.Message;setError(code==='SupervisorHasOpenEditorialWork'?(ar?'يوجد محتوى غير مكتمل للمشرف. راجعه أو اسحبه قبل الحذف.':'Resolve or withdraw the supervisor’s open editorial work before deleting.'):ar?'تعذّر حذف المشرف. قد توجد سجلات محمية.':'Deletion failed; protected records may exist.');}

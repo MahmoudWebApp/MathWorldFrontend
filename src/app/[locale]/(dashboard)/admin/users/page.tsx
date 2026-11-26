@@ -135,6 +135,7 @@ export default function AdminUsersPage() {
     const when = new Date(learner.PremiumExpiresAtUtc);
     return when.getTime() <= Date.now() ? label.expired + ': ' + fmt(when) : fmt(when);
   };
+  const expiryTone = (learner: AdminLearnerSummary) => learner.SubscriptionType !== 'Premium' ? 'neutral' as const : !learner.PremiumExpiresAtUtc ? 'purple' as const : new Date(learner.PremiumExpiresAtUtc).getTime() <= Date.now() ? 'red' as const : 'amber' as const;
   const projectedPeriod = (learner: AdminLearnerSummary) => {
     if (learner.SubscriptionType === 'Premium' && !learner.PremiumExpiresAtUtc) return null;
     const currentExpiry = learner.PremiumExpiresAtUtc ? new Date(learner.PremiumExpiresAtUtc) : null;
@@ -300,23 +301,19 @@ export default function AdminUsersPage() {
                     }`}>{u.IsActive ? label.active : label.disabled}</span>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="rounded-lg bg-muted px-2 py-1">{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</span>
-                    <span className="rounded-lg bg-muted px-2 py-1">{u.SubscriptionType}</span>
+                    <StageDataBadge id={u.CurrentStageId}>{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</StageDataBadge>
+                    <DataBadge tone={u.SubscriptionType==='Premium'?'amber':'blue'}>{u.SubscriptionType}</DataBadge>
                   </div>
                   <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted/30 p-3 text-sm">
-                    <div><dt className="text-xs text-muted-foreground">{label.expires}</dt><dd className="font-semibold">{expiry(u)}</dd></div>
+                    <div><dt className="text-xs text-muted-foreground">{label.expires}</dt><dd className="mt-1"><DataBadge tone={expiryTone(u)}>{expiry(u)}</DataBadge></dd></div>
                   </dl>
                     </div>
                   </div>
-                  <button type="button" disabled={!u.IsActive || granting || searching || isFetching} onClick={() => openGrant([u.Id])}
-                    className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/30 px-3 py-2 text-sm font-semibold text-primary disabled:opacity-40">
-                    <Crown className="h-4 w-4" aria-hidden />
-                    {u.SubscriptionType === 'Premium' ? label.renew : label.annual}
-                  </button>
-                  <Link href={`/admin/users/${u.Id}`} className="inline-flex items-center gap-2 rounded-lg border border-primary/20 px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/5">
-                    {label.detail}<DirectionalArrow direction="forward" className="h-4 w-4" />
-                  </Link>
-                  <button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-3 py-2 text-sm font-semibold text-destructive disabled:opacity-50"><Trash2 className="h-4 w-4" aria-hidden/>{ar?'حذف الطالب':'Delete learner'}</button>
+<div className="flex items-center gap-2 whitespace-nowrap">
+<Tooltip><TooltipTrigger asChild><Link href={'/admin/users/'+u.Id} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-primary/30 text-primary" aria-label={label.detail}><Eye className="h-4 w-4"/></Link></TooltipTrigger><TooltipContent>{label.detail}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={!u.IsActive||granting||searching||isFetching} onClick={()=>openGrant([u.Id])} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-amber-500/30 text-amber-600 dark:text-amber-300 disabled:opacity-40" aria-label={u.SubscriptionType==='Premium'?label.renew:label.annual}><Crown className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{u.SubscriptionType==='Premium'?label.renew:label.annual}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-destructive/30 text-destructive" aria-label={ar?'حذف الطالب':'Delete learner'}><Trash2 className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{ar?'حذف الطالب':'Delete learner'}</TooltipContent></Tooltip>
+</div>
                 </article>
               ))}
             </div>
@@ -344,16 +341,14 @@ export default function AdminUsersPage() {
                         <p className="mt-1 max-w-[230px] truncate text-xs text-muted-foreground" dir="ltr">{u.Email}</p>
                       </td>
                       <td className="px-4 py-3"><StageDataBadge id={u.CurrentStageId}>{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</StageDataBadge></td>
-                      <td className="px-4 py-3"><span className={`rounded-lg px-2 py-1 text-xs ${
-                        u.IsActive ? 'mw-status-active' : 'bg-destructive/10 text-destructive'
-                      }`}>{u.IsActive ? label.active : label.disabled}</span></td>
+                      <td className="px-4 py-3"><DataBadge tone={u.IsActive?'green':'red'}>{u.IsActive ? label.active : label.disabled}</DataBadge></td>
                       <td className="px-4 py-3"><span className={u.SubscriptionType==='Premium'?'bg-amber-500/15 text-amber-700 dark:text-amber-300 rounded-lg px-2 py-1 text-xs font-bold':'bg-slate-500/10 text-muted-foreground rounded-lg px-2 py-1 text-xs font-semibold'}>{u.SubscriptionType}</span></td>
-                      <td className="px-4 py-3"><DataBadge tone={u.SubscriptionType==='Premium'?'amber':'neutral'}>{expiry(u)}</DataBadge></td>
+                      <td className="px-4 py-3"><DataBadge tone={expiryTone(u)}>{expiry(u)}</DataBadge></td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 whitespace-nowrap">
-<Tooltip><TooltipTrigger asChild><Link href={'/admin/users/'+u.Id} className="mw-admin-action p-2" aria-label={label.detail}><Eye className="h-4 w-4"/></Link></TooltipTrigger><TooltipContent>{label.detail}</TooltipContent></Tooltip>
-<Tooltip><TooltipTrigger asChild><button type="button" disabled={!u.IsActive||granting||searching||isFetching} onClick={()=>openGrant([u.Id])} className="mw-admin-action p-2 text-amber-600 disabled:opacity-40" aria-label={u.SubscriptionType==='Premium'?label.renew:label.annual}><Crown className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{u.SubscriptionType==='Premium'?label.renew:label.annual}</TooltipContent></Tooltip>
-<Tooltip><TooltipTrigger asChild><button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="mw-admin-action p-2 text-destructive border-destructive/30" aria-label={ar?'حذف الطالب':'Delete learner'}><Trash2 className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{ar?'حذف الطالب':'Delete learner'}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><Link href={'/admin/users/'+u.Id} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-primary/30 text-primary" aria-label={label.detail}><Eye className="h-4 w-4"/></Link></TooltipTrigger><TooltipContent>{label.detail}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={!u.IsActive||granting||searching||isFetching} onClick={()=>openGrant([u.Id])} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-amber-500/30 text-amber-600 dark:text-amber-300 disabled:opacity-40" aria-label={u.SubscriptionType==='Premium'?label.renew:label.annual}><Crown className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{u.SubscriptionType==='Premium'?label.renew:label.annual}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-destructive/30 text-destructive" aria-label={ar?'حذف الطالب':'Delete learner'}><Trash2 className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{ar?'حذف الطالب':'Delete learner'}</TooltipContent></Tooltip>
 </div>
                       </td>
                     </tr>

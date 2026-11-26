@@ -187,32 +187,31 @@ export default function AdminLearnerActivityPage() {
                   <div>
                     <button type="button" onClick={() => chooseStudent(student.Id)}
                       className="text-start font-bold text-primary hover:underline">{student.FullName}</button>
-                    <p className="text-xs text-muted-foreground">#{student.Id}
-                      {' · '}{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}
-                    </p>
+                    <p className="text-xs text-muted-foreground">#{student.Id}</p><StageDataBadge id={student.CurrentStageId}>{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}</StageDataBadge>
                   </div>
                   <span className={student.IsOnline
-                    ? 'rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300'
+                    ? 'inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300'
                     : 'rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground'}>
+                    {student.IsOnline&&<span className="h-2 w-2 rounded-full bg-emerald-500 motion-safe:animate-pulse" aria-hidden="true"/>}
                     {student.IsOnline
-                      ? (ar ? 'اتصال حديث' : 'Recently online')
+                      ? (ar ? 'اتصل خلال 5 دقائق' : 'Seen within 5 min')
                       : (ar ? 'لا يوجد اتصال حديث' : 'No recent heartbeat')}
                   </span>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-2">
                   {[
-                    [ar ? 'مسجل منذ' : 'Registered', date(student.CreatedAt)],
-                    [ar ? 'آخر دخول' : 'Last login', date(student.LastLoginAt)],
-                    [ar ? 'آخر خروج مؤكد' : 'Last explicit sign-out', date(student.LastExplicitSignOutAtUtc ?? null)],
-                    [ar ? 'آخر حل' : 'Last practice', date(student.LastPracticeAt)],
-                    [ar ? 'آخر اتصال' : 'Last heartbeat', date(student.LastHeartbeatAtUtc)],
+                    [ar ? 'مسجل منذ' : 'Registered', <DataBadge tone={(student.CreatedAt)?'purple':'neutral'}>{date(student.CreatedAt)}</DataBadge>] as const,
+                    [ar ? 'آخر دخول' : 'Last login', <DataBadge tone={(student.LastLoginAt)?'green':'neutral'}>{date(student.LastLoginAt)}</DataBadge>] as const,
+                    [ar ? 'آخر خروج مؤكد' : 'Last explicit sign-out', <DataBadge tone={(student.LastExplicitSignOutAtUtc ?? null)?'amber':'neutral'}>{date(student.LastExplicitSignOutAtUtc ?? null)}</DataBadge>] as const,
+                    [ar ? 'آخر حل' : 'Last practice', <DataBadge tone={(student.LastPracticeAt)?'blue':'neutral'}>{date(student.LastPracticeAt)}</DataBadge>] as const,
+                    [ar ? 'آخر اتصال' : 'Last heartbeat', <DataBadge tone={(student.LastHeartbeatAtUtc)?'green':'neutral'}>{date(student.LastHeartbeatAtUtc)}</DataBadge>] as const,
                   ].map(([label, value]) => <div key={label} className="min-w-0">
                     <dt className="text-xs text-muted-foreground">{label}</dt>
-                    <dd className="font-semibold">{value}</dd>
+                    <dd className="mt-1 font-semibold">{value}</dd>
                   </div>)}
                 </dl>
                 <p className="border-t pt-2 font-semibold">
-                  {ar ? 'محاولات الحل' : 'Practice attempts'}: {n(student.Attempts)}
+                  {ar ? 'محاولات الحل' : 'Practice attempts'}: <DataBadge tone="blue">{n(student.Attempts)}</DataBadge>
                 </p>
               </article>
             ))}
@@ -232,7 +231,7 @@ export default function AdminLearnerActivityPage() {
               </tr>
             </thead>
             <tbody>
-              {result.currentData.Students.map(student => <tr key={student.Id} className="border-t">
+              {result.currentData.Students.map(student => <tr key={student.Id} className="border-t odd:bg-muted/10 hover:bg-muted/30 transition-colors">
                 <td className="p-3 font-semibold">
                   <button type="button" onClick={() => chooseStudent(student.Id)} className="text-start text-primary hover:underline">
                     {student.FullName}
