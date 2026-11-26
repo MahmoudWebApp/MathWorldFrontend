@@ -182,18 +182,19 @@ export default function UserDashboardPage() {
 
       <section aria-label={ar ? 'اختصارات' : 'Quick links'} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { href: '/dashboard/favorites', label: ar ? 'المفضلة' : 'Favorites', icon: Heart, premium: false },
-          { href: '/dashboard/error-notebook', label: ar ? 'دفتر الأخطاء' : 'Error notebook', icon: NotebookTabs, premium: false },
-          { href: '/dashboard/leaderboard', label: ar ? 'المتفوقون' : 'Leaderboard', icon: Trophy, premium: false },
-          { href: '/dashboard/analytics', label: ar ? 'التقارير والإحصائيات' : 'Reports & analytics', icon: ChartNoAxesCombined, premium: true },
+          { href: '/dashboard/favorites', label: ar ? 'المفضلة' : 'Favorites', icon: Heart, premium: false, tint:'bg-rose-500/10 text-rose-600 dark:text-rose-300', description:ar?'مسائلك المحفوظة':'Saved problems' },
+          { href: '/dashboard/error-notebook', label: ar ? 'دفتر الأخطاء' : 'Error notebook', icon: NotebookTabs, premium: false, tint:'bg-orange-500/10 text-orange-600 dark:text-orange-300', description:ar?'راجع أخطاءك':'Review your mistakes' },
+          { href: '/dashboard/leaderboard', label: ar ? 'المتفوقون' : 'Leaderboard', icon: Trophy, premium: false, tint:'bg-reward-gold/10 mw-reward', description:ar?'تقدّمك بين الطلاب':'Your standing among students' },
+          { href: '/dashboard/analytics', label: ar ? 'التقارير والإحصائيات' : 'Reports & analytics', icon: ChartNoAxesCombined, premium: true, tint:'bg-teal-500/10 text-teal-700 dark:text-teal-300', description:ar?'تابع إنجازك':'Track your progress' },
         ].map(item => {
-          const cardClass = "flex min-h-24 w-full flex-col justify-center gap-2 rounded-2xl border bg-card p-4 text-start transition-colors hover:border-primary/40 hover:bg-primary/5";
+          const cardClass = "flex min-h-24 w-full flex-col justify-center gap-2 rounded-2xl border bg-card p-4 text-start transition-[transform,box-shadow,border-color] motion-safe:hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40";
           const content = <>
-            <item.icon className="h-6 w-6 text-primary" aria-hidden="true" />
+            <span className={"grid h-11 w-11 place-items-center rounded-xl "+item.tint}><item.icon className="h-6 w-6" aria-hidden="true" /></span>
             <span className="flex items-center gap-2 text-sm font-bold">
               {item.label}
               {item.premium && !isPremium && <LockKeyhole className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
             </span>
+            <span className="text-xs text-muted-foreground">{item.description}</span>
           </>;
           return item.premium && !isPremium
             ? <LockedPremiumDialog key={item.href} featureName={item.label}>
