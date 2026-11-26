@@ -1,13 +1,14 @@
 'use client';
-import { useRef,useState } from 'react';
+import { useEffect,useRef,useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { Link } from '@/i18n/routing';
-import { GraduationCap, FileDown } from 'lucide-react';
+import { GraduationCap, FileDown, Printer } from 'lucide-react';
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { PopoverConfirm } from '@/components/ui/PopoverConfirm';
+import { Dialog,DialogContent,DialogHeader,DialogTitle } from '@/components/ui/Dialog';
 import { LatexPreview } from '@/components/ui/LatexPreview';
 import { useGetStudentEntitlementQuery,useGetCustomExamSetupQuery,useGetCustomExamsQuery,useLazyGetCustomExamQuery,useStartCustomExamMutation,useAnswerCustomExamMutation,useFinishCustomExamMutation,useAbandonCustomExamMutation,useDownloadExamCertificateMutation,type CustomExam } from '@/store/api/usersApi';
 
@@ -32,6 +33,10 @@ function ExamWorkspace(){
   const [finish]=useFinishCustomExamMutation();
   const [abandon]=useAbandonCustomExamMutation();
   const [pdf]=useDownloadExamCertificateMutation();
+  const [certificate,setCertificate]=useState<{url:string;filename:string}|null>(null);
+  const mounted=useRef(true);
+  useEffect(()=>{mounted.current=true;return ()=>{mounted.current=false;};},[]);
+  useEffect(()=>()=>{if(certificate)URL.revokeObjectURL(certificate.url);},[certificate]);
   const [exam,setExam]=useState<CustomExam|null>(null);
   const [category,setCategory]=useState<number|null>(null);
   const [count,setCount]=useState(10);
@@ -51,18 +56,19 @@ function ExamWorkspace(){
   const max=scoped.reduce((sum,c)=>sum+(difficulty===null?c.Count:(c.DifficultyCounts?.find(d=>d.Level===difficulty)?.Count??0)),0);
   const download=(id:string)=>void run(async()=>{
     const blob=await pdf({id,lang:ar?'ar':'en'}).unwrap();
-    if(blob.type!=='application/pdf')throw Error('Invalid PDF');
-    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mathworld-exam-'+id+'.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+    if(blob.type!=='application/pdf'||(await blob.slice(0,5).text())!=='%PDF-')throw Error('Invalid PDF');
+    if(mounted.current)setCertificate({url:URL.createObjectURL(blob),filename:'mathworld-exam-'+id+'.pdf'});
   });
   const cancel=(id:string)=>run(async()=>{await abandon(id).unwrap();setExam(null);setChosen(null);request.current=null;await history.refetch();});
   return <main className="container mx-auto max-w-4xl space-y-4 px-4 py-6">
     <WorkspacePageHeader title={tr('الامتحانات المخصصة','Custom exams')} icon={GraduationCap}/>
+    <Dialog open={!!certificate} onOpenChange={open=>{if(!open)setCertificate(null);}}><DialogContent className="max-w-4xl max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>{tr('معاينة شهادة الامتحان','Exam certificate preview')}</DialogTitle></DialogHeader>{certificate&&<><iframe title={tr('معاينة الشهادة PDF','PDF certificate preview')} src={certificate.url} className="h-[55dvh] w-full rounded-xl border bg-muted"/><div className="flex flex-wrap gap-2"><a className={btn+' inline-flex items-center gap-2'} href={certificate.url} download={certificate.filename}><FileDown className="h-4 w-4"/>{tr('تحميل PDF','Download PDF')}</a><a className={btn+' inline-flex items-center gap-2'} href={certificate.url} target="_blank" rel="noopener noreferrer"><Printer className="h-4 w-4"/>{tr('فتح للطباعة','Open for printing')}</a></div><p className="text-xs text-muted-foreground">{tr('استخدم زر الطباعة في قارئ PDF. إذا لم تظهر المعاينة، افتح الملف أو نزّله.','Use the print control in your PDF viewer. If preview is unavailable, open or download the file.')}</p></>}</DialogContent></Dialog>
     {error&&<p role="alert" className="rounded-xl border border-destructive/30 p-3 text-destructive">{error}</p>}
     {entitlement.isLoading?<MathWorldLoading compact/>:!premium?<div className="rounded-2xl border bg-card p-5"><p>{tr('الامتحانات الجديدة متاحة لحساب Premium. تبقى شهاداتك السابقة متاحة.','New exams require Premium. Your previous certificates remain available.')}</p><Link href="/dashboard/upgrade" className="mt-3 inline-block font-bold text-primary">{tr('ترقية الحساب','Upgrade account')}</Link></div>:null}
     {exam&&!exam.AbandonedAtUtc?<section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-6">
       <h2 className="text-lg font-bold">{ar?exam.TitleAr:exam.TitleEn}</h2>
       {exam.FinishedAtUtc?<><p className="text-xl font-bold">{exam.Score}/{exam.Total} — {exam.Passed?tr('ناجح','Passed'):tr('لم تجتز','Not passed')}</p>
-        {exam.CertificateIssued&&<button disabled={busy} className={btn+' mw-reward flex items-center gap-2'} onClick={()=>download(exam.Id)}><FileDown className="h-4 w-4"/>{tr('تحميل الشهادة PDF','Download certificate PDF')}</button>}
+        {exam.CertificateIssued&&<button disabled={busy} className={btn+' mw-reward flex items-center gap-2'} onClick={()=>download(exam.Id)}><FileDown className="h-4 w-4"/>{tr('معاينة الشهادة','Preview certificate')}</button>}
         <h3 className="font-bold">{tr('مراجعة الإجابات','Review answers')}</h3>
         {exam.Review?.map((r,i)=><div key={r.Question.Id} className="rounded-xl border p-3"><p>{i+1}. <MathText value={ar?r.Question.QuestionTextAr:r.Question.QuestionTextEn}/></p>{r.Question.Options.map(o=><div key={o.Id} className={'my-1 rounded-lg p-2 '+(o.Id===r.CorrectOptionId?'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300':o.Id===r.SelectedOptionId?'bg-destructive/10 text-destructive':'')}><LatexPreview latex={o.LatexCode}/>{o.Id===r.SelectedOptionId&&<span className="ms-2 text-xs">{tr('إجابتك','Your answer')}</span>}</div>)}</div>)}
         <button className={btn} onClick={()=>setExam(null)}>{tr('العودة للامتحانات','Back to exams')}</button>
