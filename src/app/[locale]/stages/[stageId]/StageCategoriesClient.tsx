@@ -1,7 +1,6 @@
 'use client';
 
 import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
-import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { BookOpenText, ListChecks, Calculator } from 'lucide-react';
@@ -13,7 +12,7 @@ import { useGetStageCategoryAccessQuery } from '@/store/api/categoriesApi';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { PublicTrackCatalog } from '@/components/curriculum/TrackViews';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
-import { CategorySkillsDialog } from '@/components/curriculum/CategorySkillsDialog';
+import { CategorySkillsPopover } from '@/components/curriculum/CategorySkillsDialog';
 
 /**
  * Public stage overview: one server-rendered heading/description, live
@@ -24,7 +23,6 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
   const ar = useLocale() === 'ar';
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const stageAccent = getStageAccent({ Id: stageId });
-  const [selectedCategory, setSelectedCategory] = useState<{ Id: number; NameAr: string; NameEn: string } | null>(null);
   const validStage=Number.isSafeInteger(stageId)&&stageId>0;
   const tracks=useGetPublishedTracksQuery(stageId,{skip:!validStage,refetchOnMountOrArgChange:120});
   const hasTracks=tracks.currentData?.Enabled===true&&tracks.currentData.Items.length>0;
@@ -37,7 +35,7 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
   });
   const categories = (data?.Categories ?? [])
     .map(category => ({ ...category, StageId: stageId }))
-    .sort((a, b) => (a.Order ?? 0) - (b.Order ?? 0) || a.Id - b.Id);
+    .sort((a,b)=>Number(data?.FreeCategoryIds.includes(b.Id)??false)-Number(data?.FreeCategoryIds.includes(a.Id)??false)||(a.Order??0)-(b.Order??0)||a.Id-b.Id);
 
   return (
     <section className="container mx-auto px-4 pb-16 pt-2 sm:px-6 lg:px-12">
@@ -97,12 +95,11 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
                     <Calculator className="h-4 w-4" aria-hidden="true" />
                     {category.ProblemsCount ?? 0} {ar ? 'مسألة' : 'problems'}
                   </span>
-                  <button type="button"
-                    onClick={() => setSelectedCategory({ Id: category.Id, NameAr: category.NameAr, NameEn: category.NameEn })}
+                  <CategorySkillsPopover stageId={stageId} category={category} trigger={<button type="button"
                     className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border mw-topic-action px-3 py-2 text-xs font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                     <ListChecks className="h-4 w-4" style={{ color: stageAccent }} aria-hidden="true" />
                     {ar ? 'عرض المهارات' : 'View skills'}
-                  </button>
+                  </button>}/>
                 </div>
               </article>
             );
@@ -110,8 +107,7 @@ export default function StageCategoriesClient({ stageId }: { stageId: number }) 
         </div>
       )}
 
-      <CategorySkillsDialog stageId={stageId} category={selectedCategory}
-        onClose={() => setSelectedCategory(null)} /></>}
+      </>}
       {!isAuthenticated && (
         <div className="mt-8 flex justify-center">
           <Link href="/register" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground hover:opacity-90">
