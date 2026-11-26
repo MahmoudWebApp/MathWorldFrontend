@@ -1,4 +1,5 @@
 'use client';
+import {useConfirmDialog} from '@/components/ui/useConfirmDialog';
 
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -17,6 +18,7 @@ type Props = {
  */
 export function StageFreeCategoryAccessEditor({ stageId, locale }: Props) {
   const ar = locale === 'ar';
+  const {ask,dialog}=useConfirmDialog();
   const { currentData: catalog, isLoading, isFetching, isError, refetch } =
     useGetStageCategoryAccessQuery(stageId, {
       skip: stageId <= 0,
@@ -71,10 +73,10 @@ export function StageFreeCategoryAccessEditor({ stageId, locale }: Props) {
     if (!canSubmit || !catalog) return;
     const selectedNames = choices.filter(item => selected.includes(item.Id))
       .map(item => ar ? item.NameAr : item.NameEn).join('، ');
-    const confirmed = window.confirm(ar
+    const confirmed = await ask(ar
       ? `تأكيد استبدال الفئتين المجانيتين لهذه المرحلة بـ: ${selectedNames}؟\nقد تتغير فوراً صلاحية وصول الطلاب Free إلى بعض المسائل بعد نشر التحديث.`
       : `Set the two Free categories for this stage to: ${selectedNames}?\nThis may change learners' access to questions when the update is deployed.`);
-    if (!confirmed) return;
+    if (!confirmed || activeStage.current!==stageId) return;
 
     setError('');
     setStatus('');
@@ -98,7 +100,7 @@ export function StageFreeCategoryAccessEditor({ stageId, locale }: Props) {
   return (
     <section className="mb-6 rounded-2xl border border-primary/20 bg-card p-4 sm:p-5"
       aria-label={ar ? 'إعداد الفئتين المجانيتين لهذه المرحلة' : 'Stage Free category settings'}>
-      <h2 className="text-lg font-bold">
+      {dialog}<h2 className="text-lg font-bold">
         {ar ? 'الفئتان المجانيتان (Free)' : 'Two Free categories'}
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">

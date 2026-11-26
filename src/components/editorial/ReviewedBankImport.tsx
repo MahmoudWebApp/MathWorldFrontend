@@ -1,4 +1,5 @@
 'use client';
+import {useConfirmDialog} from '@/components/ui/useConfirmDialog';
 
 import {useRef,useState} from 'react';
 import {useDispatch} from 'react-redux';
@@ -42,6 +43,7 @@ function Candidate({row,ar,draft}:{row:Row;ar:boolean;draft?:ReviewedDraftState}
 }
 export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
   const ar=useLocale()==='ar';const lang=ar?0:1;
+  const {ask,dialog}=useConfirmDialog();
   const dispatch=useDispatch();
   const refreshAfterPublication=()=>{dispatch(platformBrandApi.util.invalidateTags(['EditorialDraft']));};
   const [loadInfo]=useLazyGetReviewedBankInfoQuery();const [loadBatch]=useLazyGetReviewedBankBatchQuery();
@@ -81,10 +83,10 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
     setPreview(undefined);const latest=await refresh(current);const result=await execute(latest,false);setPreview(result);
     setStatus(ar?'تمت المعاينة. جاهزة: '+result.ready:'Preview complete. Ready: '+result.ready);
   });}
-  function apply(){
+  async function apply(){
     if(!batch||!preview?.ready||!note.trim())return;
     const current=batch,p=preview;
-    if(!window.confirm(current.Kind==='hints'?(ar?'تأكيد نشر التلميحات المراجعة فقط؟':'Publish the reviewed hints only?'):(ar?'تأكيد إنشاء المسودات دون نشر؟':'Create drafts without publishing?')))return;
+    if(!await ask(current.Kind==='hints'?(ar?'تأكيد نشر التلميحات المراجعة فقط؟':'Publish the reviewed hints only?'):(ar?'تأكيد إنشاء المسودات دون نشر؟':'Create drafts without publishing?')))return;
     void run(async()=>{setPreview(undefined);
       const result=await execute(current,true,p);await refresh(current);onChanged();
       setStatus((current.Kind==='hints'?(ar?'تلميحات مطبقة: ':'Hints applied: '):(ar?'مسودات منشأة: ':'Drafts created: '))+result.count);
@@ -114,10 +116,10 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
       }
     }
   }
-  function publish(){
+  async function publish(){
     if(!batch||!info?.PublicationEnabled||!note.trim())return;
     const current=batch;const selected=current.Drafts.filter(eligible);
-    if(!selected.length||!window.confirm(ar?'اعتماد ونشر '+selected.length+' مسودة مطابقة بعد مراجعة محتواها؟':'Approve and publish '+selected.length+' matching drafts after reviewing their content?'))return;
+    if(!selected.length||!await ask(ar?'اعتماد ونشر '+selected.length+' مسودة مطابقة بعد مراجعة محتواها؟':'Approve and publish '+selected.length+' matching drafts after reviewing their content?'))return;
     void run(async()=>{
       setPreview(undefined);
       const latest=await refresh(current);
@@ -171,10 +173,10 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
     setStatus((stop.current?(ar?'أوقفت المعاينة عند ':'Preview stopped at '):(ar?'اكتملت المعاينة: ':'Preview complete: '))+i+'/'+groups.length);
   }
   function scanAll(){void run(scan);}
-  function importAll(){
+  async function importAll(){
     if(!scanComplete||!bulkReady)return;
     const selected=bulk.filter(p=>!p.issue&&p.ready>0);
-    if(!window.confirm(ar?'إنشاء '+bulkReady+' مسودة جاهزة دون نشر؟ سيتم تجاوز الدفعات المعلقة.':'Create '+bulkReady+' ready drafts without publishing? Blocked batches will be skipped.'))return;
+    if(!await ask(ar?'إنشاء '+bulkReady+' مسودة جاهزة دون نشر؟ سيتم تجاوز الدفعات المعلقة.':'Create '+bulkReady+' ready drafts without publishing? Blocked batches will be skipped.'))return;
     void run(async()=>{
       setScanComplete(false);let created=0,processed=0;
       try{
@@ -198,11 +200,11 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
       setStatus((ar?'المسودات المنشأة فعلياً: ':'Drafts created: ')+created+' · '+processed+'/'+selected.length+(ar?' دفعة':' batches'));
     });
   }
-  function publishAll(){
+  async function publishAll(){
     if(!scanComplete||!info?.PublicationEnabled||!note.trim()||!bulkDrafts)return;
     const selected=bulk.filter(p=>!p.issue&&p.batch.MissingMappings===0).map(p=>({plan:p,drafts:p.batch.Drafts.filter(eligible)})).filter(x=>x.drafts.length);
     const total=selected.reduce((n,x)=>n+x.drafts.length,0);
-    if(!total||!window.confirm(ar?'هل راجعت محتوى المسودات المطابقة وتؤكد اعتماد ونشر '+total+' مسألة؟ لن تُنشر المسائل المعلقة أو المعدلة.':'Have you reviewed the matching content and confirm approval and publication of '+total+' questions? Held and changed items are excluded.'))return;
+    if(!total||!await ask(ar?'هل راجعت محتوى المسودات المطابقة وتؤكد اعتماد ونشر '+total+' مسألة؟ لن تُنشر المسائل المعلقة أو المعدلة.':'Have you reviewed the matching content and confirm approval and publication of '+total+' questions? Held and changed items are excluded.'))return;
     void run(async()=>{
       setScanComplete(false);let done=0;
       try{
@@ -229,7 +231,7 @@ export function ReviewedBankImport({onChanged}:{onChanged:()=>void}){
     });
   }
   const count=batch?.Drafts.filter(eligible).length??0;
-  return <section className="space-y-3 rounded-xl border p-4">
+  return <section className="space-y-3 rounded-xl border p-4">{dialog}
     <h3 className="font-bold">{ar?'استيراد واعتماد بنك المسائل':'Import and approve reviewed question bank'}</h3>
     <p className="text-sm text-muted-foreground">{ar?'معاينة واحدة لكل الدفعات، ثم استيراد المسودات الجاهزة، ثم اعتماد النشر بعد مراجعة المحتوى. المسائل المعلقة مستثناة دائماً.':'One preview for every batch, then import ready drafts and approve publication after review. Held questions always stay excluded.'}</p>
     <div className="space-y-3 rounded-xl border p-3">
