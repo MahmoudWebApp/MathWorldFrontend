@@ -56,7 +56,7 @@ function ExamWorkspace(){
   return <main className="container mx-auto max-w-4xl space-y-4 px-4 py-6">
     <WorkspacePageHeader title={tr('الامتحانات المخصصة','Custom exams')} icon={GraduationCap}/>
     {error&&<p role="alert" className="rounded-xl border border-destructive/30 p-3 text-destructive">{error}</p>}
-    {entitlement.isLoading?<MathWorldLoading compact/>:!premium?<div className="rounded-2xl border bg-card p-5"><p>{tr('الامتحانات الجديدة متاحة لحساب Premium. تبقى شهاداتك السابقة متاحة.','New exams require Premium. Your previous certificates remain available.')}</p><Link href="/pricing" className="mt-3 inline-block font-bold text-primary">{tr('ترقية الحساب','Upgrade account')}</Link></div>:null}
+    {entitlement.isLoading?<MathWorldLoading compact/>:!premium?<div className="rounded-2xl border bg-card p-5"><p>{tr('الامتحانات الجديدة متاحة لحساب Premium. تبقى شهاداتك السابقة متاحة.','New exams require Premium. Your previous certificates remain available.')}</p><Link href="/dashboard/upgrade" className="mt-3 inline-block font-bold text-primary">{tr('ترقية الحساب','Upgrade account')}</Link></div>:null}
     {exam&&!exam.AbandonedAtUtc?<section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-6">
       <h2 className="text-lg font-bold">{ar?exam.TitleAr:exam.TitleEn}</h2>
       {exam.FinishedAtUtc?<><p className="text-xl font-bold">{exam.Score}/{exam.Total} — {exam.Passed?tr('ناجح','Passed'):tr('لم تجتز','Not passed')}</p>
