@@ -8,7 +8,6 @@ import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
 import type {CSSProperties} from 'react';
 import {getStageAccent} from '@/lib/stageVisuals';
 import {LockedPremiumDialog} from '@/components/premium/LockedPremiumDialog';
-import {LatexPreview} from '@/components/ui/LatexPreview';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {useLocale} from 'next-intl';
 import {Link} from '@/i18n/routing';

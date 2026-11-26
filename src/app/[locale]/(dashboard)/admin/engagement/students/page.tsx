@@ -9,6 +9,7 @@ import { Search, UserRoundSearch, Download, History } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { API_BASE_URL } from '@/store/api/baseQuery';
+import {useGetAdminTracksQuery} from '@/store/api/stagesApi';
 import { useGetAdminEngagementOverviewQuery, useGetAdminEngagementStudentsQuery, useGetAdminAuditEventsQuery } from '@/store/api/statsApi';
 
 export default function AdminLearnerActivityPage() {
@@ -19,6 +20,8 @@ export default function AdminLearnerActivityPage() {
   const searching=searchInput.trim()!==term;
   useEffect(()=>{const timer=window.setTimeout(()=>{setTerm(searchInput.trim());setPage(1);},300);return ()=>window.clearTimeout(timer);},[searchInput]);
   const [stageId, setStageId] = useState(0);
+  const [trackId,setTrackId]=useState(0);
+  const tracks=useGetAdminTracksQuery();
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
@@ -44,7 +47,7 @@ export default function AdminLearnerActivityPage() {
     pollingInterval: 120_000,
   });
   const result = useGetAdminEngagementStudentsQuery({
-    page, ...(stageId ? { stageId } : {}), ...(term ? { search: term } : {}),
+    page, ...(stageId ? { stageId } : {}), ...(trackId?{trackId}:{}), ...(term ? { search: term } : {}),
     ...(onlineOnly ? { onlineOnly: true } : {}),
   }, { refetchOnMountOrArgChange: 60, pollingInterval: 120_000, skipPollingIfUnfocused: true });
   const events = useGetAdminAuditEventsQuery({
@@ -150,12 +153,12 @@ export default function AdminLearnerActivityPage() {
       <label className="block">
         <span className="sr-only">{ar ? 'تصفية حسب المستوى' : 'Filter by stage'}</span>
         <select className="mw-filter-field" value={stageId}
-          onChange={e => { setStageId(Number(e.target.value)); setPage(1); }}>
+          onChange={e => { setStageId(Number(e.target.value));setTrackId(0); setPage(1); }}>
           <option value={0}>{ar ? 'كل المستويات' : 'All stages'}</option>
           {(stages.data?.Stages ?? []).map(stage => <option key={stage.StageId} value={stage.StageId}>
             {ar ? stage.NameAr : stage.NameEn}
           </option>)}
-        </select>
+        </select><select aria-label={ar?'الصف أو المستوى':'Grade or level'} className="mw-filter-field" value={trackId} disabled={!stageId} onChange={e=>{setTrackId(Number(e.target.value));setPage(1)}}><option value={0}>{ar?'كل الصفوف والمستويات':'All grades and levels'}</option>{tracks.data?.Items.filter(x=>x.Track.StageId===stageId).map(x=><option key={x.Track.Id} value={x.Track.Id}>{ar?x.Track.NameAr:x.Track.NameEn}</option>)}</select>
       </label>
       <label className="flex cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2.5 text-sm font-semibold">
         <input type="checkbox" checked={onlineOnly}
@@ -184,7 +187,7 @@ export default function AdminLearnerActivityPage() {
                     <button type="button" onClick={() => chooseStudent(student.Id)}
                       className="text-start font-bold text-primary hover:underline">{student.FullName}</button>
                     <p className="text-xs text-muted-foreground">#{student.Id}
-                      {' · '}{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}
+                      {' · '}{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}
                     </p>
                   </div>
                   <span className={student.IsOnline
@@ -241,7 +244,7 @@ export default function AdminLearnerActivityPage() {
                     {ar ? 'اتصل خلال 5 دقائق' : 'Seen within 5 min'}
                   </span>}
                 </td>
-                <td className="p-3">{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}</td>
+                <td className="p-3">{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}</td>
                 <td className="p-3">{date(student.CreatedAt)}</td>
                 <td className="p-3">{date(student.LastLoginAt)}</td>
                 <td className="p-3">{date(student.LastExplicitSignOutAtUtc ?? null)}</td>

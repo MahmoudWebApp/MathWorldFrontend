@@ -1,13 +1,12 @@
 'use client';
 import {Suspense,useState} from 'react';
 import {useSearchParams} from 'next/navigation';
-import {Link,useRouter} from '@/i18n/routing';
+import {Link} from '@/i18n/routing';
 import {Breadcrumbs} from '@/components/ui/Breadcrumbs';
 import {DirectionalChevron,DirectionalArrow} from '@/components/ui/DirectionalNavigation';
 import {useGetAdminCategoriesQuery} from '@/store/api/categoriesApi';
 import {GraduationCap} from 'lucide-react';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
-import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {getStageAccent} from '@/lib/stageVisuals';
 import {useLocale} from 'next-intl';
 import {useSelector} from 'react-redux';
@@ -15,7 +14,7 @@ import type {RootState} from '@/store';
 import {readTrackProposal,MAX_TRACK_PROPOSAL_BYTES} from '@/components/curriculum/trackProposalImport';
 import { MathWorldLoading, MathWorldSkeleton } from '@/components/ui/MathWorldLoading';
 import {useGetAdminTracksQuery,useGetAdminTrackQuery,useGetTrackInventoryQuery,useGetAdminStagesQuery,
-  useCreateTrackMutation,useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
+  useMapTrackMutation,usePublishTrackMutation,useUpdateTrackMetadataMutation,type TrackDetail,type TrackMapping,type LearningTrack} from '@/store/api/stagesApi';
 
 const btn='rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-50';
 const field='w-full rounded-xl border bg-background p-2.5 text-sm';
@@ -120,7 +119,7 @@ function TrackEditor({id,ar}:{id:number;ar:boolean}){
  </section>;
 }
 function LearningTracksContent(){
-  const params=useSearchParams();const router=useRouter();
+  const params=useSearchParams();
   const requestedStage=Number(params.get('stageId'));
   const requestedTrack=Number(params.get('trackId'));
   const ar=useLocale()==='ar';const admin=useSelector((s:RootState)=>s.auth.user?.Role==='Admin');
@@ -128,13 +127,6 @@ function LearningTracksContent(){
   const {data:stages,isLoading:stagesLoading,isError:stagesError,refetch:reloadStages}=useGetAdminStagesQuery(undefined,{skip:!admin});
   const selected=Number.isSafeInteger(requestedTrack)&&requestedTrack>0?requestedTrack:null;
   const stageFilter=stages?.some(s=>s.Id===requestedStage)?requestedStage:0;
-  const [tab,setTab]=useState('list');
-  const [stageId,setStage]=useState(Number.isSafeInteger(requestedStage)&&requestedStage>0?requestedStage:0);const [kind,setKind]=useState<LearningTrack['Kind']>('course');
-  const [code,setCode]=useState('');const [nameAr,setAr]=useState('');const [nameEn,setEn]=useState('');
-  const [descAr,setDescAr]=useState('');const [descEn,setDescEn]=useState('');
-  const [sort,setSort]=useState(1);const [error,setError]=useState('');
-  const [create,{isLoading}]=useCreateTrackMutation();
-  async function submit(e:React.FormEvent){e.preventDefault();setError('');try{const t=await create({StageId:stageId,Kind:kind,Code:code,NameAr:nameAr,NameEn:nameEn,DescriptionAr:descAr,DescriptionEn:descEn,SortOrder:sort}).unwrap();router.push('/admin/learning-tracks?stageId='+stageId+'&trackId='+t.Id+'&edit=1');setTab('list');setCode('');setAr('');setEn('');setDescAr('');setDescEn('');}catch(e){setError(message(e,ar));}}
   if(!admin)return null;
   if((isFetching&&!data)||stagesLoading)return <MathWorldSkeleton/>;
   if(isError||stagesError)return <div role="alert" className="p-6">{ar?'تعذّر تحميل المحتوى التعليمي.':'Could not load learning content.'} <button className={btn} onClick={()=>{void refetch();void reloadStages();}}>{ar?'إعادة المحاولة':'Retry'}</button></div>;
@@ -148,27 +140,8 @@ function LearningTracksContent(){
     <Breadcrumbs items={trail}/>
     <WorkspacePageHeader title={stageName} icon={GraduationCap} actions={<Link className={btn+' inline-flex items-center gap-2'} href="/admin/stages"><DirectionalArrow direction="back" className="h-4 w-4"/>{ar?'العودة للمراحل':'Back to stages'}</Link>}/>
     {data&&!data.Enabled&&<p role="status" className="text-sm text-muted-foreground">{ar?'عرض المسارات للطلاب معطّل.':'Learner track catalog is disabled.'}</p>}
-    <Tabs value={tab} onValueChange={setTab} dir={ar?'rtl':'ltr'}>
-      <TabsList className="w-fit max-w-full"><TabsTrigger value="list">{ar?'الصفوف والمستويات':'Grades and levels'}</TabsTrigger><TabsTrigger value="create" disabled={selected!==null}>{ar?'إضافة صف أو مستوى':'Add grade or level'}</TabsTrigger></TabsList>
-      <TabsContent value="list" className="space-y-4">    
+    <div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[680px] text-sm"><thead><tr>{['ID',ar?'الاسم بالعربية':'Arabic name',ar?'الاسم بالإنجليزية':'English name',ar?'الترتيب':'Order',ar?'المسائل':'Problems',ar?'الحالة':'Status',ar?'الإجراءات':'Actions'].map(label=><th key={label} className="p-3 text-start">{label}</th>)}</tr></thead><tbody>{data?.Items.filter(x=>x.Track.StageId===stageFilter).map(x=><tr key={x.Track.Id} className="border-b mw-topic-row" style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties}><td className="p-3">{x.Track.Id}</td><td className="p-3 font-bold mw-topic-ink">{x.Track.NameAr}</td><td className="p-3">{x.Track.NameEn}</td><td className="p-3">{x.Track.SortOrder}</td><td className="p-3">{x.ProblemCount}</td><td className="p-3">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</td><td className="p-3"><Link className={btn+' mw-topic-action inline-flex items-center gap-2'} href={'/admin/categories?stageId='+stageFilter+'&trackId='+x.Track.Id}>{ar?'عرض الفئات':'View categories'}<DirectionalChevron direction="forward" className="h-4 w-4"/></Link><Link className={btn+' ms-2 inline-flex'} href={'/admin/learning-tracks?stageId='+stageFilter+'&trackId='+x.Track.Id+'&edit=1'}>{ar?'تعديل':'Edit'}</Link></td></tr>)}</tbody></table></div>
 
-    <div className="overflow-x-auto rounded-xl border"><table className="mw-workspace-table min-w-[680px] text-sm"><thead><tr>{['ID',ar?'الاسم بالعربية':'Arabic name',ar?'الاسم بالإنجليزية':'English name',ar?'الترتيب':'Order',ar?'المسائل':'Problems',ar?'الحالة':'Status',ar?'الإجراءات':'Actions'].map(label=><th key={label} className="p-3 text-start">{label}</th>)}</tr></thead><tbody>{data?.Items.filter(x=>x.Track.StageId===stageFilter).map(x=><tr key={x.Track.Id} className="border-b mw-topic-row" style={{'--stage-accent':getStageAccent({Id:x.Track.StageId})} as import('react').CSSProperties}><td className="p-3">{x.Track.Id}</td><td className="p-3 font-bold mw-topic-ink">{x.Track.NameAr}</td><td className="p-3">{x.Track.NameEn}</td><td className="p-3">{x.Track.SortOrder}</td><td className="p-3">{x.ProblemCount}</td><td className="p-3">{x.Track.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</td><td className="p-3"><Link className={btn+' mw-topic-action inline-flex items-center gap-2'} href={'/admin/categories?stageId='+stageFilter+'&trackId='+x.Track.Id}>{ar?'عرض الفئات':'View categories'}<DirectionalChevron direction="forward" className="h-4 w-4"/></Link></td></tr>)}</tbody></table></div>
-
-</TabsContent>
-      <TabsContent value="create">    <section className="rounded-2xl border bg-card p-4"><form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={submit}>
-      <label className="text-sm">{ar?'المرحلة':'Stage'}<select className={field} required value={stageId||''} disabled onChange={e=>setStage(Number(e.target.value))}><option value="">{ar?'اختر':'Select'}</option>{stages?.map(s=><option key={s.Id} value={s.Id}>{ar?s.NameAr:s.NameEn}</option>)}</select></label>
-      <label className="text-sm">{ar?'النوع':'Kind'}<select className={field} value={kind} onChange={e=>setKind(e.target.value as LearningTrack['Kind'])}><option value="grade">{ar?'صف':'Grade'}</option><option value="course">{ar?'مستوى':'Level'}</option></select></label>
-      <label className="text-sm">{ar?'الرمز الثابت':'Stable code'}<input className={field} required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} value={code} onChange={e=>setCode(e.target.value)}/></label>
-      <label className="text-sm">{ar?'الترتيب':'Order'}<input className={field} type="number" min={0} max={10000} value={sort} onChange={e=>setSort(Number(e.target.value))}/></label>
-      <label className="text-sm">{ar?'الاسم بالعربية':'Arabic name'}<input className={field} required maxLength={150} value={nameAr} onChange={e=>setAr(e.target.value)}/></label>
-      <label className="text-sm">{ar?'الاسم بالإنجليزية':'English name'}<input className={field} required maxLength={150} value={nameEn} onChange={e=>setEn(e.target.value)}/></label>
-      <label className="text-sm">{ar?'الوصف بالعربية':'Arabic description'}<textarea className={field} maxLength={1500} value={descAr} onChange={e=>setDescAr(e.target.value)}/></label>
-      <label className="text-sm">{ar?'الوصف بالإنجليزية':'English description'}<textarea className={field} maxLength={1500} value={descEn} onChange={e=>setDescEn(e.target.value)}/></label>
-      <button className={btn} disabled={isLoading||!stageId} type="submit">{ar?'إضافة مسودة':'Create draft'}</button>{error&&<p role="alert" className="text-destructive">{error}</p>}
-    </form></section>
-</TabsContent>
-      
-    </Tabs>
   </main>;
 }
 
