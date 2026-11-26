@@ -10,9 +10,10 @@ import {
   useUpdateStageMutation,
   type Stage,
 } from "@/store/api/stagesApi";
-import { Edit, CloseCircle } from "iconsax-reactjs";
+import { Edit } from "iconsax-reactjs";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/Dialog";
 import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 import { GraduationCap } from "lucide-react";
 import { getStageAccent } from "@/lib/stageVisuals";
@@ -34,10 +35,13 @@ export default function AdminStagesPage() {
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saved, setSaved] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSaveError("");
     try {
       {
         await updateStage({
@@ -53,10 +57,11 @@ export default function AdminStagesPage() {
       }
       setIsModalOpen(false);
       resetForm();
+      setSaved(true);
       refetch();
     } catch (error) {
       console.error("Failed to save stage", error);
-      alert(t("common.errorSaving"));
+      setSaveError(t("common.errorSaving"));
     } finally {
       setIsSubmitting(false);
     }
@@ -64,6 +69,8 @@ export default function AdminStagesPage() {
 
   const openModal = (stage: Stage) => {
     setFormData({Id:stage.Id,NameAr:stage.NameAr,NameEn:stage.NameEn,DescriptionAr:stage.DescriptionAr??"",DescriptionEn:stage.DescriptionEn??"",Order:stage.Order||1});
+    setSaveError("");
+    setSaved(false);
     setIsModalOpen(true);
   };
 
@@ -102,6 +109,7 @@ export default function AdminStagesPage() {
 
       <WorkspacePageHeader title={t("admin.stages.title")} icon={GraduationCap}/>
 
+      {saved && <p role="status" className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">{ar ? "تم حفظ المرحلة" : "Stage saved"}</p>}
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -176,29 +184,11 @@ export default function AdminStagesPage() {
         </CardContent>
       </Card>
 
-      {/* Modal for Add/Edit */}
-      {isModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setIsModalOpen(false)}
-        >
-          <div
-            className="bg-background p-6 rounded-lg w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">
-                {t("admin.stages.edit")}
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsModalOpen(false)}
-              >
-                <CloseCircle className="h-4 w-4" />
-              </Button>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
+      <Dialog open={isModalOpen} onOpenChange={open => { if (!isSubmitting) setIsModalOpen(open); }}>
+        <DialogContent className="max-w-3xl flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0 pe-8"><DialogTitle>{t("admin.stages.edit")}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
+            <div className="grid min-h-0 gap-4 overflow-y-auto p-1 sm:grid-cols-2">
               <div>
                 <label className="block mb-1 text-sm font-medium">
                   {t("admin.stages.nameAr")}{" "}
@@ -266,7 +256,9 @@ export default function AdminStagesPage() {
                   min={1}
                 />
               </div>
-              <div className="flex justify-end gap-2 mt-6">
+            </div>
+            {saveError && <p role="alert" className="text-sm text-destructive">{saveError}</p>}
+              <DialogFooter className="shrink-0 border-t pt-3">
                 <Button
                   variant="outline"
                   type="button"
@@ -277,11 +269,10 @@ export default function AdminStagesPage() {
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? t("common.saving") : t("common.save")}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

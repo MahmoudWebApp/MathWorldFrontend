@@ -96,6 +96,8 @@ export interface AdminActivityDay {
 }
 
 export interface AdminStageDetail {
+  TrackId?: number | null;
+  CategoryId?: number | null;
   Summary: AdminStageAnalytics;
   WindowDays: number;
   Categories: AdminCategoryAnalytics[];
@@ -347,11 +349,11 @@ export const statsApi = createApi({
     }),
     getAdminAnalyticsStage: builder.query<
       AdminStageDetail,
-      { stageId: number; days: number }
+      { stageId: number; days: number; trackId?: number; categoryId?: number }
     >({
-      query: ({ stageId, days }) => ({
+      query: ({ stageId, days, trackId, categoryId }) => ({
         url: `/admin/analytics/stages/${stageId}`,
-        params: { days },
+        params: { days, ...(trackId ? {trackId} : {}), ...(categoryId ? {categoryId} : {}) },
       }),
       providesTags: ['Stats'],
     }),

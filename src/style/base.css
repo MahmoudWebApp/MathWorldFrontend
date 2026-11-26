@@ -6,22 +6,16 @@
     font-family: var(--font-sans);
   }
 
-  /* RTL mode: Arabic font */
-  html[dir="rtl"],
-  [dir="rtl"] {
-    font-family: var(--font-arabic) !important;
+  /* Apply fonts only at explicit language/direction boundaries.
+     Let KaTeX select its own glyph fonts for each mathematical atom. */
+  :where([lang="en"], [dir="ltr"]):not(:where(.katex, .katex *)) {
+    font-family: var(--font-sans);
   }
-
-  /* English override */
-  :lang(en),
-  [dir="ltr"] {
-    font-family: var(--font-sans) !important;
+  :where([lang="ar"], [dir="rtl"]):not(:where(.katex, .katex *)) {
+    font-family: var(--font-arabic);
   }
-
-  /* Arabic override */
-  :lang(ar),
-  [dir="rtl"] {
-    font-family: var(--font-arabic) !important;
+  :where(input, textarea, select, button) {
+    font-family: inherit;
   }
   body {
     @apply bg-background text-foreground;

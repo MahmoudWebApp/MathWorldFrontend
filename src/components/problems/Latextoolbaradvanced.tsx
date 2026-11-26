@@ -5,6 +5,7 @@ import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/Dialog";
 
 /* ────────────────────────────────────────────
    TYPES
@@ -434,6 +435,8 @@ interface LatexToolbarAdvancedProps {
   defaultLevelId?: string;
   /** compact mode hides the footer manual-entry button */
   compact?: boolean;
+  wrapInlineMath?: boolean;
+  onValueChange?: (value: string) => void;
 }
 
 export function LatexToolbarAdvanced({
@@ -441,9 +444,13 @@ export function LatexToolbarAdvanced({
   className,
   defaultLevelId = "basic",
   compact = false,
+  wrapInlineMath = false,
+  onValueChange,
 }: LatexToolbarAdvancedProps) {
   const locale = useLocale();
   const isAr = locale === "ar";
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customCode, setCustomCode] = useState("");
 
   const defaultLevel = LATEX_LIBRARY.find((l) => l.id === defaultLevelId) ?? LATEX_LIBRARY[0];
   const [activeLevel, setActiveLevel] = useState<LevelData>(defaultLevel);
@@ -458,11 +465,16 @@ export function LatexToolbarAdvanced({
   const insertAtCursor = useCallback(
     (code: string) => {
       const textarea = textareaRef.current;
-      if (!textarea) return;
+      if (!textarea || textarea.matches(':disabled')) return;
 
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const val = textarea.value;
+      // Count unescaped delimiters, including unmatched block delimiters.
+      const before = val.substring(0, start);
+      const delimiters = before.match(/(?<!\\)\$\$|(?<!\\)\$/g) ?? [];
+      const insideMath = delimiters.length % 2 === 1;
+      if (wrapInlineMath && !insideMath) code = "$" + code + "$";
       const newVal = val.substring(0, start) + code + val.substring(end);
 
       /* Trigger React synthetic onChange */
@@ -470,8 +482,11 @@ export function LatexToolbarAdvanced({
         window.HTMLTextAreaElement.prototype,
         "value"
       )?.set;
-      setter?.call(textarea, newVal);
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      if (onValueChange) onValueChange(newVal);
+      else {
+        setter?.call(textarea, newVal);
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      }
 
       textarea.focus();
       setTimeout(() => {
@@ -484,7 +499,7 @@ export function LatexToolbarAdvanced({
         }
       }, 0);
     },
-    [textareaRef]
+    [textareaRef, wrapInlineMath, onValueChange]
   );
 
   const name = (item: { ar: string; en: string }) => (isAr ? item.ar : item.en);
@@ -609,15 +624,18 @@ export function LatexToolbarAdvanced({
             variant="ghost"
             size="sm"
             className="text-xs h-7 gap-1"
-            onClick={() => {
-              const code = prompt(isAr ? "أدخل كود LaTeX يدوياً:" : "Enter custom LaTeX code:");
-              if (code) insertAtCursor(code);
-            }}
+            onClick={() => { setCustomCode(""); setCustomOpen(true); }}
           >
             ⌨️ {isAr ? "كود مخصص" : "Custom code"}
           </Button>
         </div>
       )}
+      <Dialog open={customOpen} onOpenChange={setCustomOpen}>
+        <DialogContent><DialogHeader><DialogTitle>{isAr ? 'كود LaTeX مخصص' : 'Custom LaTeX code'}</DialogTitle></DialogHeader>
+          <textarea dir="ltr" aria-label={isAr?'كود LaTeX':'LaTeX code'} className="w-full rounded-xl border bg-background p-3 font-mono" value={customCode} onChange={e=>setCustomCode(e.target.value)} />
+          <DialogFooter><Button variant="outline" onClick={()=>setCustomOpen(false)}>{isAr?'إلغاء':'Cancel'}</Button><Button disabled={!customCode.trim()} onClick={()=>{insertAtCursor(customCode);setCustomOpen(false)}}>{isAr?'إدراج':'Insert'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

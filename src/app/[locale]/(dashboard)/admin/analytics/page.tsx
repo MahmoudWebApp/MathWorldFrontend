@@ -4,6 +4,9 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useState } from 'react';
+import { useGetAdminTracksQuery } from '@/store/api/stagesApi';
+import { Pagination } from '@/components/ui/Pagination';
+import { Link } from '@/i18n/routing';
 import { useLocale } from 'next-intl';
 import { Tabs,TabsList,TabsTrigger,TabsContent } from '@/components/ui/Tabs';
 import { getStageAccent } from '@/lib/stageVisuals';
@@ -24,13 +27,22 @@ export default function AdminAnalyticsPage() {
   const [days, setDays] = useState<(typeof periods)[number]>(30);
   const [chosenStage, setChosenStage] = useState<number | null>(null);
   const [tab,setTab]=useState('overview');
+  const [trackId,setTrackId]=useState(0);
+  const [categoryId,setCategoryId]=useState(0);
+  const [categoryPage,setCategoryPage]=useState(1);
+  const [learnerPage,setLearnerPage]=useState(1);
+  const tracks=useGetAdminTracksQuery(undefined,{skip:tab!=='stages'});
   const { currentData: overview, isFetching: isLoading, isError, refetch } =
     useGetAdminAnalyticsOverviewQuery(days, { refetchOnMountOrArgChange: 60 });
   const stageId = chosenStage ?? overview?.Stages[0]?.StageId ?? 0;
-  const { currentData: detail, isFetching: loadingDetail, isError: detailError } =
-    useGetAdminAnalyticsStageQuery({ stageId, days }, {
-      skip: stageId <= 0 || tab !== 'stages', refetchOnMountOrArgChange: 60,
-    });
+  const args={stageId,days,...(trackId?{trackId}:{})};
+  const base=useGetAdminAnalyticsStageQuery(args,{skip:stageId<=0||tab!=='stages',refetchOnMountOrArgChange:60});
+  const scoped=useGetAdminAnalyticsStageQuery({...args,categoryId},{skip:stageId<=0||tab!=='stages'||!categoryId,refetchOnMountOrArgChange:60});
+  const selected=categoryId?scoped:base;
+  const detail=selected.currentData;
+  const loadingDetail=selected.isFetching;
+  const detailError=selected.isError;
+  const resetPages=()=>{setCategoryPage(1);setLearnerPage(1);};
   const n = (value: number) => new Intl.NumberFormat(isArabic ? 'ar' : 'en').format(value);
   const labels = isArabic ? {
     title: 'الإحصائيات',
@@ -100,7 +112,7 @@ export default function AdminAnalyticsPage() {
         {periods.map((option) => (
           <button
             type="button" key={option} aria-pressed={days === option}
-            onClick={() => setDays(option)}
+            onClick={() => {setDays(option);resetPages();}}
             className={`rounded-xl border px-4 py-2 text-sm font-medium transition-colors ${
               days === option ? 'border-primary bg-primary text-primary-foreground'
                 : 'border-border text-foreground hover:border-primary/50'
@@ -111,7 +123,7 @@ export default function AdminAnalyticsPage() {
         ))}
       </div>}/>
 
-      {isLoading || (tab === "stages" && loadingDetail) ? (
+      {isLoading && !overview ? (
         <MathWorldLoading />
       ) : isError || !overview ? (
         <div role="alert" className="math-card mw-workspace-panel rounded-2xl border border-destructive/30 p-8">
@@ -196,7 +208,7 @@ export default function AdminAnalyticsPage() {
             <div className="mb-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               {overview.Stages.map((stage) => (
                 <button type="button" key={stage.StageId}
-                  onClick={() => setChosenStage(stage.StageId)}
+                  onClick={() => {setChosenStage(stage.StageId);setTrackId(0);setCategoryId(0);resetPages();}}
                   aria-pressed={stageId === stage.StageId}
                   style={{"--stage-accent":getStageAccent({Id:stage.StageId,NameAr:stage.NameAr,NameEn:stage.NameEn})} as import("react").CSSProperties}
                   className={`math-card mw-workspace-panel rounded-2xl border p-5 text-start transition-colors ${
@@ -218,6 +230,21 @@ export default function AdminAnalyticsPage() {
             </div>
           </section>
 
+          <section className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2">
+            <label className="space-y-2 text-sm font-semibold">{isArabic?'الصف أو المساق':'Grade or course'}
+              <select className="mw-filter-field w-full" value={trackId} disabled={tracks.isFetching} onChange={e=>{setTrackId(Number(e.target.value));setCategoryId(0);resetPages();}}>
+                <option value={0}>{isArabic?'كل الصفوف والمستويات':'All grades and levels'}</option>
+                {tracks.currentData?.Items.filter(x=>x.Track.StageId===stageId).map(x=><option key={x.Track.Id} value={x.Track.Id}>{isArabic?x.Track.NameAr:x.Track.NameEn}</option>)}
+              </select>
+            </label>
+            <label className="space-y-2 text-sm font-semibold">{isArabic?'الفئة':'Category'}
+              <select className="mw-filter-field w-full" value={categoryId} disabled={base.isFetching||!base.currentData} onChange={e=>{setCategoryId(Number(e.target.value));resetPages();}}>
+                <option value={0}>{isArabic?'جميع الفئات':'All categories'}</option>
+                {base.currentData?.Categories.map(c=><option key={c.CategoryId} value={c.CategoryId}>{isArabic?c.NameAr:c.NameEn}</option>)}
+              </select>
+            </label>
+            {tracks.isError&&<button type="button" className="text-start text-sm text-destructive" onClick={()=>void tracks.refetch()}>{isArabic?'تعذّر تحميل الصفوف — إعادة المحاولة':'Could not load grades — retry'}</button>}
+          </section>
           {loadingDetail ? (
             <div role="status" aria-busy="true" aria-label={labels.loading} className="grid animate-pulse gap-4 lg:grid-cols-2">
               <div className="h-72 rounded-2xl bg-muted/60" /><div className="h-72 rounded-2xl bg-muted/60" />
@@ -226,6 +253,9 @@ export default function AdminAnalyticsPage() {
             <p role="alert" className="math-card mw-workspace-panel rounded-2xl border border-destructive/30 p-6">{labels.error}</p>
           ) : (
             <div className="grid gap-6 xl:grid-cols-2">
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-4 xl:col-span-2">
+                {[[labels.problems,n(detail.Summary.Problems)],[labels.active,n(detail.Summary.ActiveStudentsInWindow)],[labels.attempts,n(detail.Summary.AttemptsInWindow)],[labels.accuracy,detail.Summary.CorrectRatePercent+'%']].map(([label,value])=><div key={label} className="rounded-xl border bg-card p-4"><strong className="block text-xl tabular-nums">{value}</strong><span className="text-xs text-muted-foreground">{label}</span></div>)}
+              </div>
               <section className="math-card mw-workspace-panel rounded-2xl border border-border p-5">
                 <h2 className="mb-4 text-lg font-bold">{labels.activity} — {displayStage(detail.Summary)}</h2>
                 {detail.Summary.AttemptsInWindow === 0 ? (
@@ -276,7 +306,7 @@ export default function AdminAnalyticsPage() {
                       <th className="px-2 py-3 text-end">{labels.solved}</th>
                       <th className="px-2 py-3 text-end">{labels.attempts}</th>
                     </tr></thead>
-                    <tbody>{detail.Categories.map((cat) => (
+                    <tbody>{detail.Categories.slice((categoryPage-1)*10,categoryPage*10).map((cat) => (
                       <tr className="border-b border-border last:border-0" key={cat.CategoryId}>
                         <td className="px-2 py-3">{isArabic ? cat.NameAr : cat.NameEn}</td>
                         <td className="px-2 py-3 text-end tabular-nums">{n(cat.Problems)}</td>
@@ -286,10 +316,11 @@ export default function AdminAnalyticsPage() {
                     ))}</tbody>
                   </table>
                 </div>
+                <Pagination page={categoryPage} pageSize={10} total={detail.Categories.length} onPageChange={setCategoryPage}/>
               </section>
 
               <section className="math-card mw-workspace-panel rounded-2xl border border-border p-5 xl:col-span-2">
-                <h2 className="mb-4 text-lg font-bold">{labels.leaders}</h2>
+                <h2 className="mb-4 text-lg font-bold">{categoryId?(isArabic?'المتفوقون في الفئة':'Top learners in category'):trackId?(isArabic?'المتفوقون في الصف':'Top learners in grade'):labels.leaders}</h2>
                 {!detail.TopLearners.length ? (
                   <p className="py-8 text-center text-muted-foreground">{labels.empty}</p>
                 ) : (
@@ -302,18 +333,19 @@ export default function AdminAnalyticsPage() {
                         <th className="px-3 py-3 text-end">{labels.score}</th>
                         <th className="px-3 py-3 text-end">{labels.firstTry}</th>
                       </tr></thead>
-                      <tbody>{detail.TopLearners.map((learner) => (
+                      <tbody>{detail.TopLearners.slice((learnerPage-1)*10,learnerPage*10).map((learner) => (
                         <tr key={learner.UserId} className="border-b border-border last:border-0">
                           <td className="px-3 py-3 font-bold">{learner.Rank}</td>
-                          <td className="px-3 py-3">{learner.FullName}</td>
+                          <td className="px-3 py-3"><Link href={`/admin/users/${learner.UserId}`} className="font-semibold text-primary hover:underline">{learner.FullName}</Link></td>
                           <td className="px-3 py-3 text-end">{n(learner.UniqueSolved)}</td>
-                          <td className="px-3 py-3 text-end">{n(learner.AwardedPoints)}</td>
+                          <td className="px-3 py-3 text-end mw-reward font-semibold">{n(learner.AwardedPoints)}</td>
                           <td className="px-3 py-3 text-end">{n(learner.FirstTryCorrect)}</td>
                         </tr>
                       ))}</tbody>
                     </table>
                   </div>
                 )}
+                <Pagination page={learnerPage} pageSize={10} total={detail.TopLearners.length} onPageChange={setLearnerPage}/>
               </section>
             </div>
           )}

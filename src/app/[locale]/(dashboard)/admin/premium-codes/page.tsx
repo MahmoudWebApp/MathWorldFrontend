@@ -1,4 +1,6 @@
 'use client';
+import { Pagination } from '@/components/ui/Pagination';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useState } from 'react';
@@ -158,27 +160,19 @@ export default function AdminPremiumGiftCodesPage() {
               </div>
             ))}
           </div>}
-        <div className="flex items-center justify-between border-t pt-3 text-sm">
-          <button disabled={page <= 1} onClick={() => setPage(p=>p-1)}
-            className="font-semibold text-primary disabled:opacity-40">{ar ? 'السابق' : 'Previous'}</button>
-          <span>{page} / {Math.max(1,Math.ceil((data?.Total ?? 0)/20))}</span>
-          <button disabled={!data || page * 20 >= data.Total} onClick={() => setPage(p=>p+1)}
-            className="font-semibold text-primary disabled:opacity-40">{ar ? 'التالي' : 'Next'}</button>
-        </div>
+        <Pagination page={page} pageSize={20} total={data?.Total ?? 0} onPageChange={setPage} disabled={isLoading}/>
       </section>
-      {revokeId !== null && <div role="dialog" aria-modal="true"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-sm space-y-4 rounded-2xl bg-card p-6">
-          <h2 className="text-lg font-bold">{ar ? 'تأكيد إلغاء الكود' : 'Revoke this code?'}</h2>
-          <p className="text-sm">{ar ? 'الكود غير المستخدم لن يعود قابلاً للتفعيل.'
-            : 'This unused code will no longer be redeemable.'}</p>
-          <div className="flex flex-wrap justify-end gap-2">
-            <button className="rounded-lg border px-3 py-2" onClick={()=>setRevokeId(null)}>{ar ? 'إلغاء' : 'Cancel'}</button>
+      <Dialog open={revokeId !== null} onOpenChange={open => { if (!open && !revoking) setRevokeId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>{ar ? 'تأكيد إلغاء الكود' : 'Revoke this code?'}</DialogTitle>
+          <DialogDescription>{ar ? 'الكود غير المستخدم لن يعود قابلاً للتفعيل.' : 'This unused code will no longer be redeemable.'}</DialogDescription>
+          <DialogFooter>
+            <button disabled={revoking} className="rounded-lg border px-3 py-2" onClick={()=>setRevokeId(null)}>{ar ? 'إلغاء' : 'Cancel'}</button>
             <button disabled={revoking} className="rounded-lg bg-destructive px-3 py-2 text-destructive-foreground"
               onClick={() => void confirmRevoke()}>{ar ? 'تأكيد التعطيل' : 'Confirm revoke'}</button>
-          </div>
-        </div>
-      </div>}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

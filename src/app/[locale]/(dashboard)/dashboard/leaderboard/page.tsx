@@ -6,7 +6,9 @@ import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { Link } from '@/i18n/routing';
-import { AlertCircle, ChevronLeft, ChevronRight, Medal, RefreshCw, Trophy, Users } from 'lucide-react';
+import { AlertCircle, Medal, RefreshCw, Trophy, Users } from 'lucide-react';
+import {Pagination} from '@/components/ui/Pagination';
+import {motion,useReducedMotion} from 'framer-motion';
 import {
   useGetLearningStageQuery,
   useGetStageLeaderboardQuery,
@@ -17,6 +19,7 @@ const PERIODS: StageLeaderboardFilter['period'][] = ['all', 'weekly', 'monthly']
 
 export default function StudentLeaderboardPage() {
   const ar = useLocale() === 'ar';
+  const reduced=useReducedMotion();
   const isStudent = useSelector(
     (state: { auth: { isAuthenticated: boolean; user: { Role?: string } | null } }) =>
       state.auth.isAuthenticated && state.auth.user?.Role === 'Student'
@@ -108,7 +111,7 @@ export default function StudentLeaderboardPage() {
             <section className="overflow-hidden rounded-2xl border bg-card">
               <div className="flex flex-wrap items-center justify-between gap-4 border-b p-5">
                 <div className="flex items-center gap-2">
-                  <Medal className="h-5 w-5 text-primary" aria-hidden="true" />
+                  <Medal className="h-5 w-5 mw-reward-icon" aria-hidden="true" />
                   <h2 className="font-bold">{ar ? 'ترتيب الطلاب' : 'Learner rankings'}</h2>
                 </div>
                 <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
@@ -137,11 +140,11 @@ export default function StudentLeaderboardPage() {
                 </div>
               ) : (
                 <ol className="space-y-2 p-3 sm:p-4">
-                  {data.Entries.map(entry => {
+                  {data.Entries.map((entry,index) => {
                     const podium =
                       entry.Rank === 1 ? {
-                        row: 'border-amber-400/50 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10',
-                        badge: 'border-amber-500/40 bg-amber-200 text-amber-900 dark:bg-amber-500/25 dark:text-amber-200',
+                        row: 'border-reward-gold/50 bg-reward-gold/10',
+                        badge: 'border-reward-gold/50 bg-reward-gold/20 mw-reward',
                         label: ar ? 'المركز الأول' : 'First place',
                       } : entry.Rank === 2 ? {
                         row: 'border-slate-300 bg-slate-100 dark:border-slate-400/40 dark:bg-slate-300/10',
@@ -157,7 +160,7 @@ export default function StudentLeaderboardPage() {
                         label: ar ? `المركز ${entry.Rank}` : `Rank ${entry.Rank}`,
                       };
                     return (
-                      <li key={entry.Rank}
+                      <motion.li key={entry.Rank} initial={reduced?false:{opacity:.8,y:5}} animate={{opacity:1,y:0}} transition={{duration:reduced?0:.2,delay:reduced?0:Math.min(index,7)*.035}}
                         aria-label={`${podium.label}، ${entry.IsCurrentUser ? (ar ? 'ترتيبك' : 'Your ranking') : entry.DisplayName}`}
                         className={`flex flex-wrap items-center gap-3 rounded-2xl border px-3 py-4 transition-colors sm:gap-5 sm:px-5 ${entry.IsCurrentUser
                           ? 'border-violet-500/60 bg-violet-100 ring-2 ring-violet-500/20 dark:border-violet-400/60 dark:bg-violet-400/15 dark:ring-violet-300/20'
@@ -182,26 +185,14 @@ export default function StudentLeaderboardPage() {
                         </div>
                         <div className="text-end">
                           <strong className="block text-sm text-foreground">{entry.SolvedProblems} {ar ? 'مسألة' : 'solved'}</strong>
-                          <span className="text-xs text-muted-foreground">{entry.Points} {ar ? 'نقطة' : 'points'}</span>
+                          <span className="text-xs font-semibold mw-reward">{entry.Points} {ar ? 'نقطة' : 'points'}</span>
                         </div>
-                      </li>
+                      </motion.li>
                     );
                   })}
                 </ol>
               )}
-              <div className="flex items-center justify-between gap-3 border-t p-4 text-sm">
-                <button disabled={page <= 1} onClick={() => setPage(n => n - 1)}
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-semibold disabled:opacity-40">
-                  {ar ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                  {ar ? 'السابق' : 'Previous'}
-                </button>
-                <span className="font-semibold">{page} / {pages}</span>
-                <button disabled={page >= pages} onClick={() => setPage(n => n + 1)}
-                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-semibold disabled:opacity-40">
-                  {ar ? 'التالي' : 'Next'}
-                  {ar ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                </button>
-              </div>
+              <Pagination page={page} pageSize={data.PageSize} total={data.TotalLearners} onPageChange={setPage} disabled={isFetching}/>
 
             </section>
           )}

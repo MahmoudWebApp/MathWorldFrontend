@@ -358,6 +358,8 @@ export interface AdminSubscriptionHistory {
 }
 
 export interface PremiumCategoryStatistics {
+  TotalProblems?: number;
+  MasteredProblems?: number;
   StageId: number;
   CategoryId: number;
   StageNameAr: string;
@@ -378,6 +380,8 @@ export interface PremiumCategoryStatistics {
 export interface AnalyticsFilter {stageId?:number;categoryId?:number;trackId?:number;days?:number}
 export type AnalyticsExportRequest = 'ar'|'en'|({lang:'ar'|'en'} & AnalyticsFilter);
 export interface StudentPremiumAnalyticsReport {
+  TotalProblems?: number;
+  RecentAttempts?: { ProblemId: number; TitleAr: string; TitleEn: string; IsCorrect: boolean; SubmittedAtUtc: string }[];
   ScoreBasis?:'ActiveProgress'|'PermanentAchievements';
   GuidedAttempts?:number;
   GuidedTimeMeasured?:boolean;
@@ -436,6 +440,10 @@ export interface StageLeaderboardQuery {
 
 export interface MathBadge {
   Key: string;
+  Unit?: string;
+  Icon?: string;
+  DescriptionAr?: string;
+  DescriptionEn?: string;
   TitleAr: string;
   TitleEn: string;
   RequiredSolved: number;

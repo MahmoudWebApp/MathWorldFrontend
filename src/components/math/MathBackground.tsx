@@ -19,7 +19,7 @@ export function MathBackground() {
       <motion.span className="math-global-symbol math-global-symbol-3" animate={reduced?undefined:{y:[0,12,0],rotate:[0,5,0]}} transition={{duration:15,repeat:Infinity,ease:'easeInOut'}}>x²</motion.span>
       <motion.span className="math-global-symbol math-global-symbol-4" animate={reduced?undefined:{y:[0,-12,0],rotate:[0,-5,0]}} transition={{duration:16,repeat:Infinity,ease:'easeInOut'}}>∞</motion.span>
       <motion.span className="math-global-symbol math-global-symbol-5" animate={reduced?undefined:{y:[0,12,0],rotate:[0,5,0]}} transition={{duration:17,repeat:Infinity,ease:'easeInOut'}}>∫</motion.span>
-      <motion.span className="math-global-symbol math-global-symbol-6" animate={reduced?undefined:{y:[0,-12,0],rotate:[0,-5,0]}} transition={{duration:18,repeat:Infinity,ease:'easeInOut'}}>θ</motion.span>
+      <motion.span className="math-global-symbol math-global-symbol-6" animate={reduced?undefined:{y:[0,-12,0],rotate:[0,-5,0]}} transition={{duration:18,repeat:Infinity,ease:'easeInOut'}}>√x</motion.span>
     <motion.span className="math-global-symbol" style={{top:'22%',left:'14%',fontSize:'2.4rem'}} animate={reduced?undefined:{y:[0,-15,0],rotate:[0,10,0]}} transition={{duration:18,repeat:Infinity,ease:'easeInOut'}}>△</motion.span>
       <motion.span className="math-global-symbol" style={{bottom:'19%',right:'13%',fontSize:'1.6rem'}} animate={reduced?undefined:{y:[0,14,0],rotate:[0,-8,0]}} transition={{duration:20,repeat:Infinity,ease:'easeInOut'}}>◇</motion.span>
     </div>

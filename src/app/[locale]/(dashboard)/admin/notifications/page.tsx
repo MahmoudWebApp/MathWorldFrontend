@@ -3,11 +3,16 @@ import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
-import { BellRing, Send } from 'lucide-react';
+import { BellRing, Send, AlertTriangle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
+import { Button } from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
 import { useGetAdminEmailStatusQuery, useSendAdminEmailMutation, useSendAdminNotificationMutation,useSendAdminBroadcastMutation } from '@/store/api/notificationsApi';
 
 export default function AdminNotificationsPage() {
   const ar = useLocale() === 'ar';
+  const notify=useToast();
+  const [confirmOpen,setConfirmOpen]=useState(false);
   const [audience,setAudience]=useState<'one'|'all'>('one');
   const [broadcast,{isLoading:broadcasting}]=useSendAdminBroadcastMutation();
   const [learnerId, setLearnerId] = useState('');
@@ -40,10 +45,13 @@ export default function AdminNotificationsPage() {
         : 'Optional email is not configured. Check Brevo and the delivery queue.');
       return;
     }
-    const confirmed = audience==='all'?window.confirm(ar?'سيصل الإشعار لجميع الطلاب النشطين داخل الموقع والتطبيق. تأكيد الإرسال الجماعي؟':'Send this in-app notice to all active students?'):window.confirm(ar
-      ? `تأكيد إرسال ${channel === 'email' ? 'بريد إلكتروني' : 'إشعار داخل التطبيق'} إلى الطالب رقم ${id} فقط؟ لا يمكن سحب الرسالة بعد الإرسال.\n\n${titleAr.trim()}`
-      : `Send a ${channel === 'email' ? 'single-student email' : 'single-student in-app notification'} to learner #${id}? This action cannot be undone.\n\n${titleEn.trim()}`);
-    if (!confirmed) return;
+    setConfirmOpen(true);
+  }
+
+  async function confirmSend(){
+    if(sending||!confirmOpen)return;
+    setConfirmOpen(false);
+    const id=Number(learnerId.trim());
     try {
       const payload = {
         learnerId: id,
@@ -55,7 +63,8 @@ export default function AdminNotificationsPage() {
       };
       if(audience==='all'){
         const result=await broadcast({TitleAr:payload.TitleAr,TitleEn:payload.TitleEn,BodyAr:payload.BodyAr,BodyEn:payload.BodyEn,TargetPath:payload.TargetPath}).unwrap();
-        setResult(ar?'تم إرسال الإشعار إلى '+result.Sent+' طالب.':'Notice sent to '+result.Sent+' students.');
+        const message=ar?'تم إرسال الإشعار إلى '+result.Sent+' طالب.':'Notice sent to '+result.Sent+' students.';
+        setResult(message);notify(message);
       } else if (channel === 'email') {
         const delivery = await sendEmail(payload).unwrap();
         if (delivery.Queued === true) {
@@ -69,7 +78,9 @@ export default function AdminNotificationsPage() {
         setResult(ar ? `تم إنشاء الإشعار رقم ${notice.Id} للطالب ${id}.`
           : `In-app notice #${notice.Id} created for learner #${id}.`);
       }
+      if(audience!=='all')notify(ar?'تم قبول طلب الإرسال. راجع حالة التسليم أدناه.':'Send request accepted. Check delivery status below.');
     } catch (e) {
+      notify(ar?'تعذّر إرسال الإشعار.':'Could not send the notice.','error');
       if ((e as {data?:{message?:string}})?.data?.message === 'LearnerEmailConsentRequired') {
         setError(ar?'لا يمكن إرسال البريد: يجب أن يكون بريد الطالب مؤكداً وموافقاً على رسائل الإشعارات المهمة.':'Email unavailable: the learner must verify their address and opt into important notices.');
         return;
@@ -160,6 +171,16 @@ export default function AdminNotificationsPage() {
               : (ar ? 'مراجعة وإرسال الإشعار' : 'Review and send notification')}
         </button>
       </form>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="pe-8">
+            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-amber-500"/>{ar?'تأكيد الإرسال':'Confirm sending'}</DialogTitle>
+            <DialogDescription>{audience==='all'?(ar?'سيصل الإشعار لجميع الطلاب النشطين في الموقع والتطبيق. لا يمكن سحبه بعد الإرسال.':'This notice goes to all active students on web and mobile. It cannot be recalled.'):(ar?`سيُرسل ${channel==='email'?'البريد والإشعار':'الإشعار'} إلى الطالب رقم ${learnerId} فقط. لا يمكن سحبه بعد الإرسال.`:`Send ${channel==='email'?'email and notice':'notice'} to learner #${learnerId} only. This cannot be recalled.`)}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 rounded-xl border bg-muted/40 p-3"><p dir="rtl" className="break-words font-semibold">{titleAr}</p><p dir="ltr" className="break-words font-semibold">{titleEn}</p></div>
+          <DialogFooter><Button variant="outline" onClick={()=>setConfirmOpen(false)}>{ar?'إلغاء':'Cancel'}</Button><Button disabled={sending} onClick={()=>void confirmSend()}><Send className="me-2 h-4 w-4"/>{ar?'تأكيد الإرسال':'Confirm send'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

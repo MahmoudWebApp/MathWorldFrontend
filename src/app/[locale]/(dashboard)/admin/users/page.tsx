@@ -1,4 +1,5 @@
 'use client';
+import {Pagination} from '@/components/ui/Pagination';
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 
@@ -351,9 +352,9 @@ export default function AdminUsersPage() {
                       <td className="px-4 py-3"><DataBadge tone={u.SubscriptionType==='Premium'?'amber':'neutral'}>{expiry(u)}</DataBadge></td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2 whitespace-nowrap">
-<Tooltip><TooltipTrigger asChild><Link href={'/admin/users/'+u.Id} className="mw-admin-action p-2" aria-label={label.detail}><Eye className="h-4 w-4"/></Link></TooltipTrigger><TooltipContent>{label.detail}</TooltipContent></Tooltip>
-<Tooltip><TooltipTrigger asChild><button type="button" disabled={!u.IsActive||granting||searching||isFetching} onClick={()=>openGrant([u.Id])} className="mw-admin-action p-2 text-amber-600 disabled:opacity-40" aria-label={u.SubscriptionType==='Premium'?label.renew:label.annual}><Crown className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{u.SubscriptionType==='Premium'?label.renew:label.annual}</TooltipContent></Tooltip>
-<Tooltip><TooltipTrigger asChild><button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="mw-admin-action p-2 text-destructive border-destructive/30" aria-label={ar?'حذف الطالب':'Delete learner'}><Trash2 className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{ar?'حذف الطالب':'Delete learner'}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><Link href={'/admin/users/'+u.Id} className="mw-admin-action mw-action-view p-2" aria-label={label.detail}><Eye className="h-4 w-4"/></Link></TooltipTrigger><TooltipContent>{label.detail}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={!u.IsActive||granting||searching||isFetching} onClick={()=>openGrant([u.Id])} className="mw-admin-action mw-action-premium p-2 disabled:opacity-40" aria-label={u.SubscriptionType==='Premium'?label.renew:label.annual}><Crown className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{u.SubscriptionType==='Premium'?label.renew:label.annual}</TooltipContent></Tooltip>
+<Tooltip><TooltipTrigger asChild><button type="button" disabled={deleting||granting||searching||isFetching} onClick={()=>openDelete(u)} className="mw-admin-action mw-action-delete p-2" aria-label={ar?'حذف الطالب':'Delete learner'}><Trash2 className="h-4 w-4"/></button></TooltipTrigger><TooltipContent>{ar?'حذف الطالب':'Delete learner'}</TooltipContent></Tooltip>
 </div>
                       </td>
                     </tr>
@@ -361,19 +362,7 @@ export default function AdminUsersPage() {
                 </tbody>
               </table>
             </div>
-            <div className="flex items-center justify-between gap-3 border-t border-border p-4 text-sm">
-              <span className="text-muted-foreground">{label.page} {data.Page} / {Math.max(data.TotalPages, 1)}</span>
-              <div className="flex gap-2">
-                <button type="button" disabled={isFetching || page <= 1} onClick={() => setPage((v) => v - 1)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">
-                  <DirectionalArrow direction="back" className="h-4 w-4" />{label.previous}
-                </button>
-                <button type="button" disabled={isFetching || page >= data.TotalPages} onClick={() => setPage((v) => v + 1)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border px-3 py-2 disabled:opacity-40">
-                  {label.next}<DirectionalArrow direction="forward" className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+            <div className="p-4"><Pagination page={data.Page} pageSize={data.PageSize} total={data.Total} onPageChange={setPage} disabled={isFetching}/></div>
           </>
         )}
       </section>

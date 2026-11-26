@@ -25,6 +25,7 @@ export default function AdminEngagementPage() {
   const [days, setDays] = useState<7 | 30 | 90>(30);
   const [stageId, setStageId] = useState<number | null>(null);
   const [trackId,setTrackId]=useState(0);
+  const [categoryId,setCategoryId]=useState(0);
   const tracks=useGetAdminTracksQuery();
   const [showAllCategories, setShowAllCategories] = useState(false);
 
@@ -56,15 +57,18 @@ export default function AdminEngagementPage() {
   const rankedCategories = [...(selectedStage?.Categories ?? [])]
     .sort((a, b) => b.ActiveSolvers - a.ActiveSolvers ||
       b.AttemptsInWindow - a.AttemptsInWindow || a.CategoryId - b.CategoryId);
-  const chartCategories = rankedCategories.slice(0, 8);
+  const filteredCategories=categoryId?rankedCategories.filter(c=>c.CategoryId===categoryId):rankedCategories;
+  const selectedCategory=rankedCategories.find(c=>c.CategoryId===categoryId);
+  const topStudents=categoryId?(selectedCategory?.TopStudents??[]):(selectedStage?.TopStudents??[]);
+  const chartCategories = filteredCategories.slice(0, 8);
   const categoryChart = chartCategories.map(category => ({
     id: category.CategoryId,
     name: ar ? category.NameAr : category.NameEn,
     learners: category.ActiveSolvers,
   }));
   const categoryCards = showAllCategories
-    ? rankedCategories : rankedCategories.slice(0, 6);
-  const hasOverflowCategories = rankedCategories.length > 6;
+    ? filteredCategories : filteredCategories.slice(0, 6);
+  const hasOverflowCategories = filteredCategories.length > 6;
   const chartHeight = Math.max(220, chartCategories.length * 42);
   const stageVisualIndex = Math.max(0, overview.data?.Stages.findIndex(x =>
     x.StageId === resolvedId) ?? 0);
@@ -119,7 +123,7 @@ export default function AdminEngagementPage() {
     <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
       {(overview.data?.Stages ?? []).map((item, index) => {
         const style = variants[index % variants.length];
-        return <button key={item.StageId} type="button" onClick={() => { setStageId(item.StageId); setTrackId(0);setShowAllCategories(false); }}
+        return <button key={item.StageId} type="button" onClick={() => { setStageId(item.StageId); setTrackId(0);setCategoryId(0);setShowAllCategories(false); }}
           aria-pressed={item.StageId === resolvedId}
           className={`relative min-w-0 overflow-hidden rounded-2xl border p-4 text-start transition-all hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${style.surface} ${item.StageId === resolvedId ? style.border + ' ring-2 ring-primary/40' : 'border-border'}`}>
           <StageGeometry variant={index} className={`pointer-events-none absolute -end-6 -top-8 h-24 w-24 opacity-20 ${style.text}`} />
@@ -133,7 +137,7 @@ export default function AdminEngagementPage() {
       })}
     </div>
 
-    <div className="rounded-xl border bg-card p-4"><label className="block text-sm font-semibold">{ar?'الصف أو المستوى':'Grade or level'}<select className="mw-filter-field mt-2 w-full" value={trackId} onChange={e=>{setTrackId(Number(e.target.value));setShowAllCategories(false)}}><option value={0}>{ar?'كل الصفوف والمستويات':'All grades and levels'}</option>{tracks.data?.Items.filter(x=>x.Track.StageId===resolvedId).map(x=><option key={x.Track.Id} value={x.Track.Id}>{ar?x.Track.NameAr:x.Track.NameEn}</option>)}</select></label>{trackId>0&&<p className="mt-2 text-xs text-muted-foreground">{ar?'الإحصاءات التفصيلية لهذا الصف تعتمد على تقدم التدريب المرتبط به؛ ملخص المرحلة أعلى الصفحة يبقى إجمالياً.':'Grade details use scoped practice progress; the stage summary above remains aggregate.'}</p>}</div>
+    <div className="rounded-xl border bg-card p-4"><label className="block text-sm font-semibold">{ar?'الصف أو المستوى':'Grade or level'}<select className="mw-filter-field mt-2 w-full" value={trackId} onChange={e=>{setTrackId(Number(e.target.value));setCategoryId(0);setShowAllCategories(false)}}><option value={0}>{ar?'كل الصفوف والمستويات':'All grades and levels'}</option>{tracks.data?.Items.filter(x=>x.Track.StageId===resolvedId).map(x=><option key={x.Track.Id} value={x.Track.Id}>{ar?x.Track.NameAr:x.Track.NameEn}</option>)}</select></label>{trackId>0&&<p className="mt-2 text-xs text-muted-foreground">{ar?'الإحصاءات التفصيلية لهذا الصف تعتمد على تقدم التدريب المرتبط به؛ ملخص المرحلة أعلى الصفحة يبقى إجمالياً.':'Grade details use scoped practice progress; the stage summary above remains aggregate.'}</p>}</div>
     {stage.isError && <div role="alert" className="rounded-2xl border p-5">
       <RefreshCw aria-hidden="true" className="mb-2 h-5 w-5 text-primary" />
       {ar ? 'تعذّر تحميل إحصائيات هذا المستوى.' : 'Could not load stage details.'}
@@ -145,6 +149,7 @@ export default function AdminEngagementPage() {
       {ar ? 'جارٍ تحميل نشاط المستوى المختار…' : 'Loading the selected stage…'}
     </p>}
     {selectedStage && <>
+      <section className="rounded-xl border bg-card p-4"><label className="block text-sm font-semibold">{ar?'الفئة':'Category'}<select className="mw-filter-field mt-2 w-full" value={categoryId} onChange={e=>{setCategoryId(Number(e.target.value));setShowAllCategories(false)}}><option value={0}>{ar?'كل الفئات':'All categories'}</option>{rankedCategories.map(c=><option key={c.CategoryId} value={c.CategoryId}>{ar?c.NameAr:c.NameEn}</option>)}</select></label></section>
       <section className="grid gap-5 lg:grid-cols-[1.5fr_1fr]">
         <div className="min-w-0 space-y-3 rounded-3xl border bg-card p-4 sm:p-6">
           <h2 className="flex items-center gap-2 text-lg font-bold"><Shapes className="h-5 w-5 text-primary" />
@@ -170,16 +175,16 @@ export default function AdminEngagementPage() {
             </div>}
         </div>
         <div className="rounded-3xl border bg-card p-4 sm:p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold"><Trophy className="h-5 w-5 text-amber-500" />
-            {ar ? 'الأكثر حلّاً في المستوى (كل الوقت)' : 'Top solvers in stage (all time)'}
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold"><Trophy className="h-5 w-5 mw-reward-icon" />
+            {categoryId?(ar?'الأكثر حلّاً في الفئة (كل الوقت)':'Top solvers in category (all time)'):trackId?(ar?'الأكثر حلّاً في الصف (كل الوقت)':'Top solvers in grade (all time)'):(ar ? 'الأكثر حلّاً في المرحلة (كل الوقت)' : 'Top solvers in stage (all time)')}
           </h2>
-          {selectedStage.TopStudents.length === 0 ? <p className="text-sm text-muted-foreground">
+          {topStudents.length === 0 ? <p className="text-sm text-muted-foreground">
             {ar ? 'ما في حلول مسجّلة بعد.' : 'No solved problems yet.'}
           </p> : <ol className="space-y-2">
-            {selectedStage.TopStudents.slice(0,10).map(item => <li key={item.UserId}
+            {topStudents.slice(0,10).map(item => <li key={item.UserId}
               className="flex items-center gap-3 rounded-xl bg-muted/40 p-3">
               <span className="w-7 shrink-0 text-center text-sm font-extrabold text-primary">{item.Rank}</span>
-              <span className="min-w-0 flex-1 truncate text-sm font-semibold">{item.FullName}</span>
+              <Link href={`/admin/users/${item.UserId}`} className="min-w-0 flex-1 truncate text-sm font-semibold hover:underline">{item.FullName}</Link>
               <span className="shrink-0 text-xs font-bold">{n(item.Solved)} {ar ? 'مسألة' : 'solved'}</span>
             </li>)}
           </ol>}
@@ -212,7 +217,7 @@ export default function AdminEngagementPage() {
                 {ar ? 'لسه ما في طلاب حلّوا ضمن هاي الفئة.' : 'No solved problems in this category yet.'}
               </p> : <ol className="mt-4 space-y-2">
                 {cat.TopStudents.map(student => <li key={student.UserId} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="min-w-0 truncate"><span className={`me-2 font-extrabold ${color.text}`}>{student.Rank}.</span>{student.FullName}</span>
+                  <span className="min-w-0 truncate"><span className={`me-2 font-extrabold ${color.text}`}>{student.Rank}.</span><Link href={`/admin/users/${student.UserId}`} className="hover:underline">{student.FullName}</Link></span>
                   <span className="shrink-0 tabular-nums font-bold">{n(student.Solved)}</span>
                 </li>)}
               </ol>}

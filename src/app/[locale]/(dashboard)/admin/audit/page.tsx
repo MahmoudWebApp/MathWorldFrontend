@@ -1,4 +1,5 @@
 'use client';
+import { Pagination } from '@/components/ui/Pagination';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
@@ -204,19 +205,7 @@ export default function AdminAuditPage() {
                   </div>
                 </li>)}
             </ol>}
-      <div className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
-        <button type="button" disabled={page <= 1 || events.isFetching}
-          onClick={() => setPage(x => Math.max(1, x - 1))}
-          className="font-semibold text-primary disabled:opacity-40">
-          {ar ? 'السابق' : 'Previous'}
-        </button>
-        <span>{ar ? 'صفحة' : 'Page'} {page} / {Math.max(1, Math.ceil((events.currentData?.Total ?? 0) / 30))}</span>
-        <button type="button" disabled={!events.currentData?.HasMore || events.isFetching}
-          onClick={() => setPage(x => x + 1)}
-          className="font-semibold text-primary disabled:opacity-40">
-          {ar ? 'التالي' : 'Next'}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={30} total={events.currentData?.Total??0} onPageChange={setPage} disabled={events.isFetching||!events.currentData}/>
       <p className="text-xs text-muted-foreground">
         {ar ? 'السجلات تبدأ من تاريخ تفعيل التتبّع فقط. لا يمكن استعادة العمليات القديمة أو استنتاج وقت الخروج من آخر نشاط.'
           : 'Events start when tracking is deployed. Older actions and exact logout times cannot be reconstructed.'}

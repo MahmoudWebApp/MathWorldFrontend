@@ -1,6 +1,9 @@
 'use client';
+import {useConfirmDialog} from '@/components/ui/useConfirmDialog';
 
 import { useState } from 'react';
+import { Pagination } from '@/components/ui/Pagination';
+import {useToast} from '@/components/ui/Toast';
 import {
   useGetAdminLearnerSubscriptionHistoryQuery,
   useUpdateAdminLearnerSubscriptionMutation,
@@ -17,6 +20,8 @@ interface Props {
  */
 export function AdminPremiumManager({ learnerId, locale }: Props) {
   const ar = locale === 'ar';
+  const {ask,dialog}=useConfirmDialog();
+  const notify=useToast();
   const [subscriptionType, setSubscriptionType] = useState<'Free' | 'Premium'>('Premium');
   const [expiry, setExpiry] = useState('');
   const [reason, setReason] = useState('');
@@ -42,20 +47,21 @@ export function AdminPremiumManager({ learnerId, locale }: Props) {
       if (Number.isNaN(parsed.getTime()) || parsed.getTime() <= Date.now()) return;
       change.PremiumExpiresAtUtc = parsed.toISOString();
     }
-    if (!window.confirm(ar ? 'تأكيد تعديل اشتراك هذا الطالب؟' : 'Confirm changing this learner subscription?')) return;
+    if (!await ask(ar ? 'تأكيد تعديل اشتراك هذا الطالب؟' : 'Confirm changing this learner subscription?')) return;
     try {
       await update({ LearnerId: learnerId, Change: change }).unwrap();
       setReason('');
       setSuccessMessage(true);
+      notify(ar?'تم تحديث الاشتراك':'Subscription updated');
       refetch();
     } catch {
-      // RTK Query exposes the error below.
+      notify(ar?'تعذّر تحديث الاشتراك':'Subscription update failed','error');
     }
   };
 
   return (
     <section dir={ar ? 'rtl' : 'ltr'} className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white">
-      <h2 className="mb-4 text-xl font-bold">{ar ? 'إدارة اشتراك الطالب' : 'Student subscription management'}</h2>
+      {dialog}<h2 className="mb-4 text-xl font-bold">{ar ? 'إدارة اشتراك الطالب' : 'Student subscription management'}</h2>
       <form onSubmit={submit} className="grid gap-4">
         <label className="grid gap-1 text-sm font-medium">
           {ar ? 'نوع الحساب' : 'Account type'}
@@ -109,13 +115,7 @@ export function AdminPremiumManager({ learnerId, locale }: Props) {
           </li>
         ))}
       </ol>
-      <div className="mt-4 flex items-center gap-3">
-        <button type="button" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="rounded border px-3 py-1 disabled:opacity-40">{ar ? 'السابق' : 'Previous'}</button>
-        <span>{page}</span>
-        <button type="button" disabled={!history || page * 10 >= history.Total} onClick={() => setPage((p) => p + 1)}
-          className="rounded border px-3 py-1 disabled:opacity-40">{ar ? 'التالي' : 'Next'}</button>
-      </div>
+      <Pagination page={page} pageSize={10} total={history?.Total??0} onPageChange={setPage} disabled={isFetching||!history}/>
     </section>
   );
 }

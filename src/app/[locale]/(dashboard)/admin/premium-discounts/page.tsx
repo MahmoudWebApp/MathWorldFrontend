@@ -1,4 +1,6 @@
 'use client';
+import { Pagination } from '@/components/ui/Pagination';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 
 import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
@@ -276,26 +278,20 @@ export default function AdminPremiumDiscountsPage() {
               </div>}
             </article>)}
           </div>}
-        <div className="flex justify-between border-t pt-3 text-sm">
-          <button disabled={page <= 1 || isLoading} onClick={() => setPage(p => p - 1)}
-            className="font-semibold text-primary disabled:opacity-40">{ar ? 'السابق' : 'Previous'}</button>
-          <span>{page} / {Math.max(1, Math.ceil((data?.Total ?? 0) / 20))}</span>
-          <button disabled={!data || isLoading || page * 20 >= data.Total} onClick={() => setPage(p => p + 1)}
-            className="font-semibold text-primary disabled:opacity-40">{ar ? 'التالي' : 'Next'}</button>
-        </div>
+        <Pagination page={page} pageSize={20} total={data?.Total ?? 0} onPageChange={setPage} disabled={isLoading}/>
       </section>
 
-      {editId !== null && <div role="dialog" aria-modal="true" aria-labelledby="edit-discount-heading"
-        className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
-        <form onSubmit={event => void saveEdit(event)}
-          className="w-full max-w-lg space-y-4 rounded-2xl bg-card p-5 shadow-xl">
-          <h2 id="edit-discount-heading" className="text-lg font-bold">
+      <Dialog open={editId !== null} onOpenChange={open => { if (!open && !savingSettings) setEditId(null); }}>
+        <DialogContent className="max-w-3xl flex flex-col overflow-hidden">
+          <DialogTitle className="pe-8">
             {ar ? 'تعديل صلاحية الكود' : 'Edit discount validity'}
-          </h2>
-          <p className="text-sm text-muted-foreground">
+          </DialogTitle>
+          <DialogDescription>
             {ar ? 'تغيير الحدود أو التواريخ لا يغيّر قيمة الخصم ولا يمس الطلبات المدفوعة سابقاً.'
               : 'Changing dates or limits does not alter the discount amount or past paid orders.'}
-          </p>
+          </DialogDescription>
+          <form onSubmit={event => void saveEdit(event)} className="flex min-h-0 flex-col gap-4">
+          <div className="grid min-h-0 gap-4 overflow-y-auto p-1 sm:grid-cols-2">
           <label className="block space-y-1">
             <span className="text-sm">{ar ? 'بداية الصلاحية (توقيت جهازك)' : 'Start (local time)'}</span>
             <input type="datetime-local" required value={editStart}
@@ -320,24 +316,25 @@ export default function AdminPremiumDiscountsPage() {
               onChange={event => setEditPerStudent(event.target.value)}
               className="w-full rounded-lg border bg-background px-3 py-2" />
           </label>
+          </div>
           {editError && <p role="alert" className="text-sm text-destructive">{editError}</p>}
-          <div className="flex flex-wrap justify-end gap-2">
+          <DialogFooter className="shrink-0 border-t pt-3">
             <button type="button" disabled={savingSettings} onClick={() => setEditId(null)}
               className="rounded-lg border px-3 py-2">{ar ? 'إلغاء' : 'Cancel'}</button>
             <button type="submit" disabled={savingSettings}
               className="rounded-lg bg-primary px-3 py-2 font-semibold text-primary-foreground disabled:opacity-50">
               {savingSettings ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : (ar ? 'حفظ التعديلات' : 'Save changes')}
             </button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>}
+        </DialogContent>
+      </Dialog>
 
-      {disableId !== null && <div role="dialog" aria-modal="true"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-sm space-y-4 rounded-2xl bg-card p-6">
-          <h2 className="text-lg font-bold">{ar ? 'تأكيد تعطيل كود الخصم' : 'Disable this discount?'}</h2>
-          <p className="text-sm">{ar ? 'لن يعود الكود قابلاً للاستخدام.' : 'The code will no longer be valid.'}</p>
-          <div className="flex justify-end gap-2">
+      <Dialog open={disableId !== null} onOpenChange={open => { if (!open && !disabling) setDisableId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>{ar ? 'تأكيد تعطيل كود الخصم' : 'Disable this discount?'}</DialogTitle>
+          <DialogDescription>{ar ? 'لن يعود الكود قابلاً للاستخدام.' : 'The code will no longer be valid.'}</DialogDescription>
+          <DialogFooter>
             <button onClick={() => setDisableId(null)} className="rounded-lg border px-3 py-2">
               {ar ? 'إلغاء' : 'Cancel'}
             </button>
@@ -345,9 +342,9 @@ export default function AdminPremiumDiscountsPage() {
               className="rounded-lg bg-destructive px-3 py-2 text-destructive-foreground disabled:opacity-50">
               {ar ? 'تأكيد التعطيل' : 'Confirm disable'}
             </button>
-          </div>
-        </div>
-      </div>}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import { useSelector } from 'react-redux';
 import { BarChart3, Download, Printer, LockKeyhole } from 'lucide-react';
@@ -9,7 +9,6 @@ import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
 import { Link } from '@/i18n/routing';
 import type { RootState } from '@/store';
 import { useGetPremiumProgressReportQuery } from '@/store/api/usersApi';
-import { useGetStagesQuery } from '@/store/api/stagesApi';
 
 const formatCell = (value: string | number) => {
   const text = String(value);
@@ -22,11 +21,7 @@ export default function PremiumProgressReportPage() {
   const user = useSelector((state: RootState) => state.auth.user);
   const premium = user?.SubscriptionType?.toLowerCase() === 'premium';
   const stageId = user?.CurrentStageId ?? null;
-  const [chosenStage, setChosenStage] = useState<number | null>(null);
-  const { data: stages } = useGetStagesQuery(ar ? 'ar' : 'en', {
-    skip: !premium,
-  });
-  const activeStage = chosenStage ?? stageId ?? undefined;
+  const activeStage = stageId ?? undefined;
   const { data, isLoading, error, refetch } =
     useGetPremiumProgressReportQuery(activeStage, {
       skip: !premium || !activeStage,
@@ -121,23 +116,7 @@ export default function PremiumProgressReportPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-bold">{data.StageName}</h2>
-                  {stages && stages.length > 1 && (
-                    <label className="mt-2 flex items-center gap-2 text-sm">
-                      <span>{ar ? 'المرحلة' : 'Stage'}</span>
-                      <select
-                        aria-label={ar ? 'مرحلة التقرير' : 'Report stage'}
-                        value={activeStage ?? ''}
-                        onChange={event => setChosenStage(Number(event.target.value))}
-                        className="rounded-xl border border-border bg-card px-3 py-2 print:hidden"
-                      >
-                        {stages.map(stage => (
-                          <option key={stage.Id} value={stage.Id}>
-                            {ar ? stage.NameAr : stage.NameEn}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
+                  <p className="text-sm text-muted-foreground">{ar?'الصف أو المساق الحالي':'Current grade or course'}</p>
                 </div>
                 <div className="flex flex-wrap gap-2 print:hidden">
                   <button type="button" onClick={() => window.print()}

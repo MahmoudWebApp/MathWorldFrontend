@@ -1,4 +1,5 @@
 'use client';
+import { Pagination } from '@/components/ui/Pagination';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
@@ -257,19 +258,7 @@ export default function AdminLearnerActivityPage() {
           </table>
           </div>
         </>}
-      <div className="flex items-center justify-between gap-3 border-t p-4 text-sm">
-        <button type="button" disabled={searching || page <= 1 || result.isFetching}
-          onClick={() => setPage(x => Math.max(1, x - 1))}
-          className="font-semibold text-primary disabled:opacity-40">
-          {ar ? 'السابق' : 'Previous'}
-        </button>
-        <span>{page} / {Math.max(1, Math.ceil((result.currentData?.Total ?? 0) / 20))}</span>
-        <button type="button" disabled={searching || result.isFetching || !result.currentData || page * 20 >= result.currentData.Total}
-          onClick={() => setPage(x => x + 1)}
-          className="font-semibold text-primary disabled:opacity-40">
-          {ar ? 'التالي' : 'Next'}
-        </button>
-      </div>
+      <Pagination page={page} pageSize={20} total={result.currentData?.Total??0} onPageChange={setPage} disabled={searching||result.isFetching||!result.currentData}/>
     </section>
 
     </TabsContent><TabsContent value="activity"><section className="space-y-4 rounded-2xl border bg-card p-4 sm:p-6" aria-label={ar ? 'سجل عمليات الطلاب' : 'Learner event log'}>
@@ -344,15 +333,7 @@ export default function AdminLearnerActivityPage() {
                 </div>
               </li>)}
           </ol>}
-      <div className="flex items-center justify-between gap-3 border-t pt-3 text-sm">
-        <button type="button" disabled={activityPage <= 1 || events.isFetching}
-          onClick={() => setActivityPage(p => Math.max(1, p - 1))}
-          className="font-semibold text-primary disabled:opacity-40">{ar ? 'السابق' : 'Previous'}</button>
-        <span>{ar ? 'صفحة' : 'Page'} {activityPage} / {Math.max(1, Math.ceil((events.currentData?.Total ?? 0) / 30))}</span>
-        <button type="button" disabled={!events.currentData?.HasMore || events.isFetching}
-          onClick={() => setActivityPage(p => p + 1)}
-          className="font-semibold text-primary disabled:opacity-40">{ar ? 'التالي' : 'Next'}</button>
-      </div>
+      <Pagination page={activityPage} pageSize={30} total={events.currentData?.Total??0} onPageChange={setActivityPage} disabled={events.isFetching||!events.currentData}/>
       <p className="text-xs text-muted-foreground">
         {ar ? 'هذا سجل أحداث لاحظها السيرفر منذ تفعيل التتبع فقط. إغلاق المتصفح لا يُسجّل خروجاً مؤكداً، ولا يمكن استرجاع أحداث غير مسجلة سابقاً.'
           : 'Only server-recorded events since tracking was enabled are available; closing a browser is not a verified sign-out and older unrecorded events cannot be reconstructed.'}

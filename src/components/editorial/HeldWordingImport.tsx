@@ -1,4 +1,5 @@
 'use client';
+import {useConfirmDialog} from '@/components/ui/useConfirmDialog';
 import {useRef,useState} from 'react';
 import {useLocale} from 'next-intl';
 import {useLazyGetHeldWordingQuery,useImportHeldWordingMutation,type HeldWordingPackage,type AmendmentImportResult} from '@/store/api/platformBrandApi';
@@ -14,6 +15,7 @@ const errors:Record<string,[string,string]>={
 };
 export function HeldWordingImport({onChanged}:{onChanged:()=>void}){
  const ar=useLocale()==='ar',lang=ar?0:1;
+ const {ask,dialog}=useConfirmDialog();
  const [get]=useLazyGetHeldWordingQuery();const [importRows]=useImportHeldWordingMutation();
  const [pack,setPack]=useState<HeldWordingPackage>();const [ids,setIds]=useState<number[]>([]);
  const [review,setReview]=useState<Result[]>([]);const [preview,setPreview]=useState<number[]>();
@@ -33,16 +35,16 @@ export function HeldWordingImport({onChanged}:{onChanged:()=>void}){
    setPreview(undefined);setReview([]);const result=await importRows({ProblemIds:chosen,Confirm:false}).unwrap();
    setReview(result.Items);setPreview(chosen);setStatus((ar?'مسودات جاهزة: ':'Drafts ready: ')+(result.Ready??0));
  });}
- function create(){
+ async function create(){
    if(!preview?.length||!review.some(r=>r.Status==='Ready'))return;
-   if(!window.confirm(ar?'إنشاء مسودات التصحيح فقط دون نشر؟':'Create correction drafts without publication?'))return;
+   if(!await ask(ar?'إنشاء مسودات التصحيح فقط دون نشر؟':'Create correction drafts without publication?'))return;
    const selected=preview;void run(async()=>{
       setPreview(undefined);const result=await importRows({ProblemIds:selected,Confirm:true}).unwrap();
       const p=await get(undefined,false).unwrap();setPack(p);setIds(p.Items.filter(r=>!existing(p,r.ProblemId)).map(r=>r.ProblemId));
       setReview(result.Items);onChanged();setStatus((ar?'مسودات أُنشئت: ':'Drafts created: ')+result.Created);
    });
  }
- return <section className="space-y-3 rounded-xl border p-3">
+ return <section className="space-y-3 rounded-xl border p-3">{dialog}
    <h4 className="font-semibold">{ar?'تصحيح صياغة المسائل المعلّقة':'Held question wording corrections'}</h4>
    <p className="text-sm text-muted-foreground">{ar?'النصوص المقترحة محفوظة. لا تتغير الإجابات أو الخيارات أو الفئات؛ وجود تاريخ طالب يمنع التصحيح. يتم إنشاء مسودات فقط، ثم اعتمادها من المحرر المعتاد.':'Fixed wording proposals preserve answers, options and categories. Learner history blocks correction. This creates drafts only; use the existing editor to review and publish.'}</p>
    <button type="button" className={button} onClick={load} disabled={busy}>{ar?'تحميل مقترحات التصحيح':'Load wording proposals'}</button>

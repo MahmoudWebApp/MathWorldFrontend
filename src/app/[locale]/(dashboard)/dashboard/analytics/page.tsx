@@ -41,9 +41,10 @@ export default function PremiumAnalyticsPage() {
   const journey=useGetLearningJourneyQuery(undefined,{skip:!isStudent||!premium,refetchOnMountOrArgChange:true});
   const j=journey.currentData;
   const canFilter=j?.LearningSessionsEnabled===true;
-  const [scope,setScope]=useState('all');
+  const [scope,setScope]=useState('track');
   const [days,setDays]=useState(0);
-  const filters:AnalyticsFilter=canFilter?{...(days?{days}:{}),...(scope==='stage'&&j?{stageId:j.StageId}:{}),...(scope==='track'&&j?.TrackId?{stageId:j.StageId,trackId:j.TrackId}:{}),...((scope.startsWith('category:')&&j?.Categories.some(c=>String(c.CategoryId)===scope.slice(9)))?{stageId:j.StageId,categoryId:Number(scope.slice(9)),...(j.TrackId?{trackId:j.TrackId}:{})}:{})}:{};
+  const validCategory=scope.startsWith('category:')&&j?.Categories.some(c=>String(c.CategoryId)===scope.slice(9));
+  const filters:AnalyticsFilter=canFilter&&j?{stageId:j.StageId,...(j.TrackId?{trackId:j.TrackId}:{}),...(validCategory?{categoryId:Number(scope.slice(9))}:{}),...(days?{days}:{})}:{};
   const [exportXlsx, { isLoading: exportingXlsx }] =
     useExportPremiumAnalyticsXlsxMutation();
   const [exportPdf, { isLoading: exportingPdf }] =
@@ -168,10 +169,11 @@ export default function PremiumAnalyticsPage() {
   });
 
   const tiles = report ? [
-    { label: reportAr ? 'المسائل المحلولة' : 'Unique solved', value: report.SolvedProblems },
+    { label: reportAr ? 'المسائل المحلولة' : 'Unique solved', value: report.TotalProblems===undefined?report.SolvedProblems:`${report.SolvedProblems} / ${report.TotalProblems}` },
+     { label: reportAr ? 'نسبة الإنجاز' : 'Completion', value: report.TotalProblems?`${Math.min(100,Math.round(report.SolvedProblems/report.TotalProblems*100))}%`:'0%' },
     { label: reportAr ? 'عدد المحاولات' : 'Total attempts', value: report.Attempts },
     { label: reportAr ? 'الإجابات الصحيحة' : 'Correct attempts', value: report.CorrectAttempts },
-    { label: reportAr ? 'النقاط المكتسبة' : 'Earned points', value: report.AwardedPoints },
+    { label: reportAr ? 'النقاط المكتسبة' : 'Earned points', value: report.AwardedPoints, gold:true },
   ] : [];
   const categoriesForChart = report
     ? [...report.Categories].sort((a, b) => b.SolvedProblems - a.SolvedProblems)
@@ -226,9 +228,9 @@ export default function PremiumAnalyticsPage() {
       </div>
 
       {canFilter&&premium&&j&&<section className="premium-report-actions flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4">
-        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'النطاق':'Scope'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={scope} onChange={e=>setScope(e.target.value)}>
-          <option value="all">{ar?'جميع المراحل':'All stages'}</option><option value="stage">{ar?'المرحلة الحالية':'Current stage'}</option>
-          {j.TrackId&&<option value="track">{ar?'الصف أو المساق الحالي':'Current grade or course'}</option>}
+        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'النطاق':'Scope'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={validCategory?scope:"track"} onChange={e=>setScope(e.target.value)}>
+          <option value="track">{ar?'الصف أو المساق الحالي':'Current grade or course'}</option>
+          
           {j.Categories.map(c=><option key={c.CategoryId} value={'category:'+c.CategoryId}>{ar?c.NameAr:c.NameEn}</option>)}
         </select></label>
         <label className="flex items-center gap-2 text-sm font-semibold">{ar?'الفترة':'Period'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={days} onChange={e=>setDays(Number(e.target.value))}>
@@ -306,7 +308,7 @@ export default function PremiumAnalyticsPage() {
             {tiles.map(tile => (
               <section className="premium-report-card rounded-2xl border bg-card p-4 shadow-sm sm:p-5" key={tile.label}>
                 <p className="text-xs text-muted-foreground sm:text-sm">{tile.label}</p>
-                <strong className="mt-2 block text-2xl font-extrabold tabular-nums text-primary sm:text-3xl">{tile.value}</strong>
+                <strong className={`mt-2 block text-2xl font-extrabold tabular-nums sm:text-3xl ${tile.gold?"text-amber-600 dark:text-yellow-300":"text-primary"}`}>{tile.value}</strong>
               </section>
             ))}
           </div>
@@ -349,7 +351,7 @@ export default function PremiumAnalyticsPage() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 text-xl font-bold">
                 <FileText className="h-5 w-5 text-primary" />
-                {reportAr ? 'التقدم حسب المرحلة والفئة' : 'Progress by stage and category'}
+                {reportAr ? 'التقدم حسب فئات الصف الحالي' : 'Progress by current grade category'}
               </h2>
               {formatReportDate(report.GeneratedAtUtc, reportAr ? 'ar' : 'en') && (
                 <time dateTime={report.GeneratedAtUtc} className="text-xs text-muted-foreground">
@@ -371,7 +373,8 @@ export default function PremiumAnalyticsPage() {
                       <th className="p-3 text-start">{reportAr ? 'الفئة' : 'Category'}</th>
                       <th className="p-3 text-end">{reportAr ? 'المحلولة' : 'Solved'}</th>
                       <th className="p-3 text-end">{reportAr ? 'المحاولات' : 'Attempts'}</th>
-                      <th className="p-3 text-end">{reportAr ? 'الصحيحة' : 'Correct'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'الدقة' : 'Accuracy'}</th>
+                      <th className="p-3 text-end">{reportAr ? 'الإتقان الحالي' : 'Current mastery'}</th>
                       <th className="p-3 text-end">{reportAr ? 'دفتر الأخطاء' : 'Error notebook'}</th>
                       <th className="p-3 text-end">{reportAr ? 'النقاط' : 'Points'}</th>
                     </tr>
@@ -381,22 +384,25 @@ export default function PremiumAnalyticsPage() {
                       <tr key={category.CategoryId} className="border-t">
                         <td className="p-3">{reportAr ? category.StageNameAr : category.StageNameEn}</td>
                         <td className="p-3 font-medium">{reportAr ? category.CategoryNameAr : category.CategoryNameEn}</td>
-                        <td className="p-3 text-end tabular-nums">{category.SolvedProblems}</td>
+                        <td className="p-3 text-end tabular-nums">{category.SolvedProblems}{category.TotalProblems!==undefined?` / ${category.TotalProblems}`:''}</td>
                         <td className="p-3 text-end tabular-nums">{category.Attempts}</td>
-                        <td className="p-3 text-end tabular-nums">{category.CorrectAttempts}</td>
+                        <td className="p-3 text-end tabular-nums">{category.Attempts?`${Math.round(category.CorrectAttempts/category.Attempts*100)}%`:'—'}</td>
+                        <td className="p-3 text-end tabular-nums">{category.MasteredProblems===undefined?'—':<><span className={category.TotalProblems&&category.MasteredProblems>=category.TotalProblems?'text-green-600 dark:text-green-400':'text-foreground'}>{category.MasteredProblems}{category.TotalProblems!==undefined?` / ${category.TotalProblems}`:''}</span>{!!category.TotalProblems&&<span className="block text-xs text-muted-foreground">{Math.round(category.MasteredProblems/category.TotalProblems*100)}%</span>}</>}</td>
                         <td className="p-3 text-end tabular-nums">{category.ErrorNotebookProblems}</td>
-                        <td className="p-3 text-end tabular-nums">{category.AwardedPoints}</td>
+                        <td className="p-3 text-end font-bold tabular-nums text-amber-600 dark:text-yellow-300">{category.AwardedPoints}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             )}
+            <p className="text-xs text-muted-foreground">{reportAr?'الإتقان الحالي يستند إلى حالة المسائل المسجلة، وليس إلى دقة المحاولات فقط.':'Current mastery uses recorded problem mastery, not just attempt accuracy.'}</p>
             <p className="text-xs text-muted-foreground print:text-black">
               {reportAr ? 'حمّل التقرير بصيغة Excel أو PDF، أو اطبعه مباشرة.'
                 : 'Download the Excel or PDF report, or print it directly.'}
             </p>
           </section>
+          {report.RecentAttempts&&<section className="rounded-2xl border bg-card p-5 space-y-3"><h2 className="text-xl font-bold">{ar?'آخر المحاولات':'Recent attempts'}</h2>{report.RecentAttempts.length===0?<p className="text-sm text-muted-foreground">{ar?'لا توجد محاولات بعد':'No attempts yet'}</p>:report.RecentAttempts.map((attempt,index)=><div key={`${attempt.ProblemId}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3"><span className="font-medium">{ar?attempt.TitleAr:attempt.TitleEn}</span><span className={attempt.IsCorrect?'text-green-600 dark:text-green-400':'text-red-600 dark:text-red-400'}>{attempt.IsCorrect?(ar?'صحيحة':'Correct'):(ar?'خاطئة':'Incorrect')}</span><time className="text-xs text-muted-foreground" dateTime={attempt.SubmittedAtUtc}>{formatReportDate(attempt.SubmittedAtUtc,locale)}</time></div>)}</section>}
         </>
       )}
       {pendingExport && (
