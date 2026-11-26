@@ -146,10 +146,10 @@ export default function LearningStagePage() {
               })}
             </fieldset>
 
-            {checkingTracks&&<p className="mt-4 text-sm text-muted-foreground" role="status">{isArabic?'جارٍ تحميل الصفوف والمساقات…':'Loading grades and courses…'}</p>}
+            {checkingTracks&&<p className="mt-4 text-sm text-muted-foreground" role="status">{isArabic?'جارٍ تحميل الصفوف والمستويات…':'Loading grades and levels…'}</p>}
             {catalogUnavailable&&<p role="alert" className="mt-4 text-sm text-destructive">{isArabic?'تعذّر تحميل المسارات.':'Could not load learning tracks.'} <button className="underline" onClick={()=>void catalog.refetch()}>{isArabic?'إعادة المحاولة':'Retry'}</button></p>}
-            {mandatoryTrack&&effectiveId!=null&&!checkingTracks&&!catalogUnavailable&&options.length===0&&<p role="alert" className="mt-4 text-sm text-destructive">{isArabic?'لا تتوفر صفوف أو مساقات منشورة لهذه المرحلة حالياً.':'No published grades or courses are available for this stage yet.'}</p>}
-            {requiresTrack&&options.length>0&&<fieldset className="mt-6 space-y-2"><legend className="font-bold">{isArabic?'اختر الصف أو المساق':'Choose grade or course'}</legend>
+            {mandatoryTrack&&effectiveId!=null&&!checkingTracks&&!catalogUnavailable&&options.length===0&&<p role="alert" className="mt-4 text-sm text-destructive">{isArabic?'لا تتوفر صفوف أو مستويات منشورة لهذه المرحلة حالياً.':'No published grades or levels are available for this stage yet.'}</p>}
+            {requiresTrack&&options.length>0&&<fieldset className="mt-6 space-y-2"><legend className="font-bold">{isArabic?'اختر الصف أو المستوى':'Choose grade or level'}</legend>
               <div className="grid gap-2 sm:grid-cols-2">{options.map(track=><button type="button" key={track.Id} aria-pressed={effectiveTrack===track.Id} onClick={()=>setTrackChoice(track.Id)} className={'rounded-xl border p-3 text-start '+(effectiveTrack===track.Id?'border-primary bg-primary/10':'bg-card')}><span className="font-semibold">{isArabic?track.NameAr:track.NameEn}</span><GradeAge code={track.Code} ar={isArabic}/><span className="ms-2 text-xs text-muted-foreground">{track.ProblemsCount} {isArabic?'مسألة':'problems'}</span>{track.FreeProblemsCount===0&&<span className="block mt-1 text-xs text-muted-foreground">{isArabic?'التدريب لمشتركي Premium':'Premium practice only'}</span>}</button>)}</div>
             </fieldset>}
             {error && (
