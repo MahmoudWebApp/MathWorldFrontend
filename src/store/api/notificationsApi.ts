@@ -22,6 +22,16 @@ export interface InboxSnapshot {
   Take: number;
 }
 
+export interface ManagedInbox {
+  Items: InboxNotification[];
+  SnapshotId: number;
+  TotalCount: number;
+  HasMore: boolean;
+  UnreadCount: number;
+}
+export interface InboxCursor { snapshotId?: number; beforeId?: number; beforeCreatedAt?: string }
+export interface DeleteNoticeSelection { All: boolean; SnapshotId: number; Ids: number[] }
+
 export interface StudentNotification {
   Id: number;
   Type: string;
@@ -56,8 +66,16 @@ export const notificationsApi = createApi({
   baseQuery,
   tagTypes: ['Inbox'],
   endpoints: (builder) => ({
+    getManagedInbox: builder.query<ManagedInbox, InboxCursor>({
+      query: (params) => ({url:'/notifications/v2/managed',params}),
+      keepUnusedDataFor: 0,
+    }),
+    deleteNoticeSelection: builder.mutation<{DeletedCount:number},DeleteNoticeSelection>({
+      query: body=>({url:'/notifications/v2/delete-selection',method:'POST',body}),
+      invalidatesTags:['Inbox'],
+    }),
     getInbox: builder.query<InboxSnapshot, void>({
-      query: () => ({ url: '/notifications/v2', params: { take: 30 } }),
+      query: () => ({ url: '/notifications/v2', params: { take: 5 } }),
       providesTags: ['Inbox'],
     }),
     getInboxPage: builder.query<InboxSnapshot, { skip: number; take?: number }>({
@@ -145,6 +163,8 @@ export const notificationsApi = createApi({
 
 export const {
   useGetInboxQuery,
+  useLazyGetManagedInboxQuery,
+  useDeleteNoticeSelectionMutation,
   useGetInboxPageQuery,
   useListNotificationsQuery,
   useNotificationUnreadCountQuery,
