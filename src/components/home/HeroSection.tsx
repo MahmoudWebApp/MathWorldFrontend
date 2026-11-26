@@ -27,7 +27,7 @@ export function HeroSection() {
 
         <h1 className="brand-display-title mb-4 max-w-4xl text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:mb-5 sm:text-5xl lg:text-6xl">
           {titleWords.map((word, index) => (
-            <span key={`${index}-${word}`} className={index === titleWords.length - 1 ? "sr-title-accent" : ""}>
+            <span key={`${index}-${word}`} className={index === titleWords.length - 1 ? "text-gradient-math" : ""}>
               {index > 0 ? " " : ""}{word}
             </span>
           ))}
