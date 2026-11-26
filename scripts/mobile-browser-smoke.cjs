@@ -12,6 +12,7 @@ function fixture(req){
  const path=new URL(req.url,'http://localhost').pathname.replace(/^\/api/,'');
  const role=roleOf(req);
  const user={Id:1,FullName:'Responsive Fixture Student',Email:'responsive-fixture@example.invalid',Role:role,SubscriptionType:'Premium',CurrentStageId:1};
+ const solvedFixture=id=>({Id:id,PracticeScopeId:1,Title:'Fixture internal title '+id,QuestionText:'Fixture question '+id,StageId:1,StageName:'Primary',CategoryId:1,CategoryName:'Numbers',Points:10,ViewsCount:0,IsSolved:true,HasAttempted:true,WasCorrect:true,SelectedOptionId:id*10,CorrectOptionId:id*10,IsFavorite:false,AttemptCount:1,FirstAttemptCorrect:true,CanRetry:false,MasteryStatus:'Mastered',IsInErrorNotebook:false,IsErrorNotebookArchived:false,DetailedSolution:'$1+1=2$',Options:[{Id:id*10,LatexCode:'2',Order:1},{Id:id*10+1,LatexCode:'3',Order:2}]});
  const routes={
   '/users/profile':user,
   '/users/onboarding':{NextStep:'Complete'},
@@ -23,6 +24,10 @@ function fixture(req){
   '/users/learning-tracks/1/progress':{TrackId:1,StageId:1,TrackPracticeIsolationEnabled:true,ProblemsCount:20,Solved:0,CompletionPercent:0,Categories:[{CategoryId:1,ProblemsCount:20,IsLocked:false,Solved:0,Attempted:0,Mastered:0}]},
   '/users/learning-tracks/1/categories/1/problems':practice,
   '/users/learning-tracks/continue':{TrackId:1,Problem:null},
+  '/problems/1':solvedFixture(1),
+  '/problems/2':solvedFixture(2),
+  '/users/learning-tracks/1/categories/1/next':new URL(req.url,'http://localhost').searchParams.get('afterProblemId')==='1'?{TrackId:1,CategoryId:1,HasNext:true,Problem:{Id:2,CategoryId:1,TitleAr:'طرح',TitleEn:'Subtraction',RequiresRetry:false}}:{TrackId:1,CategoryId:1,HasNext:false},
+
   '/users/dashboard':{...user,SolvedProblemsCount:0,FavoriteProblemsCount:0,TotalPoints:0,SuccessRate:0,RecentSolved:[],RecentFavorites:[],RecentActivities:[]},
   '/users/journey':{StageId:1,TrackId:1,StageNameAr:'الابتدائية',StageNameEn:'Primary',Categories:[],SolvedProblems:0,TotalProblems:20,TotalPoints:0,AttemptedProblems:0,CompletionPercent:0,LearningSessionsEnabled:false},
   '/stages/1/free-categories':{StageId:1,FreeCategoryIds:[1],Categories:[]},
@@ -88,6 +93,18 @@ if(process.argv.includes('--api')){
        if(path==='/dashboard/exams'){
         await page.getByRole('button',{name:locale==='ar'?'امتحاناتي وشهاداتي':'My exams and certificates',exact:true}).click();
         await page.getByText(locale==='ar'?'لا توجد امتحانات سابقة.':'No previous exams.',{exact:true}).waitFor({timeout:10000});
+       }
+       if(path==='/dashboard/categories/1/1'){
+        await page.goto(base+'/'+locale+'/dashboard/problems/1?trackId=1&categoryId=1',{waitUntil:'domcontentloaded'});
+        const next=page.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true});
+        await next.waitFor({timeout:15000});
+        assert.equal(await page.getByText('Fixture internal title 1',{exact:true}).count(),0,'Duplicate question title visible');
+        await next.click();
+        await page.waitForURL('**/dashboard/problems/2?trackId=1&categoryId=1');
+        await page.getByText(locale==='ar'?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.',{exact:true}).waitFor({timeout:15000});
+        assert.equal(await next.count(),0,'Next link should not exist at end of category');
+        assert.equal(pageErrors.length,0,pageErrors.join('; '));
+        console.log('PASS continuation',locale,width,scheme);
        }
        console.log('PASS',tag);
       }catch(e){errors.push(tag+': '+e.message);console.error('FAIL',tag,e.message);await page.screenshot({path:'mobile-browser-results/'+tag+'.png',fullPage:true}).catch(()=>{});}
