@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { Link, usePathname, useRouter } from "@/i18n/routing";
-import { useGetDailyChallengeQuery } from "@/store/api/stagesApi";
+import { useGetDailyChallengeQuery, useGetTrackPracticeQuery } from "@/store/api/stagesApi";
 import type { RootState } from "@/store";
 import {
   type AdminProblemOption,
@@ -157,6 +157,18 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const problemId = Number.parseInt(params.id, 10);
   const trackId = Number(searchParams.get('trackId') ?? 0);
   const fromTrack = learnerWorkspace && Number.isSafeInteger(trackId) && trackId > 0;
+  const trackCategoryId = Number(searchParams.get('categoryId') ?? 0);
+  const practicePage = Math.max(1, Number(searchParams.get('page') ?? 1) || 1);
+  const scopedPractice = fromTrack && Number.isSafeInteger(trackCategoryId) && trackCategoryId > 0;
+  const practice = useGetTrackPracticeQuery({id:trackId,categoryId:trackCategoryId,page:practicePage},{skip:!scopedPractice});
+  const practiceItems = practice.currentData?.Items ?? [];
+  const practiceIndex = practiceItems.findIndex(item=>item.Id===problemId);
+  const following = practiceIndex>=0 ? practiceItems.slice(practiceIndex+1).find(item=>!item.IsSolved) : undefined;
+  const hasNextPage = practiceIndex>=0 && !!practice.currentData && practicePage*practice.currentData.PageSize<practice.currentData.Total;
+  const nextPage = useGetTrackPracticeQuery({id:trackId,categoryId:trackCategoryId,page:practicePage+1},{skip:!scopedPractice||!hasNextPage||!!following});
+  const nextPractice = following ?? nextPage.currentData?.Items.find(item=>!item.IsSolved);
+  const nextPracticeUrl = nextPractice ? '/dashboard/problems/'+nextPractice.Id+'?trackId='+trackId+'&categoryId='+trackCategoryId+'&page='+(following?practicePage:practicePage+1) : null;
+  const trackBackUrl = scopedPractice ? '/dashboard/categories/'+trackId+'/'+trackCategoryId : '/dashboard/categories';
   const challengeStageId = Number(searchParams.get('stageId') ?? 0);
   const challengeDate = searchParams.get('daily') ?? '';
   const challengeIndex = Number(searchParams.get('step') ?? -1);
@@ -542,56 +554,6 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
 
     return "idle";
   }
-  function getBreadcrumbProblemLabel(text: string): string {
-    const superscripts: Record<string, string> = {
-      "0": "⁰",
-      "1": "¹",
-      "2": "²",
-      "3": "³",
-      "4": "⁴",
-      "5": "⁵",
-      "6": "⁶",
-      "7": "⁷",
-      "8": "⁸",
-      "9": "⁹",
-      "+": "⁺",
-      "-": "⁻",
-    };
-
-    const toSuperscript = (value: string) =>
-      value
-        .split("")
-        .map((character) => superscripts[character] ?? character)
-        .join("");
-
-    const normalized = text
-      .replace(/\$\$/g, "")
-      .replace(/\$/g, "")
-      .replace(/\\text\{([^{}]*)\}/g, "$1")
-      .replace(/\\times/g, "×")
-      .replace(/\\cdot/g, "·")
-      .replace(/\\div/g, "÷")
-      .replace(/\\pm/g, "±")
-      .replace(/\\neq/g, "≠")
-      .replace(/\\leq?/g, "≤")
-      .replace(/\\geq?/g, "≥")
-      .replace(/\\left|\\right/g, "")
-      .replace(/\^\{([0-9+-]+)\}/g, (_, exponent: string) =>
-        toSuperscript(exponent),
-      )
-      .replace(/\^([0-9])/g, (_, exponent: string) =>
-        toSuperscript(exponent),
-      )
-      .replace(/[{}]/g, "")
-      .replace(/\\[a-zA-Z]+/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const maxLength = 54;
-    return normalized.length > maxLength
-      ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
-      : normalized;
-  }
   if (isLoading) {
     return (
       <div className="container mx-auto animate-pulse px-4 py-8 md:px-16 lg:px-24">
@@ -614,7 +576,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
           {t("errors.problemNotFound")}
         </p>
         <Link
-          href={fromTrack ? "/dashboard/categories" : learnerWorkspace ? "/dashboard/problems" : "/problems"}
+          href={fromTrack ? trackBackUrl : learnerWorkspace ? "/dashboard/problems" : "/problems"}
           className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
         >
           <DirectionalArrow direction="back" />
@@ -625,7 +587,6 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   }
 
   const {
-    title,
     questionText,
     categoryId,
     categoryName,
@@ -651,7 +612,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             ? [
                 {
                   label: stageName,
-                  href: fromTrack ? "/dashboard/categories" : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
+                  href: fromTrack ? trackBackUrl : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
                 },
               ]
             : []),
@@ -659,7 +620,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             ? [
                 {
                   label: categoryName,
-                  href: fromTrack ? "/dashboard/categories" : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
+                  href: fromTrack ? trackBackUrl : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
                 },
               ]
             : []),
@@ -1011,8 +972,9 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                           </Link>}
                         </div>
                       )}
+                      {!inDailyChallenge && localAnswerResult?.IsCorrect && nextPracticeUrl && <Link href={nextPracticeUrl} className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{isArabic?'المسألة التالية':'Next problem'}<DirectionalArrow direction="forward"/></Link>}
                       <Link
-                        href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? '/dashboard/categories' : categoryId != null
+                        href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? trackBackUrl : categoryId != null
                           ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
                           : stageId != null
                             ? `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`
