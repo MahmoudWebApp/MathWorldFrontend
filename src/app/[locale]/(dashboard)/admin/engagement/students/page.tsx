@@ -141,7 +141,7 @@ export default function AdminLearnerActivityPage() {
       
     </header>
     <Tabs dir={ar?"rtl":"ltr"} value={tab} onValueChange={setTab}><TabsList><TabsTrigger value="students">{ar?"الطلاب":"Students"}</TabsTrigger><TabsTrigger value="activity">{ar?"سجل النشاط":"Activity log"}</TabsTrigger></TabsList><TabsContent value="students" className="space-y-4">
-    <section className="mw-filter-bar border bg-card lg:grid-cols-[minmax(0,1fr)_190px_auto]">
+    <section className="mw-filter-bar border bg-card sm:grid-cols-2 xl:grid-cols-[minmax(12rem,1fr)_minmax(10rem,0.8fr)_minmax(14rem,1fr)_auto] xl:items-center">
       <div className="flex gap-2">
         <label className="relative block min-w-0 flex-1">
           <span className="sr-only">{ar ? 'اسم الطالب' : 'Learner name'}</span>
@@ -151,7 +151,7 @@ export default function AdminLearnerActivityPage() {
             className="mw-filter-field mw-filter-search" />
         </label>
         </div>
-      <label className="block">
+      <label className="block min-w-0">
         <span className="sr-only">{ar ? 'تصفية حسب المستوى' : 'Filter by stage'}</span>
         <select className="mw-filter-field" value={stageId}
           onChange={e => { setStageId(Number(e.target.value));setTrackId(0); setPage(1); }}>
@@ -159,12 +159,15 @@ export default function AdminLearnerActivityPage() {
           {(stages.data?.Stages ?? []).map(stage => <option key={stage.StageId} value={stage.StageId}>
             {ar ? stage.NameAr : stage.NameEn}
           </option>)}
-        </select><select aria-label={ar?'الصف أو المستوى':'Grade or level'} className="mw-filter-field" value={trackId} disabled={!stageId} onChange={e=>{setTrackId(Number(e.target.value));setPage(1)}}><option value={0}>{ar?'كل الصفوف والمستويات':'All grades and levels'}</option>{tracks.data?.Items.filter(x=>x.Track.StageId===stageId).map(x=><option key={x.Track.Id} value={x.Track.Id}>{ar?x.Track.NameAr:x.Track.NameEn}</option>)}</select>
+        </select>
       </label>
-      <label className="flex cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2.5 text-sm font-semibold">
+      <label className="block min-w-0">
+        <select aria-label={ar?'الصف أو المستوى':'Grade or level'} className="mw-filter-field" value={trackId} disabled={!stageId} onChange={e=>{setTrackId(Number(e.target.value));setPage(1)}}><option value={0}>{ar?'كل الصفوف والمستويات':'All grades and levels'}</option>{tracks.data?.Items.filter(x=>x.Track.StageId===stageId).map(x=><option key={x.Track.Id} value={x.Track.Id}>{ar?x.Track.NameAr:x.Track.NameEn}</option>)}</select>
+      </label>
+      <label className="flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl border bg-background px-3 py-2.5 text-sm font-semibold xl:whitespace-nowrap">
         <input type="checkbox" checked={onlineOnly}
           onChange={event => { setOnlineOnly(event.target.checked); setPage(1); }}
-          className="h-4 w-4 accent-emerald-600" />
+          className="h-4 w-4 shrink-0 accent-emerald-600" />
         {ar ? 'متصلون خلال آخر 5 دقائق فقط' : 'Seen in the last 5 minutes only'}
       </label>
       
