@@ -9,8 +9,8 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { useLocale } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
-import { BookOpen, ChartNoAxesCombined, Heart, LockKeyhole, NotebookTabs, Target, Trophy } from 'lucide-react';
-import { useGetDashboardQuery, useGetLearningJourneyQuery } from '@/store/api/usersApi';
+import { BookOpen, ChartNoAxesCombined, GraduationCap, Heart, LockKeyhole, NotebookTabs, Target, Trophy } from 'lucide-react';
+import { useGetDashboardQuery, useGetLearningJourneyQuery, useGetCustomExamAvailabilityQuery } from '@/store/api/usersApi';
 import { useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { useGetTrackContinueQuery } from '@/store/api/stagesApi';
 import { useSearchProblemsQuery } from '@/store/api/problemsApi';
@@ -44,6 +44,7 @@ export default function UserDashboardPage() {
   const accent = getStageAccent({ Id: stageId, NameAr: journey?.NameAr, NameEn: journey?.NameEn });
   const isPremium = subscription?.IsPremium === true;
   const trackId=journey?.TrackId??null;
+  const {currentData:examAvailability}=useGetCustomExamAvailabilityQuery(undefined,{skip:user?.Role!=='Student',refetchOnMountOrArgChange:true});
   const {currentData:trackNext}=useGetTrackContinueQuery(undefined,{skip:!isPremium||!trackId,refetchOnMountOrArgChange:true});
   const { data: nextUnsolved } = useSearchProblemsQuery(
     { StageId: stageId, HideSolved: true, Page: 1, PageSize: 1 },
@@ -160,6 +161,7 @@ export default function UserDashboardPage() {
 
       {isPremium&&stageId>0&&journey?.LearningSessionsEnabled!==true&&<Link href="/dashboard/daily-challenge" className="flex items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-card p-4 sm:p-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary"><Target className="h-6 w-6"/></span><div><h2 className="font-bold">{ar?'تحدي اليوم':'Daily challenge'}</h2><p className="text-sm text-muted-foreground">{ar?'ابدأ تحدي اليوم أو تابع إنجازك':'Start or continue today’s challenge'}</p></div></div><span className="rounded-xl sr-wave-button px-4 py-2 text-sm font-bold text-white">{ar?'فتح التحدي':'Open challenge'}</span></Link>}
       {journey?.LearningSessionsEnabled === true && stageId > 0 && <LearningSessionCards stageId={stageId} trackId={trackId} premium={isPremium}/>}
+      {examAvailability?.Enabled===true&&<Link href="/dashboard/exams" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-card p-4 sm:p-5"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary"><GraduationCap className="h-6 w-6"/></span><div><h2 className="font-bold">{ar?'الامتحانات المخصصة':'Custom exams'}</h2><p className="text-sm text-muted-foreground">{ar?'امتحن نفسك واحصل على شهادة اجتياز':'Test yourself and earn an exam certificate'}</p></div></div><span className="rounded-xl sr-wave-button px-4 py-2 text-sm font-bold text-white">{isPremium?(ar?'فتح الامتحانات':'Open exams'):(ar?'ترقية الحساب':'Upgrade account')}</span></Link>}
       {journey?.CertificatesEnabled===true&&<Link href="/dashboard/certificates" className="flex items-center justify-between rounded-2xl border bg-card p-4 font-semibold"><span>{ar?'شهاداتي التعليمية':'My learning certificates'}</span><span className="text-primary">{ar?'عرض':'View'}</span></Link>}
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="space-y-4"><StudentAchievementsPanel compact />{journey?.LearningSessionsEnabled === true && <SessionBadges/>}</div>
