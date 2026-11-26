@@ -160,8 +160,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const trackCategoryId = Number(searchParams.get('categoryId') ?? 0);
   const scopedPractice = fromTrack && Number.isSafeInteger(trackCategoryId) && trackCategoryId > 0;
   const nextQuery = useGetNextTrackProblemQuery({id:trackId,categoryId:trackCategoryId,afterProblemId:problemId},{skip:!scopedPractice||!Number.isSafeInteger(problemId)||problemId<=0});
-  const nextPractice = nextQuery.currentData?.TrackId===trackId && nextQuery.currentData?.CategoryId===trackCategoryId ? nextQuery.currentData.Problem : null;
-  const nextPracticeUrl = nextPractice && nextPractice.Id!==problemId ? '/dashboard/problems/'+nextPractice.Id+'?trackId='+trackId+'&categoryId='+trackCategoryId : null;
+  const nextPractice = !nextQuery.isError && nextQuery.currentData?.HasNext && nextQuery.currentData.TrackId===trackId && nextQuery.currentData.CategoryId===trackCategoryId && nextQuery.currentData.Problem?.CategoryId===trackCategoryId ? nextQuery.currentData.Problem : null;
+  const nextPracticeUrl = nextPractice && nextPractice.Id!==problemId ? '/dashboard/problems/'+nextPractice.Id+'?trackId='+trackId+'&categoryId='+trackCategoryId+(nextPractice.RequiresRetry?'&retry=1':'') : null;
   const trackBackUrl = scopedPractice ? '/dashboard/categories/'+trackId+'/'+trackCategoryId : '/dashboard/categories';
   const challengeStageId = Number(searchParams.get('stageId') ?? 0);
   const challengeDate = searchParams.get('daily') ?? '';
@@ -255,6 +255,17 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
     }
   }, [studentProblem, localAnswerResult, retryMode]);
 
+  const autoRetryStarted=useRef(false);
+  useEffect(()=>{
+    if(searchParams.get('retry')!=='1'||!studentProblem?.CanRetry||!studentProblem.IsInErrorNotebook||studentProblem.IsSolved||autoRetryStarted.current)return;
+    autoRetryStarted.current=true;
+    setRetryMode(true);
+    setSubmissionDone(false);
+    setLocalAnswerResult(null);
+    setSelectedOptionId(null);
+    setActiveTab("question");
+    attemptStartedAtRef.current=Date.now();
+  },[searchParams,studentProblem]);
   useEffect(() => {
     if (!localAnswerResult || retryMode) {
       return;
@@ -500,6 +511,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
       setSubmissionDone(true);
       setRetryMode(false);
       await refetchProblem();
+      if(scopedPractice)void nextQuery.refetch();
 
     } catch (submitFailure) {
       const normalized = submitFailure as {
@@ -966,7 +978,9 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                           </Link>}
                         </div>
                       )}
-                      {!inDailyChallenge && localAnswerResult?.IsCorrect && nextPracticeUrl && <Link href={nextPracticeUrl} className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{isArabic?'المسألة التالية':'Next problem'}<DirectionalArrow direction="forward"/></Link>}
+                      {!inDailyChallenge && scopedPractice && isCorrect && !retryMode && <div className="mt-4">
+                        {nextQuery.isFetching ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'جارٍ تجهيز المسألة التالية…':'Preparing the next problem…'}</p> : nextQuery.isError ? <Button variant="outline" onClick={()=>void nextQuery.refetch()}>{isArabic?'إعادة تحميل المسألة التالية':'Retry loading the next problem'}</Button> : nextPracticeUrl ? <Link href={nextPracticeUrl} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{isArabic?'المسألة التالية':'Next problem'}<DirectionalArrow direction="forward"/></Link> : nextQuery.currentData?.HasNext===false ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.'}</p> : null}
+                      </div>}
                       <Link
                         href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? trackBackUrl : categoryId != null
                           ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
