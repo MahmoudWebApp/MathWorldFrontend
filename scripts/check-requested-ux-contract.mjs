@@ -51,7 +51,8 @@ assert.equal((categories.match(/await resetPractice\(/g) ?? []).length, 1,
 
 assert.match(categories, /<LockedPremiumDialog topicName=\{name\}>/, 'Locked categories must stay gated');
 assert.match(categories, /<CategorySkillsPopover stageId=\{stageId\}/, 'Learner topics show API-owned category skill descriptions.');
-assert.match(categories, /onClick=\{\(\) => setSkillsCategory/, 'Category skills open separately from Premium access.');
+assert.match(categories, /const skillsButton = \([\s\S]*?<CategorySkillsPopover stageId=\{stageId\} category=\{category\} trigger=/, 'Skills have a separate anchored trigger.');
+assert.match(categories, /<\/LockedPremiumDialog>\s*\{skillsButton\}/, 'Locked topics expose public skills outside the Premium gate.');
 const publicCategories = read('src/app/[locale]/stages/[stageId]/StageCategoriesClient.tsx');
 assert.match(publicCategories, /<CategorySkillsPopover stageId=\{stageId\}/,
   'Public topic cards must expose the same per-category skills popup.');
