@@ -450,7 +450,7 @@ export function LatexToolbarAdvanced({
   const locale = useLocale();
   const isAr = locale === "ar";
   const [customOpen, setCustomOpen] = useState(false);
-  const [customCode, setCustomCode] = useState('');
+  const [customCode, setCustomCode] = useState("");
 
   const defaultLevel = LATEX_LIBRARY.find((l) => l.id === defaultLevelId) ?? LATEX_LIBRARY[0];
   const [activeLevel, setActiveLevel] = useState<LevelData>(defaultLevel);
@@ -470,9 +470,12 @@ export function LatexToolbarAdvanced({
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const val = textarea.value;
-      // Rich text needs delimiters; raw math option fields do not.
-      const insideMath = (val.substring(0, start).match(/(?<!\\)\$/g)?.length ?? 0) % 2 === 1;
-      if (wrapInlineMath && !insideMath) code = '
+      // Count unescaped delimiters, including unmatched block delimiters.
+      const before = val.substring(0, start);
+      const delimiters = before.match(/(?<!\\)\$\$|(?<!\\)\$/g) ?? [];
+      const insideMath = delimiters.length % 2 === 1;
+      if (wrapInlineMath && !insideMath) code = "$" + code + "$";
+      const newVal = val.substring(0, start) + code + val.substring(end);
 
       /* Trigger React synthetic onChange */
       const setter = Object.getOwnPropertyDescriptor(
@@ -621,7 +624,7 @@ export function LatexToolbarAdvanced({
             variant="ghost"
             size="sm"
             className="text-xs h-7 gap-1"
-            onClick={() => { setCustomCode(''); setCustomOpen(true); }}
+            onClick={() => { setCustomCode(""); setCustomOpen(true); }}
           >
             ⌨️ {isAr ? "كود مخصص" : "Custom code"}
           </Button>
@@ -629,325 +632,10 @@ export function LatexToolbarAdvanced({
       )}
       <Dialog open={customOpen} onOpenChange={setCustomOpen}>
         <DialogContent><DialogHeader><DialogTitle>{isAr ? 'كود LaTeX مخصص' : 'Custom LaTeX code'}</DialogTitle></DialogHeader>
-          <textarea dir="ltr" className="w-full rounded-xl border bg-background p-3 font-mono" value={customCode} onChange={e=>setCustomCode(e.target.value)} />
+          <textarea dir="ltr" aria-label={isAr?'كود LaTeX':'LaTeX code'} className="w-full rounded-xl border bg-background p-3 font-mono" value={customCode} onChange={e=>setCustomCode(e.target.value)} />
           <DialogFooter><Button variant="outline" onClick={()=>setCustomOpen(false)}>{isAr?'إلغاء':'Cancel'}</Button><Button disabled={!customCode.trim()} onClick={()=>{insertAtCursor(customCode);setCustomOpen(false)}}>{isAr?'إدراج':'Insert'}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-} + code + '
-
-      /* Trigger React synthetic onChange */
-      const setter = Object.getOwnPropertyDescriptor(
-        window.HTMLTextAreaElement.prototype,
-        "value"
-      )?.set;
-      setter?.call(textarea, newVal);
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
-
-      textarea.focus();
-      setTimeout(() => {
-        /* Place cursor inside {} if present */
-        const braceIndex = code.indexOf("{}");
-        if (braceIndex !== -1) {
-          textarea.setSelectionRange(start + braceIndex + 1, start + braceIndex + 1);
-        } else {
-          textarea.setSelectionRange(start + code.length, start + code.length);
-        }
-      }, 0);
-    },
-    [textareaRef]
-  );
-
-  const name = (item: { ar: string; en: string }) => (isAr ? item.ar : item.en);
-
-  return (
-    <div
-      className={cn(
-        "rounded-t-lg border border-b-0 bg-muted/40 p-2 space-y-2",
-        className
-      )}
-    >
-      {/* ── Level tabs ── */}
-      <div
-        className="flex gap-1 border-b border-border/50 pb-2 overflow-x-auto scrollbar-none"
-        role="tablist"
-        aria-label={isAr ? "المستويات" : "Math levels"}
-      >
-        {LATEX_LIBRARY.map((level) => (
-          <button
-            key={level.id}
-            type="button"
-            role="tab"
-            aria-selected={activeLevel.id === level.id}
-            onClick={() => handleLevelChange(level)}
-            className={cn(
-              "px-3 py-1.5 text-xs rounded-md transition-colors whitespace-nowrap font-medium",
-              activeLevel.id === level.id
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            {name(level)}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Category tabs ── */}
-      <div
-        className="flex gap-1 overflow-x-auto scrollbar-none"
-        role="tablist"
-        aria-label={isAr ? "الفئات" : "Categories"}
-      >
-        {activeLevel.categories.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            role="tab"
-            aria-selected={activeCat.id === cat.id}
-            onClick={() => setActiveCat(cat)}
-            className={cn(
-              "px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap",
-              activeCat.id === cat.id
-                ? "bg-secondary text-secondary-foreground font-medium"
-                : "text-muted-foreground hover:bg-muted/60"
-            )}
-          >
-            {name(cat)}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Symbol grid ── */}
-      <div
-        className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 py-1"
-        role="group"
-        aria-label={isAr ? "رموز LaTeX" : "LaTeX symbols"}
-      >
-        {activeCat.items.map((item, idx) => (
-          <Tooltip key={idx}>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "h-8 px-1.5 text-xs font-mono border-dashed",
-                  "hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-                  "transition-colors"
-                )}
-                onClick={() => insertAtCursor(item.code)}
-                aria-label={name(item)}
-              >
-                {item.label}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className="text-xs max-w-[240px]"
-              dir={isAr ? "rtl" : "ltr"}
-            >
-              <p className="font-semibold">{name(item)}</p>
-              <p className="text-muted-foreground mt-0.5 font-mono">{item.code}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </div>
-
-      {/* ── Footer: hint + manual entry ── */}
-      {!compact && (
-        <div className="flex items-center justify-between pt-1 border-t border-border/40">
-          <p className="text-xs text-muted-foreground">
-            {isAr ? (
-              <>
-                استخدم{" "}
-                <code className="bg-muted px-1 rounded font-mono">$...$</code>{" "}
-                للمعادلات المضمّنة أو{" "}
-                <code className="bg-muted px-1 rounded font-mono">$$...$$</code>{" "}
-                للمعادلات المستقلة
-              </>
-            ) : (
-              <>
-                Wrap with{" "}
-                <code className="bg-muted px-1 rounded font-mono">$...$</code>{" "}
-                for inline or{" "}
-                <code className="bg-muted px-1 rounded font-mono">$$...$$</code>{" "}
-                for block math
-              </>
-            )}
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-xs h-7 gap-1"
-            onClick={() => {
-              const code = prompt(isAr ? "أدخل كود LaTeX يدوياً:" : "Enter custom LaTeX code:");
-              if (code) insertAtCursor(code);
-            }}
-          >
-            ⌨️ {isAr ? "كود مخصص" : "Custom code"}
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-};
-      const newVal = val.substring(0, start) + code + val.substring(end);
-
-      /* Trigger React synthetic onChange */
-      const setter = Object.getOwnPropertyDescriptor(
-        window.HTMLTextAreaElement.prototype,
-        "value"
-      )?.set;
-      setter?.call(textarea, newVal);
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
-
-      textarea.focus();
-      setTimeout(() => {
-        /* Place cursor inside {} if present */
-        const braceIndex = code.indexOf("{}");
-        if (braceIndex !== -1) {
-          textarea.setSelectionRange(start + braceIndex + 1, start + braceIndex + 1);
-        } else {
-          textarea.setSelectionRange(start + code.length, start + code.length);
-        }
-      }, 0);
-    },
-    [textareaRef]
-  );
-
-  const name = (item: { ar: string; en: string }) => (isAr ? item.ar : item.en);
-
-  return (
-    <div
-      className={cn(
-        "rounded-t-lg border border-b-0 bg-muted/40 p-2 space-y-2",
-        className
-      )}
-    >
-      {/* ── Level tabs ── */}
-      <div
-        className="flex gap-1 border-b border-border/50 pb-2 overflow-x-auto scrollbar-none"
-        role="tablist"
-        aria-label={isAr ? "المستويات" : "Math levels"}
-      >
-        {LATEX_LIBRARY.map((level) => (
-          <button
-            key={level.id}
-            type="button"
-            role="tab"
-            aria-selected={activeLevel.id === level.id}
-            onClick={() => handleLevelChange(level)}
-            className={cn(
-              "px-3 py-1.5 text-xs rounded-md transition-colors whitespace-nowrap font-medium",
-              activeLevel.id === level.id
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            {name(level)}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Category tabs ── */}
-      <div
-        className="flex gap-1 overflow-x-auto scrollbar-none"
-        role="tablist"
-        aria-label={isAr ? "الفئات" : "Categories"}
-      >
-        {activeLevel.categories.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            role="tab"
-            aria-selected={activeCat.id === cat.id}
-            onClick={() => setActiveCat(cat)}
-            className={cn(
-              "px-2.5 py-1 text-xs rounded-md transition-colors whitespace-nowrap",
-              activeCat.id === cat.id
-                ? "bg-secondary text-secondary-foreground font-medium"
-                : "text-muted-foreground hover:bg-muted/60"
-            )}
-          >
-            {name(cat)}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Symbol grid ── */}
-      <div
-        className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-1.5 py-1"
-        role="group"
-        aria-label={isAr ? "رموز LaTeX" : "LaTeX symbols"}
-      >
-        {activeCat.items.map((item, idx) => (
-          <Tooltip key={idx}>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "h-8 px-1.5 text-xs font-mono border-dashed",
-                  "hover:bg-primary/10 hover:text-primary hover:border-primary/40",
-                  "transition-colors"
-                )}
-                onClick={() => insertAtCursor(item.code)}
-                aria-label={name(item)}
-              >
-                {item.label}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className="text-xs max-w-[240px]"
-              dir={isAr ? "rtl" : "ltr"}
-            >
-              <p className="font-semibold">{name(item)}</p>
-              <p className="text-muted-foreground mt-0.5 font-mono">{item.code}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </div>
-
-      {/* ── Footer: hint + manual entry ── */}
-      {!compact && (
-        <div className="flex items-center justify-between pt-1 border-t border-border/40">
-          <p className="text-xs text-muted-foreground">
-            {isAr ? (
-              <>
-                استخدم{" "}
-                <code className="bg-muted px-1 rounded font-mono">$...$</code>{" "}
-                للمعادلات المضمّنة أو{" "}
-                <code className="bg-muted px-1 rounded font-mono">$$...$$</code>{" "}
-                للمعادلات المستقلة
-              </>
-            ) : (
-              <>
-                Wrap with{" "}
-                <code className="bg-muted px-1 rounded font-mono">$...$</code>{" "}
-                for inline or{" "}
-                <code className="bg-muted px-1 rounded font-mono">$$...$$</code>{" "}
-                for block math
-              </>
-            )}
-          </p>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-xs h-7 gap-1"
-            onClick={() => {
-              const code = prompt(isAr ? "أدخل كود LaTeX يدوياً:" : "Enter custom LaTeX code:");
-              if (code) insertAtCursor(code);
-            }}
-          >
-            ⌨️ {isAr ? "كود مخصص" : "Custom code"}
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
