@@ -119,7 +119,7 @@ export const stagesApi = createApi({
     getTrackProgress:builder.query<TrackProgress,number>({
       query:id=>'/users/learning-tracks/'+id+'/progress',providesTags:['LearningTrack'],
     }),
-    getNextTrackProblem:builder.query<{TrackId:number;CategoryId:number;Problem:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}|null},{id:number;categoryId:number;afterProblemId:number}>({
+    getNextTrackProblem:builder.query<{TrackId:number;CategoryId:number;HasNext:boolean;Problem?:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;RequiresRetry:boolean}|null},{id:number;categoryId:number;afterProblemId:number}>({
       query:({id,categoryId,afterProblemId})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/next',params:{afterProblemId}}),
       providesTags:['LearningTrack'],
     }),
