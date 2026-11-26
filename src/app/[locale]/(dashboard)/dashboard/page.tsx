@@ -172,7 +172,7 @@ export default function UserDashboardPage() {
           </div>
           <div className="mt-4 space-y-3">
             {!dashboard&&(isLoading||isFetching)?<MathWorldLoading compact/>:!dashboard||isError?<div role="alert" className="rounded-2xl bg-muted/30 p-4 text-sm">{ar?'تعذّر تحميل آخر المسائل.':'Recent problems unavailable.'} <button className="text-primary underline" onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>:dashboard.RecentSolved?.some(problem => problem.StageId === stageId) ? dashboard.RecentSolved.filter(problem => problem.StageId === stageId).slice(0, 2).map((problem, index) => (
-              <ProblemCard key={problem.Id ?? index} problem={problem} />
+              <ProblemCard key={problem.Id ?? index} problem={problem} compact />
             )) : <div className="rounded-2xl bg-muted/30 p-5 text-sm text-muted-foreground">
               {ar ? 'لم تحل مسائل بعد. ابدأ بأول فئة من مرحلتك.' : 'No solved problems yet. Start with a topic in your stage.'}
             </div>}
