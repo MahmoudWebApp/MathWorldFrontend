@@ -6,6 +6,7 @@ import { CheckCheck, Trash2, RefreshCw } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/store';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
+import { PopoverConfirm } from '@/components/ui/PopoverConfirm';
 import { useLazyGetManagedInboxQuery, useDeleteNoticeSelectionMutation, useMarkNotificationReadMutation, useMarkAllNotificationsReadMutation, type InboxNotification, type ManagedInbox } from '@/store/api/notificationsApi';
 
 export function ManagedNotificationList({onNavigate}:{onNavigate?:()=>void}) {
@@ -63,9 +64,8 @@ function Inbox({onNavigate}:{onNavigate?:()=>void}) {
   function toggle(id:number){
     setSelected(old=>{const next=new Set(old);if(next.has(id))next.delete(id);else next.add(id);return next;});
   }
-  const remove=()=>void run(async()=>{
+  const remove=()=>run(async()=>{
     if(!page||!count)return;
-    if(!window.confirm(ar?'حذف الإشعارات المحددة نهائياً؟':'Permanently delete the selected notifications?'))return;
     await deleteSelection({All:all,SnapshotId:page.SnapshotId,Ids:all?[]:[...selected]}).unwrap();
     if(!active.current)return;
     setItems([]);setPage(null);setAll(false);setSelected(new Set());
@@ -87,7 +87,7 @@ function Inbox({onNavigate}:{onNavigate?:()=>void}) {
     <div className="flex flex-wrap items-center gap-2 border-b p-3 text-sm">
       <label className="flex min-h-10 items-center gap-2 font-semibold"><input type="checkbox" checked={all} disabled={busy||!page?.TotalCount} onChange={e=>{setAll(e.target.checked);setSelected(new Set());}}/>{ar?'تحديد الكل':'Select all'}</label>
       <span className="text-xs text-muted-foreground" aria-live="polite">{count} {ar?'محدد':'selected'}</span>
-      <button type="button" disabled={busy||!count} onClick={remove} className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-destructive/30 px-2 text-destructive disabled:opacity-40"><Trash2 className="h-4 w-4"/>{ar?'حذف':'Delete'}</button>
+      <PopoverConfirm title={ar?'حذف الإشعارات':'Delete notifications'} description={ar?'هل تريد حذف الإشعارات المحددة نهائياً؟':'Permanently delete the selected notifications?'} onConfirm={remove} isLoading={busy} trigger={<button type="button" disabled={busy||!count} className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-destructive/30 px-2 text-destructive disabled:opacity-40"><Trash2 className="h-4 w-4"/>{ar?'حذف':'Delete'}</button>}/>
       <button type="button" disabled={busy||!items.length} onClick={()=>void run(async()=>{await markAll().unwrap();if(active.current)setItems(old=>old.map(n=>({...n,ReadAtUtc:n.ReadAtUtc??new Date().toISOString()})));})} className="inline-flex min-h-10 items-center gap-1 rounded-lg px-2 text-primary disabled:opacity-40"><CheckCheck className="h-4 w-4"/>{ar?'قراءة الكل':'Read all'}</button>
       <button type="button" disabled={busy} onClick={()=>void run(reset)} aria-label={ar?'تحديث':'Refresh'} className="ms-auto rounded-lg p-2 hover:bg-muted"><RefreshCw className="h-4 w-4"/></button>
     </div>
