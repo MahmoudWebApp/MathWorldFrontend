@@ -14,10 +14,11 @@ import { getStageAccent } from "@/lib/stageVisuals";
 
 interface ProblemCardProps {
   problem: ProblemPreview;
+  compact?: boolean;
 }
 
 /** A readable, accessible preview. A green check is never used for unsolved work. */
-export function ProblemCard({ problem }: ProblemCardProps) {
+export function ProblemCard({ problem, compact=false }: ProblemCardProps) {
   const t = useTranslations();
   const pathname = usePathname();
   const inStudentWorkspace = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
@@ -30,17 +31,17 @@ export function ProblemCard({ problem }: ProblemCardProps) {
       href={`${inStudentWorkspace ? "/dashboard" : ""}/problems/${problem.Id}`}
       className="group mx-auto block w-full max-w-5xl rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
-      <article className="brand-surface mw-topic-surface rounded-3xl p-4 hover:shadow-md sm:p-5"
+      <article className={"brand-surface mw-topic-surface hover:shadow-md "+(compact?"rounded-2xl p-3":"rounded-3xl p-4 sm:p-5")}
         style={{ "--stage-accent": stageAccent } as import("react").CSSProperties}>
-        <div className="flex flex-row items-start justify-between gap-3 sm:gap-4">
+        <div className={compact?"flex flex-wrap items-start justify-between gap-2":"flex flex-row items-start justify-between gap-3 sm:gap-4"}>
           <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
-            <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12"
+            <span aria-hidden="true" className={"flex shrink-0 items-center justify-center rounded-xl "+(compact?"h-9 w-9":"h-11 w-11 sm:h-12 sm:w-12")}
               style={{ color: stageAccent, backgroundColor: stageAccent + '17' }}>
               <Calculator className="h-6 w-6" />
             </span>
             <div className="min-w-0 flex-1">
-              <ProblemTitle text={problem.Title} className="text-base font-bold leading-7 text-foreground transition-colors sm:text-lg"/>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <ProblemTitle text={problem.Title} className={"font-bold text-foreground transition-colors "+(compact?"text-sm leading-6":"text-base leading-7 sm:text-lg")}/>
+              <div className={"flex flex-wrap "+(compact?"mt-1.5 gap-1":"mt-3 gap-2")}>
                 {typeof problem.IsSolved === "boolean" && typeof problem.HasAttempted === "boolean" &&
                   (problem.IsSolved ? (
                     <Badge variant="secondary" className="gap-1 border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
@@ -72,7 +73,7 @@ export function ProblemCard({ problem }: ProblemCardProps) {
               </div>
             </div>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-3 pt-0 sm:gap-4">
+          <div className={"flex shrink-0 items-end pt-0 "+(compact?"ms-auto flex-row flex-wrap items-center gap-2":"flex-col gap-3 sm:gap-4")}>
             {typeof problem.Points === "number" ? (
               <span className="inline-flex items-center gap-1.5 text-sm font-bold mw-reward"
                 aria-label={(locale === "ar" ? "النقاط: " : "Points: ") + problem.Points}>
