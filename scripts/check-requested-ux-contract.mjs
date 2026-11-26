@@ -127,3 +127,16 @@ assert.match(navbar, /<MathWorldLoading compact \/>/,
 console.log('PASS: branded sitewide loaders, authenticated API state, no fake fallbacks, bilingual export dialog.');
 
 console.log('PASS: MathWorld learner/admin UX and sitewide public-catalog request-efficiency contracts');
+
+const scopedGrades=read('src/app/[locale]/(dashboard)/admin/learning-tracks/page.tsx');
+const scopedTopics=read('src/app/[locale]/(dashboard)/admin/categories/page.tsx');
+const editor=read('src/components/editorial/EditorialWorkspace.tsx');
+const componentStyle=read('src/style/components.css');
+assert.match(scopedGrades,/href=\{'\/admin\/categories\?stageId='\+stageFilter\+'&trackId='\+x.Track.Id\}/);
+assert.match(scopedTopics,/track.currentData\?\.CategoryIds.includes\(cat.Id\)/);
+assert.doesNotMatch(scopedTopics,/"اختيار الصف" : "Choose grade"/);
+assert.doesNotMatch(componentStyle,/:where\(h1,h2,h3,h4,h5,h6\)/);
+assert.match(editor,/<ProblemAuthoringGuide\/>/);
+assert.match(editor,/<ProblemTitle text=\{showPair\(content.Title\)\}/);
+assert.match(editor,/if\(busy\|\|!canSubmit\|\|step!==5/);
+console.log('PASS: scoped admin content, explicit brand headings, original guide, gated editor and math titles.');

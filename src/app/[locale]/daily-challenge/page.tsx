@@ -1,5 +1,5 @@
 'use client';
-import {RichText} from '@/components/ui/RichText';
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
@@ -150,7 +150,7 @@ export default function DailyChallengePage() {
             <Target className="h-4 w-4" aria-hidden="true" />
             {ar ? 'المسألة ' + (nextIndex + 1) + ' من ' + total : 'Question ' + (nextIndex + 1) + ' of ' + total}
           </span>
-          <h2 className="text-xl font-extrabold leading-8"><RichText text={ar ? next.TitleAr : next.TitleEn} isArabic={ar}/></h2>
+          <h2 className="text-xl font-extrabold leading-8"><ProblemTitle text={ar ? next.TitleAr : next.TitleEn}/></h2>
           <p className="text-sm leading-7 text-muted-foreground">{ar
             ? 'اضغط ابدأ لفتح السؤال. بعد الإجابة بنعرض النتيجة والحل، وبيكون الانتقال للسؤال التالي متاح مباشرة.'
             : 'Open the question, submit an answer, review its solution, and move to the next question.'}</p>

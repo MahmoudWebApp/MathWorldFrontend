@@ -49,6 +49,7 @@ import { LockedPremiumDialog } from "@/components/premium/LockedPremiumDialog";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
 import { getStageAccent } from "@/lib/stageVisuals";
@@ -678,11 +679,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             }`}
             style={{ color: stageAccent }}
           >
-            <RichText
-              text={title}
-              isArabic={isArabic}
-              className="text-inherit"
-            />
+            <ProblemTitle text={title} className="text-inherit"/>
           </h1>
 
           <div

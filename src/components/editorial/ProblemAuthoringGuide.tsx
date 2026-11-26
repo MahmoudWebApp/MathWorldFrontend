@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations,useLocale } from "next-intl";
 import {
   BookOpen,
   CheckCircle2,
@@ -32,7 +32,7 @@ function RuleBox({ type, title, code }: { type: "correct" | "wrong"; title: stri
 }
 
 export default function DataEntryGuidePage() {
-  const t = useTranslations("admin.guide");
+  const t = useTranslations("admin.guide");const ar=useLocale()==='ar';
 
   return (
     <div className="mx-auto space-y-6 max-w-5xl">
@@ -45,6 +45,7 @@ export default function DataEntryGuidePage() {
       </div>
 
       <div className="grid gap-8">
+        <Card><CardHeader><CardTitle className="text-xl">{ar?'خطوات إعداد المسألة':'Editorial workflow'}</CardTitle></CardHeader><CardContent><ol className="list-decimal space-y-2 ps-5 text-sm leading-7">{(ar?['حدد المرحلة والصف أو المستوى والفئة والمهارة.','أدخل عنواناً وسؤالاً باللغتين، واستخدم LaTeX في العنوان أيضاً.','أضف أربعة خيارات مختلفة وحدد الصحيح وأسباب الأخطاء.','أضف تلميحين متدرجين لا يكشفان الإجابة.','أكمل القانون وخطوات الحل والتعويض والنتيجة والوحدة والتحقق والخطأ الشائع.','راجع المسألة كاملة: ينشر الأدمن مباشرة، ويرسل المشرف للمراجعة.']:['Select stage, grade or level, category and skill.','Enter a bilingual title and question, including LaTeX in titles.','Provide four distinct options, one correct answer and distractor reasons.','Add two progressive hints without revealing the answer.','Complete formula, steps, substitution, result, unit, verification and common error.','Review the whole problem: administrators publish directly and supervisors submit for review.']).map(line=><li key={line}>{line}</li>)}</ol></CardContent></Card>
         {/* Section 1: Latex Rules */}
         <Card className="border-t-4 border-t-primary shadow-md">
           <CardHeader className="bg-muted/20 pb-4">
