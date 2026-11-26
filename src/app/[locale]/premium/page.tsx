@@ -10,6 +10,7 @@ import type { User } from '@/store/api/types';
 import { setCredentials } from '@/store/slices/authSlice';
 import { API_BASE_URL } from '@/store/api/baseQuery';
 import { categoriesApi } from '@/store/api/categoriesApi';
+import { useGetCustomExamAvailabilityQuery } from '@/store/api/usersApi';
 
 export default function PremiumBenefitsPage() {
   const ar = useLocale() === 'ar';
@@ -19,6 +20,7 @@ export default function PremiumBenefitsPage() {
   const token = useSelector((state: RootState) => state.auth.token);
   const premium = user?.SubscriptionType?.toLowerCase() === 'premium';
   const student = user?.Role === 'Student';
+  const {currentData:exams}=useGetCustomExamAvailabilityQuery(undefined,{skip:!student,refetchOnMountOrArgChange:true});
   const [code, setCode] = useState('');
   const [redeeming, setRedeeming] = useState(false);
   const [message, setMessage] = useState('');
@@ -26,11 +28,12 @@ export default function PremiumBenefitsPage() {
 
   const premiumFeatures = [
     { icon: CheckCircle2, ar: 'حل عدد غير محدود من المسائل في جميع الفئات', en: 'Unlimited problems in all categories' },
-    { icon: LockOpen, ar: 'فتح كل فئات المرحلة التي يدرسها الطالب', en: 'Unlock every topic in the learner’s selected stage' },
+    { icon: LockOpen, ar: 'فتح جميع فئات الصف أو المساق الذي يدرسه الطالب', en: 'Unlock all topics in the learner’s selected grade or course' },
     { icon: GraduationCap, ar: 'تلميحان متدرجان قبل الحل', en: 'Two progressive hints before solving' },
     { icon: Sparkles, ar: 'تقارير وإحصائيات شخصية مع تصدير PDF وExcel (XLSX)',
       en: 'Personal analytics with PDF and native Excel (XLSX) reports' },
     { icon: Sparkles, ar: 'تحدٍ يومي تفاعلي حتى خمس مسائل متتالية', en: 'Sequential daily challenge with up to five questions' },
+    ...(exams?.Enabled===true?[{icon:GraduationCap,ar:'امتحانات مخصصة للصف أو الفئة وشهادة عند الاجتياز',en:'Custom grade or topic exams with a certificate on passing'}]:[]),
     { icon: ShieldCheck, ar: 'بدون إعلانات ضمن MathWorld', en: 'Ad-free MathWorld' },
   ];
   const freeFeatures = [
