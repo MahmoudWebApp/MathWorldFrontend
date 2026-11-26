@@ -25,7 +25,7 @@ import {
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PopoverConfirm } from "@/components/ui/PopoverConfirm";
-import { Shapes } from "lucide-react";
+import { Shapes, BookOpenText } from "lucide-react";
 import { WorkspacePageHeader } from "@/components/ui/WorkspacePageHeader";
 // Tooltip components are configured globally.
 import {
@@ -382,13 +382,7 @@ function AdminCategoriesPageContent() {
                       {freeIds===undefined?<span className="text-xs text-muted-foreground">—</span>:<span className={"rounded-full border px-3 py-1 text-xs font-bold "+(free.has(category.Id)?"border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300":"border-primary/25 bg-primary/10 text-primary")}>{free.has(category.Id)?(locale==="ar"?"مجاني":"Free"):"Premium"}</span>}
                     </td>
                     <td className="p-4 space-x-2 rtl:space-x-reverse whitespace-nowrap">
-                      <Link
-                        href={`/admin/editorial?stageId=${category.StageId}&trackId=${trackId}&categoryId=${category.Id}`}
-                        className="mb-1 inline-flex items-center gap-1 rounded-lg border mw-topic-action px-2.5 py-2 text-xs font-semibold"
-                      >
-                        {locale === "ar" ? "عرض المسائل" : "View problems"}
-                        <DirectionalChevron direction="forward" className="h-4 w-4" />
-                      </Link>
+                      <Tooltip><TooltipTrigger asChild><Link href={`/admin/editorial?stageId=${category.StageId}&trackId=${trackId}&categoryId=${category.Id}`} className="mw-admin-action mw-action-view p-2" aria-label={locale==="ar"?"عرض المسائل":"View problems"}><BookOpenText className="h-4 w-4" aria-hidden="true"/></Link></TooltipTrigger><TooltipContent>{locale==="ar"?"عرض المسائل":"View problems"}</TooltipContent></Tooltip>
 
                       {/* Edit action */}
                       <Tooltip>
@@ -396,6 +390,7 @@ function AdminCategoriesPageContent() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            aria-label={t("common.edit")}
                             onClick={() => openEditModal(category)}
                             disabled={isUpdating}
                             className="hover:text-primary hover:bg-primary/10"
@@ -428,6 +423,7 @@ function AdminCategoriesPageContent() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  aria-label={t("common.delete")}
                                   className="hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                                 >
                                   <Trash className="h-4 w-4 text-red-500" />
