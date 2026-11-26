@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { Link, usePathname, useRouter } from "@/i18n/routing";
-import { useGetDailyChallengeQuery, useGetNextTrackProblemQuery } from "@/store/api/stagesApi";
+import { useGetDailyChallengeQuery, useGetNextTrackProblemQuery, useGetTrackSelectionQuery } from "@/store/api/stagesApi";
 import type { RootState } from "@/store";
 import {
   type AdminProblemOption,
@@ -155,14 +155,6 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const isArabic = locale === "ar";
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const problemId = Number.parseInt(params.id, 10);
-  const trackId = Number(searchParams.get('trackId') ?? 0);
-  const fromTrack = learnerWorkspace && Number.isSafeInteger(trackId) && trackId > 0;
-  const trackCategoryId = Number(searchParams.get('categoryId') ?? 0);
-  const scopedPractice = fromTrack && Number.isSafeInteger(trackCategoryId) && trackCategoryId > 0;
-  const nextQuery = useGetNextTrackProblemQuery({id:trackId,categoryId:trackCategoryId,afterProblemId:problemId},{skip:!scopedPractice||!Number.isSafeInteger(problemId)||problemId<=0});
-  const nextPractice = !nextQuery.isError && nextQuery.currentData?.HasNext && nextQuery.currentData.TrackId===trackId && nextQuery.currentData.CategoryId===trackCategoryId && nextQuery.currentData.Problem?.CategoryId===trackCategoryId ? nextQuery.currentData.Problem : null;
-  const nextPracticeUrl = nextPractice && nextPractice.Id!==problemId ? '/dashboard/problems/'+nextPractice.Id+'?trackId='+trackId+'&categoryId='+trackCategoryId+(nextPractice.RequiresRetry?'&retry=1':'') : null;
-  const trackBackUrl = scopedPractice ? '/dashboard/categories/'+trackId+'/'+trackCategoryId : '/dashboard/categories';
   const challengeStageId = Number(searchParams.get('stageId') ?? 0);
   const challengeDate = searchParams.get('daily') ?? '';
   const challengeIndex = Number(searchParams.get('step') ?? -1);
@@ -198,6 +190,17 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
     : isGeometryScene(remoteDiagram) ? remoteDiagram : embeddedDiagram;
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
+  const selectedTrack = useGetTrackSelectionQuery(undefined,{skip:!learnerWorkspace||!isAuthenticated||user?.Role!=='Student'||challengeRequested});
+  const trackId = Number(selectedTrack.currentData?.TrackId ?? 0);
+  const requestedTrackId = Number(searchParams.get('trackId') ?? 0);
+  const fromTrack = learnerWorkspace && Number.isSafeInteger(trackId) && trackId>0 && (!requestedTrackId||requestedTrackId===trackId);
+  const trackCategoryId = Number(studentProblem?.CategoryId ?? 0);
+  const requestedCategoryId = Number(searchParams.get('categoryId') ?? 0);
+  const scopedPractice = fromTrack && !challengeRequested && !!studentProblem && Number.isSafeInteger(trackCategoryId) && trackCategoryId>0 && (!requestedCategoryId||requestedCategoryId===trackCategoryId);
+  const nextQuery = useGetNextTrackProblemQuery({id:trackId,categoryId:trackCategoryId,afterProblemId:problemId},{skip:!scopedPractice||!Number.isSafeInteger(problemId)||problemId<=0});
+  const nextPractice = !nextQuery.isError && nextQuery.currentData?.HasNext && nextQuery.currentData.TrackId===trackId && nextQuery.currentData.CategoryId===trackCategoryId && nextQuery.currentData.Problem?.CategoryId===trackCategoryId ? nextQuery.currentData.Problem : null;
+  const nextPracticeUrl = nextPractice && nextPractice.Id!==problemId ? '/dashboard/problems/'+nextPractice.Id+'?trackId='+trackId+'&categoryId='+trackCategoryId+(nextPractice.RequiresRetry?'&retry=1':'') : null;
+  const trackBackUrl = scopedPractice ? '/dashboard/categories/'+trackId+'/'+trackCategoryId : '/dashboard/categories';
 
 
   const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
