@@ -1,5 +1,7 @@
 'use client';
 import {Suspense,useState} from 'react';
+import {Pagination} from '@/components/ui/Pagination';
+import {DataBadge} from '@/components/admin/AdminDataBadges';
 import {useSearchParams} from 'next/navigation';
 import {Link} from '@/i18n/routing';
 import {Breadcrumbs} from '@/components/ui/Breadcrumbs';
@@ -73,7 +75,7 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
   async function publishTrack(){setError('');try{await publish({id:t.Id,Revision:t.Revision,Publish:!t.IsPublished,ConfirmPremiumOnlyCourse:premiumOnly&&confirmPremiumOnly}).unwrap();setConfirm(false);}catch(e){setError(message(e,ar));}}
   const name=(x:{NameAr:string;NameEn:string})=>ar?x.NameAr:x.NameEn;
   return <section className="space-y-4 rounded-2xl border bg-card p-4">
-    <div className="flex flex-wrap justify-between gap-2"><h2 className="text-lg font-bold">{name(t)}</h2><span className="text-sm">{t.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</span></div>
+    <div className="flex flex-wrap justify-between gap-2"><h2 className="text-lg font-bold">{name(t)}</h2><DataBadge tone={t.IsPublished?'green':'neutral'}>{t.IsPublished?(ar?'منشور':'Published'):(ar?'مسودة':'Draft')}</DataBadge></div>
     <MetadataEditor track={t} ar={ar} disabled={dirty||saving||publishing||readingProposal}/>
     <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
       {[[ar?'فئات صالحة':'Valid categories',detail.Coverage.Categories],[ar?'مهارات أساسية':'Primary skills',detail.Coverage.Skills],[ar?'مسائل جاهزة':'Ready problems',detail.Coverage.Problems],[ar?'مسائل Free':'Free problems',detail.Coverage.FreeProblems]].map(([label,count])=><div key={label} className="rounded-xl border p-3"><p className="text-muted-foreground">{label}</p><p className="text-xl font-bold">{count}</p></div>)}
@@ -98,7 +100,7 @@ function MappingEditor({detail,ar}:{detail:TrackDetail;ar:boolean}){
       <div className="max-h-64 overflow-y-auto space-y-1">{inventory.Skills.map(s=><label key={s.Id} className="flex items-center gap-2 rounded-lg border p-2 text-sm"><input type="checkbox" disabled={disabled} checked={mapping.SkillIds.includes(s.Id)} onChange={e=>toggle('SkillIds',s.Id,e.target.checked)}/><span>{name(s)} <span className="text-muted-foreground">{!s.IsPublished?(ar?'(غير منشورة)':'(unpublished)'):''}</span></span></label>)}</div>
       <h3 className="font-semibold">{ar?'المسائل':'Problems'} ({inventory.Total})</h3>
       <div className="max-h-96 overflow-y-auto space-y-1">{inventory.Problems.map(p=><label key={p.Id} className="flex items-center gap-2 rounded-lg border p-2 text-sm"><input type="checkbox" disabled={disabled||!p.PrimarySkillId} checked={mapping.ProblemIds.includes(p.Id)} onChange={e=>toggle('ProblemIds',p.Id,e.target.checked)}/><span>#{p.Id} · <ProblemTitle text={(ar?p.TitleAr:p.TitleEn)|| (ar?'بلا عنوان':'Untitled')}/> <span className="text-xs text-muted-foreground">{p.PrimarySkillId?(ar?'مهارة':'Skill')+' #'+p.PrimarySkillId:(ar?'بلا مهارة أساسية':'No primary skill')} · {ar?'المسارات':'Tracks'}: {p.AssignedTrackCount}</span></span></label>)}</div>
-      <div className="flex items-center gap-2"><button className={btn} disabled={page===1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*100>=inventory.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>
+      <Pagination page={page} pageSize={100} total={inventory.Total} onPageChange={setPage} disabled={isFetching}/>
     </>}
     <div className="flex flex-wrap gap-2"><button className={btn} disabled={disabled||!dirty} onClick={()=>void saveMapping()}>{saving?(ar?'جارٍ الحفظ…':'Saving…'):(ar?'حفظ الروابط':'Save mappings')}</button>
     <button className={btn} disabled={dirty||saving||publishing||readingProposal} onClick={()=>{setConfirmPremiumOnly(false);setConfirm(true);}}>{t.IsPublished?(ar?'إلغاء النشر':'Unpublish'):(ar?'نشر المسار':'Publish track')}</button></div>

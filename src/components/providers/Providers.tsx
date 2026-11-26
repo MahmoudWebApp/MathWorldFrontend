@@ -10,6 +10,8 @@ import { AuthHydrationGate } from './AuthHydrationGate';
 import { useLocale } from 'next-intl';
 import { setLocale } from '@/store/slices/localeSlice';
 import { TooltipProvider } from '@/components/ui/Tooltip';
+import { ToastProvider } from '@/components/ui/Toast';
+import { MotionConfig } from 'framer-motion';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -45,7 +47,7 @@ export function Providers({ children, locale, messages, timeZone }: ProvidersPro
             <TooltipProvider delayDuration={200} skipDelayDuration={0}>
               <LocaleSync>
                 <div className="w-full">
-                  <AuthHydrationGate>{children}</AuthHydrationGate>
+                  <MotionConfig reducedMotion="user"><ToastProvider><AuthHydrationGate>{children}</AuthHydrationGate></ToastProvider></MotionConfig>
                 </div>
               </LocaleSync>
             </TooltipProvider>
