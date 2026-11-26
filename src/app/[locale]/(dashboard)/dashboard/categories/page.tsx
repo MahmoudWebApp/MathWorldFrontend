@@ -11,7 +11,7 @@ import { BookOpen, ListChecks, Calculator, LockKeyhole, RefreshCw, RotateCcw } f
 import { useGetLearningStageQuery, useGetLearningJourneyQuery, useResetPracticeMutation } from '@/store/api/usersApi';
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
 import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
-import { CategorySkillsDialog } from '@/components/curriculum/CategorySkillsDialog';
+import { CategorySkillsPopover } from '@/components/curriculum/CategorySkillsDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 
@@ -20,7 +20,6 @@ export default function StudentCategoriesPage() {
   const [target, setTarget] = useState<{ scope: 'stage' | 'category'; categoryId?: number; name: string; attempted: number } | null>(null);
   const [resetMessage, setResetMessage] = useState('');
   const [resetError, setResetError] = useState('');
-  const [skillsCategory, setSkillsCategory] = useState<{ Id: number; NameAr: string; NameEn: string } | null>(null);
   const [resetPractice, { isLoading: resetting }] = useResetPracticeMutation();
   const locale = useLocale();
   const ar = locale === 'ar';
@@ -125,8 +124,6 @@ export default function StudentCategoriesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <CategorySkillsDialog stageId={stageId} category={skillsCategory}
-        onClose={() => setSkillsCategory(null)} />
       {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
       {loading ? (
         <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ تحميل فئات مرحلتك' : 'Loading your topics'} className="grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -165,7 +162,7 @@ export default function StudentCategoriesPage() {
               : (ar ? 'الفئات المفتوحة جاهزة للتعلّم. اضغط القفل لمعرفة مميزات Premium.' : 'Practice unlocked topics; tap a lock to explore Premium benefits.')}
           </p>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {[...access.Categories].sort((a,b)=>a.Order-b.Order || a.Id-b.Id).map(category => {
+            {[...access.Categories].sort((a,b)=>Number(unlocked.has(b.Id))-Number(unlocked.has(a.Id))||a.Order-b.Order||a.Id-b.Id).map(category => {
               const name = ar ? category.NameAr : category.NameEn;
               const description = ar ? category.DescriptionAr : category.DescriptionEn;
               const locked = !subscription.IsPremium && !unlocked.has(category.Id);
@@ -240,12 +237,10 @@ export default function StudentCategoriesPage() {
               // Skills stay public even when actual problems are Premium
               // locked. Keep this button outside the paywall trigger.
               const skillsButton = (
-                <button type="button" onClick={() => setSkillsCategory({
-                  Id: category.Id, NameAr: category.NameAr, NameEn: category.NameEn,
-                })} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border mw-topic-action px-3 py-2 text-xs font-bold" style={{ "--stage-accent": accent } as import("react").CSSProperties}>
+                <CategorySkillsPopover stageId={stageId} category={category} trigger={<button type="button" className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border mw-topic-action px-3 py-2 text-xs font-bold" style={{ "--stage-accent": accent } as import("react").CSSProperties}>
                   <ListChecks className="h-4 w-4" style={{ color: accent }} aria-hidden="true" />
                   {ar ? 'عرض المهارات' : 'View skills'}
-                </button>
+                </button>}/>
               );
               if (locked) return (
                 <div key={category.Id} className="flex h-full flex-col gap-2">
