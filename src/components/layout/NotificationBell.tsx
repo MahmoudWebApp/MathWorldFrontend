@@ -25,7 +25,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
   useEffect(() => {
     if (!open) return;
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape' && !document.querySelector('.mw-dialog-content[data-state="open"]')) setOpen(false);
     };
     const priorOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -62,7 +62,7 @@ export function NotificationBell({ isAuthenticated }: { isAuthenticated: boolean
         )}
       </button>
       {open && portalReady && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-4"
+        <div className="fixed inset-0 z-[55] flex items-end justify-center sm:items-center sm:p-4"
           dir={ar ? 'rtl' : 'ltr'}>
           <button type="button" className="absolute inset-0 cursor-default bg-black/55"
             aria-label={ar ? 'إغلاق الإشعارات' : 'Close notifications'}
