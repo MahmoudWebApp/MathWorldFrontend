@@ -256,9 +256,9 @@ function NavbarContent() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className={cn("absolute end-0 top-full z-20 mt-2 max-h-[min(75vh,680px)] overflow-y-auto overscroll-contain rounded-2xl border bg-popover/95 backdrop-blur-xl p-2 shadow-xl", user.Role === 'Admin' ? "w-[min(90vw,360px)]" : "w-56")}
+                        className={cn("absolute end-0 top-full z-20 mt-2 max-h-[min(75vh,680px)] overflow-y-auto overscroll-contain rounded-2xl border bg-popover/95 backdrop-blur-xl p-2 shadow-xl", (user.Role === 'Admin' || user.Role === 'Supervisor') ? "w-[min(90vw,360px)]" : "w-56")}
                       >
-                        <div className="px-3 py-2.5 text-xs text-muted-foreground border-b mb-2">{user.Email}</div>
+                        <div className="px-3 py-2.5 break-all text-xs text-muted-foreground border-b mb-2">{user.Email}</div>
                         {user.Role === 'Admin' && (
                           <Link href="/admin"
                             onClick={() => setUserMenuOpen(false)}
@@ -267,9 +267,13 @@ function NavbarContent() {
                             {locale === 'ar' ? 'لوحة الإدارة' : 'Admin dashboard'}
                           </Link>
                         )}
-                        {user.Role === 'Supervisor' && <Link href="/supervisor" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-primary/10" onClick={() => setUserMenuOpen(false)}>
-                          <Element3 className="h-4 w-4" />{locale === 'ar' ? 'مساحة المشرف' : 'Supervisor workspace'}
-                        </Link>}
+                        {user.Role === 'Supervisor' && (
+                          <Link href="/supervisor" onClick={() => setUserMenuOpen(false)}
+                            className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold hover:bg-primary/10 hover:text-primary">
+                            <Element3 className="h-4 w-4 text-primary" aria-hidden="true" />
+                            {locale === 'ar' ? 'لوحة المشرف' : 'Supervisor dashboard'}
+                          </Link>
+                        )}
                         {user.Role === 'Student' && (
                           <>
 
