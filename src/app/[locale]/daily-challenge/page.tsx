@@ -22,7 +22,7 @@ export default function DailyChallengePage() {
   const { data: selectedStage, isLoading: stageLoading, isError: stageError, refetch: retryStage } =
     useGetLearningStageQuery(undefined, { skip: !student || !isPremium });
   const stageId = selectedStage?.StageId ?? 0;
-  const { data, isLoading, isFetching, isError, refetch } = useGetDailyChallengeQuery(stageId, {
+  const { currentData: data, isLoading, isFetching, isError, refetch } = useGetDailyChallengeQuery(stageId, {
     skip: !student || !isPremium || stageId <= 0,
     refetchOnMountOrArgChange: 30,
   });
@@ -39,7 +39,7 @@ export default function DailyChallengePage() {
     ? '/dashboard/problems/' + next.Id + '?daily=' + encodeURIComponent(data?.DateUtc ?? '') +
       '&stageId=' + stageId + '&step=' + nextIndex
     : '/dashboard/daily-challenge';
-  const loading = student && (checking || (isPremium && (stageLoading || isLoading)));
+  const loading = student && (checking || (isPremium && (stageLoading || (stageId > 0 && (isLoading || (isFetching && data === undefined))))));
 
   return (
     <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-7 sm:px-6" dir={ar ? 'rtl' : 'ltr'}>
