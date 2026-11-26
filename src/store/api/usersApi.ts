@@ -33,7 +33,7 @@ export interface SessionAchievements { PermanentSolvedProblems:number; Permanent
 export interface CustomExamQuestion {Id:number;CategoryId:number;TitleAr:string;TitleEn:string;QuestionTextAr:string;QuestionTextEn:string;Options:{Id:number;LatexCode:string}[]}
 export interface CustomExamSummary {Id:string;TitleAr:string;TitleEn:string;Total:number;Score:number|null;PassPercent:number;CreatedAtUtc:string;FinishedAtUtc:string|null;AbandonedAtUtc:string|null;CertificateIssued:boolean}
 export interface CustomExam extends CustomExamSummary {Answered:number;Passed:boolean|null;CurrentQuestion:CustomExamQuestion|null;Review:{Question:CustomExamQuestion;SelectedOptionId:number;CorrectOptionId:number}[]|null}
-export interface CustomExamSetup {Track:{Id:number;StageId:number;NameAr:string;NameEn:string};Categories:{Id:number;NameAr:string;NameEn:string;Count:number}[];Counts:number[];PassPercent:number}
+export interface CustomExamSetup {Track:{Id:number;StageId:number;NameAr:string;NameEn:string};Categories:{Id:number;NameAr:string;NameEn:string;Count:number;DifficultyCounts:{Level:number;Count:number}[]}[];Counts:number[];PassPercent:number}
 export interface CertificateScope { StageId:number; TrackId?:number|null; CategoryId?:number|null }
 export interface CertificateRecord extends CertificateScope {Id:string;Kind:'category'|'grade'|'course';StudentName:string;TitleAr:string;TitleEn:string;VerificationCode:string;PolicyVersion:number;TotalProblems:number;RequiredSkills:number;IssuedAtUtc:string}
 export interface CertificateEligibility {Kind:string;TitleAr:string;TitleEn:string;TotalProblems:number;SolvedProblems:number;RequiredSkills:number;IndependentSkills:number;CatalogReady:boolean;Eligible:boolean}
@@ -653,7 +653,7 @@ export const usersApi = createApi({
     getCustomExamSetup: builder.query<CustomExamSetup,void>({query:()=>'/users/custom-exams/setup',keepUnusedDataFor:0}),
     getCustomExams: builder.query<{Items:CustomExamSummary[]},void>({query:()=>'/users/custom-exams',keepUnusedDataFor:0}),
     getCustomExam: builder.query<CustomExam,string>({query:id=>'/users/custom-exams/'+encodeURIComponent(id),keepUnusedDataFor:0}),
-    startCustomExam: builder.mutation<CustomExam,{RequestId:string;CategoryId:number|null;Count:number}>({query:body=>({url:'/users/custom-exams/start',method:'POST',body})}),
+    startCustomExam: builder.mutation<CustomExam,{RequestId:string;CategoryId:number|null;Count:number;DifficultyLevel:number|null}>({query:body=>({url:'/users/custom-exams/start',method:'POST',body})}),
     answerCustomExam: builder.mutation<CustomExam,{id:string;Position:number;OptionId:number}>({query:({id,...body})=>({url:'/users/custom-exams/'+encodeURIComponent(id)+'/answer',method:'POST',body})}),
     finishCustomExam: builder.mutation<CustomExam,string>({query:id=>({url:'/users/custom-exams/'+encodeURIComponent(id)+'/finish',method:'POST'})}),
     abandonCustomExam: builder.mutation<void,string>({query:id=>({url:'/users/custom-exams/'+encodeURIComponent(id)+'/abandon',method:'POST'})}),
