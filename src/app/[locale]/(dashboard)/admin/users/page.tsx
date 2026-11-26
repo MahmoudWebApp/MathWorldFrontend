@@ -343,7 +343,7 @@ export default function AdminUsersPage() {
                         <Link href={`/admin/users/${u.Id}`} className="font-semibold text-primary hover:underline">{u.FullName}</Link>
                         <p className="mt-1 max-w-[230px] truncate text-xs text-muted-foreground" dir="ltr">{u.Email}</p>
                       </td>
-                      <td className="px-4 py-3"><StageDataBadge id={u.StageId}>{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</StageDataBadge></td>
+                      <td className="px-4 py-3"><StageDataBadge id={u.CurrentStageId}>{(ar ? u.StageNameAr : u.StageNameEn) || label.noStage}</StageDataBadge></td>
                       <td className="px-4 py-3"><span className={`rounded-lg px-2 py-1 text-xs ${
                         u.IsActive ? 'mw-status-active' : 'bg-destructive/10 text-destructive'
                       }`}>{u.IsActive ? label.active : label.disabled}</span></td>
