@@ -42,3 +42,12 @@ const katexCss = fs.readFileSync('node_modules/katex/dist/katex.min.css', 'utf8'
 assert(katexCss.includes('KaTeX_Main'));
 assert(fs.existsSync('node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff2'));
 console.log('PASS: common math symbols and installed KaTeX font asset.');
+
+
+const determinant = String.raw`\det\begin{pmatrix}2&3\\
+1&4\end{pmatrix}`;
+const matrixSegments = parseMathSegments('نحسب المحدد:\n'+determinant+'\nإذن الناتج 5.');
+assert(matrixSegments.some(s=>s.type==='block'&&s.value===determinant));
+assert(!matrixSegments.some(s=>s.type==='text'&&s.value.includes('\\begin')));
+assert(katex.renderToString(determinant,{throwOnError:true}).includes('katex-html'));
+console.log('PASS: unwrapped matrix/determinant in Arabic solution.');
