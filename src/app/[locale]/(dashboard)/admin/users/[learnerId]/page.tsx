@@ -4,7 +4,6 @@ import { ProblemTitle } from '@/components/problems/ProblemTitle';
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { getApiErrorMessage } from '@/lib/authSession';
 import {
@@ -167,9 +166,6 @@ export default function AdminLearnerDetailPage() {
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
-      <Link href="/admin/users" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-        <DirectionalArrow direction="back" className="h-4 w-4" />{label.back}
-      </Link>
       {!validId || isError ? (
         <div role="alert" className="math-card rounded-2xl border border-destructive/30 p-8 text-center">
           <p>{label.errorLoading}</p>
