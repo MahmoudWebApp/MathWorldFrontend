@@ -70,7 +70,7 @@ if(process.argv.includes('--api')){
      const page=await context.newPage();
      const pageErrors=[];
      page.on('pageerror',error=>pageErrors.push(error.message));
-     const paths=role==='public'?['/','/login','/register','/stages','/contact','/premium']:role==='Student'?['/dashboard','/dashboard/categories','/dashboard/categories/1/1','/dashboard/problems','/dashboard/favorites','/dashboard/solved','/dashboard/daily-challenge','/dashboard/exams','/dashboard/certificates','/dashboard/analytics','/dashboard/settings']:['/admin','/admin/users','/admin/categories','/admin/problems','/admin/learning-tracks','/admin/editorial','/admin/analytics','/admin/activity','/admin/settings'];
+     const paths=role==='public'?['/','/login','/register','/stages','/contact','/premium','/about','/forgot-password']:role==='Student'?['/dashboard','/dashboard/categories','/dashboard/categories/1/1','/dashboard/problems','/dashboard/favorites','/dashboard/solved','/dashboard/daily-challenge','/dashboard/exams','/dashboard/certificates','/dashboard/analytics','/dashboard/settings']:['/admin','/admin/users','/admin/categories','/admin/problems','/admin/learning-tracks','/admin/editorial','/admin/analytics','/admin/activity','/admin/settings'];
      for(const path of paths){
       const tag=[locale,width,scheme,role,path.replaceAll('/','_')].join('-');
       try{
@@ -95,6 +95,11 @@ if(process.argv.includes('--api')){
         await page.getByText(locale==='ar'?'لا توجد امتحانات سابقة.':'No previous exams.',{exact:true}).waitFor({timeout:10000});
        }
        if(path==='/dashboard/categories/1/1'){
+        const crumb=page.getByRole('navigation',{name:locale==='ar'?'مسار التنقل':'Breadcrumb',exact:true});
+        await crumb.getByRole('link',{name:locale==='ar'?'الفئات':'Topics',exact:true}).waitFor({timeout:10000});
+        assert.equal(await page.getByRole('link',{name:locale==='ar'?'العودة للفئات':'Back to topics',exact:true}).count(),0,'Duplicate category back action');
+        await crumb.getByRole('link',{name:locale==='ar'?'الفئات':'Topics',exact:true}).click();
+        await page.waitForURL('**/dashboard/categories');
         await page.goto(base+'/'+locale+'/dashboard/problems/1?trackId=1&categoryId=1',{waitUntil:'domcontentloaded'});
         const next=page.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true});
         await next.waitFor({timeout:15000});
@@ -103,6 +108,8 @@ if(process.argv.includes('--api')){
         await page.waitForURL('**/dashboard/problems/2?trackId=1&categoryId=1');
         await page.getByText(locale==='ar'?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.',{exact:true}).waitFor({timeout:15000});
         assert.equal(await next.count(),0,'Next link should not exist at end of category');
+        await page.getByRole('navigation',{name:locale==='ar'?'مسار التنقل':'Breadcrumb',exact:true}).getByRole('link',{name:'Numbers',exact:true}).click();
+        await page.waitForURL('**/dashboard/categories/1/1');
         assert.equal(pageErrors.length,0,pageErrors.join('; '));
         console.log('PASS continuation',locale,width,scheme);
        }
