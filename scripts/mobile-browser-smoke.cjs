@@ -5,7 +5,7 @@ const assert=require('node:assert/strict');
 const base='http://127.0.0.1:4173';
 const track={Id:1,StageId:1,Code:'grade-1',Kind:'Grade',NameAr:'الصف الأول',NameEn:'Grade one',DescriptionAr:'تدريب',DescriptionEn:'Practice'};
 const topic={Id:1,NameAr:'الأعداد والعمليات الحسابية',NameEn:'Numbers and arithmetic operations',DescriptionAr:'تدريب الأعداد',DescriptionEn:'Number practice',Icon:'',IsFree:true,ProblemsCount:20};
-const practice={TrackId:1,CategoryId:1,Total:2,Page:1,PageSize:10,Items:[{Id:1,CategoryId:1,TitleAr:'جمع الأعداد',TitleEn:'Addition',Points:10,IsSolved:false},{Id:2,CategoryId:1,TitleAr:'طرح الأعداد',TitleEn:'Subtraction',Points:10,IsSolved:false}]};
+const practice={TrackId:1,CategoryId:1,Total:2,Page:1,PageSize:5,Items:[{Id:1,CategoryId:1,TitleAr:'جمع الأعداد',TitleEn:'Addition',Points:10,IsSolved:false},{Id:2,CategoryId:1,TitleAr:'طرح الأعداد',TitleEn:'Subtraction',Points:10,IsSolved:false}]};
 const lockedTopic={...topic,Id:2,NameAr:'الهندسة',NameEn:'Geometry',IsFree:false};
 const lockedTopic2={...topic,Id:3,NameAr:'الإحصاء',NameEn:'Statistics',IsFree:false};
 function token(role,tier='Premium'){return ['eyJhbGciOiJub25lIn0',Buffer.from(JSON.stringify({role,tier,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),'fixture'].join('.')}
@@ -26,7 +26,8 @@ function fixture(req){
   '/stages/1/tracks':{Enabled:true,Items:[{...track,ProblemsCount:20,CategoriesCount:1,SkillsCount:1,FreeProblemsCount:20}]},
   '/learning-tracks/1':{Track:track,Categories:free?[topic,lockedTopic,lockedTopic2]:[topic],Skills:[],Examples:[]},
   '/users/learning-tracks/1/progress':{TrackId:1,StageId:1,TrackPracticeIsolationEnabled:true,ProblemsCount:20,Solved:0,CompletionPercent:0,Categories:[{CategoryId:1,ProblemsCount:20,IsLocked:false,Solved:0,Attempted:0,Mastered:0},...(free?[{CategoryId:2,ProblemsCount:20,IsLocked:true,Solved:0,Attempted:0,Mastered:0},{CategoryId:3,ProblemsCount:20,IsLocked:true,Solved:0,Attempted:0,Mastered:0}]:[])]},
-  '/users/learning-tracks/1/categories/1/problems':practice,
+  '/users/learning-tracks/1/categories/1/problems':(()=>{const params=new URL(req.url,'http://localhost').searchParams;const q=(params.get('q')||'').toLowerCase();const items=practice.Items.filter(p=>!q||p.TitleAr.includes(q)||p.TitleEn.toLowerCase().includes(q)).map(p=>({...p,StageId:1,StageNameAr:'الابتدائية',StageNameEn:'Primary',CategoryNameAr:topic.NameAr,CategoryNameEn:topic.NameEn,HasAttempted:false,IsFavorite:false}));return {...practice,Total:items.length,Items:items};})(),
+  '/users/favorites':[], '/users/solved':[],
   '/users/learning-tracks/continue':{TrackId:1,Problem:null},
   '/problems/1':solvedFixture(1),
   '/problems/2':solvedFixture(2),
@@ -50,6 +51,8 @@ if(process.argv.includes('--api')){
   res.setHeader('Access-Control-Allow-Headers','*');
   res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
   res.setHeader('Content-Type','application/json');
+  res.setHeader('Access-Control-Expose-Headers','X-Total-Count,X-Due-Count');
+  res.setHeader('X-Total-Count','0');
   if(req.method==='OPTIONS'){res.writeHead(204);return res.end()}
   if(req.method==='POST'&&new URL(req.url,'http://localhost').pathname==='/api/auth/forgot-password'){
    let body='';req.on('data',chunk=>body+=chunk);req.on('end',()=>{
@@ -118,6 +121,12 @@ if(process.argv.includes('--api')){
         await page.getByText(locale==='ar'?'لا توجد امتحانات سابقة.':'No previous exams.',{exact:true}).waitFor({timeout:10000});
        }
        if(path==='/dashboard/categories/1/1'){
+        const search=page.getByRole('searchbox',{name:locale==='ar'?'البحث في مسائل الفئة':'Search topic problems'});
+        await search.fill(locale==='ar'?'طرح':'Subtraction');
+        await page.getByRole('link').filter({hasText:locale==='ar'?'طرح الأعداد':'Subtraction'}).waitFor({timeout:10000});
+        await page.waitForFunction(()=>performance.getEntriesByType('resource').some(e=>{const u=new URL(e.name);return u.pathname.endsWith('/categories/1/problems')&&u.searchParams.get('q')&&u.searchParams.get('pageSize')==='5'}),{},{timeout:10000});
+        assert.equal(await page.getByRole('link').filter({hasText:locale==='ar'?'جمع الأعداد':'Addition'}).count(),0,'Search must remove nonmatching card');
+        await search.fill('');
         const crumb=page.getByRole('navigation',{name:locale==='ar'?'مسار التنقل':'Breadcrumb',exact:true});
         await crumb.getByRole('link',{name:locale==='ar'?'الفئات':'Topics',exact:true}).waitFor({timeout:10000});
         assert.equal(await page.getByRole('link',{name:locale==='ar'?'العودة للفئات':'Back to topics',exact:true}).count(),0,'Duplicate category back action');
