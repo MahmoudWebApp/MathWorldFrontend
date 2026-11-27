@@ -2,7 +2,8 @@
 import {ProblemTitle} from '@/components/problems/ProblemTitle';
 
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Pagination } from '@/components/ui/Pagination';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   Archive,
@@ -22,22 +23,12 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import {
   type ErrorNotebookProblem,
-  useGetErrorNotebookQuery,
+  useGetErrorNotebookPageQuery,
   useGetLearningStageQuery,
   useSetErrorNotebookArchiveMutation,
 } from '@/store/api/usersApi';
 
 type NotebookTab = 'active' | 'archived';
-
-// Never treat malformed or absent review dates as overdue.
-function reviewTimestamp(problem: ErrorNotebookProblem) {
-  const parsed = problem.NextReviewAt ? Date.parse(problem.NextReviewAt) : Number.NaN;
-  return Number.isFinite(parsed) ? parsed : Number.POSITIVE_INFINITY;
-}
-
-function isReviewDue(problem: ErrorNotebookProblem, now: number) {
-  return reviewTimestamp(problem) <= now;
-}
 
 export default function ErrorNotebookPage() {
   const t = useTranslations();
@@ -48,39 +39,24 @@ export default function ErrorNotebookPage() {
   const [dueOnly, setDueOnly] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
-  const {
-    data: problems = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useGetErrorNotebookQuery(
-    { IncludeArchived: true, Locale: locale },
-    { refetchOnMountOrArgChange: true },
-  );
-
   const { data: selectedStage, isLoading: stageLoading, isError: stageError, refetch: reloadStage } = useGetLearningStageQuery();
   const stageId = selectedStage?.StageId ?? 0;
-
+  const [page,setPage]=useState(1);
+  useEffect(()=>setPage(1),[stageId,locale]);
+  const active = useGetErrorNotebookPageQuery({archived:false,page:activeTab==='active'&&!dueOnly?page:1,locale,stageId},{skip:stageId<=0});
+  const archived = useGetErrorNotebookPageQuery({archived:true,page:activeTab==='archived'?page:1,locale,stageId},{skip:stageId<=0});
+  const due = useGetErrorNotebookPageQuery({archived:false,page,locale,stageId,dueOnly:true},{skip:stageId<=0||!dueOnly});
+  const selected = activeTab==='archived'?archived:dueOnly?due:active;
+  const visibleProblems = selected.currentData?.Items ?? [];
+  const total = selected.currentData?.Total ?? 0;
+  const activeCount=active.data?.Total;
+  const archivedCount=archived.data?.Total;
+  const dueCount=active.data?.Due;
+  const isLoading=selected.isLoading||(selected.isFetching&&!selected.currentData);
+  const isError=selected.isError||active.isError||archived.isError;
   const [setArchiveStatus] = useSetErrorNotebookArchiveMutation();
-
-  // Past-stage history remains in the database; the workspace shows only
-  // the active stage and never offers an all-stages notebook selector.
-  const stageProblems = useMemo(() =>
-    problems.filter(problem => stageId > 0 && problem.StageId === stageId),
-  [problems, stageId]);
-  const visibleProblems = useMemo(() => {
-    const now = Date.now();
-    return stageProblems.filter(problem =>
-      problem.IsArchived === (activeTab === 'archived') &&
-      (!dueOnly || isReviewDue(problem, now))
-    ).sort((a, b) => reviewTimestamp(a) - reviewTimestamp(b) ||
-      Date.parse(b.LastAttemptAt) - Date.parse(a.LastAttemptAt) || a.Id - b.Id);
-  }, [stageProblems, activeTab, dueOnly]);
-
-  const activeCount = stageProblems.filter(problem => !problem.IsArchived).length;
-  const archivedCount = stageProblems.length - activeCount;
-  const dueCount = stageProblems.filter(problem => !problem.IsArchived &&
-    isReviewDue(problem, Date.now())).length;
+  useEffect(()=>{if(selected.currentData&&page>Math.max(1,Math.ceil(total/5)))setPage(Math.max(1,Math.ceil(total/5)));},[selected.currentData,page,total]);
+  function refetch(){if(stageId>0){void active.refetch();void archived.refetch();if(dueOnly)void due.refetch();}}
   const filtersActive = dueOnly;
 
   function getMasteryLabel(status: ErrorNotebookProblem['MasteryStatus']) {
@@ -126,7 +102,7 @@ export default function ErrorNotebookPage() {
       <div className="mb-6 grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => setActiveTab('active')}
+          onClick={() => {setActiveTab('active');setPage(1);}}
           className={`rounded-xl border p-4 text-start transition-colors ${
             activeTab === 'active'
               ? 'border-primary bg-primary/5 text-primary'
@@ -138,13 +114,13 @@ export default function ErrorNotebookPage() {
               <CircleAlert className="h-5 w-5" />
               {t('errorNotebook.active')}
             </span>
-            <Badge variant="secondary">{activeCount}</Badge>
+            <Badge variant="secondary">{activeCount??'—'}</Badge>
           </div>
         </button>
 
         <button
           type="button"
-          onClick={() => { setActiveTab('archived'); setDueOnly(false); }}
+          onClick={() => { setActiveTab('archived'); setDueOnly(false);setPage(1); }}
           className={`rounded-xl border p-4 text-start transition-colors ${
             activeTab === 'archived'
               ? 'border-primary bg-primary/5 text-primary'
@@ -156,17 +132,17 @@ export default function ErrorNotebookPage() {
               <Archive className="h-5 w-5" />
               {t('errorNotebook.archived')}
             </span>
-            <Badge variant="secondary">{archivedCount}</Badge>
+            <Badge variant="secondary">{archivedCount??'—'}</Badge>
           </div>
         </button>
       </div>
 
       <div className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4">
-        <button type="button" aria-pressed={dueOnly} disabled={activeTab === 'archived'} onClick={() => setDueOnly(value => !value)}
+        <button type="button" aria-pressed={dueOnly} disabled={activeTab === 'archived'} onClick={() => {setDueOnly(value => !value);setPage(1);}}
           className={`min-h-10 rounded-lg border px-4 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${dueOnly ? 'border-primary bg-primary/10 text-primary' : 'bg-background hover:bg-muted/50'}`}>
-          {isArabic ? `المراجعة المستحقة (${dueCount})` : `Due for review (${dueCount})`}
+          {isArabic ? `المراجعة المستحقة (${dueCount??'—'})` : `Due for review (${dueCount??'—'})`}
         </button>
-        {filtersActive && <button type="button" onClick={() => setDueOnly(false)}
+        {filtersActive && <button type="button" onClick={() => {setDueOnly(false);setPage(1);}}
           className="min-h-10 rounded-lg px-3 text-sm font-semibold text-primary underline">
           {isArabic ? 'إلغاء التصفية' : 'Clear filters'}
         </button>}
@@ -175,7 +151,7 @@ export default function ErrorNotebookPage() {
 
       {isLoading || stageLoading ? (
         <div className="grid gap-4 md:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, index) => (
+          {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
               className="h-56 animate-pulse rounded-2xl border bg-muted/40"
@@ -211,7 +187,7 @@ export default function ErrorNotebookPage() {
                 : t('errorNotebook.emptyArchivedDescription')}
             </p>
             {filtersActive ? (
-              <Button variant="outline" onClick={() => setDueOnly(false)}>
+              <Button variant="outline" onClick={() => {setDueOnly(false);setPage(1);}}>
                 {isArabic ? 'عرض كل المسائل' : 'Show all problems'}
               </Button>
             ) : activeTab === 'active' && (
@@ -321,6 +297,7 @@ export default function ErrorNotebookPage() {
               </CardContent>
             </Card>
           ))}
+          {total>5&&<div className="md:col-span-2"><Pagination page={page} pageSize={5} total={total} onPageChange={setPage} disabled={selected.isFetching}/></div>}
         </div>
       )}
     </div>
