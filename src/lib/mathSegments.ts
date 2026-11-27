@@ -4,16 +4,19 @@
  */
 export type MathSegment = { type: 'text' | 'inline' | 'block'; value: string };
 
-const MATH_TOKEN_PATTERN = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[^\n$]+?\$|\\\([\s\S]+?\\\))/g;
+const MATH_TOKEN_PATTERN = /(\$\$[\s\S]+?\$\$|\\\[[\s\S]+?\\\]|\$[^\n$]+?\$|\\\([\s\S]+?\\\)|(?:\\det\s*)?\\begin\{(?:[pbBvV]?matrix|smallmatrix)\}[\s\S]+?\\end\{(?:[pbBvV]?matrix|smallmatrix)\})/g;
 
 export function parseMathSegments(text: string): MathSegment[] {
   if (!text) return [];
 
   // Some API imports were escaped twice. Preserve ordinary TeX
   // newlines and single command backslashes.
-  const normalized = text.replace(/\\\\(?=[A-Za-z\[\]\(\)])/g, '\\');
+  const normalized = text.replace(/\\\\(?=(?:[A-Za-z]{2,}(?![A-Za-z])|[\[\]\(\)]))/g, '\\');
 
   return normalized.split(MATH_TOKEN_PATTERN).filter(Boolean).map((part) => {
+    if (part.startsWith('\\begin{') || part.startsWith('\\det')) {
+      return { type: 'block' as const, value: part.trim() };
+    }
     if ((part.startsWith('$$') && part.endsWith('$$')) ||
         (part.startsWith('\\[') && part.endsWith('\\]'))) {
       return { type: 'block' as const, value: part.slice(2, -2).trim() };
