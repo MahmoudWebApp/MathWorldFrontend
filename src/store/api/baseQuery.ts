@@ -3,6 +3,7 @@ import {
   type BaseQueryFn,
   type FetchArgs,
   type FetchBaseQueryError,
+  type FetchBaseQueryMeta,
 } from '@reduxjs/toolkit/query/react';
 
 import { clearAuthSession } from '@/lib/authSession';
@@ -208,7 +209,11 @@ const rawBaseQuery = fetchBaseQuery({
 export const baseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
-  ApiBaseQueryError
+  ApiBaseQueryError,
+  // RTK Query uses an empty object for optional endpoint extraOptions.
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+  {},
+  FetchBaseQueryMeta
 > = async (args, api, extraOptions) => {
   const result = await rawBaseQuery(args, api, extraOptions);
 
@@ -224,15 +229,15 @@ export const baseQuery: BaseQueryFn<
   }
 
   if (result.data === undefined || result.data === null) {
-    return { data: null };
+    return { data: null, meta:result.meta };
   }
 
   if (!isApiResponse(result.data)) {
-    return { data: result.data };
+    return { data: result.data, meta:result.meta };
   }
 
   if (result.data.Success) {
-    return { data: result.data.Data ?? null };
+    return { data: result.data.Data ?? null, meta:result.meta };
   }
 
   const status = result.data.StatusCode || 400;

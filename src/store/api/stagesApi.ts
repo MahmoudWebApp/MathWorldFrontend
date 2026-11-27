@@ -43,7 +43,7 @@ export interface PublishedTrackDetail {
 }
 export interface TrackSelection {Enabled:boolean;StageId:number|null;TrackId:number|null;Track?:PublishedTrack|null}
 export interface TrackProgress {TrackId:number;StageId:number;TrackPracticeIsolationEnabled?:boolean;ProblemsCount:number;Solved:number;CompletionPercent:number;Categories:{CategoryId:number;ProblemsCount:number;IsLocked:boolean;Solved:number;Attempted:number;Mastered:number}[]}
-export interface TrackPractice {TrackId:number;CategoryId:number;Total:number;Page:number;PageSize:number;Items:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;Points:number;IsSolved:boolean}[]}
+export interface TrackPractice {TrackId:number;CategoryId:number;Total:number;Page:number;PageSize:number;Items:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;Points:number;IsSolved:boolean;HasAttempted?:boolean;IsFavorite?:boolean;StageId?:number;StageNameAr?:string;StageNameEn?:string;CategoryNameAr?:string;CategoryNameEn?:string}[]}
 export interface JourneyCategoryProgress {
   CategoryId: number;
   NameAr: string;
@@ -123,8 +123,8 @@ export const stagesApi = createApi({
       query:({id,categoryId,afterProblemId})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/next',params:{afterProblemId}}),
       providesTags:['LearningTrack'],
     }),
-    getTrackPractice:builder.query<TrackPractice,{id:number;categoryId:number;page:number}>({
-      query:({id,categoryId,page})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page}}),providesTags:['LearningTrack'],
+    getTrackPractice:builder.query<TrackPractice,{id:number;categoryId:number;page:number;q?:string;hideSolved?:boolean}>({
+      query:({id,categoryId,page,q,hideSolved})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page,pageSize:5,q:q?.trim()||undefined,hideSolved:hideSolved||undefined}}),providesTags:['LearningTrack'],
     }),
     getAdminTracks:builder.query<{Enabled:boolean;Items:TrackListRow[]},void>({
       query:()=>'/admin/learning-tracks',providesTags:['LearningTrack'],

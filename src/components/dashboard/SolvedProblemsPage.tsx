@@ -3,8 +3,9 @@
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { useGetSolvedProblemsQuery } from '@/store/api/usersApi';
+import { useGetUserProblemPageQuery, useGetLearningStageQuery } from '@/store/api/usersApi';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
+import { Pagination } from '@/components/ui/Pagination';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -22,19 +23,22 @@ export function SolvedProblemsPage() {
     setMounted(true);
   }, []);
 
-  const { data: solvedProblems, isLoading, error, refetch } = useGetSolvedProblemsQuery(locale, {
-    refetchOnMountOrArgChange: 45,
-  });
+  const {data:stage,isLoading:stageLoading,isError:stageError,refetch:reloadStage}=useGetLearningStageQuery();
+  const stageId=stage?.StageId??0;
+  const [page,setPage]=useState(1);
+  useEffect(()=>setPage(1),[stageId,locale]);
+  const {currentData:result,isLoading,isFetching,error,refetch}=useGetUserProblemPageQuery({kind:'solved',page,locale,stageId},{skip:stageId<=0,refetchOnMountOrArgChange:45});
+  const solvedProblems=result?.Items??[];
+  const totalCount=result?.Total??0;
+  useEffect(()=>{if(result&&page>Math.max(1,Math.ceil(result.Total/5)))setPage(Math.max(1,Math.ceil(result.Total/5)));},[result,page]);
 
-  const totalCount = solvedProblems?.length ?? 0;
-
-  if (error || (!isLoading && !solvedProblems)) {
+  if (error || stageError) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-red-500 dark:text-red-400 py-20">
           <AlertCircle className="h-12 w-12" />
           <p className="text-lg font-medium">{t('common.errorLoadingData')}</p>
-          <Button onClick={() => void refetch()} variant="outline">
+          <Button onClick={() => {void reloadStage();if(stageId>0)void refetch();}} variant="outline">
             {t('common.retry')}
           </Button>
         </div>
@@ -44,10 +48,10 @@ export function SolvedProblemsPage() {
 
   return (
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
-      <WorkspacePageHeader title={t('solved.title')} icon={Target} count={isLoading ? undefined : mounted ? <AnimatedCounter end={totalCount} duration={700}/> : totalCount} />
+      <WorkspacePageHeader title={t('solved.title')} icon={Target} count={isLoading || stageLoading || isFetching ? undefined : mounted ? <AnimatedCounter end={totalCount} duration={700}/> : totalCount} />
 
       {/* Problems List */}
-      {isLoading ? (
+      {stageLoading || isLoading || (isFetching&&!result) ? (
         <div className="space-y-4">
           <MathWorldLoading compact />
           {Array.from({ length: 5 }).map((_, i) => (
@@ -60,6 +64,7 @@ export function SolvedProblemsPage() {
             <ProblemCard key={problem.Id}
               problem={{ ...problem, IsSolved: true, HasAttempted: true }} />
           ))}
+          {totalCount>5&&<Pagination page={page} pageSize={5} total={totalCount} onPageChange={setPage} disabled={isFetching}/>}
         </div>
       ) : (
         <Card className="border-dashed">

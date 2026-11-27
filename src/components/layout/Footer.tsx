@@ -75,7 +75,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.06, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                  className="group grid h-12 w-12 shrink-0 place-items-center rounded-xl mw-social-brand transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                   aria-label={ar ? social.LabelAr : social.LabelEn}
                 >
                   {socialLinks.find(item => item.name.toLowerCase() === social.Platform.toLowerCase())?.icon ?? <ExternalLink className="h-4 w-4" />}

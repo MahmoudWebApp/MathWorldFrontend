@@ -233,10 +233,12 @@ export const problemsApi = createApi({
 
     getProblem: builder.query<
       ProblemDetail,
-      { Id: number; locale?: string }
+      { Id: number; locale?: string; viewerKey?: string }
     >({
-      query: ({ Id }) => ({
+      keepUnusedDataFor: 25,
+      query: ({ Id, locale }) => ({
         url: `/problems/${Id}`,
+        headers: locale ? {'Accept-Language':locale} : undefined,
       }),
       providesTags: (_result, _error, params) => [
         { type: 'Problem', id: params.Id },

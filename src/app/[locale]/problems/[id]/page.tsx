@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   BookOpen,
   CheckCircle,
@@ -21,7 +21,7 @@ import {
 
 import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { useGetDailyChallengeQuery, useGetNextTrackProblemQuery, useGetTrackSelectionQuery } from "@/store/api/stagesApi";
-import type { RootState } from "@/store";
+import type { AppDispatch, RootState } from "@/store";
 import {
   type AdminProblemOption,
   type AnswerResult,
@@ -31,6 +31,7 @@ import {
   type ProblemDetail,
   type ProblemForPublic,
   type ProblemForStudent,
+  problemsApi,
   useGetProblemDiagramQuery,
   useGetProblemQuery,
   useGetProblemHintsQuery,
@@ -38,7 +39,6 @@ import {
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
-  useCheckFavoriteQuery,
   useToggleFavoriteMutation,
   useGetStudentEntitlementQuery,
 } from "@/store/api/usersApi";
@@ -135,21 +135,24 @@ export default function ProblemPage() {
   const locale = useLocale();
   const {isAuthenticated,user}=useSelector((state:RootState)=>state.auth);
   const problemId=Number.parseInt(params.id,10);
-  const query=useGetProblemQuery({Id:problemId,locale},{
+  const searchParams=useSearchParams();
+  const viewerKey=JSON.stringify([isAuthenticated?user?.Id:null,user?.Role,user?.CurrentStageId,user?.SubscriptionType,Number(searchParams.get('trackId')??0)]);
+  const query=useGetProblemQuery({Id:problemId,locale,viewerKey},{
     skip:Number.isNaN(problemId),refetchOnMountOrArgChange:true,
   });
   // Remount interaction state if the authoritative scope or problem changes.
   // RTK Query's currentData never supplies another route's previous response.
   const problem=query.error?undefined:query.currentData;
   const scope=isStudentProblem(problem)?problem.PracticeScopeId??0:"non-student";
-  return <ProblemPageContent key={JSON.stringify([problemId,locale,scope,isAuthenticated,user?.Id])} query={query}/>;
+  return <ProblemPageContent key={JSON.stringify([problemId,locale,scope,isAuthenticated,user?.Id])} query={query} viewerKey={viewerKey}/>;
 }
 
-function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>}) {
+function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetProblemQuery>;viewerKey:string}) {
   const params = useParams<{ id: string }>();
   const learnerWorkspace = usePathname().startsWith("/dashboard/");
   const t = useTranslations();
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const searchParams = useSearchParams();
   const locale = useLocale();
   const isArabic = locale === "ar";
@@ -179,7 +182,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
   const embeddedDiagram = isGeometryScene(rawDiagram) ? rawDiagram : null;
   const { data: fetchedDiagram } = useGetProblemDiagramQuery(problemId, {
-    skip: !Number.isSafeInteger(problemId) || problemId <= 0,
+    skip: !problem || !!embeddedDiagram || !Number.isSafeInteger(problemId) || problemId <= 0,
   });
   const [diagramOverride, setDiagramOverride] = useState<{ problemId: number; scene: unknown } | null>(null);
   const remoteDiagram = diagramOverride?.problemId === problemId
@@ -203,9 +206,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const trackBackUrl = scopedPractice ? '/dashboard/categories/'+trackId+'/'+trackCategoryId : '/dashboard/categories';
 
 
-  const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
-    skip: !isAuthenticated || Number.isNaN(problemId),
-  });
+  // The detail response already contains the authoritative favorite state.
+  const [favoriteBusy,setFavoriteBusy]=useState(false);
 
   const { data: entitlement } = useGetStudentEntitlementQuery(undefined, {
     skip: !isAuthenticated || !studentProblem,
@@ -295,6 +297,15 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
     : -1;
   const nextChallengeProblem = nextChallengeIndex >= 0
     ? dailyChallenge?.Problems[nextChallengeIndex] : undefined;
+  const warmProblemId = nextPractice?.Id ?? nextChallengeProblem?.Id;
+  useEffect(()=>{
+    // Only warm one server-selected successor; never prefetch a locked category.
+    // RTK Query deduplicates this with the eventual detail request. The route
+    // still revalidates before enabling answer submission.
+    if(!isAuthenticated||user?.Role!=='Student'||!studentProblem||!warmProblemId||warmProblemId===problemId||nextQuery.isFetching||isFetching)return;
+    const warmViewerKey=JSON.stringify([user.Id,user.Role,user.CurrentStageId,user.SubscriptionType,nextPractice?trackId:0]);
+    dispatch(problemsApi.util.prefetch('getProblem',{Id:warmProblemId,locale,viewerKey:warmViewerKey},{ifOlderThan:15}));
+  },[dispatch,isAuthenticated,user?.Role,user?.Id,user?.CurrentStageId,user?.SubscriptionType,studentProblem?.Id,warmProblemId,problemId,locale,nextQuery.isFetching,isFetching,nextPractice?.Id,trackId]);
   const nextChallengeUrl = nextChallengeProblem
     ? '/dashboard/problems/' + nextChallengeProblem.Id +
       '?daily=' + challengeDate + '&stageId=' + challengeStageId +
@@ -437,26 +448,28 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const showVideoTab = !!youtubeUrl &&
     (showResult || !!adminProblem);
   const isFavorite =
-    favoriteData?.IsFavorite ?? studentProblem?.IsFavorite ?? false;
+    studentProblem?.IsFavorite ?? false;
 
   function getMasteryLabel(status: MasteryStatus) {
     return t(`problem.mastery.${status}`);
   }
 
   async function handleFavorite() {
-    if (!problem) {
+    if (!problem || !studentProblem || favoriteBusy) {
       return;
     }
-
+    setFavoriteBusy(true);
     try {
-      await toggleFavorite({
+      const confirmed = await toggleFavorite({
         ProblemId: problem.Id,
         IsFavorite: !isFavorite,
       }).unwrap();
-      await refetchProblem();
+      dispatch(problemsApi.util.updateQueryData("getProblem",{Id:problemId,locale,viewerKey},draft=>{
+        if(isStudentProblem(draft))draft.IsFavorite=confirmed.IsFavorite;
+      }));
     } catch (favoriteError) {
       console.error("Failed to update favorite:", favoriteError);
-    }
+    } finally {setFavoriteBusy(false);}
   }
 
   function handleStartRetry() {
@@ -513,8 +526,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
       setSelectedOptionId(result.SelectedOptionId);
       setSubmissionDone(true);
       setRetryMode(false);
-      await refetchProblem();
-      if(scopedPractice)void nextQuery.refetch();
+      // submitAnswer already invalidates the problem and track queries on success.
+      // Do not queue a duplicate refresh or block the confirmed result on it.
 
     } catch (submitFailure) {
       const normalized = submitFailure as {
@@ -616,8 +629,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
         className="mb-6"
         items={[
           { label: learnerWorkspace ? (isArabic ? "الرئيسية" : "Home") : t("nav.home"), href: learnerWorkspace ? "/dashboard" : "/" },
-          { label: learnerWorkspace ? (isArabic ? "الفئات" : "Topics") : t("nav.stages"), href: learnerWorkspace ? "/dashboard/categories" : "/stages" },
-          ...(stageName
+          ...(inDailyChallenge ? [{label:isArabic?"تحدي اليوم":"Daily challenge",href:"/dashboard/daily-challenge"}] : [{ label: learnerWorkspace ? (isArabic ? "الفئات" : "Topics") : t("nav.stages"), href: learnerWorkspace ? "/dashboard/categories" : "/stages" }]),
+          ...(!inDailyChallenge && stageName && !fromTrack
             ? [
                 {
                   label: stageName,
@@ -625,7 +638,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                 },
               ]
             : []),
-          ...(categoryName
+          ...(!inDailyChallenge && categoryName
             ? [
                 {
                   label: categoryName,
@@ -684,6 +697,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             variant="ghost"
             size="icon"
             onClick={handleFavorite}
+            disabled={favoriteBusy}
             aria-label={
               isFavorite
                 ? t("favorites.removeFromFavorites")
@@ -984,7 +998,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                       {!inDailyChallenge && scopedPractice && isCorrect && !retryMode && <div className="mt-4">
                         {nextQuery.isFetching ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'جارٍ تجهيز المسألة التالية…':'Preparing the next problem…'}</p> : nextQuery.isError ? <Button variant="outline" onClick={()=>void nextQuery.refetch()}>{isArabic?'إعادة تحميل المسألة التالية':'Retry loading the next problem'}</Button> : nextPracticeUrl ? <Link href={nextPracticeUrl} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{isArabic?'المسألة التالية':'Next problem'}<DirectionalArrow direction="forward"/></Link> : nextQuery.currentData?.HasNext===false ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.'}</p> : null}
                       </div>}
-                      <Link
+                      {!learnerWorkspace && (<Link
                         href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? trackBackUrl : categoryId != null
                           ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
                           : stageId != null
@@ -995,7 +1009,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                         <DirectionalArrow direction="back" />
                         {inDailyChallenge ? (isArabic ? 'العودة للتحدي' : 'Back to challenge') :
                           t("problem.backToProblems")}
-                      </Link>
+                      </Link>)}
+
 
                       {isInErrorNotebook && !inDailyChallenge && (
                         <div className="mt-5 flex flex-wrap items-center gap-3">

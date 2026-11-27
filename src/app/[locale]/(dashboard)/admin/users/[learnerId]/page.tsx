@@ -1,10 +1,10 @@
 'use client';
+import { ProblemTitle } from '@/components/problems/ProblemTitle';
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Link } from '@/i18n/routing';
-import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
+import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { getApiErrorMessage } from '@/lib/authSession';
 import {
   BarChart3, BookOpen, CheckCircle2, Clock3, ListChecks,
@@ -48,7 +48,7 @@ export default function AdminLearnerDetailPage() {
   );
 
   const label = ar ? {
-    back: 'العودة إلى الطلاب', title: 'ملف الطالب', active: 'نشط', disabled: 'معطّل',
+    title: 'ملف الطالب', active: 'نشط', disabled: 'معطّل',
     stage: 'المرحلة الحالية', noStage: 'لم يحدد المرحلة', joined: 'تاريخ التسجيل',
     login: 'آخر تسجيل دخول', activity: 'آخر محاولة', never: 'لا يوجد نشاط',
     plan: 'نوع الحساب', solved: 'مسائل محلولة', attempts: 'إجمالي المحاولات',
@@ -72,7 +72,7 @@ export default function AdminLearnerDetailPage() {
     tierError: 'تعذر تغيير اشتراك الطالب.',
 
   } : {
-    back: 'Back to students', title: 'Learner profile', active: 'Active', disabled: 'Disabled',
+    title: 'Learner profile', active: 'Active', disabled: 'Disabled',
     stage: 'Current stage', noStage: 'Not selected', joined: 'Joined',
     login: 'Last login', activity: 'Last attempt', never: 'No activity',
     plan: 'Plan', solved: 'Solved problems', attempts: 'Attempts',
@@ -166,9 +166,6 @@ export default function AdminLearnerDetailPage() {
 
   return (
     <main className="container mx-auto max-w-7xl px-4 py-8 md:px-10">
-      <Link href="/admin/users" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-        <DirectionalArrow direction="back" className="h-4 w-4" />{label.back}
-      </Link>
       {!validId || isError ? (
         <div role="alert" className="math-card rounded-2xl border border-destructive/30 p-8 text-center">
           <p>{label.errorLoading}</p>
@@ -371,7 +368,7 @@ export default function AdminLearnerDetailPage() {
                       <tbody>{attemptData.Attempts.map((attempt) => (
                         <tr key={attempt.Id} className="border-t border-border">
                           <td className="max-w-[250px] px-4 py-3">
-                            <p className="font-medium">{ar ? attempt.TitleAr : attempt.TitleEn}</p>
+                            <p className="font-medium min-w-0 break-words"><ProblemTitle text={ar ? attempt.TitleAr : attempt.TitleEn}/></p>
                             <p className="mt-1 text-xs text-muted-foreground">#{attempt.ProblemId}</p>
                           </td>
                           <td className="px-4 py-3">

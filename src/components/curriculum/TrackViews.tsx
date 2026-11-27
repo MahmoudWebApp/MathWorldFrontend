@@ -1,13 +1,15 @@
 'use client';
 import {ProblemTitle} from '@/components/problems/ProblemTitle';
+import {ProblemCard} from '@/components/problems/ProblemCard';
+import {Pagination} from '@/components/ui/Pagination';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {useEffect,useState} from 'react';
 import {motion} from 'framer-motion';
-import {BookOpenText, Calculator, ListChecks, LockKeyhole, RotateCcw, GraduationCap} from 'lucide-react';
+import {BookOpenText, Calculator, ListChecks, LockKeyhole, RotateCcw, GraduationCap, Search, X} from 'lucide-react';
 import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
 import type {CSSProperties} from 'react';
 import {getStageAccent} from '@/lib/stageVisuals';
-import {LockedPremiumDialog} from '@/components/premium/LockedPremiumDialog';
+import {LockedCategoryOverlay} from '@/components/premium/LockedCategoryOverlay';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/Tabs';
 import {useLocale} from 'next-intl';
 import {Link} from '@/i18n/routing';
@@ -67,13 +69,33 @@ export function PublicTrackCatalog({stageId}:{stageId:number}){
 }
 function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
   const [page,setPage]=useState(1);
-  const {currentData:data,isFetching,isError,refetch}=useGetTrackPracticeQuery({id,categoryId,page},{refetchOnMountOrArgChange:true});
-  return <div className="space-y-2">
-    {isFetching&&!data&&<MathWorldLoading compact mode="filter"/>}
+  const [input,setInput]=useState('');
+  const [q,setQ]=useState('');
+  const [hideSolved,setHideSolved]=useState(false);
+  useEffect(()=>{
+    const timer=window.setTimeout(()=>{setQ(input.trim());setPage(1);},input.trim()?350:0);
+    return ()=>window.clearTimeout(timer);
+  },[input]);
+  const pending=input.trim()!==q;
+  const {currentData:data,isFetching,isError,refetch}=useGetTrackPracticeQuery({id,categoryId,page,q,hideSolved},{refetchOnMountOrArgChange:true});
+  useEffect(()=>{if(data&&!pending&&page>Math.max(1,Math.ceil(data.Total/data.PageSize)))setPage(Math.max(1,Math.ceil(data.Total/data.PageSize)));},[data,page,pending]);
+  return <div className="space-y-3">
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="relative min-w-0 flex-1 basis-52">
+        <Search size={19} aria-hidden="true" className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
+        <input type="search" maxLength={120} value={input} onChange={e=>setInput(e.target.value)} aria-label={ar?'البحث في مسائل الفئة':'Search topic problems'} placeholder={ar?'ابحث في مسائل الفئة…':'Search topic problems…'} className="min-h-12 w-full rounded-xl border bg-card ps-10 pe-10 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
+        {input&&<button type="button" aria-label={ar?'مسح البحث':'Clear search'} onClick={()=>{setInput('');setQ('');setPage(1);}} className="absolute end-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg"><X size={17}/></button>}
+      </div>
+      <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={hideSolved} onChange={e=>{setHideSolved(e.target.checked);setPage(1);}}/>{ar?'إخفاء المحلولة':'Hide solved'}</label>
+    </div>
+    {(pending||(isFetching&&!data))&&<MathWorldLoading compact mode="filter"/>}
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسائل.':'Could not load problems.'} <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
-    {data&&!isError&&<>
-      {data.Items.map(p=><Link key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id+'&categoryId='+categoryId+'&page='+page} className="flex items-center justify-between gap-2 rounded-xl border mw-topic-surface p-3 text-sm"><ProblemTitle text={ar?p.TitleAr:p.TitleEn}/><span className={p.IsSolved?'text-emerald-600':'text-amber-600'}>{p.IsSolved?(ar?'محلولة':'Solved'):(ar?'غير محلولة':'Unsolved')}</span></Link>)}
-      {data.Total>data.PageSize&&<div className="flex items-center gap-2"><button className={btn} disabled={page<=1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*data.PageSize>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
+    {data&&!isError&&!pending&&<>
+      {data.Items.length===0&&<p role="status" className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">{ar?'لا توجد مسائل مطابقة':'No matching problems'}</p>}
+      {data.Items.map(p=><ProblemCard key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id+'&categoryId='+categoryId+'&page='+page}
+        problem={{Id:p.Id,Title:ar?p.TitleAr:p.TitleEn,StageId:p.StageId,StageName:ar?p.StageNameAr:p.StageNameEn,CategoryId:p.CategoryId,CategoryName:(ar?p.CategoryNameAr:p.CategoryNameEn)??'',Points:p.Points,ViewsCount:0,RequiresLogin:true,IsSolved:p.IsSolved,HasAttempted:p.HasAttempted,IsFavorite:p.IsFavorite}}/>)}
+      {data.Total>data.PageSize&&<Pagination page={page} pageSize={data.PageSize} total={data.Total} onPageChange={setPage} disabled={isFetching}/>}
+
     </>}
   </div>;
 }
@@ -96,7 +118,6 @@ export function StudentTrackWorkspace({trackId,categoryId}:{trackId:number;categ
     const topic=data.Categories.find(c=>c.Id===categoryId);
     const access=byId.get(categoryId);
     return <main className="mx-auto w-full max-w-4xl space-y-4 p-4 sm:p-6" style={{'--stage-accent':accent} as CSSProperties}>
-      <Link href="/dashboard/categories" className={btn}>{ar?'العودة للفئات':'Back to topics'}</Link>
       {topic&&access&&!access.IsLocked?<><TopicHeading name={ar?topic.NameAr:topic.NameEn} icon={topic.Icon} count={topic.ProblemsCount} accent={accent} ar={ar}/><Practice key={categoryId} id={trackId} categoryId={categoryId} ar={ar}/></>:<p role="alert">{ar?'هذه الفئة غير متاحة لحسابك.':'This topic is unavailable for your account.'}</p>}
     </main>;
   }
@@ -105,13 +126,14 @@ export function StudentTrackWorkspace({trackId,categoryId}:{trackId:number;categ
     <Dialog open={!!target} onOpenChange={open=>{if(!open&&!resetState.isLoading)setTarget(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'تأكيد إعادة التدريب':'Confirm practice restart'}</DialogTitle><DialogDescription>{target?.name}</DialogDescription></DialogHeader><p>{ar?'يعود تقدم التدريب ودفتر الأخطاء في هذا النطاق فقط إلى البداية. النقاط الدائمة والمفضلة والشهادات وتقدم الصفوف الأخرى محفوظة.':'Only practice progress and review errors in this scope reset. Lifetime points, favorites, certificates and other tracks remain.'}</p>{error&&<p role="alert" className="text-destructive">{error}</p>}<DialogFooter><button className={btn} disabled={resetState.isLoading} onClick={()=>setTarget(null)}>{ar?'إلغاء':'Cancel'}</button><button className={btn+' bg-primary text-primary-foreground'} disabled={resetState.isLoading} onClick={()=>void confirm()}>{ar?'تأكيد':'Confirm'}</button></DialogFooter></DialogContent></Dialog>
     {notice&&<p role="status" className="text-primary">{notice}</p>}
     <section className="rounded-xl border bg-card p-4"><p className="flex flex-wrap items-center justify-between gap-2 font-semibold"><span>{ar?'التقدم':'Progress'}</span><span dir="ltr" className="tabular-nums" style={{color:accent}}>{stats.Solved} / {stats.ProblemsCount} · {stats.CompletionPercent}%</span></p><progress aria-label={ar?'تقدم المسار':'Track progress'} className="mw-stage-progress mt-3 w-full" max={100} value={stats.CompletionPercent}/>{stats.TrackPracticeIsolationEnabled&&stats.Categories.some(c=>c.Attempted>0)&&<button className={btn} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({name:ar?data.Track.NameAr:data.Track.NameEn})}}>{ar?'إعادة تدريب الصف أو المستوى':'Restart grade or level'}</button>}</section>
-    <div className="grid gap-3 sm:grid-cols-2">{[...data.Categories].sort((a,b)=>Number(b.IsFree)-Number(a.IsFree)).map(c=>{const p=byId.get(c.Id);const locked=!p||p.IsLocked;const href=`/dashboard/categories/${trackId}/${c.Id}`;return <article key={c.Id} className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border mw-topic-surface p-5 shadow-sm hover:shadow-md">
-      {!locked&&<Link href={href} aria-label={ar?c.NameAr:c.NameEn} className="absolute inset-0 z-10 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"/>}
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{[...data.Categories].sort((a,b)=>Number(b.IsFree)-Number(a.IsFree)).map(c=>{const p=byId.get(c.Id);const locked=p?.IsLocked===true;const available=p?.IsLocked===false;const href=`/dashboard/categories/${trackId}/${c.Id}`;return <article key={c.Id} className="relative isolate flex min-h-52 flex-col gap-3 overflow-hidden rounded-2xl border mw-topic-surface p-5 shadow-sm hover:shadow-md">
+      {available&&<Link href={href} aria-label={ar?c.NameAr:c.NameEn} className="absolute inset-0 z-10 rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"/>}
       <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1" style={{backgroundColor:accent}}/><TopicHeading name={ar?c.NameAr:c.NameEn} icon={c.Icon} count={c.ProblemsCount} accent={accent} ar={ar}/>
       <p className="text-sm text-muted-foreground">{ar?c.DescriptionAr:c.DescriptionEn}</p>
       <div className="mt-auto flex items-center gap-3 text-xs text-muted-foreground"><span>{ar?'محلولة':'Solved'}: <b dir="ltr">{p?.Solved??0}/{c.ProblemsCount}</b></span><progress aria-label={ar?'تقدم الفئة':'Topic progress'} className="mw-stage-progress min-w-0 flex-1" max={Math.max(1,c.ProblemsCount)} value={p?.Solved??0}/></div>
-      <div className="relative z-20 flex flex-wrap gap-2 border-t border-border/60 pt-3"><SkillsPopover title={ar?c.NameAr:c.NameEn} trigger={<button className={btn+' mw-topic-action inline-flex items-center gap-2'}><ListChecks size={16} style={{color:accent}}/>{ar?'عرض المهارات':'View skills'}</button>}><ul className="max-h-[55vh] space-y-3 overflow-y-auto">{data.Skills.filter(s=>s.CategoryId===c.Id).map(s=><li key={s.Id} className="flex gap-2"><ListChecks size={17} className="mt-1 shrink-0" style={{color:accent}}/><div><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></div></li>)}</ul></SkillsPopover>
-      {locked?<LockedPremiumDialog topicName={ar?c.NameAr:c.NameEn}><button className={btn+' mw-topic-action inline-flex items-center gap-2'}><LockKeyhole size={16}/>{ar?'ترقية الحساب':'Upgrade account'}</button></LockedPremiumDialog>:<Link href={href} className={btn+' mw-topic-action-solid inline-flex items-center gap-2'}><BookOpenText size={16}/>{ar?'عرض المسائل':'View problems'}</Link>}{!locked&&stats.TrackPracticeIsolationEnabled&&(p?.Attempted??0)>0&&<button className={btn+' mw-topic-action'} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({categoryId:c.Id,name:ar?c.NameAr:c.NameEn})}}><RotateCcw size={15} className="me-1 inline"/>{ar?'إعادة تدريب الفئة':'Restart topic'}</button>}</div>
+      <div inert={locked} className="relative z-20 flex flex-wrap gap-2 border-t border-border/60 pt-3"><SkillsPopover title={ar?c.NameAr:c.NameEn} trigger={<button className={btn+' mw-topic-action inline-flex items-center gap-2'}><ListChecks size={16} style={{color:accent}}/>{ar?'عرض المهارات':'View skills'}</button>}><ul className="max-h-[55vh] space-y-3 overflow-y-auto">{data.Skills.filter(s=>s.CategoryId===c.Id).map(s=><li key={s.Id} className="flex gap-2"><ListChecks size={17} className="mt-1 shrink-0" style={{color:accent}}/><div><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></div></li>)}</ul></SkillsPopover>
+      {locked?<span className={btn+" mw-topic-action inline-flex items-center gap-2"}><LockKeyhole size={16}/>{ar?"مقفلة":"Locked"}</span>:available?<Link href={href} className={btn+' mw-topic-action-solid inline-flex items-center gap-2'}><BookOpenText size={16}/>{ar?'عرض المسائل':'View problems'}</Link>:<span className="text-xs text-muted-foreground">{ar?'التحقق من الصلاحيات':'Checking access'}</span>}{available&&stats.TrackPracticeIsolationEnabled&&(p?.Attempted??0)>0&&<button className={btn+' mw-topic-action'} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({categoryId:c.Id,name:ar?c.NameAr:c.NameEn})}}><RotateCcw size={15} className="me-1 inline"/>{ar?'إعادة تدريب الفئة':'Restart topic'}</button>}</div>
+      {locked&&<LockedCategoryOverlay name={ar?c.NameAr:c.NameEn}/>}
     </article>;})}</div>
   </main>;
 }

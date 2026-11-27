@@ -302,7 +302,6 @@ function AdminCategoriesPageContent() {
         className="mb-6"
       />
       <WorkspacePageHeader title={t("admin.categories.title")} icon={Shapes} actions={<div className="flex flex-wrap items-center gap-2">
-        <Link href={"/admin/learning-tracks?stageId="+selectedStageId} className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold"><DirectionalChevron direction="back" className="h-4 w-4"/>{locale==="ar"?"العودة للصفوف والمستويات":"Back to grades and levels"}</Link>
         <Button
           onClick={openCreateModal}
           className="gap-2"

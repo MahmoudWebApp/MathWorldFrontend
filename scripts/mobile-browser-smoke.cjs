@@ -5,24 +5,29 @@ const assert=require('node:assert/strict');
 const base='http://127.0.0.1:4173';
 const track={Id:1,StageId:1,Code:'grade-1',Kind:'Grade',NameAr:'الصف الأول',NameEn:'Grade one',DescriptionAr:'تدريب',DescriptionEn:'Practice'};
 const topic={Id:1,NameAr:'الأعداد والعمليات الحسابية',NameEn:'Numbers and arithmetic operations',DescriptionAr:'تدريب الأعداد',DescriptionEn:'Number practice',Icon:'',IsFree:true,ProblemsCount:20};
-const practice={TrackId:1,CategoryId:1,Total:2,Page:1,PageSize:10,Items:[{Id:1,CategoryId:1,TitleAr:'جمع الأعداد',TitleEn:'Addition',Points:10,IsSolved:false},{Id:2,CategoryId:1,TitleAr:'طرح الأعداد',TitleEn:'Subtraction',Points:10,IsSolved:false}]};
-function token(role){return ['eyJhbGciOiJub25lIn0',Buffer.from(JSON.stringify({role,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),'fixture'].join('.')}
+const practice={TrackId:1,CategoryId:1,Total:2,Page:1,PageSize:5,Items:[{Id:1,CategoryId:1,TitleAr:'جمع الأعداد',TitleEn:'Addition',Points:10,IsSolved:false},{Id:2,CategoryId:1,TitleAr:'طرح الأعداد',TitleEn:'Subtraction',Points:10,IsSolved:false}]};
+const lockedTopic={...topic,Id:2,NameAr:'الهندسة',NameEn:'Geometry',IsFree:false};
+const lockedTopic2={...topic,Id:3,NameAr:'الإحصاء',NameEn:'Statistics',IsFree:false};
+function token(role,tier='Premium'){return ['eyJhbGciOiJub25lIn0',Buffer.from(JSON.stringify({role,tier,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),'fixture'].join('.')}
 function roleOf(req){try{return JSON.parse(Buffer.from((req.headers.authorization||'').split('.')[1],'base64url')).role}catch{return 'Student'}}
 function fixture(req){
  const path=new URL(req.url,'http://localhost').pathname.replace(/^\/api/,'');
  const role=roleOf(req);
- const user={Id:1,FullName:'Responsive Fixture Student',Email:'responsive-fixture@example.invalid',Role:role,SubscriptionType:'Premium',CurrentStageId:1};
+ let tier='Premium';try{tier=JSON.parse(Buffer.from((req.headers.authorization||'').split('.')[1],'base64url')).tier||'Premium'}catch{}
+ const free=tier==='Free';
+ const user={Id:1,FullName:'Responsive Fixture Student',Email:'responsive-fixture@example.invalid',Role:role,SubscriptionType:tier,CurrentStageId:1};
  const solvedFixture=id=>({Id:id,PracticeScopeId:1,Title:'Fixture internal title '+id,QuestionText:'Fixture question '+id,StageId:1,StageName:'Primary',CategoryId:1,CategoryName:'Numbers',Points:10,ViewsCount:0,IsSolved:true,HasAttempted:true,WasCorrect:true,SelectedOptionId:id*10,CorrectOptionId:id*10,IsFavorite:false,AttemptCount:1,FirstAttemptCorrect:true,CanRetry:false,MasteryStatus:'Mastered',IsInErrorNotebook:false,IsErrorNotebookArchived:false,DetailedSolution:'$1+1=2$',Options:[{Id:id*10,LatexCode:'2',Order:1},{Id:id*10+1,LatexCode:'3',Order:2}]});
  const routes={
   '/users/profile':user,
   '/users/onboarding':{NextStep:'Complete'},
-  '/users/subscription':{IsPremium:true,SubscriptionType:'Premium'},
+  '/users/subscription':{IsPremium:!free,SubscriptionType:tier},
   '/users/learning-stage':{StageId:1,NameAr:'الابتدائية',NameEn:'Primary'},
   '/users/learning-track':{Enabled:true,StageId:1,TrackId:1,Track:track},
   '/stages/1/tracks':{Enabled:true,Items:[{...track,ProblemsCount:20,CategoriesCount:1,SkillsCount:1,FreeProblemsCount:20}]},
-  '/learning-tracks/1':{Track:track,Categories:[topic],Skills:[],Examples:[]},
-  '/users/learning-tracks/1/progress':{TrackId:1,StageId:1,TrackPracticeIsolationEnabled:true,ProblemsCount:20,Solved:0,CompletionPercent:0,Categories:[{CategoryId:1,ProblemsCount:20,IsLocked:false,Solved:0,Attempted:0,Mastered:0}]},
-  '/users/learning-tracks/1/categories/1/problems':practice,
+  '/learning-tracks/1':{Track:track,Categories:free?[topic,lockedTopic,lockedTopic2]:[topic],Skills:[],Examples:[]},
+  '/users/learning-tracks/1/progress':{TrackId:1,StageId:1,TrackPracticeIsolationEnabled:true,ProblemsCount:20,Solved:0,CompletionPercent:0,Categories:[{CategoryId:1,ProblemsCount:20,IsLocked:false,Solved:0,Attempted:0,Mastered:0},...(free?[{CategoryId:2,ProblemsCount:20,IsLocked:true,Solved:0,Attempted:0,Mastered:0},{CategoryId:3,ProblemsCount:20,IsLocked:true,Solved:0,Attempted:0,Mastered:0}]:[])]},
+  '/users/learning-tracks/1/categories/1/problems':(()=>{const params=new URL(req.url,'http://localhost').searchParams;const q=(params.get('q')||'').toLowerCase();const items=practice.Items.filter(p=>!q||p.TitleAr.includes(q)||p.TitleEn.toLowerCase().includes(q)).map(p=>({...p,StageId:1,StageNameAr:'الابتدائية',StageNameEn:'Primary',CategoryNameAr:topic.NameAr,CategoryNameEn:topic.NameEn,HasAttempted:false,IsFavorite:false}));return {...practice,Total:items.length,Items:items};})(),
+  '/users/favorites':[], '/users/solved':[], '/users/error-notebook':[],
   '/users/learning-tracks/continue':{TrackId:1,Problem:null},
   '/problems/1':solvedFixture(1),
   '/problems/2':solvedFixture(2),
@@ -44,9 +49,19 @@ if(process.argv.includes('--api')){
  createServer((req,res)=>{
   res.setHeader('Access-Control-Allow-Origin','*');
   res.setHeader('Access-Control-Allow-Headers','*');
-  res.setHeader('Access-Control-Allow-Methods','GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
   res.setHeader('Content-Type','application/json');
+  res.setHeader('Access-Control-Expose-Headers','X-Total-Count,X-Due-Count');
+  res.setHeader('X-Total-Count','0');
+  res.setHeader('X-Due-Count','0');
   if(req.method==='OPTIONS'){res.writeHead(204);return res.end()}
+  if(req.method==='POST'&&new URL(req.url,'http://localhost').pathname==='/api/auth/forgot-password'){
+   let body='';req.on('data',chunk=>body+=chunk);req.on('end',()=>{
+    let email;try{email=JSON.parse(body).Email}catch{}
+    if(email==='not-registered@example.invalid'){res.writeHead(404);res.end(JSON.stringify({Success:false,Errors:{Email:['RecoveryEmailNotRegistered']}}));}
+    else{res.writeHead(202);res.end(JSON.stringify({Success:true,Data:{Accepted:true}}));}
+   });return;
+  }
   if(req.method!=='GET'){res.writeHead(405);return res.end(JSON.stringify({Message:'Fixture is read-only'}))}
   const data=fixture(req);
   res.writeHead(data===undefined?503:200);
@@ -70,7 +85,7 @@ if(process.argv.includes('--api')){
      const page=await context.newPage();
      const pageErrors=[];
      page.on('pageerror',error=>pageErrors.push(error.message));
-     const paths=role==='public'?['/','/login','/register','/stages','/contact','/premium']:role==='Student'?['/dashboard','/dashboard/categories','/dashboard/categories/1/1','/dashboard/problems','/dashboard/favorites','/dashboard/solved','/dashboard/daily-challenge','/dashboard/exams','/dashboard/certificates','/dashboard/analytics','/dashboard/settings']:['/admin','/admin/users','/admin/categories','/admin/problems','/admin/learning-tracks','/admin/editorial','/admin/analytics','/admin/activity','/admin/settings'];
+     const paths=role==='public'?['/','/login','/register','/stages','/contact','/premium','/about','/forgot-password']:role==='Student'?['/dashboard','/dashboard/categories','/dashboard/categories/1/1','/dashboard/problems','/dashboard/favorites','/dashboard/solved','/dashboard/daily-challenge','/dashboard/exams','/dashboard/certificates','/dashboard/analytics','/dashboard/settings']:['/admin','/admin/users','/admin/categories','/admin/problems','/admin/learning-tracks','/admin/editorial','/admin/analytics','/admin/activity','/admin/settings'];
      for(const path of paths){
       const tag=[locale,width,scheme,role,path.replaceAll('/','_')].join('-');
       try{
@@ -84,6 +99,18 @@ if(process.argv.includes('--api')){
        const size=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
        assert(size.scroll<=size.width+2,'Horizontal overflow '+JSON.stringify(size));
        assert.equal(pageErrors.length,0,pageErrors.join('; '));
+       if(path==='/forgot-password'){
+        const email=page.locator('input[type=email]');
+        await email.fill('not-registered@example.invalid');
+        const submit=page.getByRole('button',{name:locale==='ar'?'طلب رابط الاستعادة':'Request recovery link',exact:true});
+        assert(await submit.isEnabled(),'Local recovery fixture must be ready without external CAPTCHA');
+        {
+         await submit.click();
+         await page.getByRole('alert').filter({hasText:locale==='ar'?'البريد الإلكتروني غير مستخدم في المنصة.':'This email is not registered on the platform.'}).waitFor({timeout:10000});
+         assert.equal(await email.inputValue(),'not-registered@example.invalid');
+         console.log('PASS recovery unknown email',locale,width,scheme);
+        }
+       }
        if(path==='/dashboard/categories'){
         const card=page.getByRole('link',{name:locale==='ar'?topic.NameAr:topic.NameEn,exact:true});
         await card.waitFor({timeout:10000});
@@ -95,14 +122,37 @@ if(process.argv.includes('--api')){
         await page.getByText(locale==='ar'?'لا توجد امتحانات سابقة.':'No previous exams.',{exact:true}).waitFor({timeout:10000});
        }
        if(path==='/dashboard/categories/1/1'){
+        const search=page.getByRole('searchbox',{name:locale==='ar'?'البحث في مسائل الفئة':'Search topic problems'});
+        await search.fill(locale==='ar'?'طرح':'Subtraction');
+        await page.getByRole('link').filter({hasText:locale==='ar'?'طرح الأعداد':'Subtraction'}).waitFor({timeout:10000});
+        await page.waitForFunction(()=>performance.getEntriesByType('resource').some(e=>{const u=new URL(e.name);return u.pathname.endsWith('/categories/1/problems')&&u.searchParams.get('q')&&u.searchParams.get('pageSize')==='5'}),{},{timeout:10000});
+        assert.equal(await page.getByRole('link').filter({hasText:locale==='ar'?'جمع الأعداد':'Addition'}).count(),0,'Search must remove nonmatching card');
+        await search.fill('');
+        const crumb=page.getByRole('navigation',{name:locale==='ar'?'مسار التنقل':'Breadcrumb',exact:true});
+        await crumb.getByRole('link',{name:locale==='ar'?'الفئات':'Topics',exact:true}).waitFor({timeout:10000});
+        assert.equal(await page.getByRole('link',{name:locale==='ar'?'العودة للفئات':'Back to topics',exact:true}).count(),0,'Duplicate category back action');
+        await crumb.getByRole('link',{name:locale==='ar'?'الفئات':'Topics',exact:true}).click();
+        await page.waitForURL('**/dashboard/categories');
+        const detailRequests=[];
+        const recordRequest=req=>{const url=new URL(req.url());if(url.port==='4174')detailRequests.push(url.pathname);};
+        page.on('request',recordRequest);
         await page.goto(base+'/'+locale+'/dashboard/problems/1?trackId=1&categoryId=1',{waitUntil:'domcontentloaded'});
         const next=page.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true});
         await next.waitFor({timeout:15000});
         assert.equal(await page.getByText('Fixture internal title 1',{exact:true}).count(),0,'Duplicate question title visible');
+        await page.waitForFunction(()=>performance.getEntriesByType('resource').some(e=>new URL(e.name).pathname==='/api/problems/2'),{},{timeout:15000});
+        assert.equal(detailRequests.filter(p=>p==='/api/problems/2').length,1,'Next problem prefetched once before click');
+        assert.equal(detailRequests.filter(p=>p==='/api/users/favorite/check/1').length,0,'No duplicate favorite lookup');
+        const transitionStart=Date.now();
         await next.click();
         await page.waitForURL('**/dashboard/problems/2?trackId=1&categoryId=1');
+        await page.getByText('Fixture question 2',{exact:true}).waitFor({timeout:15000});
+        console.log('LOCAL next problem render ms',Date.now()-transitionStart,locale,width,scheme);
+        page.off('request',recordRequest);
         await page.getByText(locale==='ar'?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.',{exact:true}).waitFor({timeout:15000});
         assert.equal(await next.count(),0,'Next link should not exist at end of category');
+        await page.getByRole('navigation',{name:locale==='ar'?'مسار التنقل':'Breadcrumb',exact:true}).getByRole('link',{name:'Numbers',exact:true}).click();
+        await page.waitForURL('**/dashboard/categories/1/1');
         assert.equal(pageErrors.length,0,pageErrors.join('; '));
         console.log('PASS continuation',locale,width,scheme);
        }
@@ -111,6 +161,27 @@ if(process.argv.includes('--api')){
      }
      await context.close();
     }
+   }
+   for(const [locale,width,scheme] of [['ar',390,'dark'],['en',1440,'light']]){
+    const context=await browser.newContext({viewport:{width,height:900},colorScheme:scheme});
+    try{
+     await context.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
+     await context.addCookies([{name:'token',value:token('Student','Free'),url:base}]);
+     const page=await context.newPage();
+     await page.goto(base+'/'+locale+'/dashboard/categories',{waitUntil:'domcontentloaded'});
+     const locks=page.locator('[data-category-locked="true"]');
+     await locks.first().waitFor({timeout:15000});
+     assert.equal(await locks.count(),2,'Only restricted categories have overlays');
+     assert.equal(await page.getByRole('link',{name:locale==='ar'?lockedTopic.NameAr:lockedTopic.NameEn,exact:true}).count(),0,'Locked card must not expose a practice link');
+     if(width>=1280){
+      const columns=await locks.first().evaluate(el=>getComputedStyle(el.closest('article').parentElement).gridTemplateColumns.split(' ').length);
+      assert.equal(columns,3,'Wide category grid must have three columns');
+     }
+     await locks.first().getByRole('button').click();
+     await page.getByRole('dialog').waitFor({timeout:10000});
+     console.log('PASS locked category overlay',locale,width,scheme);
+    }catch(e){errors.push('locked category '+locale+': '+e.message);}
+    finally{await context.close();}
    }
   }finally{await browser.close();fs.writeFileSync('mobile-browser-results/report.json',JSON.stringify({errors},null,2))}
   assert.equal(errors.length,0,errors.join('\n'));

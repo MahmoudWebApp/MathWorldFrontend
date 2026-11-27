@@ -24,7 +24,7 @@ import { StageIconBadge } from '@/components/stages/StageIconBadge';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 5;
 const DEBOUNCE_DELAY = 500;
 
 // Simple debounce hook
