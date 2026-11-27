@@ -36,7 +36,7 @@ export function ForgotPasswordForm() {
     pending.current = true; setBusy(true); setError('');
     try {
       const result = await requestRecovery('forgot-password', { Email: email.trim() }, ar ? 'ar' : 'en', captcha.token);
-      if (result.ok && result.data?.Accepted === true) { setAccepted(true); setEmail(''); }
+      if (result.ok && result.data?.Accepted === true) { setAccepted(true); }
       else setError(result.status === 429
         ? ar ? 'محاولات كثيرة. حاول بعد دقيقة.' : 'Too many requests. Try again in a minute.'
         : ar ? 'تعذّر إرسال الطلب. حاول مجدداً.' : 'Could not submit the request. Try again.');
@@ -47,9 +47,9 @@ export function ForgotPasswordForm() {
     <section className="brand-surface math-card w-full max-w-md space-y-5 rounded-3xl p-6 sm:p-8">
       <Mail className="h-8 w-8 text-primary" aria-hidden />
       <h1 className="text-2xl font-bold">{ar ? 'استعادة كلمة المرور' : 'Recover your password'}</h1>
-      {accepted ? <p role="status" className="rounded-xl border bg-card p-4 text-sm leading-relaxed">{ar
-        ? 'إذا كان الحساب مؤهلاً للاستعادة ستصلك رسالة على بريدك. افحص البريد غير المرغوب أيضاً. إذا كنت تستخدم Google فجرّب تسجيل الدخول به.'
-        : 'If the account is eligible for recovery, you will receive an email. Check spam too. If you use Google, try signing in with Google.'}</p> :
+      {accepted ? <div className="space-y-3"><p role="status" className="rounded-xl border bg-card p-4 text-sm leading-relaxed">{ar
+        ? 'تم استلام الطلب فقط. هذا لا يعني أن البريد مسجل أو أن رسالة أُرسلت. إذا كان البريد مرتبطاً بحساب مؤهل، ستصلك رسالة الاستعادة. تأكد من كتابة البريد الصحيح وافحص البريد غير المرغوب. إذا كنت تستخدم Google فجرّب تسجيل الدخول به.'
+        : 'Request received only. This does not confirm that the email is registered or that a message was sent. If the email belongs to an eligible account, you will receive a recovery message. Check the address and spam folder. If you use Google, try signing in with Google.'}</p><button type="button" className="w-full rounded-xl border p-3 font-semibold text-primary" onClick={()=>{setAccepted(false);setError('');captcha.reset();}}>{ar?'تعديل البريد وإعادة المحاولة':'Edit email and try again'}</button></div> :
         <form onSubmit={submit} className="space-y-4">
           <p className="text-sm text-muted-foreground">{ar ? 'أدخل البريد المرتبط بحسابك المحلي.' : 'Enter the email associated with your local account.'}</p>
           <label className="block space-y-1 text-sm font-medium">{ar ? 'البريد الإلكتروني' : 'Email'}<input className={inputClass} type="email" autoComplete="email" maxLength={254} required value={email} onChange={e=>setEmail(e.target.value)} disabled={busy}/></label>
