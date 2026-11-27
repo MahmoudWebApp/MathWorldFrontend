@@ -51,3 +51,14 @@ assert(matrixSegments.some(s=>s.type==='block'&&s.value===determinant));
 assert(!matrixSegments.some(s=>s.type==='text'&&s.value.includes('\\begin')));
 assert(katex.renderToString(determinant,{throwOnError:true}).includes('katex-html'));
 console.log('PASS: unwrapped matrix/determinant in Arabic solution.');
+
+
+// Regression: student answer-history title must render the determinant
+// using the same parser as the problem itself.
+const historyMatrix = 'A = '+slash+'begin{pmatrix} 2 & 3 '+slash+slash+' 1 & 4 '+slash+'end{pmatrix}';
+const historyTitle = 'أوجد محدد المصفوفة (Determinant) $'+historyMatrix+'$.';
+const historyParts = parseMathSegments(historyTitle);
+assert(historyParts.some(part=>part.type==='inline'&&part.value===historyMatrix));
+assert(!historyParts.some(part=>part.type==='text'&&part.value.includes(slash+'begin')));
+assert(katex.renderToString(historyMatrix,{throwOnError:true}).includes('katex-html'));
+console.log('PASS: Arabic answer-history determinant title.');
