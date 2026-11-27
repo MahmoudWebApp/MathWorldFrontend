@@ -10,7 +10,7 @@ import { Link } from '@/i18n/routing';
 import { BookOpen, ListChecks, Calculator, LockKeyhole, RefreshCw, RotateCcw } from 'lucide-react';
 import { useGetLearningStageQuery, useGetLearningJourneyQuery, useResetPracticeMutation } from '@/store/api/usersApi';
 import { useGetStageCategoryAccessQuery, useGetStudentSubscriptionQuery } from '@/store/api/categoriesApi';
-import { LockedPremiumDialog } from '@/components/premium/LockedPremiumDialog';
+import { LockedCategoryOverlay } from '@/components/premium/LockedCategoryOverlay';
 import { CategorySkillsPopover } from '@/components/curriculum/CategorySkillsDialog';
 import { getStageAccent } from '@/lib/stageVisuals';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -243,12 +243,10 @@ export default function StudentCategoriesPage() {
                 </button>}/>
               );
               if (locked) return (
-                <div key={category.Id} className="flex h-full flex-col gap-2">
-                  <LockedPremiumDialog topicName={name}>
-                    <button type="button" className="w-full flex-1 text-start focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={ar ? `${name} مقفولة` : `${name} locked`}>{card}</button>
-                  </LockedPremiumDialog>
-                  {skillsButton}
-                </div>
+                <article key={category.Id} className="relative isolate flex h-full min-h-52 flex-col overflow-hidden rounded-2xl">
+                  <div inert className="flex flex-1 flex-col gap-2">{card}{skillsButton}</div>
+                  <LockedCategoryOverlay name={name}/>
+                </article>
               );
               return <div key={category.Id} className={empty ? 'flex h-full flex-col gap-2 opacity-75' : 'flex h-full flex-col gap-2'}>{card}{skillsButton}</div>;
             })}
