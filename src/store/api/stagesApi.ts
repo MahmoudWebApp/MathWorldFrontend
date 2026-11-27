@@ -123,8 +123,8 @@ export const stagesApi = createApi({
       query:({id,categoryId,afterProblemId})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/next',params:{afterProblemId}}),
       providesTags:['LearningTrack'],
     }),
-    getTrackPractice:builder.query<TrackPractice,{id:number;categoryId:number;page:number}>({
-      query:({id,categoryId,page})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page,pageSize:5}}),providesTags:['LearningTrack'],
+    getTrackPractice:builder.query<TrackPractice,{id:number;categoryId:number;page:number;q?:string;hideSolved?:boolean}>({
+      query:({id,categoryId,page,q,hideSolved})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page,pageSize:5,q:q?.trim()||undefined,hideSolved:hideSolved||undefined}}),providesTags:['LearningTrack'],
     }),
     getAdminTracks:builder.query<{Enabled:boolean;Items:TrackListRow[]},void>({
       query:()=>'/admin/learning-tracks',providesTags:['LearningTrack'],
