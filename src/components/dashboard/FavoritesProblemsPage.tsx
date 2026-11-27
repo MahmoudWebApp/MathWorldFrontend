@@ -3,7 +3,8 @@
 import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { useGetFavoritesQuery, useGetLearningStageQuery, useToggleFavoriteMutation } from '@/store/api/usersApi';
+import { useGetUserProblemPageQuery, useGetLearningStageQuery, useToggleFavoriteMutation } from '@/store/api/usersApi';
+import { Pagination } from '@/components/ui/Pagination';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -24,15 +25,18 @@ export function FavoritesProblemsPage() {
 
   const { data: selectedStage, isLoading: stageLoading, isError: stageError, refetch: retryStage } = useGetLearningStageQuery();
   const stageId = selectedStage?.StageId ?? 0;
-  const { data: favorites, isLoading, error, refetch: retryFavorites } = useGetFavoritesQuery(locale, {
-    refetchOnMountOrArgChange: 45,
+  const [page,setPage]=useState(1);
+  useEffect(()=>setPage(1),[stageId,locale]);
+  const { currentData: favorites, isLoading, isFetching, error, refetch: retryFavorites } = useGetUserProblemPageQuery({kind:'favorites',page,locale,stageId},{
+    skip:stageId<=0,refetchOnMountOrArgChange:45,
   });
   const [toggleFavorite] = useToggleFavoriteMutation();
 
   // Favorites remain stored across stage changes; the student only browses
   // items belonging to the currently selected stage.
-  const stageFavorites = (favorites ?? []).filter(problem => problem.StageId === stageId);
-  const totalCount = stageFavorites.length;
+  const stageFavorites = favorites?.Items ?? [];
+  const totalCount = favorites?.Total ?? 0;
+  useEffect(()=>{if(favorites&&page>Math.max(1,Math.ceil(favorites.Total/5)))setPage(Math.max(1,Math.ceil(favorites.Total/5)));},[favorites,page]);
 
   const handleRemoveFavorite = async (problemId: number) => {
     try {
@@ -45,7 +49,7 @@ export function FavoritesProblemsPage() {
     }
   };
 
-  if (error || stageError || (!isLoading && !favorites)) {
+  if (error || stageError) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-red-500 dark:text-red-400 py-20">
@@ -61,10 +65,10 @@ export function FavoritesProblemsPage() {
 
   return (
     <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
-      <WorkspacePageHeader title={t('favorites.title')} icon={Heart} iconTone="favorite" count={isLoading || stageLoading ? undefined : mounted ? <AnimatedCounter end={totalCount} duration={700}/> : totalCount} />
+      <WorkspacePageHeader title={t('favorites.title')} icon={Heart} iconTone="favorite" count={isLoading || isFetching || stageLoading ? undefined : mounted ? <AnimatedCounter end={totalCount} duration={700}/> : totalCount} />
 
       {/* Problems List */}
-      {isLoading ? (
+      {stageLoading || isLoading || (isFetching&&!favorites) ? (
         <div className="space-y-4">
           <MathWorldLoading compact />
           {Array.from({ length: 5 }).map((_, i) => (
@@ -93,6 +97,7 @@ export function FavoritesProblemsPage() {
               </Button>
             </div>
           ))}
+          {totalCount>5&&<Pagination page={page} pageSize={5} total={totalCount} onPageChange={setPage} disabled={isFetching}/>}
         </div>
       ) : (
         <Card className="border-dashed">
