@@ -23,11 +23,14 @@ export function SolvedProblemsPage() {
     setMounted(true);
   }, []);
 
-  const { data: solvedProblems, isLoading, error, refetch } = useGetSolvedProblemsQuery(locale, {
-    refetchOnMountOrArgChange: 45,
-  });
-
-  const totalCount = solvedProblems?.length ?? 0;
+  const {data:stage,isLoading:stageLoading,isError:stageError,refetch:reloadStage}=useGetLearningStageQuery();
+  const stageId=stage?.StageId??0;
+  const [page,setPage]=useState(1);
+  useEffect(()=>setPage(1),[stageId,locale]);
+  const {currentData:result,isLoading,isFetching,error,refetch}=useGetUserProblemPageQuery({kind:'solved',page,locale,stageId},{skip:stageId<=0,refetchOnMountOrArgChange:45});
+  const solvedProblems=result?.Items??[];
+  const totalCount=result?.Total??0;
+  useEffect(()=>{if(result&&page>Math.max(1,Math.ceil(result.Total/5)))setPage(Math.max(1,Math.ceil(result.Total/5)));},[result,page]);
 
   if (error || stageError) {
     return (
