@@ -1,4 +1,5 @@
 'use client';
+import { ProblemTitle } from '@/components/problems/ProblemTitle';
 import {WorkspacePageHeader} from '@/components/ui/WorkspacePageHeader';
 
 import { useLocale } from 'next-intl';
@@ -402,7 +403,7 @@ export default function PremiumAnalyticsPage() {
                 : 'Download the Excel or PDF report, or print it directly.'}
             </p>
           </section>
-          {report.RecentAttempts&&<section className="rounded-2xl border bg-card p-5 space-y-3"><h2 className="text-xl font-bold">{ar?'آخر المحاولات':'Recent attempts'}</h2>{report.RecentAttempts.length===0?<p className="text-sm text-muted-foreground">{ar?'لا توجد محاولات بعد':'No attempts yet'}</p>:report.RecentAttempts.map((attempt,index)=><div key={`${attempt.ProblemId}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3"><span className="font-medium">{ar?attempt.TitleAr:attempt.TitleEn}</span><span className={attempt.IsCorrect?'text-green-600 dark:text-green-400':'text-red-600 dark:text-red-400'}>{attempt.IsCorrect?(ar?'صحيحة':'Correct'):(ar?'خاطئة':'Incorrect')}</span><time className="text-xs text-muted-foreground" dateTime={attempt.SubmittedAtUtc}>{formatReportDate(attempt.SubmittedAtUtc,locale)}</time></div>)}</section>}
+          {report.RecentAttempts&&<section className="rounded-2xl border bg-card p-5 space-y-3"><h2 className="text-xl font-bold">{ar?'آخر المحاولات':'Recent attempts'}</h2>{report.RecentAttempts.length===0?<p className="text-sm text-muted-foreground">{ar?'لا توجد محاولات بعد':'No attempts yet'}</p>:report.RecentAttempts.map((attempt,index)=><div key={`${attempt.ProblemId}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3"><span className="font-medium min-w-0 break-words"><ProblemTitle text={ar?attempt.TitleAr:attempt.TitleEn}/></span><span className={attempt.IsCorrect?'text-green-600 dark:text-green-400':'text-red-600 dark:text-red-400'}>{attempt.IsCorrect?(ar?'صحيحة':'Correct'):(ar?'خاطئة':'Incorrect')}</span><time className="text-xs text-muted-foreground" dateTime={attempt.SubmittedAtUtc}>{formatReportDate(attempt.SubmittedAtUtc,locale)}</time></div>)}</section>}
         </>
       )}
       {pendingExport && (
