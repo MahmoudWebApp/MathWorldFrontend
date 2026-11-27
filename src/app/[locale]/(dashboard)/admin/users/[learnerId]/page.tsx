@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { DirectionalArrow, DirectionalChevron } from '@/components/ui/DirectionalNavigation';
+import { DirectionalChevron } from '@/components/ui/DirectionalNavigation';
 import { getApiErrorMessage } from '@/lib/authSession';
 import {
   BarChart3, BookOpen, CheckCircle2, Clock3, ListChecks,
@@ -49,7 +49,7 @@ export default function AdminLearnerDetailPage() {
   );
 
   const label = ar ? {
-    back: 'العودة إلى الطلاب', title: 'ملف الطالب', active: 'نشط', disabled: 'معطّل',
+    title: 'ملف الطالب', active: 'نشط', disabled: 'معطّل',
     stage: 'المرحلة الحالية', noStage: 'لم يحدد المرحلة', joined: 'تاريخ التسجيل',
     login: 'آخر تسجيل دخول', activity: 'آخر محاولة', never: 'لا يوجد نشاط',
     plan: 'نوع الحساب', solved: 'مسائل محلولة', attempts: 'إجمالي المحاولات',
@@ -73,7 +73,7 @@ export default function AdminLearnerDetailPage() {
     tierError: 'تعذر تغيير اشتراك الطالب.',
 
   } : {
-    back: 'Back to students', title: 'Learner profile', active: 'Active', disabled: 'Disabled',
+    title: 'Learner profile', active: 'Active', disabled: 'Disabled',
     stage: 'Current stage', noStage: 'Not selected', joined: 'Joined',
     login: 'Last login', activity: 'Last attempt', never: 'No activity',
     plan: 'Plan', solved: 'Solved problems', attempts: 'Attempts',
