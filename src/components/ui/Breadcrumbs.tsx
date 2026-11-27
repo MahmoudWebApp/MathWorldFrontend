@@ -36,23 +36,22 @@ export function Breadcrumbs({
         className,
       )}
     >
-      <ol className="flex w-full min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap sm:gap-1.5">
+      <ol className="flex w-full min-w-0 flex-wrap items-center gap-x-1 gap-y-2 sm:gap-x-1.5">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           const shouldTruncate = item.truncate || isLast;
           const labelClassName = cn(
             "block min-w-0 text-start [unicode-bidi:plaintext]",
             shouldTruncate &&
-              "max-w-[38vw] truncate sm:max-w-[20rem] lg:max-w-[34rem]",
+              "max-w-[70vw] truncate sm:max-w-[20rem] lg:max-w-[34rem]",
           );
 
           return (
             <li
               key={`${item.label}-${index}`}
               className={cn(
-                index < items.length - 2 ? "hidden sm:flex" : "flex",
-                "min-w-0 items-center",
-                isLast ? "flex-1 overflow-hidden" : "max-w-[40vw] shrink-0 overflow-hidden sm:max-w-none",
+                "flex min-w-0 max-w-full items-center",
+                isLast ? "overflow-hidden" : "max-w-[80vw] shrink-0 sm:max-w-none",
               )}
             >
               {item.href && !isLast ? (
