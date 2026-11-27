@@ -6,7 +6,7 @@ import { usersApi } from './usersApi';
 import { stagesApi } from './stagesApi';
 import type { PagedProblemsResponse, ProblemPreview } from './types';
 
-export interface ProblemHints {ProblemId:number;Available:boolean;RevealedCount:number;Hints:{Level:number;Text:string}[]}
+export interface ProblemHints {ProblemId:number;Available:boolean;HintCount?:number;RevealedCount:number;Hints:{Level:number;Text:string}[]}
 
 export interface OptionForStudent {
   Id: number;
