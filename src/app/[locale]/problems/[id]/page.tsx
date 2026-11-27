@@ -726,7 +726,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             {hints.currentData?.Available===false&&<p className="text-sm text-muted-foreground">{isArabic?'لا توجد تلميحات لهذه المسألة بعد.':'Hints are not yet available for this problem.'}</p>}
             {hints.currentData?.Available&&<>
               {hints.currentData.Hints.map(h=><div key={h.Level} className="rounded-xl border bg-background p-3"><p className="mb-1 text-sm font-semibold">{isArabic?'التلميح':'Hint'} {h.Level}</p><RichText text={h.Text} isArabic={isArabic}/></div>)}
-              {hints.currentData.RevealedCount<2&&<Button variant="outline" disabled={hintBusy||isSubmitting} onClick={async()=>{setHintError(false);try{await revealHint({problemId,Level:(hints.currentData?.RevealedCount??0)+1,locale,scope:studentProblem?.PracticeScopeId}).unwrap();}catch{setHintError(true);}}}>{hintBusy?(isArabic?'جارٍ التحميل…':'Loading…'):(isArabic?'عرض التلميح':'Reveal hint')+' '+(hints.currentData.RevealedCount+1)}</Button>}
+              {hints.currentData.RevealedCount<(hints.currentData.HintCount??2)&&<Button variant="outline" disabled={hintBusy||isSubmitting} onClick={async()=>{setHintError(false);try{await revealHint({problemId,Level:(hints.currentData?.RevealedCount??0)+1,locale,scope:studentProblem?.PracticeScopeId}).unwrap();}catch{setHintError(true);}}}>{hintBusy?(isArabic?'جارٍ التحميل…':'Loading…'):(isArabic?'عرض التلميح':'Reveal hint')+' '+(hints.currentData.RevealedCount+1)}</Button>}
             </>}
             {hintError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر عرض التلميح. حاول مجدداً.':'Could not reveal hint. Please retry.'}</p>}
           </>}
