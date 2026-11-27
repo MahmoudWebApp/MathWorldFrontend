@@ -96,7 +96,6 @@ export function StudentTrackWorkspace({trackId,categoryId}:{trackId:number;categ
     const topic=data.Categories.find(c=>c.Id===categoryId);
     const access=byId.get(categoryId);
     return <main className="mx-auto w-full max-w-4xl space-y-4 p-4 sm:p-6" style={{'--stage-accent':accent} as CSSProperties}>
-      <Link href="/dashboard/categories" className={btn}>{ar?'العودة للفئات':'Back to topics'}</Link>
       {topic&&access&&!access.IsLocked?<><TopicHeading name={ar?topic.NameAr:topic.NameEn} icon={topic.Icon} count={topic.ProblemsCount} accent={accent} ar={ar}/><Practice key={categoryId} id={trackId} categoryId={categoryId} ar={ar}/></>:<p role="alert">{ar?'هذه الفئة غير متاحة لحسابك.':'This topic is unavailable for your account.'}</p>}
     </main>;
   }
