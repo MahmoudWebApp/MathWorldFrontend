@@ -181,8 +181,11 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
   // Optional forward-compatible geometry payload. Older API responses have no diagram.
   const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
   const embeddedDiagram = isGeometryScene(rawDiagram) ? rawDiagram : null;
-  const { data: fetchedDiagram } = useGetProblemDiagramQuery(problemId, {
-    skip: !problem || !!embeddedDiagram || !Number.isSafeInteger(problemId) || problemId <= 0,
+  // Only skip when the authorized detail explicitly confirms absence.
+  // Older servers and the admin editor retain the existing diagram request.
+  const noDiagram = isStudentProblem(problem) && problem.HasDiagram === false;
+  const { currentData: fetchedDiagram } = useGetProblemDiagramQuery(problemId, {
+    skip: !problem || noDiagram || !!embeddedDiagram || !Number.isSafeInteger(problemId) || problemId <= 0,
   });
   const [diagramOverride, setDiagramOverride] = useState<{ problemId: number; scene: unknown } | null>(null);
   const remoteDiagram = diagramOverride?.problemId === problemId
