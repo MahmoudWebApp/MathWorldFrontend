@@ -55,7 +55,7 @@ export function FavoritesProblemsPage() {
         <div className="flex flex-col items-center gap-4 text-red-500 dark:text-red-400 py-20">
           <AlertCircle className="h-12 w-12" />
           <p className="text-lg font-medium">{t('common.errorLoadingData')}</p>
-          <Button onClick={() => { void retryStage(); void retryFavorites(); }} variant="outline">
+          <Button onClick={() => { void retryStage(); if(stageId>0)void retryFavorites(); }} variant="outline">
             {t('common.retry')}
           </Button>
         </div>
