@@ -19,7 +19,7 @@ async function requestRecovery(path: string, body: object, locale: string, captc
     body: JSON.stringify(body),
   });
   const payload = await result.json().catch(() => null);
-  return { ok: result.ok && payload?.Success === true, data: payload?.Data, status: result.status, captchaFailed: payload?.Errors?.Captcha?.includes('CaptchaVerificationFailed') === true };
+  return { ok: result.ok && payload?.Success === true, data: payload?.Data, status: result.status, emailNotRegistered: payload?.Errors?.Email?.includes('RecoveryEmailNotRegistered') === true, invalidEmail: payload?.Errors?.Email?.includes('RecoveryInvalidEmail') === true, captchaFailed: payload?.Errors?.Captcha?.includes('CaptchaVerificationFailed') === true };
 }
 
 export function ForgotPasswordForm() {
@@ -37,6 +37,10 @@ export function ForgotPasswordForm() {
     try {
       const result = await requestRecovery('forgot-password', { Email: email.trim() }, ar ? 'ar' : 'en', captcha.token);
       if (result.ok && result.data?.Accepted === true) { setAccepted(true); }
+      else if (result.emailNotRegistered) setError(ar ? 'البريد الإلكتروني غير مستخدم في المنصة.' : 'This email is not registered on the platform.');
+      else if (result.invalidEmail) setError(ar ? 'أدخل بريداً إلكترونياً صالحاً.' : 'Enter a valid email address.');
+      else if (result.status === 503) setError(ar ? 'استعادة كلمة المرور غير متاحة حالياً. حاول لاحقاً.' : 'Password recovery is temporarily unavailable. Try again later.');
+      else if (result.captchaFailed) setError(ar ? 'تعذّر التحقق الأمني. أعد المحاولة.' : 'Security verification failed. Try again.');
       else setError(result.status === 429
         ? ar ? 'محاولات كثيرة. حاول بعد دقيقة.' : 'Too many requests. Try again in a minute.'
         : ar ? 'تعذّر إرسال الطلب. حاول مجدداً.' : 'Could not submit the request. Try again.');
