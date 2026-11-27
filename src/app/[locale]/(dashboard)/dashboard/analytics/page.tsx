@@ -227,16 +227,16 @@ export default function PremiumAnalyticsPage() {
         )}
       </div>
 
-      {canFilter&&premium&&j&&<section className="premium-report-actions flex flex-wrap items-center gap-4 rounded-xl border bg-card p-4">
-        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'النطاق':'Scope'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={validCategory?scope:"track"} onChange={e=>setScope(e.target.value)}>
+      {canFilter&&premium&&j&&<section className="premium-report-actions grid min-w-0 gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2">
+        <label className="flex min-w-0 flex-col gap-2 text-sm font-semibold">{ar?'النطاق':'Scope'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={validCategory?scope:"track"} onChange={e=>setScope(e.target.value)}>
           <option value="track">{ar?'الصف أو المساق الحالي':'Current grade or course'}</option>
           
           {j.Categories.map(c=><option key={c.CategoryId} value={'category:'+c.CategoryId}>{ar?c.NameAr:c.NameEn}</option>)}
         </select></label>
-        <label className="flex items-center gap-2 text-sm font-semibold">{ar?'الفترة':'Period'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={days} onChange={e=>setDays(Number(e.target.value))}>
+        <label className="flex min-w-0 flex-col gap-2 text-sm font-semibold">{ar?'الفترة':'Period'}<select disabled={!!pendingExport||preparingExport} className="mw-filter-field" value={days} onChange={e=>setDays(Number(e.target.value))}>
           <option value={0}>{ar?'كل الوقت':'All time'}</option>{[7,30,90,365].map(d=><option key={d} value={d}>{d} {ar?'يوم':'days'}</option>)}
         </select></label>
-        <p className="basis-full text-xs text-muted-foreground">{ar?'النقاط حسب تاريخ اكتسابها؛ دفتر الأخطاء يعرض الحالة الحالية. زمن الجلسات الموجهة غير مقاس.':'Points follow their original earn date; review errors show current state. Guided-session time is not measured.'}</p>
+        <p className="text-xs text-muted-foreground sm:col-span-2">{ar?'النقاط حسب تاريخ اكتسابها؛ دفتر الأخطاء يعرض الحالة الحالية. زمن الجلسات الموجهة غير مقاس.':'Points follow their original earn date; review errors show current state. Guided-session time is not measured.'}</p>
       </section>}
       {downloadError && !pendingExport && (
         <div role="alert" className="premium-report-actions rounded-xl border border-destructive/30 p-3 text-sm text-destructive">
@@ -365,7 +365,7 @@ export default function PremiumAnalyticsPage() {
                   : 'No attempts recorded yet. Start solving to populate your report.'}
               </p>
             ) : (
-              <div className="premium-report-table overflow-x-auto">
+              <div className="premium-report-table max-w-full overflow-x-auto">
                 <table className="w-full min-w-[660px] border-collapse text-sm">
                   <thead className="bg-muted/60 text-muted-foreground">
                     <tr>

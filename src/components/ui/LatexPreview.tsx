@@ -47,7 +47,7 @@ export function LatexPreview({
       <Component
         dir="ltr"
         className={cn(
-          block ? 'my-4 block text-center' : 'inline-block',
+          block ? 'my-4 block max-w-full overflow-x-auto text-center' : 'inline-block max-w-full overflow-x-auto align-middle',
           'rounded bg-destructive/10 px-1 font-mono text-sm text-destructive',
           className,
         )}
@@ -61,7 +61,7 @@ export function LatexPreview({
     <Component
       dir="ltr"
       className={cn(
-        block ? 'my-4 block overflow-x-auto text-center text-lg' : 'inline-block',
+        block ? 'my-4 block max-w-full overflow-x-auto text-center text-lg' : 'inline-block max-w-full overflow-x-auto align-middle',
         className,
       )}
       dangerouslySetInnerHTML={{ __html: html }}

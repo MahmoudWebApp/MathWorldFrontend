@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { Link, usePathname, useRouter } from "@/i18n/routing";
-import { useGetDailyChallengeQuery } from "@/store/api/stagesApi";
+import { useGetDailyChallengeQuery, useGetNextTrackProblemQuery, useGetTrackSelectionQuery } from "@/store/api/stagesApi";
 import type { RootState } from "@/store";
 import {
   type AdminProblemOption,
@@ -49,7 +49,6 @@ import { LockedPremiumDialog } from "@/components/premium/LockedPremiumDialog";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Button } from "@/components/ui/Button";
 import { LatexPreview } from "@/components/ui/LatexPreview";
-import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
 import { getStageAccent } from "@/lib/stageVisuals";
@@ -156,8 +155,6 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const isArabic = locale === "ar";
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const problemId = Number.parseInt(params.id, 10);
-  const trackId = Number(searchParams.get('trackId') ?? 0);
-  const fromTrack = learnerWorkspace && Number.isSafeInteger(trackId) && trackId > 0;
   const challengeStageId = Number(searchParams.get('stageId') ?? 0);
   const challengeDate = searchParams.get('daily') ?? '';
   const challengeIndex = Number(searchParams.get('step') ?? -1);
@@ -193,6 +190,17 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
     : isGeometryScene(remoteDiagram) ? remoteDiagram : embeddedDiagram;
   const studentProblem = isStudentProblem(problem) ? problem : null;
   const adminProblem = isAdminProblem(problem) ? problem : null;
+  const selectedTrack = useGetTrackSelectionQuery(undefined,{skip:!learnerWorkspace||!isAuthenticated||user?.Role!=='Student'||challengeRequested});
+  const trackId = Number(selectedTrack.currentData?.TrackId ?? 0);
+  const requestedTrackId = Number(searchParams.get('trackId') ?? 0);
+  const fromTrack = learnerWorkspace && Number.isSafeInteger(trackId) && trackId>0 && (!requestedTrackId||requestedTrackId===trackId);
+  const trackCategoryId = Number(studentProblem?.CategoryId ?? 0);
+  const requestedCategoryId = Number(searchParams.get('categoryId') ?? 0);
+  const scopedPractice = fromTrack && !challengeRequested && !!studentProblem && Number.isSafeInteger(trackCategoryId) && trackCategoryId>0 && (!requestedCategoryId||requestedCategoryId===trackCategoryId);
+  const nextQuery = useGetNextTrackProblemQuery({id:trackId,categoryId:trackCategoryId,afterProblemId:problemId},{skip:!scopedPractice||!Number.isSafeInteger(problemId)||problemId<=0});
+  const nextPractice = !nextQuery.isError && nextQuery.currentData?.HasNext && nextQuery.currentData.TrackId===trackId && nextQuery.currentData.CategoryId===trackCategoryId && nextQuery.currentData.Problem?.CategoryId===trackCategoryId ? nextQuery.currentData.Problem : null;
+  const nextPracticeUrl = nextPractice && nextPractice.Id!==problemId ? '/dashboard/problems/'+nextPractice.Id+'?trackId='+trackId+'&categoryId='+trackCategoryId+(nextPractice.RequiresRetry?'&retry=1':'') : null;
+  const trackBackUrl = scopedPractice ? '/dashboard/categories/'+trackId+'/'+trackCategoryId : '/dashboard/categories';
 
 
   const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
@@ -250,6 +258,17 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
     }
   }, [studentProblem, localAnswerResult, retryMode]);
 
+  const autoRetryStarted=useRef(false);
+  useEffect(()=>{
+    if(searchParams.get('retry')!=='1'||!studentProblem?.CanRetry||!studentProblem.IsInErrorNotebook||studentProblem.IsSolved||autoRetryStarted.current)return;
+    autoRetryStarted.current=true;
+    setRetryMode(true);
+    setSubmissionDone(false);
+    setLocalAnswerResult(null);
+    setSelectedOptionId(null);
+    setActiveTab("question");
+    attemptStartedAtRef.current=Date.now();
+  },[searchParams,studentProblem]);
   useEffect(() => {
     if (!localAnswerResult || retryMode) {
       return;
@@ -495,6 +514,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
       setSubmissionDone(true);
       setRetryMode(false);
       await refetchProblem();
+      if(scopedPractice)void nextQuery.refetch();
 
     } catch (submitFailure) {
       const normalized = submitFailure as {
@@ -543,56 +563,6 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
 
     return "idle";
   }
-  function getBreadcrumbProblemLabel(text: string): string {
-    const superscripts: Record<string, string> = {
-      "0": "⁰",
-      "1": "¹",
-      "2": "²",
-      "3": "³",
-      "4": "⁴",
-      "5": "⁵",
-      "6": "⁶",
-      "7": "⁷",
-      "8": "⁸",
-      "9": "⁹",
-      "+": "⁺",
-      "-": "⁻",
-    };
-
-    const toSuperscript = (value: string) =>
-      value
-        .split("")
-        .map((character) => superscripts[character] ?? character)
-        .join("");
-
-    const normalized = text
-      .replace(/\$\$/g, "")
-      .replace(/\$/g, "")
-      .replace(/\\text\{([^{}]*)\}/g, "$1")
-      .replace(/\\times/g, "×")
-      .replace(/\\cdot/g, "·")
-      .replace(/\\div/g, "÷")
-      .replace(/\\pm/g, "±")
-      .replace(/\\neq/g, "≠")
-      .replace(/\\leq?/g, "≤")
-      .replace(/\\geq?/g, "≥")
-      .replace(/\\left|\\right/g, "")
-      .replace(/\^\{([0-9+-]+)\}/g, (_, exponent: string) =>
-        toSuperscript(exponent),
-      )
-      .replace(/\^([0-9])/g, (_, exponent: string) =>
-        toSuperscript(exponent),
-      )
-      .replace(/[{}]/g, "")
-      .replace(/\\[a-zA-Z]+/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const maxLength = 54;
-    return normalized.length > maxLength
-      ? `${normalized.slice(0, maxLength - 1).trimEnd()}…`
-      : normalized;
-  }
   if (isLoading) {
     return (
       <div className="container mx-auto animate-pulse px-4 py-8 md:px-16 lg:px-24">
@@ -615,7 +585,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
           {t("errors.problemNotFound")}
         </p>
         <Link
-          href={fromTrack ? "/dashboard/categories" : learnerWorkspace ? "/dashboard/problems" : "/problems"}
+          href={fromTrack ? trackBackUrl : learnerWorkspace ? "/dashboard/problems" : "/problems"}
           className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
         >
           <DirectionalArrow direction="back" />
@@ -626,7 +596,6 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   }
 
   const {
-    title,
     questionText,
     categoryId,
     categoryName,
@@ -652,7 +621,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             ? [
                 {
                   label: stageName,
-                  href: fromTrack ? "/dashboard/categories" : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
+                  href: fromTrack ? trackBackUrl : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`,
                 },
               ]
             : []),
@@ -660,12 +629,12 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             ? [
                 {
                   label: categoryName,
-                  href: fromTrack ? "/dashboard/categories" : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
+                  href: fromTrack ? trackBackUrl : `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}&categoryId=${categoryId}`,
                 },
               ]
             : []),
           {
-            label: getBreadcrumbProblemLabel(title),
+            label: isArabic ? 'المسألة' : 'Problem',
             truncate: true,
           },
         ]}
@@ -673,12 +642,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
 
       <div className="mb-8 flex items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">
-          <h1
-            className="mb-3 break-words text-start text-xl font-bold leading-snug sm:text-2xl"
-            style={{ color: stageAccent }}
-          >
-            <ProblemTitle text={title} className="text-inherit"/>
-          </h1>
+          <h1 className="sr-only">{isArabic ? 'نص المسألة' : 'Problem statement'}</h1>
 
           <div
             className="flex flex-wrap items-center justify-start gap-2"
@@ -1017,8 +981,11 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                           </Link>}
                         </div>
                       )}
+                      {!inDailyChallenge && scopedPractice && isCorrect && !retryMode && <div className="mt-4">
+                        {nextQuery.isFetching ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'جارٍ تجهيز المسألة التالية…':'Preparing the next problem…'}</p> : nextQuery.isError ? <Button variant="outline" onClick={()=>void nextQuery.refetch()}>{isArabic?'إعادة تحميل المسألة التالية':'Retry loading the next problem'}</Button> : nextPracticeUrl ? <Link href={nextPracticeUrl} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{isArabic?'المسألة التالية':'Next problem'}<DirectionalArrow direction="forward"/></Link> : nextQuery.currentData?.HasNext===false ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.'}</p> : null}
+                      </div>}
                       <Link
-                        href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? '/dashboard/categories' : categoryId != null
+                        href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? trackBackUrl : categoryId != null
                           ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
                           : stageId != null
                             ? `${learnerWorkspace ? "/dashboard" : ""}/problems?stageId=${stageId}`
@@ -1109,11 +1076,11 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
               <CheckCircle className="h-5 w-5" />
               {t("problem.solution")}
             </h3>
-            {structuredSolution ? <div className="space-y-4">
+            {solutionText ? <RichText text={solutionText} isArabic={isArabic} /> : structuredSolution ? <div className="space-y-4">
               <section><h4 className="font-bold">{isArabic?'الفكرة والقانون':'Idea and formula'}</h4><RichText text={structuredSolution.Idea} isArabic={isArabic}/><LatexPreview latex={structuredSolution.FormulaLatex} block/></section>
               <section><h4 className="font-bold">{isArabic?'خطوات الحل':'Solution steps'}</h4><ol className="list-decimal space-y-2 ps-6">{structuredSolution.Steps.map((step,i)=><li key={i}><RichText text={step} isArabic={isArabic}/></li>)}</ol></section>
               {([[isArabic?'التعويض':'Substitution',structuredSolution.Substitution],[isArabic?'النتيجة والوحدة':'Result and unit',structuredSolution.Result+' '+structuredSolution.Unit],[isArabic?'التحقق':'Verification',structuredSolution.Verification],[isArabic?'الخطأ الشائع':'Common error',structuredSolution.CommonError]] as const).map(([label,value])=><section key={label}><h4 className="font-bold">{label}</h4><RichText text={value} isArabic={isArabic}/></section>)}
-            </div>:<RichText text={solutionText} isArabic={isArabic} />}
+            </div>:null}
           </div>
         )}
 

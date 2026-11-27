@@ -90,6 +90,17 @@ function Wizard({initial,initialStage=0,initialCategory=0,initialTrack=0,admin,c
   const steps=ar?['التصنيف','السؤال','الخيارات','التلميحات','طريقة الحل','فيديو الشرح','المعاينة والمراجعة']:['Classification','Question','Options','Hints','Solution','Explanation video','Preview and review'];
   function patch(p:Partial<EditorialContent>){setContent(c=>({...c,...p}));setDirty(true);setMessage('');}
   function patchSolution(p:Partial<EditorialSolution>){patch({Solution:{...content.Solution,...p}});}
+  function flexibleExplanation():Bilingual {
+    const v=content.Solution;
+    if(v.ManualExplanation)return v.ManualExplanation;
+    function flatten(lang:'Ar'|'En'){
+      const formula=v.FormulaLatex.trim();
+      const result=[v.Result[lang],v.Unit[lang]].filter(Boolean).join(' ');
+      return [v.Idea[lang],formula?'$'+formula+'$':'',...v.Steps.map((step,i)=>(step[lang].trim()?String(i+1)+'. '+step[lang]:'')),v.Substitution[lang],result,v.Verification[lang],v.CommonError[lang]].filter(x=>x.trim()).join('\n\n');
+    }
+    const flat={Ar:flatten('Ar'),En:flatten('En')};
+    return flat.Ar.trim()||flat.En.trim()?flat:{Ar:initial?.LegacySolutionAr??'',En:initial?.LegacySolutionEn??''};
+  }
   function failure(e:unknown){
     const data=(e as {data?:{Message?:string;message?:string;Errors?:string[];errors?:string[]|Record<string,string[]>}})?.data;
     const details=data?.Errors??data?.errors;
@@ -151,8 +162,8 @@ function Wizard({initial,initialStage=0,initialCategory=0,initialTrack=0,admin,c
             onApply={Hints => patch({Hints})}/> : null}
         <p className="text-sm text-muted-foreground">{ar?'لا تكتب الإجابة النهائية ضمن التلميحات.':'Do not reveal the final answer in hints.'}</p>{content.Hints.map((h,i)=><PairField key={i} label={i===0?(ar?'تلميح القانون أو الفكرة':'Rule or concept hint'):(ar?'تلميح بداية الخطوة':'First-step hint')} value={h} onChange={v=>patch({Hints:content.Hints.map((x,j)=>j===i?v:x)})}/>)}</>}
       {step===4&&<>
-        {admin&&!reviewOnly&&(!initial||initial.SourceProblemId)&&<div className="flex flex-wrap gap-2"><button type="button" className={btn+' '+(manual?'bg-primary text-primary-foreground':'')} onClick={()=>patchSolution({ManualExplanation:content.Solution.ManualExplanation??(initial?.LegacySolutionAr&&initial.LegacySolutionEn?{Ar:initial.LegacySolutionAr,En:initial.LegacySolutionEn}:pair()),Steps:[]})}>{ar?'شرح مرن':'Flexible solution'}</button><button type="button" className={btn+' '+(!manual?'bg-primary text-primary-foreground':'')} onClick={()=>patchSolution({ManualExplanation:null,Steps:content.Solution.Steps.length?content.Solution.Steps:[pair()]})}>{ar?'حل مفصّل منظم':'Structured solution'}</button></div>}
-        {manual&&content.Solution.ManualExplanation?<PairField math label={ar?'طريقة الحل':'Solution explanation'} value={content.Solution.ManualExplanation} onChange={v=>patchSolution({ManualExplanation:v})}/>:<>
+        {admin&&!reviewOnly&&(!initial||initial.SourceProblemId)&&<div className="flex flex-wrap gap-2"><button type="button" className={btn+' '+(manual?'bg-primary text-primary-foreground':'')} onClick={()=>patchSolution({ManualExplanation:flexibleExplanation(),Steps:[]})}>{ar?'شرح مرن':'Flexible solution'}</button><button type="button" className={btn+' '+(!manual?'bg-primary text-primary-foreground':'')} onClick={()=>patchSolution({ManualExplanation:null,Steps:content.Solution.Steps.length?content.Solution.Steps:[pair()]})}>{ar?'حل مفصّل منظم':'Structured solution'}</button></div>}
+        {manual&&content.Solution.ManualExplanation?<PairField math label={ar?'الحل التفصيلي (نص ومعادلات)':'Detailed solution (text and equations)'} value={content.Solution.ManualExplanation} onChange={v=>patchSolution({ManualExplanation:v})}/>:<>
         {editable&&draft?.SourceProblemId&&content.Options.filter(o=>o.IsCorrect).length===1&&
           !content.Solution.Idea.Ar.trim()&&!content.Solution.Idea.En.trim()&&
           content.Solution.Steps.every(s=>!s.Ar.trim()&&!s.En.trim())&&

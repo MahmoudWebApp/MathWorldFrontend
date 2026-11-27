@@ -339,7 +339,7 @@ function NavbarContent() {
           {mobileMenuOpen && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }} id="mathworld-mobile-menu"
-              className="max-h-[calc(100dvh-4rem)] space-y-2 overflow-y-auto border-t bg-background/95 px-4 py-4 backdrop-blur-xl lg:hidden">
+              className="max-h-[calc(100dvh-4rem)] space-y-2 overflow-y-auto overscroll-contain border-t bg-background/95 px-4 py-4 backdrop-blur-xl lg:hidden">
               <p className="px-3 text-xs font-bold text-muted-foreground">
                 {adminArea ? (locale === 'ar' ? 'قائمة الإدارة' : 'Admin menu')
                   : supervisorArea ? (locale === 'ar' ? 'مساحة المشرف' : 'Supervisor workspace')
@@ -376,7 +376,7 @@ function NavbarContent() {
                 <MathWorldLoading compact />
               ) : isAuthenticated && user ? (
                 <>
-                  <div className="mt-2 border-t px-4 py-3 text-xs text-muted-foreground">{user.Email}</div>
+                  <div className="mt-2 break-all border-t px-4 py-3 text-xs text-muted-foreground">{user.Email}</div>
                   <button type="button" onClick={() => { setMobileMenuOpen(false); void handleLogout(); }}
                     className="flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-destructive hover:bg-destructive/10">
                     <Logout className="h-5 w-5" />{t('nav.logout')}

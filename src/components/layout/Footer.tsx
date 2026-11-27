@@ -5,10 +5,6 @@ import { useTranslations, useLocale } from 'next-intl';
 import { ExternalLink } from 'lucide-react';
 import { useGetPublicBrandQuery, publishedSocialLinks, defaultSocialLinks } from '@/store/api/platformBrandApi';
 import { socialLinks } from './socialLinks';
-const socialTints:Record<string,string>={
-  youtube:'bg-red-600 text-white',facebook:'bg-blue-600 text-white',instagram:'bg-gradient-to-br from-amber-500 via-pink-600 to-violet-700 text-white',
-  tiktok:'bg-neutral-950 text-white',linkedin:'bg-sky-700 text-white',github:'bg-neutral-800 text-white','x (twitter)':'bg-neutral-950 text-white',x:'bg-neutral-950 text-white',twitter:'bg-neutral-950 text-white'
-};
 import { motion } from 'framer-motion';
 import { BrandLogo } from './BrandLogo';
 
@@ -79,10 +75,10 @@ export function Footer() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.06, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group flex min-h-12 min-w-0 items-center gap-2 rounded-xl border bg-card px-2.5 py-2 text-sm font-semibold text-foreground shadow-sm transition-[box-shadow,border-color] hover:border-primary/40 hover:shadow-md"
+                  className="group grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                   aria-label={ar ? social.LabelAr : social.LabelEn}
                 >
-                  <span className={"grid h-8 w-8 shrink-0 place-items-center rounded-lg "+(socialTints[social.Platform.toLowerCase()]??'bg-primary/10 text-primary')}>{socialLinks.find(item => item.name.toLowerCase() === social.Platform.toLowerCase())?.icon ?? <ExternalLink className="h-4 w-4" />}</span><span className="min-w-0 break-words">{ar?social.LabelAr:social.LabelEn}</span>
+                  {socialLinks.find(item => item.name.toLowerCase() === social.Platform.toLowerCase())?.icon ?? <ExternalLink className="h-4 w-4" />}
                 </motion.a>
               ))}
             </div>}
