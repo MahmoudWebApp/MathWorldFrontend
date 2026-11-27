@@ -95,7 +95,8 @@ if(process.argv.includes('--api')){
         const email=page.locator('input[type=email]');
         await email.fill('not-registered@example.invalid');
         const submit=page.getByRole('button',{name:locale==='ar'?'طلب رابط الاستعادة':'Request recovery link',exact:true});
-        if(await submit.isEnabled()){
+        assert(await submit.isEnabled(),'Local recovery fixture must be ready without external CAPTCHA');
+        {
          await submit.click();
          await page.getByRole('alert').filter({hasText:locale==='ar'?'البريد الإلكتروني غير مستخدم في المنصة.':'This email is not registered on the platform.'}).waitFor({timeout:10000});
          assert.equal(await email.inputValue(),'not-registered@example.invalid');
