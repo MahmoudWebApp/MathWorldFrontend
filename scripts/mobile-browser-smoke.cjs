@@ -44,9 +44,16 @@ if(process.argv.includes('--api')){
  createServer((req,res)=>{
   res.setHeader('Access-Control-Allow-Origin','*');
   res.setHeader('Access-Control-Allow-Headers','*');
-  res.setHeader('Access-Control-Allow-Methods','GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');
   res.setHeader('Content-Type','application/json');
   if(req.method==='OPTIONS'){res.writeHead(204);return res.end()}
+  if(req.method==='POST'&&new URL(req.url,'http://localhost').pathname==='/api/auth/forgot-password'){
+   let body='';req.on('data',chunk=>body+=chunk);req.on('end',()=>{
+    let email;try{email=JSON.parse(body).Email}catch{}
+    if(email==='not-registered@example.invalid'){res.writeHead(404);res.end(JSON.stringify({Success:false,Errors:{Email:['RecoveryEmailNotRegistered']}}));}
+    else{res.writeHead(202);res.end(JSON.stringify({Success:true,Data:{Accepted:true}}));}
+   });return;
+  }
   if(req.method!=='GET'){res.writeHead(405);return res.end(JSON.stringify({Message:'Fixture is read-only'}))}
   const data=fixture(req);
   res.writeHead(data===undefined?503:200);
@@ -84,6 +91,17 @@ if(process.argv.includes('--api')){
        const size=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
        assert(size.scroll<=size.width+2,'Horizontal overflow '+JSON.stringify(size));
        assert.equal(pageErrors.length,0,pageErrors.join('; '));
+       if(path==='/forgot-password'){
+        const email=page.locator('input[type=email]');
+        await email.fill('not-registered@example.invalid');
+        const submit=page.getByRole('button',{name:locale==='ar'?'طلب رابط الاستعادة':'Request recovery link',exact:true});
+        if(await submit.isEnabled()){
+         await submit.click();
+         await page.getByRole('alert').filter({hasText:locale==='ar'?'البريد الإلكتروني غير مستخدم في المنصة.':'This email is not registered on the platform.'}).waitFor({timeout:10000});
+         assert.equal(await email.inputValue(),'not-registered@example.invalid');
+         console.log('PASS recovery unknown email',locale,width,scheme);
+        }
+       }
        if(path==='/dashboard/categories'){
         const card=page.getByRole('link',{name:locale==='ar'?topic.NameAr:topic.NameEn,exact:true});
         await card.waitFor({timeout:10000});
