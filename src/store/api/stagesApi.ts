@@ -99,7 +99,7 @@ export interface CreateStageRequest {
 export const stagesApi = createApi({
   reducerPath: 'stagesApi',
   baseQuery,
-  tagTypes: ['Stage', 'LearningJourney', 'DailyChallenge','LearningTrack'],
+  tagTypes: ['Stage', 'LearningJourney', 'DailyChallenge','LearningTrack','TrackPracticeState'],
   endpoints: (builder) => ({
     getPublishedTracks:builder.query<TrackCatalog,number>({
       query:id=>'/stages/'+id+'/tracks',providesTags:['LearningTrack'],
@@ -114,17 +114,17 @@ export const stagesApi = createApi({
       query:body=>({url:'/users/learning-track',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack','LearningJourney','DailyChallenge'],
     }),
     getTrackContinue:builder.query<{TrackId:number;Problem:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}|null},void>({
-      query:()=>'/users/learning-tracks/continue',providesTags:['LearningTrack'],
+      query:()=>'/users/learning-tracks/continue',providesTags:['LearningTrack','TrackPracticeState'],
     }),
     getTrackProgress:builder.query<TrackProgress,number>({
-      query:id=>'/users/learning-tracks/'+id+'/progress',providesTags:['LearningTrack'],
+      query:id=>'/users/learning-tracks/'+id+'/progress',providesTags:['LearningTrack','TrackPracticeState'],
     }),
     getNextTrackProblem:builder.query<{TrackId:number;CategoryId:number;HasNext:boolean;Problem?:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string;RequiresRetry:boolean}|null},{id:number;categoryId:number;afterProblemId:number}>({
       query:({id,categoryId,afterProblemId})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/next',params:{afterProblemId}}),
-      providesTags:['LearningTrack'],
+      providesTags:['LearningTrack','TrackPracticeState'],
     }),
     getTrackPractice:builder.query<TrackPractice,{id:number;categoryId:number;page:number;q?:string;hideSolved?:boolean}>({
-      query:({id,categoryId,page,q,hideSolved})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page,pageSize:5,q:q?.trim()||undefined,hideSolved:hideSolved||undefined}}),providesTags:['LearningTrack'],
+      query:({id,categoryId,page,q,hideSolved})=>({url:'/users/learning-tracks/'+id+'/categories/'+categoryId+'/problems',params:{page,pageSize:5,q:q?.trim()||undefined,hideSolved:hideSolved||undefined}}),providesTags:['LearningTrack','TrackPracticeState'],
     }),
     getAdminTracks:builder.query<{Enabled:boolean;Items:TrackListRow[]},void>({
       query:()=>'/admin/learning-tracks',providesTags:['LearningTrack'],
