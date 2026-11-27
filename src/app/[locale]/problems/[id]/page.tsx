@@ -182,7 +182,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
   const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
   const embeddedDiagram = isGeometryScene(rawDiagram) ? rawDiagram : null;
   const { data: fetchedDiagram } = useGetProblemDiagramQuery(problemId, {
-    skip: !problem || !!embeddedDiagram || !Number.isSafeInteger(problemId) || problemId <= 0,
+    skip: !problem || !!embeddedDiagram || (isStudentProblem(problem) && problem.HasDiagram === false) || !Number.isSafeInteger(problemId) || problemId <= 0,
   });
   const [diagramOverride, setDiagramOverride] = useState<{ problemId: number; scene: unknown } | null>(null);
   const remoteDiagram = diagramOverride?.problemId === problemId
