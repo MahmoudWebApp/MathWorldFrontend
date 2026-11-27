@@ -161,7 +161,7 @@ export default function StudentCategoriesPage() {
               ? (ar ? 'جميع فئات مرحلتك متاحة.' : 'All topics in your stage are available.')
               : (ar ? 'الفئات المفتوحة جاهزة للتعلّم. اضغط القفل لمعرفة مميزات Premium.' : 'Practice unlocked topics; tap a lock to explore Premium benefits.')}
           </p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {[...access.Categories].sort((a,b)=>Number(unlocked.has(b.Id))-Number(unlocked.has(a.Id))||a.Order-b.Order||a.Id-b.Id).map(category => {
               const name = ar ? category.NameAr : category.NameEn;
               const description = ar ? category.DescriptionAr : category.DescriptionEn;
