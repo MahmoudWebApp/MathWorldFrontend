@@ -1,4 +1,5 @@
 'use client';
+import { ProblemTitle } from '@/components/problems/ProblemTitle';
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -371,7 +372,7 @@ export default function AdminLearnerDetailPage() {
                       <tbody>{attemptData.Attempts.map((attempt) => (
                         <tr key={attempt.Id} className="border-t border-border">
                           <td className="max-w-[250px] px-4 py-3">
-                            <p className="font-medium">{ar ? attempt.TitleAr : attempt.TitleEn}</p>
+                            <p className="font-medium min-w-0 break-words"><ProblemTitle text={ar ? attempt.TitleAr : attempt.TitleEn}/></p>
                             <p className="mt-1 text-xs text-muted-foreground">#{attempt.ProblemId}</p>
                           </td>
                           <td className="px-4 py-3">
