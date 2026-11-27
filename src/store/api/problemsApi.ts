@@ -31,6 +31,7 @@ export type MasteryStatus = 'New' | 'NeedsReview' | 'Practicing' | 'Mastered';
 
 export interface SolutionStructure {Idea:string;FormulaLatex:string;Steps:string[];Substitution:string;Result:string;Unit:string;Verification:string;CommonError:string}
 export interface ProblemForStudent {
+  HasDiagram?: boolean;
   PracticeScopeId?: number|null;
   SolutionStructure?:SolutionStructure|null;
   Id: number;
