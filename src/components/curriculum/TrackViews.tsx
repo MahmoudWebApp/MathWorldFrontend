@@ -1,4 +1,6 @@
 'use client';
+import {ProblemCard} from '@/components/problems/ProblemCard';
+import {Pagination} from '@/components/ui/Pagination';
 import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {useEffect,useState} from 'react';
@@ -72,8 +74,10 @@ function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
     {isFetching&&!data&&<MathWorldLoading compact mode="filter"/>}
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسائل.':'Could not load problems.'} <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&<>
-      {data.Items.map(p=><Link key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id+'&categoryId='+categoryId+'&page='+page} className="flex items-center justify-between gap-2 rounded-xl border mw-topic-surface p-3 text-sm"><ProblemTitle text={ar?p.TitleAr:p.TitleEn}/><span className={p.IsSolved?'text-emerald-600':'text-amber-600'}>{p.IsSolved?(ar?'محلولة':'Solved'):(ar?'غير محلولة':'Unsolved')}</span></Link>)}
-      {data.Total>data.PageSize&&<div className="flex items-center gap-2"><button className={btn} disabled={page<=1} onClick={()=>setPage(p=>p-1)}>{ar?'السابق':'Previous'}</button><span>{page}</span><button className={btn} disabled={page*data.PageSize>=data.Total} onClick={()=>setPage(p=>p+1)}>{ar?'التالي':'Next'}</button></div>}
+      {data.Items.map(p=><ProblemCard key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id+'&categoryId='+categoryId+'&page='+page}
+        problem={{Id:p.Id,Title:ar?p.TitleAr:p.TitleEn,StageId:p.StageId,StageName:ar?p.StageNameAr:p.StageNameEn,CategoryId:p.CategoryId,CategoryName:(ar?p.CategoryNameAr:p.CategoryNameEn)??'',Points:p.Points,ViewsCount:0,RequiresLogin:true,IsSolved:p.IsSolved,HasAttempted:p.HasAttempted,IsFavorite:p.IsFavorite}}/>)}
+      {data.Total>data.PageSize&&<Pagination page={page} pageSize={data.PageSize} total={data.Total} onPageChange={setPage} disabled={isFetching}/>}
+
     </>}
   </div>;
 }
