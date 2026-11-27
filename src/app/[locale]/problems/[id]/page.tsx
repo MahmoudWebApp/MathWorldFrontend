@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   BookOpen,
   CheckCircle,
@@ -21,7 +21,7 @@ import {
 
 import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { useGetDailyChallengeQuery, useGetNextTrackProblemQuery, useGetTrackSelectionQuery } from "@/store/api/stagesApi";
-import type { RootState } from "@/store";
+import type { AppDispatch, RootState } from "@/store";
 import {
   type AdminProblemOption,
   type AnswerResult,
@@ -31,6 +31,7 @@ import {
   type ProblemDetail,
   type ProblemForPublic,
   type ProblemForStudent,
+  problemsApi,
   useGetProblemDiagramQuery,
   useGetProblemQuery,
   useGetProblemHintsQuery,
@@ -38,7 +39,6 @@ import {
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
-  useCheckFavoriteQuery,
   useToggleFavoriteMutation,
   useGetStudentEntitlementQuery,
 } from "@/store/api/usersApi";
@@ -150,6 +150,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const learnerWorkspace = usePathname().startsWith("/dashboard/");
   const t = useTranslations();
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const searchParams = useSearchParams();
   const locale = useLocale();
   const isArabic = locale === "ar";
@@ -179,7 +180,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const rawDiagram: unknown = problem && "Diagram" in problem ? problem.Diagram : null;
   const embeddedDiagram = isGeometryScene(rawDiagram) ? rawDiagram : null;
   const { data: fetchedDiagram } = useGetProblemDiagramQuery(problemId, {
-    skip: !Number.isSafeInteger(problemId) || problemId <= 0,
+    skip: !problem || !!embeddedDiagram || !Number.isSafeInteger(problemId) || problemId <= 0,
   });
   const [diagramOverride, setDiagramOverride] = useState<{ problemId: number; scene: unknown } | null>(null);
   const remoteDiagram = diagramOverride?.problemId === problemId
@@ -203,9 +204,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const trackBackUrl = scopedPractice ? '/dashboard/categories/'+trackId+'/'+trackCategoryId : '/dashboard/categories';
 
 
-  const { data: favoriteData } = useCheckFavoriteQuery(problemId, {
-    skip: !isAuthenticated || Number.isNaN(problemId),
-  });
+  // The detail response already contains the authoritative favorite state.
+  const [favoriteBusy,setFavoriteBusy]=useState(false);
 
   const { data: entitlement } = useGetStudentEntitlementQuery(undefined, {
     skip: !isAuthenticated || !studentProblem,
@@ -295,6 +295,14 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
     : -1;
   const nextChallengeProblem = nextChallengeIndex >= 0
     ? dailyChallenge?.Problems[nextChallengeIndex] : undefined;
+  const warmProblemId = nextPractice?.Id ?? nextChallengeProblem?.Id;
+  useEffect(()=>{
+    // Only warm one server-selected successor; never prefetch a locked category.
+    // RTK Query deduplicates this with the eventual detail request. The route
+    // still revalidates before enabling answer submission.
+    if(!isAuthenticated||user?.Role!=='Student'||!studentProblem||!warmProblemId||warmProblemId===problemId||nextQuery.isFetching)return;
+    dispatch(problemsApi.util.prefetch('getProblem',{Id:warmProblemId,locale},{ifOlderThan:15}));
+  },[dispatch,isAuthenticated,user?.Role,user?.Id,studentProblem?.Id,warmProblemId,problemId,locale,nextQuery.isFetching]);
   const nextChallengeUrl = nextChallengeProblem
     ? '/dashboard/problems/' + nextChallengeProblem.Id +
       '?daily=' + challengeDate + '&stageId=' + challengeStageId +
@@ -437,26 +445,28 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
   const showVideoTab = !!youtubeUrl &&
     (showResult || !!adminProblem);
   const isFavorite =
-    favoriteData?.IsFavorite ?? studentProblem?.IsFavorite ?? false;
+    studentProblem?.IsFavorite ?? false;
 
   function getMasteryLabel(status: MasteryStatus) {
     return t(`problem.mastery.${status}`);
   }
 
   async function handleFavorite() {
-    if (!problem) {
+    if (!problem || !studentProblem || favoriteBusy) {
       return;
     }
-
+    setFavoriteBusy(true);
     try {
-      await toggleFavorite({
+      const confirmed = await toggleFavorite({
         ProblemId: problem.Id,
         IsFavorite: !isFavorite,
       }).unwrap();
-      await refetchProblem();
+      dispatch(problemsApi.util.updateQueryData("getProblem",{Id:problemId,locale},draft=>{
+        if(isStudentProblem(draft))draft.IsFavorite=confirmed.IsFavorite;
+      }));
     } catch (favoriteError) {
       console.error("Failed to update favorite:", favoriteError);
-    }
+    } finally {setFavoriteBusy(false);}
   }
 
   function handleStartRetry() {
@@ -513,8 +523,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
       setSelectedOptionId(result.SelectedOptionId);
       setSubmissionDone(true);
       setRetryMode(false);
-      await refetchProblem();
-      if(scopedPractice)void nextQuery.refetch();
+      // submitAnswer already invalidates the problem and track queries on success.
+      // Do not queue a duplicate refresh or block the confirmed result on it.
 
     } catch (submitFailure) {
       const normalized = submitFailure as {
@@ -684,6 +694,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
             variant="ghost"
             size="icon"
             onClick={handleFavorite}
+            disabled={favoriteBusy}
             aria-label={
               isFavorite
                 ? t("favorites.removeFromFavorites")
