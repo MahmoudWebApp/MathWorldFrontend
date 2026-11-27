@@ -1,4 +1,5 @@
 'use client';
+import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import {ProblemCard} from '@/components/problems/ProblemCard';
 import {Pagination} from '@/components/ui/Pagination';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
