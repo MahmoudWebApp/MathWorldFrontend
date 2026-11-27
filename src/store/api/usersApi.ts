@@ -1017,7 +1017,7 @@ export const usersApi = createApi({
             import('./problemsApi'), import('./stagesApi'),
           ]);
           dispatch(problemsApi.util.invalidateTags(['Problem', 'Category', 'AttemptHistory']));
-          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge','LearningTrack']));
+          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge', 'TrackPracticeState']));
         } catch { /* Failed resets must not update any cache. */ }
       },
     }),
