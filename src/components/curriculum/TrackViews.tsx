@@ -1,11 +1,10 @@
 'use client';
 import {ProblemCard} from '@/components/problems/ProblemCard';
 import {Pagination} from '@/components/ui/Pagination';
-import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import {useEffect,useState} from 'react';
 import {motion} from 'framer-motion';
-import {BookOpenText, Calculator, ListChecks, LockKeyhole, RotateCcw, GraduationCap} from 'lucide-react';
+import {BookOpenText, Calculator, ListChecks, LockKeyhole, RotateCcw, GraduationCap, Search, X} from 'lucide-react';
 import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
 import type {CSSProperties} from 'react';
 import {getStageAccent} from '@/lib/stageVisuals';
@@ -69,11 +68,29 @@ export function PublicTrackCatalog({stageId}:{stageId:number}){
 }
 function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
   const [page,setPage]=useState(1);
-  const {currentData:data,isFetching,isError,refetch}=useGetTrackPracticeQuery({id,categoryId,page},{refetchOnMountOrArgChange:true});
-  return <div className="space-y-2">
-    {isFetching&&!data&&<MathWorldLoading compact mode="filter"/>}
+  const [input,setInput]=useState('');
+  const [q,setQ]=useState('');
+  const [hideSolved,setHideSolved]=useState(false);
+  useEffect(()=>{
+    const timer=window.setTimeout(()=>{setQ(input.trim());setPage(1);},input.trim()?350:0);
+    return ()=>window.clearTimeout(timer);
+  },[input]);
+  const pending=input.trim()!==q;
+  const {currentData:data,isFetching,isError,refetch}=useGetTrackPracticeQuery({id,categoryId,page,q,hideSolved},{refetchOnMountOrArgChange:true});
+  useEffect(()=>{if(data&&!pending&&page>Math.max(1,Math.ceil(data.Total/data.PageSize)))setPage(Math.max(1,Math.ceil(data.Total/data.PageSize)));},[data,page,pending]);
+  return <div className="space-y-3">
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="relative min-w-0 flex-1 basis-52">
+        <Search size={19} aria-hidden="true" className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
+        <input type="search" maxLength={120} value={input} onChange={e=>setInput(e.target.value)} aria-label={ar?'البحث في مسائل الفئة':'Search topic problems'} placeholder={ar?'ابحث في مسائل الفئة…':'Search topic problems…'} className="min-h-12 w-full rounded-xl border bg-card ps-10 pe-10 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary"/>
+        {input&&<button type="button" aria-label={ar?'مسح البحث':'Clear search'} onClick={()=>{setInput('');setQ('');setPage(1);}} className="absolute end-1 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg"><X size={17}/></button>}
+      </div>
+      <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={hideSolved} onChange={e=>{setHideSolved(e.target.checked);setPage(1);}}/>{ar?'إخفاء المحلولة':'Hide solved'}</label>
+    </div>
+    {(pending||(isFetching&&!data))&&<MathWorldLoading compact mode="filter"/>}
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسائل.':'Could not load problems.'} <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
-    {data&&!isError&&<>
+    {data&&!isError&&!pending&&<>
+      {data.Items.length===0&&<p role="status" className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">{ar?'لا توجد مسائل مطابقة':'No matching problems'}</p>}
       {data.Items.map(p=><ProblemCard key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id+'&categoryId='+categoryId+'&page='+page}
         problem={{Id:p.Id,Title:ar?p.TitleAr:p.TitleEn,StageId:p.StageId,StageName:ar?p.StageNameAr:p.StageNameEn,CategoryId:p.CategoryId,CategoryName:(ar?p.CategoryNameAr:p.CategoryNameEn)??'',Points:p.Points,ViewsCount:0,RequiresLogin:true,IsSolved:p.IsSolved,HasAttempted:p.HasAttempted,IsFavorite:p.IsFavorite}}/>)}
       {data.Total>data.PageSize&&<Pagination page={page} pageSize={data.PageSize} total={data.Total} onPageChange={setPage} disabled={isFetching}/>}
