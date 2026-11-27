@@ -616,8 +616,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
         className="mb-6"
         items={[
           { label: learnerWorkspace ? (isArabic ? "الرئيسية" : "Home") : t("nav.home"), href: learnerWorkspace ? "/dashboard" : "/" },
-          { label: learnerWorkspace ? (isArabic ? "الفئات" : "Topics") : t("nav.stages"), href: learnerWorkspace ? "/dashboard/categories" : "/stages" },
-          ...(stageName
+          ...(inDailyChallenge ? [{label:isArabic?"تحدي اليوم":"Daily challenge",href:"/dashboard/daily-challenge"}] : [{ label: learnerWorkspace ? (isArabic ? "الفئات" : "Topics") : t("nav.stages"), href: learnerWorkspace ? "/dashboard/categories" : "/stages" }]),
+          ...(!inDailyChallenge && stageName && !fromTrack
             ? [
                 {
                   label: stageName,
@@ -625,7 +625,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                 },
               ]
             : []),
-          ...(categoryName
+          ...(!inDailyChallenge && categoryName
             ? [
                 {
                   label: categoryName,
@@ -984,7 +984,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                       {!inDailyChallenge && scopedPractice && isCorrect && !retryMode && <div className="mt-4">
                         {nextQuery.isFetching ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'جارٍ تجهيز المسألة التالية…':'Preparing the next problem…'}</p> : nextQuery.isError ? <Button variant="outline" onClick={()=>void nextQuery.refetch()}>{isArabic?'إعادة تحميل المسألة التالية':'Retry loading the next problem'}</Button> : nextPracticeUrl ? <Link href={nextPracticeUrl} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{isArabic?'المسألة التالية':'Next problem'}<DirectionalArrow direction="forward"/></Link> : nextQuery.currentData?.HasNext===false ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.'}</p> : null}
                       </div>}
-                      <Link
+                      {!learnerWorkspace && (<Link
                         href={inDailyChallenge ? '/dashboard/daily-challenge' : fromTrack ? trackBackUrl : categoryId != null
                           ? `${learnerWorkspace ? "/dashboard" : ""}/problems?categoryId=${categoryId}&stageId=${stageId}`
                           : stageId != null
@@ -995,7 +995,8 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
                         <DirectionalArrow direction="back" />
                         {inDailyChallenge ? (isArabic ? 'العودة للتحدي' : 'Back to challenge') :
                           t("problem.backToProblems")}
-                      </Link>
+                      </Link>)}
+
 
                       {isInErrorNotebook && !inDailyChallenge && (
                         <div className="mt-5 flex flex-wrap items-center gap-3">
