@@ -6,22 +6,26 @@ const base='http://127.0.0.1:4173';
 const track={Id:1,StageId:1,Code:'grade-1',Kind:'Grade',NameAr:'الصف الأول',NameEn:'Grade one',DescriptionAr:'تدريب',DescriptionEn:'Practice'};
 const topic={Id:1,NameAr:'الأعداد والعمليات الحسابية',NameEn:'Numbers and arithmetic operations',DescriptionAr:'تدريب الأعداد',DescriptionEn:'Number practice',Icon:'',IsFree:true,ProblemsCount:20};
 const practice={TrackId:1,CategoryId:1,Total:2,Page:1,PageSize:10,Items:[{Id:1,CategoryId:1,TitleAr:'جمع الأعداد',TitleEn:'Addition',Points:10,IsSolved:false},{Id:2,CategoryId:1,TitleAr:'طرح الأعداد',TitleEn:'Subtraction',Points:10,IsSolved:false}]};
-function token(role){return ['eyJhbGciOiJub25lIn0',Buffer.from(JSON.stringify({role,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),'fixture'].join('.')}
+const lockedTopic={...topic,Id:2,NameAr:'الهندسة',NameEn:'Geometry',IsFree:false};
+const lockedTopic2={...topic,Id:3,NameAr:'الإحصاء',NameEn:'Statistics',IsFree:false};
+function token(role,tier='Premium'){return ['eyJhbGciOiJub25lIn0',Buffer.from(JSON.stringify({role,tier,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url'),'fixture'].join('.')}
 function roleOf(req){try{return JSON.parse(Buffer.from((req.headers.authorization||'').split('.')[1],'base64url')).role}catch{return 'Student'}}
 function fixture(req){
  const path=new URL(req.url,'http://localhost').pathname.replace(/^\/api/,'');
  const role=roleOf(req);
- const user={Id:1,FullName:'Responsive Fixture Student',Email:'responsive-fixture@example.invalid',Role:role,SubscriptionType:'Premium',CurrentStageId:1};
+ let tier='Premium';try{tier=JSON.parse(Buffer.from((req.headers.authorization||'').split('.')[1],'base64url')).tier||'Premium'}catch{}
+ const free=tier==='Free';
+ const user={Id:1,FullName:'Responsive Fixture Student',Email:'responsive-fixture@example.invalid',Role:role,SubscriptionType:tier,CurrentStageId:1};
  const solvedFixture=id=>({Id:id,PracticeScopeId:1,Title:'Fixture internal title '+id,QuestionText:'Fixture question '+id,StageId:1,StageName:'Primary',CategoryId:1,CategoryName:'Numbers',Points:10,ViewsCount:0,IsSolved:true,HasAttempted:true,WasCorrect:true,SelectedOptionId:id*10,CorrectOptionId:id*10,IsFavorite:false,AttemptCount:1,FirstAttemptCorrect:true,CanRetry:false,MasteryStatus:'Mastered',IsInErrorNotebook:false,IsErrorNotebookArchived:false,DetailedSolution:'$1+1=2$',Options:[{Id:id*10,LatexCode:'2',Order:1},{Id:id*10+1,LatexCode:'3',Order:2}]});
  const routes={
   '/users/profile':user,
   '/users/onboarding':{NextStep:'Complete'},
-  '/users/subscription':{IsPremium:true,SubscriptionType:'Premium'},
+  '/users/subscription':{IsPremium:!free,SubscriptionType:tier},
   '/users/learning-stage':{StageId:1,NameAr:'الابتدائية',NameEn:'Primary'},
   '/users/learning-track':{Enabled:true,StageId:1,TrackId:1,Track:track},
   '/stages/1/tracks':{Enabled:true,Items:[{...track,ProblemsCount:20,CategoriesCount:1,SkillsCount:1,FreeProblemsCount:20}]},
-  '/learning-tracks/1':{Track:track,Categories:[topic],Skills:[],Examples:[]},
-  '/users/learning-tracks/1/progress':{TrackId:1,StageId:1,TrackPracticeIsolationEnabled:true,ProblemsCount:20,Solved:0,CompletionPercent:0,Categories:[{CategoryId:1,ProblemsCount:20,IsLocked:false,Solved:0,Attempted:0,Mastered:0}]},
+  '/learning-tracks/1':{Track:track,Categories:free?[topic,lockedTopic,lockedTopic2]:[topic],Skills:[],Examples:[]},
+  '/users/learning-tracks/1/progress':{TrackId:1,StageId:1,TrackPracticeIsolationEnabled:true,ProblemsCount:20,Solved:0,CompletionPercent:0,Categories:[{CategoryId:1,ProblemsCount:20,IsLocked:false,Solved:0,Attempted:0,Mastered:0},...(free?[{CategoryId:2,ProblemsCount:20,IsLocked:true,Solved:0,Attempted:0,Mastered:0},{CategoryId:3,ProblemsCount:20,IsLocked:true,Solved:0,Attempted:0,Mastered:0}]:[])]},
   '/users/learning-tracks/1/categories/1/problems':practice,
   '/users/learning-tracks/continue':{TrackId:1,Problem:null},
   '/problems/1':solvedFixture(1),
@@ -137,6 +141,27 @@ if(process.argv.includes('--api')){
      }
      await context.close();
     }
+   }
+   for(const [locale,width,scheme] of [['ar',390,'dark'],['en',1440,'light']]){
+    const context=await browser.newContext({viewport:{width,height:900},colorScheme:scheme});
+    try{
+     await context.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
+     await context.addCookies([{name:'token',value:token('Student','Free'),url:base}]);
+     const page=await context.newPage();
+     await page.goto(base+'/'+locale+'/dashboard/categories',{waitUntil:'domcontentloaded'});
+     const locks=page.locator('[data-category-locked="true"]');
+     await locks.first().waitFor({timeout:15000});
+     assert.equal(await locks.count(),2,'Only restricted categories have overlays');
+     assert.equal(await page.getByRole('link',{name:locale==='ar'?lockedTopic.NameAr:lockedTopic.NameEn,exact:true}).count(),0,'Locked card must not expose a practice link');
+     if(width>=1280){
+      const columns=await locks.first().evaluate(el=>getComputedStyle(el.closest('article').parentElement).gridTemplateColumns.split(' ').length);
+      assert.equal(columns,3,'Wide category grid must have three columns');
+     }
+     await locks.first().getByRole('button').click();
+     await page.getByRole('dialog').waitFor({timeout:10000});
+     console.log('PASS locked category overlay',locale,width,scheme);
+    }catch(e){errors.push('locked category '+locale+': '+e.message);}
+    finally{await context.close();}
    }
   }finally{await browser.close();fs.writeFileSync('mobile-browser-results/report.json',JSON.stringify({errors},null,2))}
   assert.equal(errors.length,0,errors.join('\n'));
