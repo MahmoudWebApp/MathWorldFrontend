@@ -1027,6 +1027,20 @@ export const usersApi = createApi({
       providesTags: ['Solved'],
     }),
 
+    getErrorNotebookPage: builder.query<{Items:ErrorNotebookProblem[];Total:number;Due:number},{archived:boolean;page:number;locale:string;stageId:number;dueOnly?:boolean}>({
+      async queryFn({archived,page,stageId,dueOnly},_api,_extra,fetchWithBQ){
+        const result=await fetchWithBQ({url:'/users/error-notebook',params:{includeArchived:archived,page,pageSize:5,stageId,dueOnly:!!dueOnly}});
+        if(result.error)return {error:result.error};
+        const totalHeader=result.meta?.response?.headers.get('X-Total-Count');
+        const dueHeader=result.meta?.response?.headers.get('X-Due-Count');
+        const total=totalHeader===null||totalHeader===undefined?NaN:Number(totalHeader);
+        const due=dueHeader===null||dueHeader===undefined?NaN:Number(dueHeader);
+        if(!Number.isSafeInteger(total)||total<0||!Number.isSafeInteger(due)||due<0||!Array.isArray(result.data)||result.data.length>5)
+          return {error:{status:'CUSTOM_ERROR',error:'Invalid paginated response',data:{message:'Invalid paginated response'}}};
+        return {data:{Items:result.data as ErrorNotebookProblem[],Total:total,Due:due}};
+      },
+      providesTags:['ErrorNotebook'],
+    }),
     getErrorNotebook: builder.query<
       ErrorNotebookProblem[],
       { IncludeArchived?: boolean; Locale: string }
@@ -1225,6 +1239,7 @@ export const {
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,
   useResetPracticeMutation,
+  useGetErrorNotebookPageQuery,
   useGetErrorNotebookQuery,
   useSetErrorNotebookArchiveMutation,
   useToggleFavoriteMutation,
