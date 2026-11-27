@@ -210,7 +210,7 @@ export const baseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
   ApiBaseQueryError,
-  Record<string, never>,
+  {},
   FetchBaseQueryMeta
 > = async (args, api, extraOptions) => {
   const result = await rawBaseQuery(args, api, extraOptions);
