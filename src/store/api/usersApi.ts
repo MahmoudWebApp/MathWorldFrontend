@@ -981,6 +981,18 @@ export const usersApi = createApi({
       providesTags: ['Dashboard'],
     }),
 
+    getUserProblemPage: builder.query<{Items:ProblemPreview[];Total:number;Page:number;PageSize:number},{kind:'favorites'|'solved';page:number;locale:string;stageId:number}>({
+      async queryFn({kind,page},_api,_extra,fetchWithBQ){
+        const result=await fetchWithBQ({url:'/users/'+kind,params:{page,pageSize:5}});
+        if(result.error)return {error:result.error};
+        const rawTotal=result.meta?.response?.headers.get('X-Total-Count');
+        const total=rawTotal==null?NaN:Number(rawTotal);
+        if(!Number.isSafeInteger(total)||total<0||!Array.isArray(result.data)||result.data.length>5)
+          return {error:{status:'CUSTOM_ERROR',error:'Invalid paginated response',data:{message:'Invalid paginated response'}}};
+        return {data:{Items:result.data as ProblemPreview[],Total:total,Page:page,PageSize:5}};
+      },
+      providesTags:(_r,_e,{kind})=>[kind==='favorites'?'Favorite':'Solved'],
+    }),
     getFavorites: builder.query<ProblemPreview[], string>({
       query: () => '/users/favorites',
       providesTags: ['Favorite'],
@@ -1209,6 +1221,7 @@ export const {
   useGrantAnnualPremiumMutation,
   useGetAdminLearnerSubscriptionHistoryQuery,
   useGetProfileQuery,
+  useGetUserProblemPageQuery,
   useGetFavoritesQuery,
   useGetSolvedProblemsQuery,
   useResetPracticeMutation,
