@@ -979,3 +979,9 @@ button:focus-visible,[role="button"]:focus-visible,a.sr-wave-button:focus-visibl
 @keyframes mw-dialog-in { from { opacity: 0; scale: .98; } to { opacity: 1; scale: 1; } }
 @keyframes mw-dialog-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .98; } }
 @media (prefers-reduced-motion: reduce) { .mw-dialog-overlay, .mw-dialog-content { animation-duration: .01ms !important; } }
+
+/* Social links use the platform's shared brand gradient, not network colors. */
+.mw-social-brand { background:var(--sr-grad); color:#fff; border:1px solid transparent; }
+.mw-social-brand:hover { color:#fff; filter:brightness(1.08); box-shadow:0 6px 18px rgb(var(--sr-primary-rgb) / .22); }
+/* This title sits on an already saturated gradient surface. */
+.impact-shell .impact-title-accent { background:none; color:#fff; -webkit-text-fill-color:#fff; animation:none; }
