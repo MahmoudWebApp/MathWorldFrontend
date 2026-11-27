@@ -49,10 +49,13 @@ assert.match(resetHandler, /await resetPractice\(/,
 assert.equal((categories.match(/await resetPractice\(/g) ?? []).length, 1,
   'There must be exactly one practice-reset API call and no direct card action.');
 
-assert.match(categories, /<LockedPremiumDialog topicName=\{name\}>/, 'Locked categories must stay gated');
+const overlay=read('src/components/premium/LockedCategoryOverlay.tsx');
+assert.match(categories, /<LockedCategoryOverlay name=\{name\}/, 'Locked categories must stay gated');
+assert.match(overlay, /<LockedPremiumDialog topicName=\{name\}>/, 'Upgrade dialog remains available');
+assert.match(overlay, /absolute inset-0/, 'Locked cards must display full-card overlay');
 assert.match(categories, /<CategorySkillsPopover stageId=\{stageId\}/, 'Learner topics show API-owned category skill descriptions.');
 assert.match(categories, /const skillsButton = \([\s\S]*?<CategorySkillsPopover stageId=\{stageId\} category=\{category\} trigger=/, 'Skills have a separate anchored trigger.');
-assert.match(categories, /<\/LockedPremiumDialog>\s*\{skillsButton\}/, 'Locked topics expose public skills outside the Premium gate.');
+assert.match(categories, /<div inert[\s\S]*?\{skillsButton\}[\s\S]*?<LockedCategoryOverlay/, 'Locked card content is inert below the overlay');
 const publicCategories = read('src/app/[locale]/stages/[stageId]/StageCategoriesClient.tsx');
 assert.match(publicCategories, /<CategorySkillsPopover stageId=\{stageId\}/,
   'Public topic cards must expose the same per-category skills popup.');
