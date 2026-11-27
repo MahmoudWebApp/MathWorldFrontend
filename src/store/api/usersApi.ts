@@ -27,7 +27,7 @@ export interface SessionSolution { Idea:string; FormulaLatex:string; Steps:strin
 export interface SessionAnswerBody { RequestId:string; Position:number; ProblemId:number; SelectedOptionId:number }
 export interface SessionAnswerResult { SessionId:string; Position:number; ProblemId:number; RequestId:string; IsCorrect:boolean; AttemptNumber:number; PointsEarned:number; Completed:number; Total:number; IsComplete:boolean; UsedHint:boolean; IndependentFirstCorrect:boolean; CorrectOptionId?:number; DetailedSolutionAr?:string; DetailedSolutionEn?:string; SolutionStructure?:SessionSolution|null }
 export interface SessionRestartPreview { StageId:number; TrackId?:number|null; CategoryId?:number|null; SessionIds:string[] }
-export interface SessionHints { Available:boolean; RevealedCount:number; Hints:{Level:number;Text:string}[] }
+export interface SessionHints { Available:boolean; HintCount?:number; RevealedCount:number; Hints:{Level:number;Text:string}[] }
 export interface SessionAchievements { PermanentSolvedProblems:number; PermanentPoints:number; CompletedPracticeSessions:number; CompletedDailyChallenges:number; CorrectSessionAnswers:number; UniqueSolvedProblems:number; IndependentFirstCorrect:number; AssistedCorrect:number; Badges:{Key:string;TitleAr:string;TitleEn:string;EarnedAtUtc:string}[] }
 
 export interface CustomExamQuestion {Id:number;CategoryId:number;TitleAr:string;TitleEn:string;QuestionTextAr:string;QuestionTextEn:string;Options:{Id:number;LatexCode:string}[]}
