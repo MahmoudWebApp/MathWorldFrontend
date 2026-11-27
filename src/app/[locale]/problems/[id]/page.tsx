@@ -135,17 +135,19 @@ export default function ProblemPage() {
   const locale = useLocale();
   const {isAuthenticated,user}=useSelector((state:RootState)=>state.auth);
   const problemId=Number.parseInt(params.id,10);
-  const query=useGetProblemQuery({Id:problemId,locale},{
+  const searchParams=useSearchParams();
+  const viewerKey=JSON.stringify([isAuthenticated?user?.Id:null,user?.Role,user?.CurrentStageId,user?.SubscriptionType,Number(searchParams.get('trackId')??0)]);
+  const query=useGetProblemQuery({Id:problemId,locale,viewerKey},{
     skip:Number.isNaN(problemId),refetchOnMountOrArgChange:true,
   });
   // Remount interaction state if the authoritative scope or problem changes.
   // RTK Query's currentData never supplies another route's previous response.
   const problem=query.error?undefined:query.currentData;
   const scope=isStudentProblem(problem)?problem.PracticeScopeId??0:"non-student";
-  return <ProblemPageContent key={JSON.stringify([problemId,locale,scope,isAuthenticated,user?.Id])} query={query}/>;
+  return <ProblemPageContent key={JSON.stringify([problemId,locale,scope,isAuthenticated,user?.Id])} query={query} viewerKey={viewerKey}/>;
 }
 
-function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>}) {
+function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetProblemQuery>;viewerKey:string}) {
   const params = useParams<{ id: string }>();
   const learnerWorkspace = usePathname().startsWith("/dashboard/");
   const t = useTranslations();
@@ -300,9 +302,10 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
     // Only warm one server-selected successor; never prefetch a locked category.
     // RTK Query deduplicates this with the eventual detail request. The route
     // still revalidates before enabling answer submission.
-    if(!isAuthenticated||user?.Role!=='Student'||!studentProblem||!warmProblemId||warmProblemId===problemId||nextQuery.isFetching)return;
-    dispatch(problemsApi.util.prefetch('getProblem',{Id:warmProblemId,locale},{ifOlderThan:15}));
-  },[dispatch,isAuthenticated,user?.Role,user?.Id,studentProblem?.Id,warmProblemId,problemId,locale,nextQuery.isFetching]);
+    if(!isAuthenticated||user?.Role!=='Student'||!studentProblem||!warmProblemId||warmProblemId===problemId||nextQuery.isFetching||isFetching)return;
+    const warmViewerKey=JSON.stringify([user.Id,user.Role,user.CurrentStageId,user.SubscriptionType,nextPractice?trackId:0]);
+    dispatch(problemsApi.util.prefetch('getProblem',{Id:warmProblemId,locale,viewerKey:warmViewerKey},{ifOlderThan:15}));
+  },[dispatch,isAuthenticated,user?.Role,user?.Id,user?.CurrentStageId,user?.SubscriptionType,studentProblem?.Id,warmProblemId,problemId,locale,nextQuery.isFetching,isFetching,nextPractice?.Id,trackId]);
   const nextChallengeUrl = nextChallengeProblem
     ? '/dashboard/problems/' + nextChallengeProblem.Id +
       '?daily=' + challengeDate + '&stageId=' + challengeStageId +
@@ -461,7 +464,7 @@ function ProblemPageContent({query}:{query:ReturnType<typeof useGetProblemQuery>
         ProblemId: problem.Id,
         IsFavorite: !isFavorite,
       }).unwrap();
-      dispatch(problemsApi.util.updateQueryData("getProblem",{Id:problemId,locale},draft=>{
+      dispatch(problemsApi.util.updateQueryData("getProblem",{Id:problemId,locale,viewerKey},draft=>{
         if(isStudentProblem(draft))draft.IsFavorite=confirmed.IsFavorite;
       }));
     } catch (favoriteError) {
