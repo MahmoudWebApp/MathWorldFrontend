@@ -27,7 +27,7 @@ function fixture(req){
   '/learning-tracks/1':{Track:track,Categories:free?[topic,lockedTopic,lockedTopic2]:[topic],Skills:[],Examples:[]},
   '/users/learning-tracks/1/progress':{TrackId:1,StageId:1,TrackPracticeIsolationEnabled:true,ProblemsCount:20,Solved:0,CompletionPercent:0,Categories:[{CategoryId:1,ProblemsCount:20,IsLocked:false,Solved:0,Attempted:0,Mastered:0},...(free?[{CategoryId:2,ProblemsCount:20,IsLocked:true,Solved:0,Attempted:0,Mastered:0},{CategoryId:3,ProblemsCount:20,IsLocked:true,Solved:0,Attempted:0,Mastered:0}]:[])]},
   '/users/learning-tracks/1/categories/1/problems':(()=>{const params=new URL(req.url,'http://localhost').searchParams;const q=(params.get('q')||'').toLowerCase();const items=practice.Items.filter(p=>!q||p.TitleAr.includes(q)||p.TitleEn.toLowerCase().includes(q)).map(p=>({...p,StageId:1,StageNameAr:'الابتدائية',StageNameEn:'Primary',CategoryNameAr:topic.NameAr,CategoryNameEn:topic.NameEn,HasAttempted:false,IsFavorite:false}));return {...practice,Total:items.length,Items:items};})(),
-  '/users/favorites':[], '/users/solved':[],
+  '/users/favorites':[], '/users/solved':[], '/users/error-notebook':[],
   '/users/learning-tracks/continue':{TrackId:1,Problem:null},
   '/problems/1':solvedFixture(1),
   '/problems/2':solvedFixture(2),
@@ -53,6 +53,7 @@ if(process.argv.includes('--api')){
   res.setHeader('Content-Type','application/json');
   res.setHeader('Access-Control-Expose-Headers','X-Total-Count,X-Due-Count');
   res.setHeader('X-Total-Count','0');
+  res.setHeader('X-Due-Count','0');
   if(req.method==='OPTIONS'){res.writeHead(204);return res.end()}
   if(req.method==='POST'&&new URL(req.url,'http://localhost').pathname==='/api/auth/forgot-password'){
    let body='';req.on('data',chunk=>body+=chunk);req.on('end',()=>{
