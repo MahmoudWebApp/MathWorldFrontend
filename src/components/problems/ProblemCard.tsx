@@ -15,10 +15,11 @@ import { getStageAccent } from "@/lib/stageVisuals";
 interface ProblemCardProps {
   problem: ProblemPreview;
   compact?: boolean;
+  href?: string;
 }
 
 /** A readable, accessible preview. A green check is never used for unsolved work. */
-export function ProblemCard({ problem, compact=false }: ProblemCardProps) {
+export function ProblemCard({ problem, compact=false, href }: ProblemCardProps) {
   const t = useTranslations();
   const pathname = usePathname();
   const inStudentWorkspace = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
@@ -28,7 +29,7 @@ export function ProblemCard({ problem, compact=false }: ProblemCardProps) {
 
   return (
     <Link
-      href={`${inStudentWorkspace ? "/dashboard" : ""}/problems/${problem.Id}`}
+      href={href ?? `${inStudentWorkspace ? "/dashboard" : ""}/problems/${problem.Id}`}
       className="group mx-auto block w-full max-w-5xl rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <article className={"brand-surface mw-topic-surface hover:shadow-md "+(compact?"rounded-2xl p-3":"rounded-3xl p-4 sm:p-5")}
