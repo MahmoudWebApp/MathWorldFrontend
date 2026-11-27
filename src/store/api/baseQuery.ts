@@ -210,6 +210,8 @@ export const baseQuery: BaseQueryFn<
   string | FetchArgs,
   unknown,
   ApiBaseQueryError,
+  // RTK Query uses an empty object for optional endpoint extraOptions.
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   {},
   FetchBaseQueryMeta
 > = async (args, api, extraOptions) => {
