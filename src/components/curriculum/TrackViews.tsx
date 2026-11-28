@@ -39,7 +39,7 @@ function TopicHeading({name,icon,count,accent,ar}:{name:string;icon:string;count
  return <div className="flex flex-wrap items-start justify-between gap-2"><div className="flex min-w-0 flex-1 items-start gap-3"><TopicIcon icon={icon} accent={accent}/><h3 className="min-w-0 break-words pt-1 text-base font-extrabold sm:text-lg" style={{color:accent}}>{name}</h3></div><TopicCount count={count} accent={accent} ar={ar}/></div>;
 }
 function PublicTrackDetails({id,ar}:{id:number;ar:boolean}){
- const {currentData:data,isFetching,isError,refetch}=useGetPublishedTrackQuery(id,{refetchOnMountOrArgChange:true});
+ const {currentData:data,isFetching,isError,refetch}=useGetPublishedTrackQuery(id,{refetchOnMountOrArgChange:120});
  if(isFetching&&!data)return <MathWorldLoading compact mode="tab"/>;
  if(isError)return <p role="alert">{ar?'تعذّر تحميل المسار.':'Could not load track.'} <button onClick={()=>void refetch()} className={btn}>{ar?'إعادة المحاولة':'Retry'}</button></p>;
  if(!data)return null;
@@ -100,7 +100,7 @@ function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
   </div>;
 }
 export function StudentTrackWorkspace({trackId,categoryId}:{trackId:number;categoryId?:number}){
-  const ar=useLocale()==='ar';const detail=useGetPublishedTrackQuery(trackId,{refetchOnMountOrArgChange:true});
+  const ar=useLocale()==='ar';const detail=useGetPublishedTrackQuery(trackId,{refetchOnMountOrArgChange:120});
   const progress=useGetTrackProgressQuery(trackId,{refetchOnMountOrArgChange:true});
   const data=detail.currentData;const stats=progress.currentData;
   const [target,setTarget]=useState<{categoryId?:number;name:string}|null>(null);

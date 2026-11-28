@@ -102,10 +102,10 @@ export const stagesApi = createApi({
   tagTypes: ['Stage', 'LearningJourney', 'DailyChallenge','LearningTrack','TrackPracticeState'],
   endpoints: (builder) => ({
     getPublishedTracks:builder.query<TrackCatalog,number>({
-      query:id=>'/stages/'+id+'/tracks',providesTags:['LearningTrack'],
+      query:id=>'/stages/'+id+'/tracks',providesTags:['LearningTrack'],keepUnusedDataFor:180,
     }),
     getPublishedTrack:builder.query<PublishedTrackDetail,number>({
-      query:id=>'/learning-tracks/'+id,providesTags:['LearningTrack'],
+      query:id=>'/learning-tracks/'+id,providesTags:['LearningTrack'],keepUnusedDataFor:180,
     }),
     getTrackSelection:builder.query<TrackSelection,void>({
       query:()=>'/users/learning-track',providesTags:['LearningTrack'],
