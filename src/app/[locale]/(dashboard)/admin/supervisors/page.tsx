@@ -90,7 +90,7 @@ function StaffRow({row,ar}:{row:SupervisorAccount;ar:boolean}) {
     <Dialog open={deleteOpen} onOpenChange={open=>{if(!deleting)setDeleteOpen(open)}}>
       <DialogContent>
         <DialogHeader><DialogTitle className="flex items-center gap-2 pe-7"><AlertTriangle className="h-5 w-5 text-destructive"/>{ar?'حذف المشرف نهائياً':'Permanently delete supervisor'}</DialogTitle>
-          <DialogDescription>{ar?'سيُحذف حساب المشرف وسجل نشاطه المرتبط به. لا يمكن التراجع.':'The supervisor account and its associated activity history will be deleted. This cannot be undone.'}</DialogDescription>
+          <DialogDescription>{ar?'سيُحذف حساب المشرف وسجل نشاطه ومسوداته غير المنشورة نهائياً، وستبقى المسائل المنشورة محفوظة. لا يمكن التراجع.':'The supervisor account, activity history and unpublished drafts will be permanently deleted. Published problems will be preserved. This cannot be undone.'}</DialogDescription>
         </DialogHeader>
         <p className="break-words font-semibold">{row.FullName}</p>
         <DialogFooter>
