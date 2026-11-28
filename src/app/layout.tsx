@@ -11,10 +11,10 @@ const alexandria = Alexandria({
 
 export const metadata: Metadata = {
   title: {
-    default: 'MathWorld',
-    template: '%s | MathWorld',
+    default: 'MathSuper',
+    template: '%s | MathSuper',
   },
-  description: 'Learn, practice, and master mathematics with MathWorld.',
+  description: 'Learn, practice, and master mathematics with MathSuper.',
   manifest: '/site.webmanifest',
   icons: {
     icon: [

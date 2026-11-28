@@ -17,7 +17,8 @@ export function BrandLogo({ compact = false, className }: BrandLogoProps) {
   const [failedLogo, setFailedLogo] = useState('');
   const logo = data?.Profile.LogoUrl;
   const customLogo = logo && data && !(/\/mathworld-mark-(?:transparent-v3\.png|balanced-v4\.(?:svg|png)|gradient-v5\.png)(?:[?#].*)?$/i.test(logo)) && logo !== failedLogo && isSafeBrandLogo(logo, data.WebsiteUrl) ? logo : null;
-  const name = (ar ? data?.Profile.NameAr : data?.Profile.NameEn) || 'MathWorld';
+  const configuredName = ar ? data?.Profile.NameAr : data?.Profile.NameEn;
+  const name = !configuredName || configuredName.trim().toLowerCase() === 'mathworld' ? 'MathSuper' : configuredName;
   return (
     <div className={cn(compact ? 'brand-logo-lockup' : 'brand-logo-lockup brand-logo-lockup-large', className)}>
       <span className={cn('brand-mark-shell', !compact && 'brand-mark-shell-large')}>
@@ -27,7 +28,7 @@ export function BrandLogo({ compact = false, className }: BrandLogoProps) {
         ) : <BrandMark className={compact ? 'h-11 w-11' : 'h-16 w-16'} />}
       </span>
       <span className={cn('brand-wordmark font-extrabold tracking-tight', compact ? 'hidden text-[1.2rem] min-[430px]:inline' : 'text-2xl')} dir="auto">
-        {name.toLowerCase()==='mathworld'?<span dir="ltr" aria-label="MathWorld" className="mw-brand-flow">MathWorld</span>:<span className="mw-brand-flow">{name}</span>}
+        {name.toLowerCase()==='mathsuper'?<span dir="ltr" aria-label="MathSuper" className="mw-brand-flow">MathSuper</span>:<span className="mw-brand-flow">{name}</span>}
       </span>
     </div>
   );
