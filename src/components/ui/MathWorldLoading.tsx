@@ -14,7 +14,7 @@ type Props = {
 
 /**
  * One accessible loading identity across public, student and admin routes.
- * Uses the exact MathWorld mark, not a replacement or a generic spinner.
+ * Uses the exact MathSuper mark, not a replacement or a generic spinner.
  * Never inserts placeholder values, progress metrics or account details.
  */
 export function MathWorldLoading({
@@ -42,7 +42,7 @@ export function MathWorldLoading({
         </div>
       </div>
       <div className="space-y-1">
-        <p className="brand-wordmark font-extrabold tracking-tight" dir="ltr"><span className="mw-brand-flow">MathWorld</span></p>
+        <p className="brand-wordmark font-extrabold tracking-tight" dir="ltr"><span className="mw-brand-flow">MathSuper</span></p>
         <p className="text-sm text-muted-foreground">
           {copy}
         </p>

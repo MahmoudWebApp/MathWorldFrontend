@@ -47,7 +47,7 @@ export default function PremiumProgressReportPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `mathworld-stage-${data.StageId}-report.csv`;
+    link.download = `mathsuper-stage-${data.StageId}-report.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
