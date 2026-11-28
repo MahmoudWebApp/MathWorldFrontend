@@ -1,8 +1,7 @@
 'use client';
 
-import { StudentTrackWorkspace } from '@/components/curriculum/TrackViews';
+import { StudentTrackWorkspace, StudentCategoryLoading, StudentCategorySkeleton } from '@/components/curriculum/TrackViews';
 import { useGetTrackSelectionQuery,useGetPublishedTracksQuery } from '@/store/api/stagesApi';
-import { MathWorldLoading, MathWorldSkeleton } from '@/components/ui/MathWorldLoading';
 import { useLocale } from 'next-intl';
 import { useState } from 'react';
 import {StageTopicArtwork} from '@/components/stages/StageTopicArtwork';
@@ -61,11 +60,11 @@ export default function StudentCategoriesPage() {
     }
   }
 
-  if(stageId>0&&(trackCatalog.isLoading||(!trackCatalog.currentData&&trackCatalog.isFetching))) return <MathWorldSkeleton/>;
+  if(selecting || (stageId>0&&(trackCatalog.isLoading||(!trackCatalog.currentData&&trackCatalog.isFetching)))) return <StudentCategoryLoading ar={ar}/>;
   if(stageId>0&&trackCatalog.isError&&(trackCatalog.error as {status?:number})?.status!==404)
-    return <main className="p-6"><button className="underline" onClick={()=>void trackCatalog.refetch()}>{ar?'تعذّر تحميل المسارات. إعادة المحاولة':'Could not load tracks. Retry'}</button></main>;
+    return <main className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6"><h1 className="text-3xl font-extrabold">{ar?'الفئات':'Topics'}</h1><button className="underline" onClick={()=>void trackCatalog.refetch()}>{ar?'تعذّر تحميل المسارات. إعادة المحاولة':'Could not load tracks. Retry'}</button></main>;
   if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&(trackSelection.isLoading||trackSelection.isError))
-    return <main className="p-6">{trackSelection.isError?<button className="underline" onClick={()=>void trackSelection.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>:<MathWorldLoading compact/>}</main>;
+    return trackSelection.isError ? <main className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6"><h1 className="text-3xl font-extrabold">{ar?'الفئات':'Topics'}</h1><button className="underline" onClick={()=>void trackSelection.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></main> : <StudentCategoryLoading ar={ar}/>;
   if(trackCatalog.currentData?.Enabled&&trackSelection.data?.Enabled&&trackSelection.data.TrackId&&trackSelection.data.StageId===stageId)
     return <StudentTrackWorkspace key={trackSelection.data.TrackId} trackId={trackSelection.data.TrackId}/>;
   if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&(!trackSelection.data?.TrackId||trackSelection.data.StageId!==stageId))
@@ -132,14 +131,7 @@ export default function StudentCategoriesPage() {
       </Dialog>
       {!target && resetMessage && <p role="status" className="font-semibold text-primary">{resetMessage}</p>}
       {loading ? (
-        <div role="status" aria-busy="true" aria-label={ar ? 'جارٍ تحميل فئات مرحلتك' : 'Loading your topics'} className="grid animate-pulse gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }, (_, index) => <div key={index} className="h-52 rounded-3xl border border-border/70 bg-card/70 p-5">
-            <div className="h-10 w-10 rounded-xl bg-muted/70" />
-            <div className="mt-4 h-6 w-2/3 rounded bg-muted/70" />
-            <div className="mt-4 h-4 w-full rounded bg-muted/60" />
-            <div className="mt-2 h-4 w-3/4 rounded bg-muted/60" />
-          </div>)}
-        </div>
+        <StudentCategorySkeleton ar={ar}/>
       ) : failed ? (
         <div role="alert" className="rounded-2xl border border-destructive/30 p-6">
           <p>{ar ? 'تعذّر تحميل الفئات أو صلاحيات الحساب.' : 'Could not load topics or subscription access.'}</p>
