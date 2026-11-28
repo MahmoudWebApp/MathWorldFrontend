@@ -988,8 +988,8 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                                 {pauseChallengeAdvance
                                   ? (isArabic ? 'تم إيقاف الانتقال التلقائي حتى تنتهي من قراءة طريقة الحل.'
                                     : 'Automatic advance paused while you review the solution.')
-                                  : (isArabic ? 'الانتقال التلقائي خلال 8 ثوانٍ لقراءة الحل والقانون المستخدم.'
-                                    : 'Advancing in 8 seconds so you can read the solution and rule first.')}
+                                  : (isArabic ? 'الانتقال التلقائي بعد 8 ثوانٍ من إغلاق نافذة الحل.'
+                                    : 'Automatic advance 8 seconds after closing the solution dialog.')}
                               </p>
                             )}
                           </div>
@@ -1024,7 +1024,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                       </Link>)}
 
 
-                      {isInErrorNotebook && !inDailyChallenge && (
+                      {isInErrorNotebook && (!inDailyChallenge || !isCorrect) && (
                         <div className="mt-5 flex flex-wrap items-center gap-3">
                           {canRetry && <Button
                             variant="outline"
@@ -1035,7 +1035,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                             {t("problem.tryAgain")}
                           </Button>}
 
-                          {isInErrorNotebook && (
+                          {isInErrorNotebook && !inDailyChallenge && (
                             <Link
                               href="/dashboard/error-notebook"
                               className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
