@@ -44,11 +44,13 @@ export default function UserDashboardPage() {
   const accent = getStageAccent({ Id: stageId, NameAr: journey?.NameAr, NameEn: journey?.NameEn });
   const isPremium = subscription?.IsPremium === true;
   const trackId=journey?.TrackId??null;
-  const {currentData:examAvailability}=useGetCustomExamAvailabilityQuery(undefined,{skip:user?.Role!=='Student',refetchOnMountOrArgChange:true});
-  const {currentData:trackNext}=useGetTrackContinueQuery(undefined,{skip:!isPremium||!trackId,refetchOnMountOrArgChange:true});
+  // Secondary actions must not compete with the first dashboard load.
+  const coreReady=!!journey && !!subscription && (!!dashboard || (!isLoading && !isFetching));
+  const {currentData:examAvailability}=useGetCustomExamAvailabilityQuery(undefined,{skip:user?.Role!=='Student'||!coreReady,refetchOnMountOrArgChange:true});
+  const {currentData:trackNext}=useGetTrackContinueQuery(undefined,{skip:!coreReady||!isPremium||!trackId,refetchOnMountOrArgChange:true});
   const { data: nextUnsolved } = useSearchProblemsQuery(
     { StageId: stageId, HideSolved: true, Page: 1, PageSize: 1 },
-    { skip: !isPremium || user?.Role !== 'Student' || stageId <= 0 || !journey || trackId!==null,
+    { skip: !coreReady || !isPremium || user?.Role !== 'Student' || stageId <= 0 || !journey || trackId!==null,
       refetchOnMountOrArgChange: 45 },
   );
   const nextProblemId = trackId ? (trackNext?.TrackId===trackId?trackNext.Problem?.Id:undefined) : nextUnsolved?.Results?.[0]?.Id;

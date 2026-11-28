@@ -36,6 +36,7 @@ import {
   useGetProblemQuery,
   useGetProblemHintsQuery,
   useRevealProblemHintMutation,
+  useExportProblemDocumentMutation,
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
@@ -48,6 +49,7 @@ import { StudentStageAccessNotice } from "@/components/stages/StudentStageAccess
 import { LockedPremiumDialog } from "@/components/premium/LockedPremiumDialog";
 import { DirectionalArrow } from "@/components/ui/DirectionalNavigation";
 import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/Dialog";
 import { LatexPreview } from "@/components/ui/LatexPreview";
 import { RichText } from "@/components/ui/RichText";
 import { StageIconBadge } from "@/components/stages/StageIconBadge";
@@ -171,7 +173,6 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
     dailyChallenge?.DateUtc === challengeDate &&
     dailyChallenge?.StageId === challengeStageId &&
     dailyChallenge.Problems[challengeIndex]?.Id === problemId;
-  const solutionRef = useRef<HTMLDivElement>(null);
   const questionCardRef = useRef<HTMLDivElement>(null);
   const attemptStartedAtRef = useRef(Date.now());
 
@@ -217,6 +218,30 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
   });
   const [revealHint,{isLoading:hintBusy}]=useRevealProblemHintMutation();
   const [hintError,setHintError]=useState(false);
+  const [resultDialog,setResultDialog]=useState(false);
+  const [hintsRequested,setHintsRequested]=useState(false);
+  const [exportDocument,{isLoading:exporting,reset:resetExport}]=useExportProblemDocumentMutation();
+  const [exportError,setExportError]=useState(false);
+  const exportOwner=useRef(viewerKey);
+  exportOwner.current=viewerKey;
+  useEffect(()=>()=>{exportOwner.current='';},[]);
+  async function downloadProblem(format:'pdf'|'docx'){
+    if(exporting||!entitlement?.IsPremium||!isCorrect||retryMode)return;
+    const owner=exportOwner.current;
+    setExportError(false);
+    try{
+      const blob=await exportDocument({problemId,language:isArabic?'ar':'en',format}).unwrap();
+      if(exportOwner.current!==owner)return;
+      const mime=format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      if(!(blob instanceof Blob)||blob.type!==mime||blob.size<100||blob.size>20_000_000)throw new Error('Invalid document');
+      const url=URL.createObjectURL(blob);
+      const anchor=document.createElement('a');
+      anchor.href=url;anchor.download=`MathWorld-question-${problemId}-${isArabic?'ar':'en'}.${format}`;
+      document.body.appendChild(anchor);anchor.click();anchor.remove();
+      window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }catch{if(exportOwner.current===owner)setExportError(true);}
+    finally{if(exportOwner.current===owner)resetExport();}
+  }
 
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
@@ -242,6 +267,10 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
     setPauseChallengeAdvance(false);
     setSubmitError("");
     setActiveTab("question");
+    setResultDialog(false);
+    setHintsRequested(false);
+    setHintError(false);
+    setExportError(false);
     attemptStartedAtRef.current = Date.now();
   }, [problemId]);
 
@@ -274,23 +303,6 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
     setActiveTab("question");
     attemptStartedAtRef.current=Date.now();
   },[searchParams,studentProblem]);
-  useEffect(() => {
-    if (!localAnswerResult || retryMode) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      solutionRef.current?.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
-        block: "start",
-      });
-    }, 200);
-
-    return () => window.clearTimeout(timer);
-  }, [localAnswerResult, retryMode]);
-
   // Resume the first unanswered question after this step, never revisit
   // already completed items from a resumed session. Questions remain fixed
   // for the UTC day and stage.
@@ -319,11 +331,11 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
   // Auto-advance remains enabled by default and can be paused per question.
   useEffect(() => {
     if (!localAnswerResult?.IsCorrect || !inDailyChallenge || !dailyChallenge ||
-        pauseChallengeAdvance) return;
+        pauseChallengeAdvance || resultDialog) return;
     const timer = window.setTimeout(() => router.replace(nextChallengeUrl), 8000);
     return () => window.clearTimeout(timer);
   }, [localAnswerResult, inDailyChallenge, dailyChallenge, pauseChallengeAdvance,
-    nextChallengeUrl, router]);
+    nextChallengeUrl, router, resultDialog]);
 
   const problemData = useMemo(() => {
     if (!problem) {
@@ -381,7 +393,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
       : null;
 
   const canRetry = localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
-  const hints=useGetProblemHintsQuery({problemId,locale,scope:studentProblem?.PracticeScopeId},{skip:!studentProblem||!entitlement?.IsPremium||isCorrect||!!studentProblem.IsSolved,refetchOnMountOrArgChange:true});
+  const hints=useGetProblemHintsQuery({problemId,locale,scope:studentProblem?.PracticeScopeId},{skip:!resultDialog||!hintsRequested||!studentProblem||!entitlement?.IsPremium||isCorrect||!!studentProblem.IsSolved,refetchOnMountOrArgChange:true});
   const canAnswer =
     isAuthenticated &&
     !isFetching &&
@@ -446,10 +458,8 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
 
   const structuredSolution = isCorrect && !retryMode
     ? localAnswerResult?.SolutionStructure ?? studentProblem?.SolutionStructure : null;
-  const showSolutionSection = !!solutionText &&
-    (showResult || !!adminProblem);
-  const showVideoTab = !!youtubeUrl &&
-    (showResult || !!adminProblem);
+  const showSolutionSection = !!adminProblem && !!solutionText;
+  const showVideoTab = !!youtubeUrl && !!adminProblem;
   const isFavorite =
     studentProblem?.IsFavorite ?? false;
 
@@ -477,7 +487,9 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
 
   function handleStartRetry() {
     if (!canRetry || !isInErrorNotebook) return;
-
+    setResultDialog(false);
+    setHintsRequested(false);
+    setHintError(false);
     setRetryMode(true);
     setSubmissionDone(false);
     setLocalAnswerResult(null);
@@ -526,6 +538,9 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
       }).unwrap();
 
       setLocalAnswerResult(result);
+      setResultDialog(true);
+      setHintsRequested(false);
+      setHintError(false);
       setSelectedOptionId(result.SelectedOptionId);
       setSubmissionDone(true);
       setRetryMode(false);
@@ -734,22 +749,6 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
         </div>
       )}
 
-      {studentProblem && !isCorrect && !studentProblem.IsSolved && entitlement && (
-        <section className="mb-5 space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-          <h2 className="font-semibold">{isArabic ? 'تلميحات تساعدك على الحل' : 'Hints to help you solve'}</h2>
-          {!entitlement.IsPremium ? <LockedPremiumDialog><button type="button" className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"><Lock className="h-4 w-4"/>{isArabic?'تلميحات Premium':'Premium hints'}</button></LockedPremiumDialog> : <>
-            {hints.isLoading&&<p role="status">{isArabic?'جارٍ التحميل…':'Loading…'}</p>}
-            {hints.isError&&<button className="text-sm underline" onClick={()=>void hints.refetch()}>{isArabic?'تعذّر تحميل التلميحات. إعادة المحاولة':'Could not load hints. Retry'}</button>}
-            {hints.currentData?.Available===false&&<p className="text-sm text-muted-foreground">{isArabic?'لا توجد تلميحات لهذه المسألة بعد.':'Hints are not yet available for this problem.'}</p>}
-            {hints.currentData?.Available&&<>
-              {hints.currentData.Hints.map(h=><div key={h.Level} className="rounded-xl border bg-background p-3"><p className="mb-1 text-sm font-semibold">{isArabic?'التلميح':'Hint'} {h.Level}</p><RichText text={h.Text} isArabic={isArabic}/></div>)}
-              {hints.currentData.RevealedCount<(hints.currentData.HintCount??2)&&<Button variant="outline" disabled={hintBusy||isSubmitting} onClick={async()=>{setHintError(false);try{await revealHint({problemId,Level:(hints.currentData?.RevealedCount??0)+1,locale,scope:studentProblem?.PracticeScopeId}).unwrap();}catch{setHintError(true);}}}>{hintBusy?(isArabic?'جارٍ التحميل…':'Loading…'):(isArabic?'عرض التلميح':'Reveal hint')+' '+(hints.currentData.RevealedCount+1)}</Button>}
-            </>}
-            {hintError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر عرض التلميح. حاول مجدداً.':'Could not reveal hint. Please retry.'}</p>}
-          </>}
-          <p className="text-xs text-muted-foreground">{isArabic?'الإجابة وطريقة الحل تظهران بعد الحل الصحيح لجميع الطلاب.':'The answer and solution appear after a correct solve for all learners.'}</p>
-        </section>
-      )}
       <div className="grid grid-cols-1 gap-8">
         <div
           ref={questionCardRef}
@@ -913,7 +912,11 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                     </div>
                   )}
 
-                  {showResult && (
+                  {showResult && <Button variant="outline" onClick={()=>setResultDialog(true)}>{isCorrect?(isArabic?'عرض الحل والنتيجة':'View result and solution'):(isArabic?'التلميحات وإعادة المحاولة':'Hints and retry')}</Button>}
+                  {showResult && <Dialog open={resultDialog} onOpenChange={open=>{setResultDialog(open);if(!open){setHintsRequested(false);setHintError(false);}}}>
+                    <DialogContent className="max-w-2xl">
+                      <DialogTitle className="pe-8">{isCorrect?(isArabic?'أحسنت! إجابة صحيحة':'Well done! Correct answer'):(isArabic?'حاول مرة أخرى':'Try again')}</DialogTitle>
+                      <DialogDescription>{isCorrect?(isArabic?'راجع طريقة الحل ثم تابع التعلم.':'Review the solution and keep learning.'):(isArabic?'اطلب تلميحاً إذا احتجت للمساعدة.':'Request a hint if you need help.')}</DialogDescription>
                     <div
                       role="status"
                       aria-live="polite"
@@ -967,6 +970,42 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                         </div>
                       )}
 
+                      {isCorrect && <div className="mt-5 space-y-4 rounded-xl border bg-card p-4">
+                        {localAnswerResult?.IsCorrect && <div aria-hidden="true" className="flex justify-center gap-3 overflow-hidden py-2">
+                          {['#5c24ff','#ff2399','#F5C518','#22c55e','#5c24ff','#ff2399','#F5C518'].map((color,i)=><span key={i} className="h-3 w-2 rounded-sm motion-safe:animate-bounce" style={{backgroundColor:color,animationDelay:i*90+'ms',animationIterationCount:3,transform:'rotate('+i*23+'deg)'}}/>)}
+                        </div>}
+                        <h3 className="font-bold">{isArabic?'السؤال':'Question'}</h3>
+                        <RichText text={questionText} isArabic={isArabic}/>
+                        <h3 className="font-bold text-green-700 dark:text-green-300">{t("problem.solution")}</h3>
+                        {solutionText ? <RichText text={solutionText} isArabic={isArabic}/> : structuredSolution ? <div className="space-y-3">
+                          <RichText text={structuredSolution.Idea} isArabic={isArabic}/><LatexPreview latex={structuredSolution.FormulaLatex} block/>
+                          <ol className="list-decimal space-y-2 ps-6">{structuredSolution.Steps.map((step,i)=><li key={i}><RichText text={step} isArabic={isArabic}/></li>)}</ol>
+                          {([structuredSolution.Substitution,structuredSolution.Result+' '+structuredSolution.Unit,structuredSolution.Verification,structuredSolution.CommonError]).filter(Boolean).map((part,i)=><RichText key={i} text={part} isArabic={isArabic}/>)}
+                        </div> : <p className="text-sm text-muted-foreground">{isArabic?'الحل التفصيلي غير متوفر.':'Detailed solution unavailable.'}</p>}
+                        {youtubeUrl && <YoutubeEmbed url={youtubeUrl}/>}
+                        {entitlement?.IsPremium && <div className="space-y-2 border-t pt-4">
+                          <p className="text-sm font-bold">{isArabic?'تحميل السؤال والحل':'Download question and solution'}</p>
+                          <div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={exporting} onClick={()=>void downloadProblem('pdf')}>PDF</Button><Button variant="outline" disabled={exporting} onClick={()=>void downloadProblem('docx')}>Word</Button></div>
+                          {exporting&&<p role="status" className="text-sm text-muted-foreground">{isArabic?'جاري تجهيز الملف…':'Preparing document…'}</p>}
+                          {exportError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر تجهيز الملف. تأكد من الاشتراك والاتصال وحاول مجدداً.':'Could not prepare the document. Check your access and connection, then retry.'}</p>}
+                        </div>}
+                      </div>}
+                      {studentProblem && !isCorrect && !studentProblem.IsSolved && entitlement && (
+        <section className="mb-5 space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <h2 className="font-semibold">{isArabic ? 'تلميحات تساعدك على الحل' : 'Hints to help you solve'}</h2>
+          {!entitlement.IsPremium ? <LockedPremiumDialog><button type="button" className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"><Lock className="h-4 w-4"/>{isArabic?'تلميحات Premium':'Premium hints'}</button></LockedPremiumDialog> : !hintsRequested ? <Button variant="outline" onClick={()=>setHintsRequested(true)}>{isArabic?"طلب التلميح":"Request a hint"}</Button> : <>
+            {hints.isLoading&&<p role="status">{isArabic?'جارٍ التحميل…':'Loading…'}</p>}
+            {hints.isError&&<button className="text-sm underline" onClick={()=>void hints.refetch()}>{isArabic?'تعذّر تحميل التلميحات. إعادة المحاولة':'Could not load hints. Retry'}</button>}
+            {hints.currentData?.Available===false&&<p className="text-sm text-muted-foreground">{isArabic?'لا توجد تلميحات لهذه المسألة بعد.':'Hints are not yet available for this problem.'}</p>}
+            {hints.currentData?.Available&&<>
+              {hints.currentData.Hints.map(h=><div key={h.Level} className="rounded-xl border bg-background p-3"><p className="mb-1 text-sm font-semibold">{isArabic?'التلميح':'Hint'} {h.Level}</p><RichText text={h.Text} isArabic={isArabic}/></div>)}
+              {hints.currentData.RevealedCount<(hints.currentData.HintCount??2)&&<Button variant="outline" disabled={hintBusy||isSubmitting} onClick={async()=>{setHintError(false);try{await revealHint({problemId,Level:(hints.currentData?.RevealedCount??0)+1,locale,scope:studentProblem?.PracticeScopeId}).unwrap();}catch{setHintError(true);}}}>{hintBusy?(isArabic?'جارٍ التحميل…':'Loading…'):(isArabic?'عرض التلميح':'Reveal hint')+' '+(hints.currentData.RevealedCount+1)}</Button>}
+            </>}
+            {hintError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر عرض التلميح. حاول مجدداً.':'Could not reveal hint. Please retry.'}</p>}
+          </>}
+          <p className="text-xs text-muted-foreground">{isArabic?'الإجابة وطريقة الحل تظهران بعد الحل الصحيح لجميع الطلاب.':'The answer and solution appear after a correct solve for all learners.'}</p>
+        </section>
+      )}
                       {inDailyChallenge && (
                         <div className="mt-5 flex flex-wrap items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
                           <div className="min-w-0 flex-1">
@@ -979,8 +1018,8 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                                 {pauseChallengeAdvance
                                   ? (isArabic ? 'تم إيقاف الانتقال التلقائي حتى تنتهي من قراءة طريقة الحل.'
                                     : 'Automatic advance paused while you review the solution.')
-                                  : (isArabic ? 'الانتقال التلقائي خلال 8 ثوانٍ لقراءة الحل والقانون المستخدم.'
-                                    : 'Advancing in 8 seconds so you can read the solution and rule first.')}
+                                  : (isArabic ? 'الانتقال التلقائي بعد 8 ثوانٍ من إغلاق نافذة الحل.'
+                                    : 'Automatic advance 8 seconds after closing the solution dialog.')}
                               </p>
                             )}
                           </div>
@@ -1015,7 +1054,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                       </Link>)}
 
 
-                      {isInErrorNotebook && !inDailyChallenge && (
+                      {isInErrorNotebook && (!inDailyChallenge || !isCorrect) && (
                         <div className="mt-5 flex flex-wrap items-center gap-3">
                           {canRetry && <Button
                             variant="outline"
@@ -1026,7 +1065,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                             {t("problem.tryAgain")}
                           </Button>}
 
-                          {isInErrorNotebook && (
+                          {isInErrorNotebook && !inDailyChallenge && (
                             <Link
                               href="/dashboard/error-notebook"
                               className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
@@ -1038,7 +1077,9 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                         </div>
                       )}
                     </div>
-                  )}
+                    </DialogContent>
+                  </Dialog>}
+
                 </div>
               )}
 
@@ -1086,7 +1127,6 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
 
         {showSolutionSection && solutionText && (
           <div
-            ref={solutionRef}
             id="solution-section"
             className="scroll-mt-20 animate-in rounded-2xl border border-green-200 bg-green-50/30 p-6 shadow-sm duration-500 fade-in slide-in-from-bottom-4 dark:bg-green-900/10"
           >

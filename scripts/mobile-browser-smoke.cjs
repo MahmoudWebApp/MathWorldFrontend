@@ -137,7 +137,14 @@ if(process.argv.includes('--api')){
         const recordRequest=req=>{const url=new URL(req.url());if(url.port==='4174')detailRequests.push(url.pathname);};
         page.on('request',recordRequest);
         await page.goto(base+'/'+locale+'/dashboard/problems/1?trackId=1&categoryId=1',{waitUntil:'domcontentloaded'});
-        const next=page.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true});
+        const resultButton=page.getByRole('button',{name:locale==='ar'?'عرض الحل والنتيجة':'View result and solution',exact:true});
+        await resultButton.waitFor({timeout:15000});
+        const dialog=page.getByRole('dialog');
+        const next=dialog.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true});
+        assert.equal(await page.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true}).count(),0,'Next action belongs inside result dialog');
+        assert.equal(await dialog.count(),0,'Historical solved result must not open automatically');
+        await resultButton.click();
+        await dialog.waitFor({timeout:10000});
         await next.waitFor({timeout:15000});
         assert.equal(await page.getByText('Fixture internal title 1',{exact:true}).count(),0,'Duplicate question title visible');
         await page.waitForFunction(()=>performance.getEntriesByType('resource').some(e=>new URL(e.name).pathname==='/api/problems/2'),{},{timeout:15000});
@@ -149,8 +156,11 @@ if(process.argv.includes('--api')){
         await page.getByText('Fixture question 2',{exact:true}).waitFor({timeout:15000});
         console.log('LOCAL next problem render ms',Date.now()-transitionStart,locale,width,scheme);
         page.off('request',recordRequest);
-        await page.getByText(locale==='ar'?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.',{exact:true}).waitFor({timeout:15000});
+        await resultButton.click();
+        await dialog.getByText(locale==='ar'?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.',{exact:true}).waitFor({timeout:15000});
         assert.equal(await next.count(),0,'Next link should not exist at end of category');
+        await page.keyboard.press('Escape');
+        await dialog.waitFor({state:'hidden'});
         await page.getByRole('navigation',{name:locale==='ar'?'مسار التنقل':'Breadcrumb',exact:true}).getByRole('link',{name:'Numbers',exact:true}).click();
         await page.waitForURL('**/dashboard/categories/1/1');
         assert.equal(pageErrors.length,0,pageErrors.join('; '));

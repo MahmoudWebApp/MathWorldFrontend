@@ -26,18 +26,24 @@ export default function StudentCategoriesPage() {
   const { data: selected, isLoading: selecting, isError: selectedError, refetch: reloadSelected } = useGetLearningStageQuery();
   const stageId = selected?.StageId ?? 0;
   const trackSelection=useGetTrackSelectionQuery(undefined,{refetchOnMountOrArgChange:true});
-  const trackCatalog=useGetPublishedTracksQuery(stageId,{skip:stageId<=0,refetchOnMountOrArgChange:true});
+  const trackCatalog=useGetPublishedTracksQuery(stageId,{skip:stageId<=0,refetchOnMountOrArgChange:120});
+  // Only fetch legacy stage data after the catalog confirms that the track UI is unavailable.
+  const useLegacyStage = stageId > 0 && (
+    (!!trackCatalog.currentData && !trackCatalog.currentData.Enabled) ||
+    (trackCatalog.isError && (trackCatalog.error as {status?:number})?.status===404) ||
+    (!!trackCatalog.currentData?.Enabled && trackCatalog.currentData.Items.length===0)
+  );
   const { data: journey } = useGetLearningJourneyQuery(stageId, {
-    skip: stageId <= 0,
+    skip: !useLegacyStage,
     refetchOnMountOrArgChange: 45,
   });
   const categoryProgress = new Map((journey?.Categories ?? []).map(item => [item.CategoryId, item]));
   const { data: access, isLoading: loadingAccess, isError: accessError, refetch: reloadAccess } =
-    useGetStageCategoryAccessQuery(stageId, { skip: stageId <= 0, refetchOnMountOrArgChange: 45 });
+    useGetStageCategoryAccessQuery(stageId, { skip: !useLegacyStage, refetchOnMountOrArgChange: 45 });
   const { data: subscription, isLoading: loadingPlan, isError: planError, refetch: reloadPlan } =
-    useGetStudentSubscriptionQuery(undefined, { refetchOnMountOrArgChange: 45 });
+    useGetStudentSubscriptionQuery(undefined, { skip: !useLegacyStage, refetchOnMountOrArgChange: 45 });
   const accent = getStageAccent({ Id: stageId, NameAr: selected?.NameAr, NameEn: selected?.NameEn });
-  const loading = selecting || (stageId > 0 && (loadingAccess || loadingPlan));
+  const loading = selecting || (stageId > 0 && (!useLegacyStage || loadingAccess || loadingPlan));
   const failed = selectedError || accessError || planError;
   const stageName = ar ? selected?.NameAr : selected?.NameEn;
   const unlocked = new Set(access?.FreeCategoryIds ?? []);
@@ -55,7 +61,7 @@ export default function StudentCategoriesPage() {
     }
   }
 
-  if(stageId>0&&trackCatalog.isLoading) return <MathWorldSkeleton/>;
+  if(stageId>0&&(trackCatalog.isLoading||(!trackCatalog.currentData&&trackCatalog.isFetching))) return <MathWorldSkeleton/>;
   if(stageId>0&&trackCatalog.isError&&(trackCatalog.error as {status?:number})?.status!==404)
     return <main className="p-6"><button className="underline" onClick={()=>void trackCatalog.refetch()}>{ar?'تعذّر تحميل المسارات. إعادة المحاولة':'Could not load tracks. Retry'}</button></main>;
   if(trackCatalog.currentData?.Enabled&&trackCatalog.currentData.Items.length>0&&(trackSelection.isLoading||trackSelection.isError))
@@ -245,7 +251,7 @@ export default function StudentCategoriesPage() {
               if (locked) return (
                 <article key={category.Id} className="relative isolate flex h-full min-h-52 flex-col overflow-hidden rounded-2xl">
                   <div inert className="flex flex-1 flex-col gap-2">{card}{skillsButton}</div>
-                  <LockedCategoryOverlay name={name}/>
+                  <LockedCategoryOverlay name={name} accent={accent}/>
                 </article>
               );
               return <div key={category.Id} className={empty ? 'flex h-full flex-col gap-2 opacity-75' : 'flex h-full flex-col gap-2'}>{card}{skillsButton}</div>;

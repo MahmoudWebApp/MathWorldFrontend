@@ -411,7 +411,7 @@ function ProblemsPageClient() {
           {problems.length > 0 ? (
             <div className="grid gap-3">
               {problems.map((problem) => (
-                <ProblemCard key={problem.Id} problem={problem} />
+                <ProblemCard key={problem.Id} problem={problem} showContext={!scopedCategory} />
               ))}
             </div>
           ) : (

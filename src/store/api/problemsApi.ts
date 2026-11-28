@@ -349,6 +349,10 @@ export const problemsApi = createApi({
       query:({problemId,Level,locale,scope})=>({url:`/problems/${problemId}/hints`,method:'POST',body:{Level,...(scope==null?{}:{PracticeScopeId:scope})},headers:{'Accept-Language':locale}}),
       invalidatesTags:(_r,e,{problemId})=>e?[]:[{type:'Problem',id:problemId}],
     }),
+    exportProblemDocument: builder.mutation<Blob,{problemId:number;language:'ar'|'en';format:'pdf'|'docx'}>({
+      query:({problemId,language,format})=>({url:`/problems/${problemId}/export`,params:{language,format},
+        responseHandler:async(response:Response)=>response.ok?response.blob():response.json()}),
+    }),
     getPremiumSolution: builder.query<PremiumSolution, number>({
       query: (problemId) => `/problems/${problemId}/premium-solution`,
     }),
@@ -395,6 +399,7 @@ export const {
   useGetProblemQuery,
   useGetProblemHintsQuery,
   useRevealProblemHintMutation,
+  useExportProblemDocumentMutation,
   useLazyGetPremiumSolutionQuery,
   useLazyGetSolutionPreviewQuery,
   useGetProblemAttemptsQuery,
