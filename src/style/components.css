@@ -965,8 +965,12 @@ button:focus-visible,[role="button"]:focus-visible,a.sr-wave-button:focus-visibl
 .mw-admin-action.mw-action-premium:hover { background:color-mix(in srgb,var(--color-reward-gold) 14%,var(--color-card)); }
 .mw-admin-action.mw-action-delete:hover { background:color-mix(in srgb,var(--color-destructive) 10%,var(--color-card)); }
 /* Points use the same foreground for the number and its icon. */
-.mw-reward, .mw-reward-icon { color:#A66B00; }
-.dark .mw-reward, .dark .mw-reward-icon { color:#F7C948; }
+.mw-reward, .mw-reward-icon { color:#FFD700; }
+.mw-reward { text-shadow: 0 0 1px #3B3000; }
+.mw-reward-icon { filter:drop-shadow(0 0 0.65px #3B3000); }
+.mw-points-chip { color:#FFD700; background:#3B3000; border-radius:.5rem; padding:.25rem .5rem; }
+.mw-points-chip .mw-reward, .mw-points-chip .mw-reward-icon { text-shadow:none; filter:none; }
+.dark .mw-reward, .dark .mw-reward-icon { color:#FFD700; text-shadow:none; filter:none; }
 .mw-reward-icon.fill-reward-gold-bright { fill:currentColor; }
 
 /* Radix waits for the exit keyframe before unmounting; keyboard focus stays managed. */

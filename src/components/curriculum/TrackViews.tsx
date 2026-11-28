@@ -3,6 +3,7 @@ import {ProblemTitle} from '@/components/problems/ProblemTitle';
 import {ProblemCard} from '@/components/problems/ProblemCard';
 import {Pagination} from '@/components/ui/Pagination';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
+import { StudentCategoryLoading } from '@/components/dashboard/StudentCategoryLoading';
 import {useEffect,useState} from 'react';
 import {motion} from 'framer-motion';
 import {BookOpenText, Calculator, ListChecks, LockKeyhole, RotateCcw, GraduationCap, Search, X} from 'lucide-react';
@@ -111,7 +112,7 @@ export function StudentTrackWorkspace({trackId,categoryId}:{trackId:number;categ
     catch{setError(ar?'تعذّرت إعادة التدريب. حدّث المسار وحاول مجدداً.':'Restart failed. Refresh the track and retry.');}}
 
   if(detail.isError||progress.isError)return <main className="p-6"><p role="alert">{ar?'تعذّر تحميل المسار أو تقدمه.':'Could not load track or progress.'}</p><button className={btn} onClick={()=>{void detail.refetch();void progress.refetch();}}>{ar?'إعادة المحاولة':'Retry'}</button> <Link href="/learning-stage">{ar?'تغيير المسار':'Change track'}</Link></main>;
-  if(!data||!stats)return <MathWorldLoading compact mode="tab"/>;
+  if(!data||!stats)return categoryId===undefined?<StudentCategoryLoading ar={ar}/>:<MathWorldLoading compact mode="tab"/>;
   const byId=new Map(stats.Categories.map(c=>[c.CategoryId,c]));
   const accent=getStageAccent({Id:data.Track.StageId});
   if(categoryId!==undefined){
@@ -122,7 +123,7 @@ export function StudentTrackWorkspace({trackId,categoryId}:{trackId:number;categ
     </main>;
   }
   return <main className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6" style={{'--stage-accent':accent} as CSSProperties}>
-    <header className="flex flex-wrap items-center justify-between gap-2"><h1 className="flex items-center gap-3 text-2xl font-extrabold sm:text-3xl" style={{color:accent}}><GraduationCap size={27} aria-hidden="true"/>{ar?data.Track.NameAr:data.Track.NameEn}</h1><Link className={btn} href="/learning-stage">{ar?'تغيير الصف أو المستوى':'Change grade or level'}</Link></header>
+    <header className="flex flex-wrap items-center justify-between gap-2"><div><h1 className="text-3xl font-extrabold">{ar?'الفئات':'Topics'}</h1><p className="mt-2 flex items-center gap-2 text-sm font-semibold" style={{color:accent}}><GraduationCap size={18} aria-hidden="true"/>{ar?data.Track.NameAr:data.Track.NameEn}</p></div><Link className={btn} href="/learning-stage">{ar?'تغيير الصف أو المستوى':'Change grade or level'}</Link></header>
     <Dialog open={!!target} onOpenChange={open=>{if(!open&&!resetState.isLoading)setTarget(null)}}><DialogContent><DialogHeader><DialogTitle>{ar?'تأكيد إعادة التدريب':'Confirm practice restart'}</DialogTitle><DialogDescription>{target?.name}</DialogDescription></DialogHeader><p>{ar?'يعود تقدم التدريب ودفتر الأخطاء في هذا النطاق فقط إلى البداية. النقاط الدائمة والمفضلة والشهادات وتقدم الصفوف الأخرى محفوظة.':'Only practice progress and review errors in this scope reset. Lifetime points, favorites, certificates and other tracks remain.'}</p>{error&&<p role="alert" className="text-destructive">{error}</p>}<DialogFooter><button className={btn} disabled={resetState.isLoading} onClick={()=>setTarget(null)}>{ar?'إلغاء':'Cancel'}</button><button className={btn+' bg-primary text-primary-foreground'} disabled={resetState.isLoading} onClick={()=>void confirm()}>{ar?'تأكيد':'Confirm'}</button></DialogFooter></DialogContent></Dialog>
     {notice&&<p role="status" className="text-primary">{notice}</p>}
     <section className="rounded-xl border bg-card p-4"><p className="flex flex-wrap items-center justify-between gap-2 font-semibold"><span>{ar?'التقدم':'Progress'}</span><span dir="ltr" className="tabular-nums" style={{color:accent}}>{stats.Solved} / {stats.ProblemsCount} · {stats.CompletionPercent}%</span></p><progress aria-label={ar?'تقدم المسار':'Track progress'} className="mw-stage-progress mt-3 w-full" max={100} value={stats.CompletionPercent}/>{stats.TrackPracticeIsolationEnabled&&stats.Categories.some(c=>c.Attempted>0)&&<button className={btn} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({name:ar?data.Track.NameAr:data.Track.NameEn})}}>{ar?'إعادة تدريب الصف أو المستوى':'Restart grade or level'}</button>}</section>

@@ -44,19 +44,19 @@ export default function ErrorNotebookPage() {
   const [page,setPage]=useState(1);
   useEffect(()=>setPage(1),[stageId,locale]);
   const active = useGetErrorNotebookPageQuery({archived:false,page:activeTab==='active'&&!dueOnly?page:1,locale,stageId},{skip:stageId<=0});
-  const archived = useGetErrorNotebookPageQuery({archived:true,page:activeTab==='archived'?page:1,locale,stageId},{skip:stageId<=0});
+  const archived = useGetErrorNotebookPageQuery({archived:true,page:activeTab==='archived'?page:1,locale,stageId},{skip:stageId<=0||(activeTab!=='archived'&&!active.currentData&&!active.isError)});
   const due = useGetErrorNotebookPageQuery({archived:false,page,locale,stageId,dueOnly:true},{skip:stageId<=0||!dueOnly});
   const selected = activeTab==='archived'?archived:dueOnly?due:active;
   const visibleProblems = selected.currentData?.Items ?? [];
   const total = selected.currentData?.Total ?? 0;
-  const activeCount=active.data?.Total;
-  const archivedCount=archived.data?.Total;
-  const dueCount=active.data?.Due;
+  const activeCount=active.currentData?.Total;
+  const archivedCount=archived.currentData?.Total;
+  const dueCount=active.currentData?.Due;
   const isLoading=selected.isLoading||(selected.isFetching&&!selected.currentData);
-  const isError=selected.isError||active.isError||archived.isError;
+  const isError=selected.isError;
   const [setArchiveStatus] = useSetErrorNotebookArchiveMutation();
   useEffect(()=>{if(selected.currentData&&page>Math.max(1,Math.ceil(total/5)))setPage(Math.max(1,Math.ceil(total/5)));},[selected.currentData,page,total]);
-  function refetch(){if(stageId>0){void active.refetch();void archived.refetch();if(dueOnly)void due.refetch();}}
+  function refetch(){if(stageId>0){if(!active.isUninitialized)void active.refetch();if(!archived.isUninitialized)void archived.refetch();if(dueOnly&&!due.isUninitialized)void due.refetch();}}
   const filtersActive = dueOnly;
 
   function getMasteryLabel(status: ErrorNotebookProblem['MasteryStatus']) {

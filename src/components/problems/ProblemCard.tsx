@@ -56,7 +56,7 @@ export function ProblemCard({ problem, compact=false, href, showContext=true }: 
                       {locale === "ar" ? "تحتاج مراجعة" : "Needs review"}
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="gap-1 border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-300">
+                    <Badge variant="secondary" className="gap-1 border-[#FFD700]/40 !bg-[#3B3000] !text-[#FFD700]">
                       <CircleDot className="h-3.5 w-3.5" />
                       {locale === "ar" ? "جديدة" : "New"}
                     </Badge>
@@ -77,7 +77,7 @@ export function ProblemCard({ problem, compact=false, href, showContext=true }: 
           </div>
           <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2">
             {typeof problem.Points === "number" ? (
-              <span className="inline-flex items-center gap-1.5 text-sm font-bold mw-reward"
+              <span className="inline-flex items-center gap-1.5 text-sm font-bold mw-reward mw-points-chip"
                 aria-label={(locale === "ar" ? "النقاط: " : "Points: ") + problem.Points}>
                 <Star aria-hidden="true" className="h-4 w-4 fill-reward-gold-bright mw-reward-icon" />
                 <span className="tabular-nums">{problem.Points}</span>
