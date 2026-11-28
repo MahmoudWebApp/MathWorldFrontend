@@ -6,10 +6,10 @@ export async function generateMetadata({
 }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const ar = locale === 'ar';
-  const title = ar ? 'مقارنة حساب Free وPremium | MathWorld' : 'Free vs Premium features | MathWorld';
+  const title = ar ? 'مقارنة حساب Free وPremium | MathSuper' : 'Free vs Premium features | MathSuper';
   const description = ar
-    ? 'قارن بين حساب MathWorld المجاني والمدفوع، والفئات المفتوحة، والتحديات اليومية، والتقارير. لا توجد أسعار معروضة حالياً.'
-    : 'Compare MathWorld Free and Premium accounts, learning topics, daily challenges and reports. No prices are published yet.';
+    ? 'قارن بين حساب MathSuper المجاني والمدفوع، والفئات المفتوحة، والتحديات اليومية، والتقارير. لا توجد أسعار معروضة حالياً.'
+    : 'Compare MathSuper Free and Premium accounts, learning topics, daily challenges and reports. No prices are published yet.';
   return {
     title,
     description,
@@ -21,9 +21,9 @@ export async function generateMetadata({
       title,
       description,
       type: 'website',
-      siteName: 'MathWorld',
+      siteName: 'MathSuper',
       url: `${SITE_URL}/${locale}/premium`,
-      images: [{ url: `${SITE_URL}/mathworld-logo.png`, alt: 'MathWorld' }],
+      images: [{ url: `${SITE_URL}/mathworld-logo.png`, alt: 'MathSuper' }],
     },
   };
 }

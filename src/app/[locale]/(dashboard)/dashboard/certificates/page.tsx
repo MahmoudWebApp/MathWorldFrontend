@@ -50,7 +50,7 @@ function CertificateCard({c}:{c:CertificateRecord}){
   async function save(lang:'ar'|'en'){
     setError(false);try{const blob=await download({Id:c.Id,Lang:lang}).unwrap();
       if(blob.type!=='application/pdf'||(await blob.slice(0,5).text())!=='%PDF-')throw Error('pdf');
-      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mathworld-certificate-'+lang+'.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mathsuper-certificate-'+lang+'.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     }catch{setError(true);}
   }
   return <article className="rounded-2xl border bg-card p-4 space-y-3"><div className="flex items-center gap-3"><Award className="h-7 w-7 shrink-0 text-primary"/><div><h3 className="font-bold">{ar?c.TitleAr:c.TitleEn}</h3><p className="text-sm text-muted-foreground">{c.StudentName} · {new Date(c.IssuedAtUtc).toLocaleDateString(ar?'ar':'en')}</p></div></div>

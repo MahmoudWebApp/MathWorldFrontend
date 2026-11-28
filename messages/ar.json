@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "MathWorld - عالم الرياضيات",
+    "title": "MathSuper - عالم الرياضيات",
     "description": "منصة تفاعلية لحل المسائل الرياضية",
-    "stagesTitle": "المراحل التعليمية | MathWorld",
+    "stagesTitle": "المراحل التعليمية | MathSuper",
     "stagesDescription": "استكشف فئات ومسائل الرياضيات حسب المرحلة التعليمية"
   },
   "nav": {
@@ -66,7 +66,7 @@
     "viewAll": "عرض الكل"
   },
   "stats": {
-    "whyMathWorld": "لماذا MathWorld؟",
+    "whyMathWorld": "لماذا MathSuper؟",
     "description": "منصة متكاملة مصممة خصيصاً لمساعدتك على إتقان الرياضيات",
     "totalProblems": "المسائل",
     "totalUsers": "المستخدمين",
@@ -413,7 +413,7 @@
     "followUs": "تابعنا",
     "github": "GitHub",
     "twitter": "Twitter",
-    "copyright": "© {year} MathWorld. جميع الحقوق محفوظة."
+    "copyright": "© {year} MathSuper. جميع الحقوق محفوظة."
   },
   "common": {
     "welcome": "أهلاً بك",
@@ -457,11 +457,11 @@
   },
   "about": {
     "metadata": {
-      "title": "عن MathWorld - قصتنا ورسالتنا",
-      "description": "اكتشف قصة MathWorld، ورسالتنا في جعل الرياضيات متاحة، والفريق وراء المنصة."
+      "title": "عن MathSuper - قصتنا ورسالتنا",
+      "description": "اكتشف قصة MathSuper، ورسالتنا في جعل الرياضيات متاحة، والفريق وراء المنصة."
     },
     "hero": {
-      "title": "عن MathWorld",
+      "title": "عن MathSuper",
       "subtitle": "رحلتنا لجعل الرياضيات متاحة، جذابة، وممتعة للجميع",
       "badge": "قصتنا"
     },
@@ -541,8 +541,8 @@
   },
   "privacy": {
     "metadata": {
-      "title": "سياسة الخصوصية - MathWorld",
-      "description": "تعرف على كيفية جمع MathWorld واستخدام وحماية معلوماتك الشخصية."
+      "title": "سياسة الخصوصية - MathSuper",
+      "description": "تعرف على كيفية جمع MathSuper واستخدام وحماية معلوماتك الشخصية."
     },
     "hero": {
       "title": "سياسة الخصوصية",
@@ -553,7 +553,7 @@
     "sections": {
       "introduction": {
         "title": "مقدمة",
-        "content": "في MathWorld، نحن ملتزمون بحماية خصوصيتك."
+        "content": "في MathSuper، نحن ملتزمون بحماية خصوصيتك."
       },
       "information": {
         "title": "المعلومات التي نجمعها",
@@ -614,8 +614,8 @@
   },
   "contact": {
     "metadata": {
-      "title": "تواصل معنا - MathWorld",
-      "description": "تواصل مع فريق MathWorld."
+      "title": "تواصل معنا - MathSuper",
+      "description": "تواصل مع فريق MathSuper."
     },
     "hero": {
       "title": "تواصل معنا",
@@ -639,7 +639,7 @@
   },
   "solved": {
     "metadata": {
-      "title": "المسائل المحلولة - MathWorld",
+      "title": "المسائل المحلولة - MathSuper",
       "description": "عرض جميع المسائل الرياضية التي حللتها."
     },
     "title": "المسائل المحلولة",
@@ -655,7 +655,7 @@
   },
   "favorites": {
     "metadata": {
-      "title": "المسائل المفضلة - MathWorld",
+      "title": "المسائل المفضلة - MathSuper",
       "description": "مسائلك الرياضية المفضلة."
     },
     "title": "المسائل المفضلة",

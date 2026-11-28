@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "MathWorld - The World of Mathematics",
+    "title": "MathSuper - The World of Mathematics",
     "description": "An interactive platform for solving math problems",
-    "stagesTitle": "Educational Stages | MathWorld",
+    "stagesTitle": "Educational Stages | MathSuper",
     "stagesDescription": "Explore math problems by educational stage"
   },
   "nav": {
@@ -66,7 +66,7 @@
     "viewAll": "View All"
   },
   "stats": {
-    "whyMathWorld": "Why MathWorld?",
+    "whyMathWorld": "Why MathSuper?",
     "description": "A comprehensive platform designed to help you master mathematics",
     "totalProblems": "Problems",
     "totalUsers": "Users",
@@ -412,7 +412,7 @@
     "followUs": "Follow Us",
     "github": "GitHub",
     "twitter": "Twitter",
-    "copyright": "© {year} MathWorld. All rights reserved."
+    "copyright": "© {year} MathSuper. All rights reserved."
   },
   "common": {
     "welcome": "Welcome",
@@ -456,11 +456,11 @@
   },
   "about": {
     "metadata": {
-      "title": "About MathWorld",
-      "description": "Discover the story behind MathWorld."
+      "title": "About MathSuper",
+      "description": "Discover the story behind MathSuper."
     },
     "hero": {
-      "title": "About MathWorld",
+      "title": "About MathSuper",
       "subtitle": "Making mathematics accessible and enjoyable",
       "badge": "Our Story"
     },
@@ -540,7 +540,7 @@
   },
   "privacy": {
     "metadata": {
-      "title": "Privacy Policy - MathWorld",
+      "title": "Privacy Policy - MathSuper",
       "description": "Learn how we protect your information."
     },
     "hero": {
@@ -613,8 +613,8 @@
   },
   "contact": {
     "metadata": {
-      "title": "Contact Us - MathWorld",
-      "description": "Get in touch with the MathWorld team."
+      "title": "Contact Us - MathSuper",
+      "description": "Get in touch with the MathSuper team."
     },
     "hero": {
       "title": "Contact Us",
@@ -638,7 +638,7 @@
   },
   "solved": {
     "metadata": {
-      "title": "Solved Problems - MathWorld",
+      "title": "Solved Problems - MathSuper",
       "description": "View your solved math problems."
     },
     "title": "Solved Problems",
@@ -654,7 +654,7 @@
   },
   "favorites": {
     "metadata": {
-      "title": "Favorite Problems - MathWorld",
+      "title": "Favorite Problems - MathSuper",
       "description": "Your favorite math problems."
     },
     "title": "Favorite Problems",

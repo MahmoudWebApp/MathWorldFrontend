@@ -1,7 +1,7 @@
 {
-  "name": "MathWorld - عالم الرياضيات",
-  "short_name": "MathWorld",
-  "description": "Learn, practice, and master mathematics with MathWorld.",
+  "name": "MathSuper - عالم الرياضيات",
+  "short_name": "MathSuper",
+  "description": "Learn, practice, and master mathematics with MathSuper.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#090511",

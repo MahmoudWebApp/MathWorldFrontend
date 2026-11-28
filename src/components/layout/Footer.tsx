@@ -54,7 +54,7 @@ export function Footer() {
             <Link
               href="/"
               className="group mb-6 inline-flex items-center rounded-[2rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="MathWorld"
+              aria-label="MathSuper"
             >
               <BrandLogo className="w-[190px] transition-transform duration-300 group-hover:scale-[1.025]" />
             </Link>
