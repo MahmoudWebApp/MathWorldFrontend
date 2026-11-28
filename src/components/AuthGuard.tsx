@@ -6,6 +6,7 @@ import {usePathname,useRouter} from '@/i18n/routing';
 import type {RootState} from '@/store';
 import {useGetStudentOnboardingQuery} from '@/store/api/usersApi';
 import {MathWorldLoading} from '@/components/ui/MathWorldLoading';
+import {StudentCategoryLoading} from '@/components/dashboard/StudentCategoryLoading';
 export function AuthGuard({children}:{children:React.ReactNode}){
  const path=usePathname(),router=useRouter(),ar=useLocale()==='ar';
  const {user,isLoading,isAuthenticated,sessionUnavailable}=useSelector((s:RootState)=>s.auth);
@@ -25,6 +26,6 @@ export function AuthGuard({children}:{children:React.ReactNode}){
  if(!privateRoute)return <>{children}</>;
  if(sessionUnavailable)return <div className="mx-auto max-w-lg p-8 text-center"><p role="alert">{ar?'تعذّر التحقق من الجلسة.':'Unable to verify session.'}</p><button className="sr-wave-button mt-4 rounded-xl px-4 py-2 text-white" onClick={()=>window.dispatchEvent(new Event('mathworld:retry-auth'))}>{ar?'إعادة المحاولة':'Retry'}</button></div>;
  if(requiresSetup&&onboarding.isError&&!onboarding.data)return <div className="mx-auto max-w-lg p-8 text-center"><p role="alert">{ar?'تعذّر التحقق من إعداد الحساب.':'Could not check account setup.'}</p><button className="sr-wave-button mt-4 rounded-xl px-4 py-2 text-white" onClick={()=>void onboarding.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></div>;
- if(isLoading||!allowed||requiresSetup)return <div className="p-8"><MathWorldLoading compact/></div>;
+ if(isLoading||!allowed||requiresSetup)return path==='/dashboard/categories'?<StudentCategoryLoading ar={ar}/>:<div className="p-8"><MathWorldLoading compact/></div>;
  return <>{children}</>;
 }
