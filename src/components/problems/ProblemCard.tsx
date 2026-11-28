@@ -16,10 +16,11 @@ interface ProblemCardProps {
   problem: ProblemPreview;
   compact?: boolean;
   href?: string;
+  showTaxonomy?: boolean;
 }
 
 /** A readable, accessible preview. A green check is never used for unsolved work. */
-export function ProblemCard({ problem, compact=false, href }: ProblemCardProps) {
+export function ProblemCard({ problem, compact=false, href, showTaxonomy=true }: ProblemCardProps) {
   const t = useTranslations();
   const pathname = usePathname();
   const inStudentWorkspace = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
@@ -55,18 +56,18 @@ export function ProblemCard({ problem, compact=false, href }: ProblemCardProps) 
                       {locale === "ar" ? "تحتاج مراجعة" : "Needs review"}
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="gap-1 border-amber-400/40 bg-amber-400/10 text-amber-700 dark:text-amber-300">
+                    <Badge variant="secondary" className="gap-1 border-yellow-500/40 bg-yellow-400/10 text-yellow-800 dark:text-yellow-300">
                       <CircleDot className="h-3.5 w-3.5" />
                       {locale === "ar" ? "جديدة" : "New"}
                     </Badge>
                   ))}
-                {problem.StageName && (
+                {showTaxonomy && problem.StageName && (
                   <Badge variant="secondary" className="gap-1.5 border bg-background/80 text-foreground" style={{ borderColor: stageAccent + '34' }}>
                     <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-transparent shadow-none" />
                     {problem.StageName}
                   </Badge>
                 )}
-                {problem.CategoryName && (
+                {showTaxonomy && problem.CategoryName && (
                   <Badge variant="outline" className="mw-topic-action">
                     {problem.CategoryName}
                   </Badge>
@@ -76,9 +77,9 @@ export function ProblemCard({ problem, compact=false, href }: ProblemCardProps) 
           </div>
           <div className={compact?"ms-auto flex shrink-0 flex-row flex-wrap items-center gap-2":"flex shrink-0 flex-col items-end gap-3 pt-0 sm:gap-4"}>
             {typeof problem.Points === "number" ? (
-              <span className="inline-flex items-center gap-1.5 text-sm font-bold mw-reward"
+              <span className="inline-flex items-center gap-1.5 text-sm font-bold text-yellow-700 dark:text-yellow-300"
                 aria-label={(locale === "ar" ? "النقاط: " : "Points: ") + problem.Points}>
-                <Star aria-hidden="true" className="h-4 w-4 fill-reward-gold-bright mw-reward-icon" />
+                <Star aria-hidden="true" className="h-4 w-4 fill-current" />
                 <span className="tabular-nums">{problem.Points}</span>
               </span>
             ) : <span aria-hidden="true" />}
