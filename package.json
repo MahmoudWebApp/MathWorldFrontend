@@ -23,9 +23,9 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.42.2",
     "iconsax-reactjs": "^0.0.8",
-    "katex": "^0.16.45",
+    "katex": "0.18.2",
     "lucide-react": "^1.14.0",
-    "next": "15.1.11",
+    "next": "15.5.29",
     "next-intl": "^4.11.0",
     "next-themes": "^0.4.6",
     "react": "19.0.0",
@@ -41,8 +41,19 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "8.57.1",
-    "eslint-config-next": "15.1.11",
+    "eslint-config-next": "15.5.29",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss@<8.5.23": "8.5.23",
+      "nanoid@>=3.0.0 <3.3.18": "3.3.18",
+      "source-map-js@<1.2.2": "1.2.2",
+      "brace-expansion@<1.1.21": "1.1.21",
+      "brace-expansion@>=4.0.0 <5.0.12": "5.0.12",
+      "js-yaml@>=4.0.0 <4.3.2": "4.3.2",
+      "minimatch@10.2.5": "11.0.1"
+    }
   }
 }
