@@ -191,28 +191,28 @@ export default function AdminLearnerActivityPage() {
                   <div>
                     <button type="button" onClick={() => chooseStudent(student.Id)}
                       className="text-start font-bold text-primary hover:underline">{student.FullName}</button>
-                    <p className="text-xs text-muted-foreground">#{student.Id}
-                      {' · '}{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}
-                    </p>
+                    <p className="text-xs text-muted-foreground">#{student.Id} {' · '}{student.IsActive ? (ar ? 'مفعّل' : 'Active') : (ar ? 'معطّل' : 'Disabled')}</p>
+                    <StageDataBadge id={student.CurrentStageId} name={student.CurrentStageId ? names.get(student.CurrentStageId) : undefined}>{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}</StageDataBadge>
                   </div>
                   <span className={student.IsOnline
-                    ? 'rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300'
+                    ? 'inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-300'
                     : 'rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground'}>
+                    {student.IsOnline && <span className="h-2 w-2 rounded-full bg-emerald-500 motion-safe:animate-pulse" aria-hidden="true" />}
                     {student.IsOnline
-                      ? (ar ? 'اتصال حديث' : 'Recently online')
+                      ? (ar ? 'اتصل خلال 5 دقائق' : 'Seen within 5 min')
                       : (ar ? 'لا يوجد اتصال حديث' : 'No recent heartbeat')}
                   </span>
                 </div>
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-2">
-                  {[
-                    [ar ? 'مسجل منذ' : 'Registered', date(student.CreatedAt)],
-                    [ar ? 'آخر دخول' : 'Last login', date(student.LastLoginAt)],
-                    [ar ? 'آخر خروج مؤكد' : 'Last explicit sign-out', date(student.LastExplicitSignOutAtUtc ?? null)],
-                    [ar ? 'آخر حل' : 'Last practice', date(student.LastPracticeAt)],
-                    [ar ? 'آخر اتصال' : 'Last heartbeat', date(student.LastHeartbeatAtUtc)],
-                  ].map(([label, value]) => <div key={label} className="min-w-0">
+                  {([
+                    [ar ? 'مسجل منذ' : 'Registered', date(student.CreatedAt), student.CreatedAt?'purple':'neutral'],
+                    [ar ? 'آخر دخول' : 'Last login', date(student.LastLoginAt), student.LastLoginAt?'green':'neutral'],
+                    [ar ? 'آخر خروج مؤكد' : 'Last explicit sign-out', date(student.LastExplicitSignOutAtUtc ?? null), student.LastExplicitSignOutAtUtc?'amber':'neutral'],
+                    [ar ? 'آخر حل' : 'Last practice', date(student.LastPracticeAt), student.LastPracticeAt?'blue':'neutral'],
+                    [ar ? 'آخر اتصال' : 'Last heartbeat', date(student.LastHeartbeatAtUtc), student.LastHeartbeatAtUtc?'green':'neutral'],
+                  ] as const).map(([label, value, tone]) => <div key={label} className="min-w-0">
                     <dt className="text-xs text-muted-foreground">{label}</dt>
-                    <dd className="font-semibold">{value}</dd>
+                    <dd className="mt-1"><DataBadge tone={tone}>{value}</DataBadge></dd>
                   </div>)}
                 </dl>
                 <p className="border-t pt-2 font-semibold">
@@ -249,7 +249,7 @@ export default function AdminLearnerActivityPage() {
                     {ar ? 'اتصل خلال 5 دقائق' : 'Seen within 5 min'}
                   </span>}
                 </td>
-                <td className="p-3"><StageDataBadge id={student.CurrentStageId}>{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}</StageDataBadge></td>
+                <td className="p-3"><StageDataBadge id={student.CurrentStageId} name={student.CurrentStageId ? names.get(student.CurrentStageId) : undefined}>{student.CurrentStageId ? names.get(student.CurrentStageId) ?? `#${student.CurrentStageId}` : '—'}{student.CurrentTrackId?(' · '+(tracks.data?.Items.find(x=>x.Track.Id===student.CurrentTrackId)?.Track[ar?'NameAr':'NameEn']??'#'+student.CurrentTrackId)):''}</StageDataBadge></td>
                 <td className="p-3"><DataBadge tone={(student.CreatedAt)?'purple':'neutral'}>{date(student.CreatedAt)}</DataBadge></td>
                 <td className="p-3"><DataBadge tone={(student.LastLoginAt)?'green':'neutral'}>{date(student.LastLoginAt)}</DataBadge></td>
                 <td className="p-3"><DataBadge tone={(student.LastExplicitSignOutAtUtc ?? null)?'amber':'neutral'}>{date(student.LastExplicitSignOutAtUtc ?? null)}</DataBadge></td>
