@@ -21,8 +21,8 @@ const stageApi = read('src/store/api/stagesApi.ts');
 const problemList = read('src/app/[locale]/problems/ProblemsPageClient.tsx');
 
 assert.match(card, /max-w-5xl/, 'Problem preview cards must stay reasonably narrow');
-assert.match(card, /flex flex-row items-start justify-between/, 'Mobile and desktop should keep the score and action in the top corner');
-assert.match(card, /flex shrink-0 flex-col items-end/, 'Star and view action should be vertically aligned in the top corner');
+assert.match(card, /flex w-full min-w-0 items-start/, 'Question title should receive the full card width without action compression');
+assert.match(card, /flex w-full flex-wrap items-center justify-between gap-2 border-t/, 'Score and view action should remain in a separate responsive row');
 assert.match(card, /<Star\b/, 'Problem points star missing');
 assert.match(card, /<DirectionalArrow direction="forward"/, 'Problem open action missing');
 assert.match(card, /problem\.IsSolved\s*\?\s*\(/, 'Solved status must use server-owned progress');
