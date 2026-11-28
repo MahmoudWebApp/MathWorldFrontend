@@ -36,6 +36,7 @@ import {
   useGetProblemQuery,
   useGetProblemHintsQuery,
   useRevealProblemHintMutation,
+  useExportProblemDocumentMutation,
   useSubmitAnswerMutation,
 } from "@/store/api/problemsApi";
 import {
@@ -219,6 +220,28 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
   const [hintError,setHintError]=useState(false);
   const [resultDialog,setResultDialog]=useState(false);
   const [hintsRequested,setHintsRequested]=useState(false);
+  const [exportDocument,{isLoading:exporting,reset:resetExport}]=useExportProblemDocumentMutation();
+  const [exportError,setExportError]=useState(false);
+  const exportOwner=useRef(viewerKey);
+  exportOwner.current=viewerKey;
+  useEffect(()=>()=>{exportOwner.current='';},[]);
+  async function downloadProblem(format:'pdf'|'docx'){
+    if(exporting||!entitlement?.IsPremium||!isCorrect||retryMode)return;
+    const owner=exportOwner.current;
+    setExportError(false);
+    try{
+      const blob=await exportDocument({problemId,language:isArabic?'ar':'en',format}).unwrap();
+      if(exportOwner.current!==owner)return;
+      const mime=format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      if(!(blob instanceof Blob)||blob.type!==mime||blob.size<100||blob.size>20_000_000)throw new Error('Invalid document');
+      const url=URL.createObjectURL(blob);
+      const anchor=document.createElement('a');
+      anchor.href=url;anchor.download=`MathWorld-question-${problemId}-${isArabic?'ar':'en'}.${format}`;
+      document.body.appendChild(anchor);anchor.click();anchor.remove();
+      window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }catch{if(exportOwner.current===owner)setExportError(true);}
+    finally{if(exportOwner.current===owner)resetExport();}
+  }
 
   const [toggleFavorite] = useToggleFavoriteMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
@@ -247,6 +270,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
     setResultDialog(false);
     setHintsRequested(false);
     setHintError(false);
+    setExportError(false);
     attemptStartedAtRef.current = Date.now();
   }, [problemId]);
 
@@ -959,6 +983,12 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                           {([structuredSolution.Substitution,structuredSolution.Result+' '+structuredSolution.Unit,structuredSolution.Verification,structuredSolution.CommonError]).filter(Boolean).map((part,i)=><RichText key={i} text={part} isArabic={isArabic}/>)}
                         </div> : <p className="text-sm text-muted-foreground">{isArabic?'الحل التفصيلي غير متوفر.':'Detailed solution unavailable.'}</p>}
                         {youtubeUrl && <YoutubeEmbed url={youtubeUrl}/>}
+                        {entitlement?.IsPremium && <div className="space-y-2 border-t pt-4">
+                          <p className="text-sm font-bold">{isArabic?'تحميل السؤال والحل':'Download question and solution'}</p>
+                          <div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={exporting} onClick={()=>void downloadProblem('pdf')}>PDF</Button><Button variant="outline" disabled={exporting} onClick={()=>void downloadProblem('docx')}>Word</Button></div>
+                          {exporting&&<p role="status" className="text-sm text-muted-foreground">{isArabic?'جاري تجهيز الملف…':'Preparing document…'}</p>}
+                          {exportError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر تجهيز الملف. تأكد من الاشتراك والاتصال وحاول مجدداً.':'Could not prepare the document. Check your access and connection, then retry.'}</p>}
+                        </div>}
                       </div>}
                       {studentProblem && !isCorrect && !studentProblem.IsSolved && entitlement && (
         <section className="mb-5 space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
