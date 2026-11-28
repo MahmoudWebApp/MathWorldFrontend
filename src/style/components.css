@@ -980,8 +980,9 @@ button:focus-visible,[role="button"]:focus-visible,a.sr-wave-button:focus-visibl
 @keyframes mw-dialog-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .98; } }
 @media (prefers-reduced-motion: reduce) { .mw-dialog-overlay, .mw-dialog-content { animation-duration: .01ms !important; } }
 
-/* Social links use the platform's shared brand gradient, not network colors. */
-.mw-social-brand { background:var(--sr-grad, linear-gradient(90deg,#5c24ff,#ff2399)); color:#fff; border:1px solid transparent; }
-.mw-social-brand:hover { color:#fff; filter:brightness(1.08); box-shadow:0 6px 18px rgb(var(--sr-primary-rgb) / .22); }
+/* Neutral social controls until hover or keyboard focus; touch does not require hover. */
+.mw-social-brand { background:var(--color-card); color:var(--color-muted-foreground); border:1px solid var(--color-border); }
+@media (hover:hover) { .mw-social-brand:hover { background:var(--sr-grad, linear-gradient(90deg,#5c24ff,#ff2399)); color:#fff; border-color:transparent; box-shadow:0 6px 18px rgb(var(--sr-primary-rgb) / .22); } }
+.mw-social-brand:focus-visible,.mw-social-brand:active { background:var(--sr-grad, linear-gradient(90deg,#5c24ff,#ff2399)); color:#fff; border-color:transparent; }
 /* This title sits on an already saturated gradient surface. */
 .impact-shell .impact-title-accent { background:none; color:#fff; -webkit-text-fill-color:#fff; animation:none; }
