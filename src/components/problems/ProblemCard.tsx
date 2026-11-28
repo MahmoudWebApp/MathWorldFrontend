@@ -16,10 +16,11 @@ interface ProblemCardProps {
   problem: ProblemPreview;
   compact?: boolean;
   href?: string;
+  showContext?: boolean;
 }
 
 /** A readable, accessible preview. A green check is never used for unsolved work. */
-export function ProblemCard({ problem, compact=false, href }: ProblemCardProps) {
+export function ProblemCard({ problem, compact=false, href, showContext=true }: ProblemCardProps) {
   const t = useTranslations();
   const pathname = usePathname();
   const inStudentWorkspace = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
@@ -60,13 +61,13 @@ export function ProblemCard({ problem, compact=false, href }: ProblemCardProps) 
                       {locale === "ar" ? "جديدة" : "New"}
                     </Badge>
                   ))}
-                {problem.StageName && (
+                {showContext && problem.StageName && (
                   <Badge variant="secondary" className="gap-1.5 border bg-background/80 text-foreground" style={{ borderColor: stageAccent + '34' }}>
                     <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-transparent shadow-none" />
                     {problem.StageName}
                   </Badge>
                 )}
-                {problem.CategoryName && (
+                {showContext && problem.CategoryName && (
                   <Badge variant="outline" className="mw-topic-action">
                     {problem.CategoryName}
                   </Badge>

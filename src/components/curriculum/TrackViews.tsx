@@ -92,7 +92,7 @@ function Practice({id,categoryId,ar}:{id:number;categoryId:number;ar:boolean}){
     {isError&&<p role="alert">{ar?'تعذّر تحميل المسائل.':'Could not load problems.'} <button className={btn} onClick={()=>void refetch()}>{ar?'إعادة المحاولة':'Retry'}</button></p>}
     {data&&!isError&&!pending&&<>
       {data.Items.length===0&&<p role="status" className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">{ar?'لا توجد مسائل مطابقة':'No matching problems'}</p>}
-      {data.Items.map(p=><ProblemCard key={p.Id} href={'/dashboard/problems/'+p.Id+'?trackId='+id+'&categoryId='+categoryId+'&page='+page}
+      {data.Items.map(p=><ProblemCard key={p.Id} showContext={false} href={'/dashboard/problems/'+p.Id+'?trackId='+id+'&categoryId='+categoryId+'&page='+page}
         problem={{Id:p.Id,Title:ar?p.TitleAr:p.TitleEn,StageId:p.StageId,StageName:ar?p.StageNameAr:p.StageNameEn,CategoryId:p.CategoryId,CategoryName:(ar?p.CategoryNameAr:p.CategoryNameEn)??'',Points:p.Points,ViewsCount:0,RequiresLogin:true,IsSolved:p.IsSolved,HasAttempted:p.HasAttempted,IsFavorite:p.IsFavorite}}/>)}
       {data.Total>data.PageSize&&<Pagination page={page} pageSize={data.PageSize} total={data.Total} onPageChange={setPage} disabled={isFetching}/>}
 
@@ -133,7 +133,7 @@ export function StudentTrackWorkspace({trackId,categoryId}:{trackId:number;categ
       <div className="mt-auto flex items-center gap-3 text-xs text-muted-foreground"><span>{ar?'محلولة':'Solved'}: <b dir="ltr">{p?.Solved??0}/{c.ProblemsCount}</b></span><progress aria-label={ar?'تقدم الفئة':'Topic progress'} className="mw-stage-progress min-w-0 flex-1" max={Math.max(1,c.ProblemsCount)} value={p?.Solved??0}/></div>
       <div inert={locked} className="relative z-20 flex flex-wrap gap-2 border-t border-border/60 pt-3"><SkillsPopover title={ar?c.NameAr:c.NameEn} trigger={<button className={btn+' mw-topic-action inline-flex items-center gap-2'}><ListChecks size={16} style={{color:accent}}/>{ar?'عرض المهارات':'View skills'}</button>}><ul className="max-h-[55vh] space-y-3 overflow-y-auto">{data.Skills.filter(s=>s.CategoryId===c.Id).map(s=><li key={s.Id} className="flex gap-2"><ListChecks size={17} className="mt-1 shrink-0" style={{color:accent}}/><div><strong>{ar?s.NameAr:s.NameEn}</strong><p className="text-sm text-muted-foreground">{ar?s.DescriptionAr:s.DescriptionEn}</p></div></li>)}</ul></SkillsPopover>
       {locked?<span className={btn+" mw-topic-action inline-flex items-center gap-2"}><LockKeyhole size={16}/>{ar?"مقفلة":"Locked"}</span>:available?<Link href={href} className={btn+' mw-topic-action-solid inline-flex items-center gap-2'}><BookOpenText size={16}/>{ar?'عرض المسائل':'View problems'}</Link>:<span className="text-xs text-muted-foreground">{ar?'التحقق من الصلاحيات':'Checking access'}</span>}{available&&stats.TrackPracticeIsolationEnabled&&(p?.Attempted??0)>0&&<button className={btn+' mw-topic-action'} disabled={resetState.isLoading} onClick={()=>{setError('');setNotice('');setTarget({categoryId:c.Id,name:ar?c.NameAr:c.NameEn})}}><RotateCcw size={15} className="me-1 inline"/>{ar?'إعادة تدريب الفئة':'Restart topic'}</button>}</div>
-      {locked&&<LockedCategoryOverlay name={ar?c.NameAr:c.NameEn}/>}
+      {locked&&<LockedCategoryOverlay name={ar?c.NameAr:c.NameEn} accent={accent}/>}
     </article>;})}</div>
   </main>;
 }

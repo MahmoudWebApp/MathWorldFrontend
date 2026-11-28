@@ -251,7 +251,7 @@ export default function StudentCategoriesPage() {
               if (locked) return (
                 <article key={category.Id} className="relative isolate flex h-full min-h-52 flex-col overflow-hidden rounded-2xl">
                   <div inert className="flex flex-1 flex-col gap-2">{card}{skillsButton}</div>
-                  <LockedCategoryOverlay name={name}/>
+                  <LockedCategoryOverlay name={name} accent={accent}/>
                 </article>
               );
               return <div key={category.Id} className={empty ? 'flex h-full flex-col gap-2 opacity-75' : 'flex h-full flex-col gap-2'}>{card}{skillsButton}</div>;
