@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations} from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { 
   FileText, 
   Database, 
@@ -31,6 +31,7 @@ const colorGradients = [
 
 export function PrivacyContent() {
   const t = useTranslations('privacy');
+  const locale = useLocale();
   const { ref: sectionRef, isInView } = useInView(0.05);
 
   const sections = [
@@ -94,11 +95,11 @@ export function PrivacyContent() {
 
                         {sectionKey === 'contact' && (
                           <a 
-                            href="mailto:support@mathworld.com"
+                            href={`/${locale}/contact`}
                             className="inline-flex items-center gap-2 mt-4 text-primary hover:underline font-medium"
                           >
                             <Mail className="h-4 w-4" />
-                            support@mathworld.com
+                            {locale === 'ar' ? 'صفحة التواصل الرسمية' : 'Official contact page'}
                           </a>
                         )}
                       </div>
