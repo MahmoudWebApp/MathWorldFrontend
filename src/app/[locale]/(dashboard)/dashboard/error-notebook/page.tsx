@@ -49,11 +49,11 @@ export default function ErrorNotebookPage() {
   const selected = activeTab==='archived'?archived:dueOnly?due:active;
   const visibleProblems = selected.currentData?.Items ?? [];
   const total = selected.currentData?.Total ?? 0;
-  const activeCount=active.data?.Total;
-  const archivedCount=archived.data?.Total;
-  const dueCount=active.data?.Due;
+  const activeCount=active.currentData?.Total;
+  const archivedCount=archived.currentData?.Total;
+  const dueCount=active.currentData?.Due;
   const isLoading=selected.isLoading||(selected.isFetching&&!selected.currentData);
-  const isError=selected.isError||active.isError||archived.isError;
+  const isError=selected.isError;
   const [setArchiveStatus] = useSetErrorNotebookArchiveMutation();
   useEffect(()=>{if(selected.currentData&&page>Math.max(1,Math.ceil(total/5)))setPage(Math.max(1,Math.ceil(total/5)));},[selected.currentData,page,total]);
   function refetch(){if(stageId>0){void active.refetch();void archived.refetch();if(dueOnly)void due.refetch();}}
