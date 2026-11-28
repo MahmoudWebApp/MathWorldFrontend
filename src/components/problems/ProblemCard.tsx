@@ -35,15 +35,15 @@ export function ProblemCard({ problem, compact=false, href, showContext=true }: 
     >
       <article className={"brand-surface mw-topic-surface hover:shadow-md "+(compact?"rounded-2xl p-3":"rounded-3xl p-4 sm:p-5")}
         style={{ "--stage-accent": stageAccent } as import("react").CSSProperties}>
-        <div className={compact?"flex flex-wrap items-start justify-between gap-2":"flex flex-row items-start justify-between gap-3 sm:gap-4"}>
-          <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex w-full min-w-0 items-start gap-3 sm:gap-4">
             <span aria-hidden="true" className={"flex shrink-0 items-center justify-center rounded-xl "+(compact?"h-9 w-9":"h-11 w-11 sm:h-12 sm:w-12")}
               style={{ color: stageAccent, backgroundColor: stageAccent + '17' }}>
               <Calculator className="h-6 w-6" />
             </span>
             <div className="min-w-0 flex-1">
               <ProblemTitle text={problem.Title} className={"font-bold text-foreground transition-colors "+(compact?"text-sm leading-6":"text-base leading-7 sm:text-lg")}/>
-              <div className={"flex flex-wrap "+(compact?"mt-1.5 gap-1":"mt-3 gap-2")}>
+              <div className={"flex min-w-0 flex-wrap items-center "+(compact?"mt-1.5 gap-1":"mt-2 gap-2")}>
                 {typeof problem.IsSolved === "boolean" && typeof problem.HasAttempted === "boolean" &&
                   (problem.IsSolved ? (
                     <Badge variant="secondary" className="gap-1 border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
@@ -62,20 +62,20 @@ export function ProblemCard({ problem, compact=false, href, showContext=true }: 
                     </Badge>
                   ))}
                 {showContext && problem.StageName && (
-                  <Badge variant="secondary" className="gap-1.5 border bg-background/80 text-foreground" style={{ borderColor: stageAccent + '34' }}>
+                  <Badge variant="secondary" className="max-w-full gap-1.5 rounded-lg border bg-background/80 text-foreground [overflow-wrap:anywhere]" style={{ borderColor: stageAccent + '34' }}>
                     <StageIconBadge stage={stageIdentity} size="xs" className="border-0 bg-transparent shadow-none" />
                     {problem.StageName}
                   </Badge>
                 )}
                 {showContext && problem.CategoryName && (
-                  <Badge variant="outline" className="mw-topic-action">
+                  <Badge variant="outline" className="mw-topic-action max-w-full rounded-lg whitespace-normal text-start [overflow-wrap:anywhere]">
                     {problem.CategoryName}
                   </Badge>
                 )}
               </div>
             </div>
           </div>
-          <div className={compact?"ms-auto flex shrink-0 flex-row flex-wrap items-center gap-2":"flex shrink-0 flex-col items-end gap-3 pt-0 sm:gap-4"}>
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2">
             {typeof problem.Points === "number" ? (
               <span className="inline-flex items-center gap-1.5 text-sm font-bold mw-reward"
                 aria-label={(locale === "ar" ? "النقاط: " : "Points: ") + problem.Points}>

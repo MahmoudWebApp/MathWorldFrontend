@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useDispatch, useSelector } from "react-redux";
 import {
   BookOpen,
+  FileText,
+  FileDown,
+  Lightbulb,
   CheckCircle,
   Heart,
   Loader2,
@@ -34,7 +38,7 @@ import {
   problemsApi,
   useGetProblemDiagramQuery,
   useGetProblemQuery,
-  useGetProblemHintsQuery,
+  type ProblemHints,
   useRevealProblemHintMutation,
   useExportProblemDocumentMutation,
   useSubmitAnswerMutation,
@@ -219,7 +223,9 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
   const [revealHint,{isLoading:hintBusy}]=useRevealProblemHintMutation();
   const [hintError,setHintError]=useState(false);
   const [resultDialog,setResultDialog]=useState(false);
-  const [hintsRequested,setHintsRequested]=useState(false);
+  const [hintData,setHintData]=useState<ProblemHints|null>(null);
+  const [celebrate,setCelebrate]=useState(false);
+  useEffect(()=>{if(!celebrate)return;const timer=window.setTimeout(()=>setCelebrate(false),1600);return ()=>window.clearTimeout(timer);},[celebrate]);
   const [exportDocument,{isLoading:exporting,reset:resetExport}]=useExportProblemDocumentMutation();
   const [exportError,setExportError]=useState(false);
   const exportOwner=useRef(viewerKey);
@@ -268,7 +274,8 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
     setSubmitError("");
     setActiveTab("question");
     setResultDialog(false);
-    setHintsRequested(false);
+    setHintData(null);
+    setCelebrate(false);
     setHintError(false);
     setExportError(false);
     attemptStartedAtRef.current = Date.now();
@@ -393,7 +400,13 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
       : null;
 
   const canRetry = localAnswerResult?.CanRetry ?? studentProblem?.CanRetry ?? false;
-  const hints=useGetProblemHintsQuery({problemId,locale,scope:studentProblem?.PracticeScopeId},{skip:!resultDialog||!hintsRequested||!studentProblem||!entitlement?.IsPremium||isCorrect||!!studentProblem.IsSolved,refetchOnMountOrArgChange:true});
+  const hints=hintData?.ProblemId===problemId?hintData:null;
+  async function showNextHint(){
+    if(hintBusy||!studentProblem||!entitlement?.IsPremium||isCorrect)return;
+    setHintError(false);
+    try{const value=await revealHint({problemId,Level:(hints?.RevealedCount??0)+1,locale,scope:studentProblem.PracticeScopeId}).unwrap();setHintData(value);}
+    catch{setHintError(true);}
+  }
   const canAnswer =
     isAuthenticated &&
     !isFetching &&
@@ -486,9 +499,8 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
   }
 
   function handleStartRetry() {
-    if (!canRetry || !isInErrorNotebook) return;
+    if (!canRetry) return;
     setResultDialog(false);
-    setHintsRequested(false);
     setHintError(false);
     setRetryMode(true);
     setSubmissionDone(false);
@@ -539,7 +551,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
 
       setLocalAnswerResult(result);
       setResultDialog(true);
-      setHintsRequested(false);
+      setCelebrate(result.IsCorrect && result.PointsEarned>0);
       setHintError(false);
       setSelectedOptionId(result.SelectedOptionId);
       setSubmissionDone(true);
@@ -912,38 +924,28 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                     </div>
                   )}
 
-                  {showResult && <Button variant="outline" onClick={()=>setResultDialog(true)}>{isCorrect?(isArabic?'عرض الحل والنتيجة':'View result and solution'):(isArabic?'التلميحات وإعادة المحاولة':'Hints and retry')}</Button>}
-                  {showResult && <Dialog open={resultDialog} onOpenChange={open=>{setResultDialog(open);if(!open){setHintsRequested(false);setHintError(false);}}}>
-                    <DialogContent className="max-w-2xl">
-                      <DialogTitle className="pe-8">{isCorrect?(isArabic?'أحسنت! إجابة صحيحة':'Well done! Correct answer'):(isArabic?'حاول مرة أخرى':'Try again')}</DialogTitle>
+                  {showResult && !resultDialog && <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Button variant="outline" onClick={()=>setResultDialog(true)}>{isCorrect?(isArabic?'عرض الحل والنتيجة':'View result and solution'):(isArabic?'التلميحات وإعادة المحاولة':'Hints and retry')}</Button>
+                    {!isCorrect&&canRetry&&<button type="button" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-100 px-3 font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-200" onClick={handleStartRetry}><RotateCcw className="h-4 w-4"/>{t("problem.tryAgain")}</button>}
+                    {!inDailyChallenge&&scopedPractice&&nextPracticeUrl&&<Link href={nextPracticeUrl} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 font-bold text-primary-foreground">{isArabic?'المسألة التالية':'Next problem'}<DirectionalArrow direction="forward"/></Link>}
+                    {!inDailyChallenge&&scopedPractice&&nextQuery.isError&&<Button variant="outline" onClick={()=>void nextQuery.refetch()}>{isArabic?'إعادة تحميل المسألة التالية':'Retry loading the next problem'}</Button>}
+                    {inDailyChallenge&&isCorrect&&<Link href={nextChallengeUrl} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 font-bold text-primary-foreground">{nextChallengeProblem?(isArabic?'السؤال التالي':'Next question'):(isArabic?'إنهاء التحدي':'Finish challenge')}</Link>}
+                  </div>}
+                  {celebrate&&resultDialog&&typeof document!=='undefined'&&createPortal(<div aria-hidden="true" className="mw-answer-celebration pointer-events-none fixed inset-x-0 top-[7dvh] z-[90] flex justify-center overflow-visible">{Array.from({length:22},(_,i)=><span key={i} style={{'--dx':((i-10.5)*14)+'px','--dy':(55+(i%5)*22)+'px',backgroundColor:['#5c24ff','#ff2399','#F5C518','#22c55e'][i%4],animationDelay:(i%4)*35+'ms'} as React.CSSProperties}/>)}</div>,document.body)}
+                  {showResult && <Dialog open={resultDialog} onOpenChange={open=>{setResultDialog(open);if(!open){setCelebrate(false);setHintError(false);}}}>
+                    <DialogContent className="max-w-2xl gap-2 p-4 sm:p-5" onOpenAutoFocus={event=>{event.preventDefault(); const el=document.querySelector<HTMLElement>('[data-answer-dialog-heading]');el?.focus({preventScroll:true});}}>
+                      <DialogTitle tabIndex={-1} data-answer-dialog-heading className="pe-8 leading-normal">{isCorrect?(isArabic?'أحسنت! إجابة صحيحة':'Well done! Correct answer'):(isArabic?'حاول مرة أخرى':'Try again')}</DialogTitle>
                       <DialogDescription>{isCorrect?(isArabic?'راجع طريقة الحل ثم تابع التعلم.':'Review the solution and keep learning.'):(isArabic?'اطلب تلميحاً إذا احتجت للمساعدة.':'Request a hint if you need help.')}</DialogDescription>
                     <div
                       role="status"
                       aria-live="polite"
                       aria-atomic="true"
-                      className={`mt-6 animate-in rounded-xl border p-5 duration-300 fade-in zoom-in ${
+                      className={`mt-2 rounded-xl border p-3 sm:p-4 ${
                         isCorrect
                           ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
                           : "border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
                       }`}
                     >
-                      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          {isCorrect ? (
-                            <CheckCircle className="h-5 w-5 text-green-600" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-red-600" />
-                          )}
-                          <span className="font-semibold">
-                            {isCorrect
-                              ? t("problem.correct")
-                              : t("problem.wrong")}
-                          </span>
-                        </div>
-
-
-                      </div>
-
                       {!isCorrect && (
                         <p className="mt-2 text-sm leading-relaxed text-red-700 dark:text-red-300">
                           {t("problem.retryWithoutReveal")}
@@ -970,14 +972,11 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                         </div>
                       )}
 
-                      {isCorrect && <div className="mt-5 space-y-4 rounded-xl border bg-card p-4">
-                        {localAnswerResult?.IsCorrect && <div aria-hidden="true" className="flex justify-center gap-3 overflow-hidden py-2">
-                          {['#5c24ff','#ff2399','#F5C518','#22c55e','#5c24ff','#ff2399','#F5C518'].map((color,i)=><span key={i} className="h-3 w-2 rounded-sm motion-safe:animate-bounce" style={{backgroundColor:color,animationDelay:i*90+'ms',animationIterationCount:3,transform:'rotate('+i*23+'deg)'}}/>)}
-                        </div>}
+                      {isCorrect && <div className="mt-3 space-y-2 rounded-xl border bg-card p-3">
                         <h3 className="font-bold">{isArabic?'السؤال':'Question'}</h3>
                         <RichText text={questionText} isArabic={isArabic}/>
                         <h3 className="font-bold text-green-700 dark:text-green-300">{t("problem.solution")}</h3>
-                        {solutionText ? <RichText text={solutionText} isArabic={isArabic}/> : structuredSolution ? <div className="space-y-3">
+                        {solutionText ? <RichText text={solutionText} isArabic={isArabic} className="text-sm leading-relaxed"/> : structuredSolution ? <div className="space-y-3">
                           <RichText text={structuredSolution.Idea} isArabic={isArabic}/><LatexPreview latex={structuredSolution.FormulaLatex} block/>
                           <ol className="list-decimal space-y-2 ps-6">{structuredSolution.Steps.map((step,i)=><li key={i}><RichText text={step} isArabic={isArabic}/></li>)}</ol>
                           {([structuredSolution.Substitution,structuredSolution.Result+' '+structuredSolution.Unit,structuredSolution.Verification,structuredSolution.CommonError]).filter(Boolean).map((part,i)=><RichText key={i} text={part} isArabic={isArabic}/>)}
@@ -985,7 +984,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                         {youtubeUrl && <YoutubeEmbed url={youtubeUrl}/>}
                         {entitlement?.IsPremium && <div className="space-y-2 border-t pt-4">
                           <p className="text-sm font-bold">{isArabic?'تحميل السؤال والحل':'Download question and solution'}</p>
-                          <div className="grid grid-cols-2 gap-2"><Button variant="outline" disabled={exporting} onClick={()=>void downloadProblem('pdf')}>PDF</Button><Button variant="outline" disabled={exporting} onClick={()=>void downloadProblem('docx')}>Word</Button></div>
+                          <div className="grid grid-cols-2 gap-2"><button type="button" className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 font-bold text-red-700 disabled:opacity-50 dark:bg-red-950 dark:text-red-200" disabled={exporting} onClick={()=>void downloadProblem('pdf')}><FileDown className="h-5 w-5"/>PDF</button><button type="button" className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-300 bg-blue-50 font-bold text-blue-700 disabled:opacity-50 dark:bg-blue-950 dark:text-blue-200" disabled={exporting} onClick={()=>void downloadProblem('docx')}><FileText className="h-5 w-5"/>Word</button></div>
                           {exporting&&<p role="status" className="text-sm text-muted-foreground">{isArabic?'جاري تجهيز الملف…':'Preparing document…'}</p>}
                           {exportError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر تجهيز الملف. تأكد من الاشتراك والاتصال وحاول مجدداً.':'Could not prepare the document. Check your access and connection, then retry.'}</p>}
                         </div>}
@@ -993,14 +992,10 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                       {studentProblem && !isCorrect && !studentProblem.IsSolved && entitlement && (
         <section className="mb-5 space-y-3 rounded-2xl border border-primary/20 bg-primary/5 p-4">
           <h2 className="font-semibold">{isArabic ? 'تلميحات تساعدك على الحل' : 'Hints to help you solve'}</h2>
-          {!entitlement.IsPremium ? <LockedPremiumDialog><button type="button" className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"><Lock className="h-4 w-4"/>{isArabic?'تلميحات Premium':'Premium hints'}</button></LockedPremiumDialog> : !hintsRequested ? <Button variant="outline" onClick={()=>setHintsRequested(true)}>{isArabic?"طلب التلميح":"Request a hint"}</Button> : <>
-            {hints.isLoading&&<p role="status">{isArabic?'جارٍ التحميل…':'Loading…'}</p>}
-            {hints.isError&&<button className="text-sm underline" onClick={()=>void hints.refetch()}>{isArabic?'تعذّر تحميل التلميحات. إعادة المحاولة':'Could not load hints. Retry'}</button>}
-            {hints.currentData?.Available===false&&<p className="text-sm text-muted-foreground">{isArabic?'لا توجد تلميحات لهذه المسألة بعد.':'Hints are not yet available for this problem.'}</p>}
-            {hints.currentData?.Available&&<>
-              {hints.currentData.Hints.map(h=><div key={h.Level} className="rounded-xl border bg-background p-3"><p className="mb-1 text-sm font-semibold">{isArabic?'التلميح':'Hint'} {h.Level}</p><RichText text={h.Text} isArabic={isArabic}/></div>)}
-              {hints.currentData.RevealedCount<(hints.currentData.HintCount??2)&&<Button variant="outline" disabled={hintBusy||isSubmitting} onClick={async()=>{setHintError(false);try{await revealHint({problemId,Level:(hints.currentData?.RevealedCount??0)+1,locale,scope:studentProblem?.PracticeScopeId}).unwrap();}catch{setHintError(true);}}}>{hintBusy?(isArabic?'جارٍ التحميل…':'Loading…'):(isArabic?'عرض التلميح':'Reveal hint')+' '+(hints.currentData.RevealedCount+1)}</Button>}
-            </>}
+          {!entitlement.IsPremium ? <LockedPremiumDialog><button type="button" className="flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"><Lock className="h-4 w-4"/>{isArabic?'تلميحات Premium':'Premium hints'}</button></LockedPremiumDialog> : <>
+            {hints?.Available===false&&<p className="text-sm text-muted-foreground">{isArabic?'لا توجد تلميحات لهذه المسألة بعد.':'Hints are not yet available for this problem.'}</p>}
+            {hints?.Hints.map(h=><div key={h.Level} className="rounded-xl border bg-background p-3"><p className="mb-1 text-sm font-semibold">{isArabic?'التلميح':'Hint'} {h.Level}</p><RichText text={h.Text} isArabic={isArabic} className="text-sm leading-relaxed"/></div>)}
+            {hints?.Available!==false&&(hints?.RevealedCount??0)<(hints?.HintCount??2)&&<button type="button" disabled={hintBusy||isSubmitting} onClick={()=>void showNextHint()} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-amber-100 px-4 text-sm font-bold text-amber-900 disabled:opacity-50 dark:bg-amber-950 dark:text-amber-200"><Lightbulb className="h-4 w-4"/>{hintBusy?(isArabic?'جارٍ التحميل…':'Loading…'):(isArabic?'عرض التلميح':'Reveal hint')+' '+((hints?.RevealedCount??0)+1)}</button>}
             {hintError&&<p role="alert" className="text-sm text-destructive">{isArabic?'تعذّر عرض التلميح. حاول مجدداً.':'Could not reveal hint. Please retry.'}</p>}
           </>}
           <p className="text-xs text-muted-foreground">{isArabic?'الإجابة وطريقة الحل تظهران بعد الحل الصحيح لجميع الطلاب.':'The answer and solution appear after a correct solve for all learners.'}</p>
@@ -1037,7 +1032,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                           </Link>}
                         </div>
                       )}
-                      {!inDailyChallenge && scopedPractice && isCorrect && !retryMode && <div className="mt-4">
+                      {!inDailyChallenge && scopedPractice && !retryMode && <div className="mt-4">
                         {nextQuery.isFetching ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'جارٍ تجهيز المسألة التالية…':'Preparing the next problem…'}</p> : nextQuery.isError ? <Button variant="outline" onClick={()=>void nextQuery.refetch()}>{isArabic?'إعادة تحميل المسألة التالية':'Retry loading the next problem'}</Button> : nextPracticeUrl ? <Link href={nextPracticeUrl} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-bold text-primary-foreground">{isArabic?'المسألة التالية':'Next problem'}<DirectionalArrow direction="forward"/></Link> : nextQuery.currentData?.HasNext===false ? <p role="status" className="text-sm text-muted-foreground">{isArabic?'لا توجد مسائل أخرى غير محلولة ومتاحة في هذه الفئة.':'No other available unsolved problems in this topic.'}</p> : null}
                       </div>}
                       {!learnerWorkspace && (<Link
@@ -1054,7 +1049,7 @@ function ProblemPageContent({query,viewerKey}:{query:ReturnType<typeof useGetPro
                       </Link>)}
 
 
-                      {isInErrorNotebook && (!inDailyChallenge || !isCorrect) && (
+                      {(!isCorrect || isInErrorNotebook) && (!inDailyChallenge || !isCorrect) && (
                         <div className="mt-5 flex flex-wrap items-center gap-3">
                           {canRetry && <Button
                             variant="outline"

@@ -141,7 +141,7 @@ if(process.argv.includes('--api')){
         await resultButton.waitFor({timeout:15000});
         const dialog=page.getByRole('dialog');
         const next=dialog.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true});
-        assert.equal(await page.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true}).count(),0,'Next action belongs inside result dialog');
+        await page.getByRole('link',{name:locale==='ar'?'المسألة التالية':'Next problem',exact:true}).waitFor({timeout:15000});
         assert.equal(await dialog.count(),0,'Historical solved result must not open automatically');
         await resultButton.click();
         await dialog.waitFor({timeout:10000});

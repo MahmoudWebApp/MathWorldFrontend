@@ -14,5 +14,7 @@ export function ContextualFooter() {
   const learnerFlow = role === 'Student' && (
     pathname === '/notifications' || pathname.startsWith('/problems') || pathname.startsWith('/stages/')
   );
-  return workspace || learnerFlow ? null : <Footer />;
+  // Category browsing is a catalog flow; keep the footer on both public and student category pages.
+  const catalog = pathname === '/stages' || pathname.startsWith('/stages/') || pathname === '/dashboard/categories' || pathname.startsWith('/dashboard/categories/');
+  return !catalog && (workspace || learnerFlow) ? null : <Footer />;
 }

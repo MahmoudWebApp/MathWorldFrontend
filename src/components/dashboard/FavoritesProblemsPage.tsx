@@ -6,7 +6,6 @@ import { Link } from '@/i18n/routing';
 import { useGetUserProblemPageQuery, useGetLearningStageQuery, useToggleFavoriteMutation } from '@/store/api/usersApi';
 import { Pagination } from '@/components/ui/Pagination';
 import { ProblemCard } from '@/components/problems/ProblemCard';
-import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { AlertCircle, Heart, X } from 'lucide-react';
@@ -49,7 +48,7 @@ export function FavoritesProblemsPage() {
     }
   };
 
-  if (error || stageError) {
+  if ((error || stageError) && !favorites) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-red-500 dark:text-red-400 py-20">
@@ -70,9 +69,8 @@ export function FavoritesProblemsPage() {
       {/* Problems List */}
       {stageLoading || isLoading || (isFetching&&!favorites) ? (
         <div className="space-y-4">
-          <MathWorldLoading compact />
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-32 bg-muted/50 animate-pulse rounded-xl" />
+            <div key={i} className="h-28 rounded-xl border border-border/50 bg-muted/50 motion-safe:animate-pulse" />
           ))}
         </div>
       ) : stageFavorites.length > 0 ? (
@@ -85,7 +83,7 @@ export function FavoritesProblemsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute top-4 end-4 z-10 opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="mt-1 ms-auto flex text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

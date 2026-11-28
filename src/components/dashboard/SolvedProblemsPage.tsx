@@ -4,7 +4,6 @@ import { WorkspacePageHeader } from '@/components/ui/WorkspacePageHeader';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { useGetUserProblemPageQuery, useGetLearningStageQuery } from '@/store/api/usersApi';
-import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
 import { Pagination } from '@/components/ui/Pagination';
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -32,7 +31,7 @@ export function SolvedProblemsPage() {
   const totalCount=result?.Total??0;
   useEffect(()=>{if(result&&page>Math.max(1,Math.ceil(result.Total/5)))setPage(Math.max(1,Math.ceil(result.Total/5)));},[result,page]);
 
-  if (error || stageError) {
+  if ((error || stageError) && !result) {
     return (
       <div className="container mx-auto lg:px-24 md:px-16 px-4 py-8">
         <div className="flex flex-col items-center gap-4 text-red-500 dark:text-red-400 py-20">
@@ -53,9 +52,8 @@ export function SolvedProblemsPage() {
       {/* Problems List */}
       {stageLoading || isLoading || (isFetching&&!result) ? (
         <div className="space-y-4">
-          <MathWorldLoading compact />
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-32 bg-muted/50 animate-pulse rounded-xl" />
+            <div key={i} className="h-28 rounded-xl border border-border/50 bg-muted/50 motion-safe:animate-pulse" />
           ))}
         </div>
       ) : solvedProblems && solvedProblems.length > 0 ? (

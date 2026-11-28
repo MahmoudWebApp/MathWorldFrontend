@@ -980,8 +980,16 @@ button:focus-visible,[role="button"]:focus-visible,a.sr-wave-button:focus-visibl
 @keyframes mw-dialog-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .98; } }
 @media (prefers-reduced-motion: reduce) { .mw-dialog-overlay, .mw-dialog-content { animation-duration: .01ms !important; } }
 
-/* Social links use the platform's shared brand gradient, not network colors. */
-.mw-social-brand { background:var(--sr-grad, linear-gradient(90deg,#5c24ff,#ff2399)); color:#fff; border:1px solid transparent; }
-.mw-social-brand:hover { color:#fff; filter:brightness(1.08); box-shadow:0 6px 18px rgb(var(--sr-primary-rgb) / .22); }
+/* Neutral social controls until hover or keyboard focus; touch does not require hover. */
+.mw-social-brand { background:var(--color-muted); color:#6b7280; border:1px solid var(--color-border); }
+.dark .mw-social-brand { color:#9ca3af; }
+.dark .mw-social-brand:focus-visible,.dark .mw-social-brand:active { color:#fff; }
+@media (hover:hover) { .dark .mw-social-brand:hover { color:#fff; } }
+@media (hover:hover) { .mw-social-brand:hover { background:var(--sr-grad, linear-gradient(90deg,#5c24ff,#ff2399)); color:#fff; border-color:transparent; box-shadow:0 6px 18px rgb(var(--sr-primary-rgb) / .22); } }
+.mw-social-brand:focus-visible,.mw-social-brand:active { background:var(--sr-grad, linear-gradient(90deg,#5c24ff,#ff2399)); color:#fff; border-color:transparent; }
+/* Decorative, independent of the dialog scroll surface; never catches clicks. */
+.mw-answer-celebration span { position:absolute; width:7px; height:12px; border-radius:2px; opacity:0; animation:mw-answer-confetti 1.45s ease-out both; }
+@keyframes mw-answer-confetti { 0%{opacity:0;transform:translate(0,0) rotate(0deg)} 15%{opacity:1} 75%{opacity:1} 100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(260deg)} }
+@media (prefers-reduced-motion:reduce){.mw-answer-celebration{display:none}}
 /* This title sits on an already saturated gradient surface. */
 .impact-shell .impact-title-accent { background:none; color:#fff; -webkit-text-fill-color:#fff; animation:none; }
