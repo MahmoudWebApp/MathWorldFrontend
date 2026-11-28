@@ -28,7 +28,7 @@ export default function StudentCategoriesPage() {
   const trackSelection=useGetTrackSelectionQuery(undefined,{refetchOnMountOrArgChange:true});
   const trackCatalog=useGetPublishedTracksQuery(stageId,{skip:stageId<=0,refetchOnMountOrArgChange:120});
   // Only fetch legacy stage data after the catalog confirms that the track UI is unavailable.
-  const useLegacyStage = stageId > 0 && !trackCatalog.isFetching && (
+  const useLegacyStage = stageId > 0 && (
     (!!trackCatalog.currentData && !trackCatalog.currentData.Enabled) ||
     (trackCatalog.isError && (trackCatalog.error as {status?:number})?.status===404) ||
     (!!trackCatalog.currentData?.Enabled && trackCatalog.currentData.Items.length===0)
