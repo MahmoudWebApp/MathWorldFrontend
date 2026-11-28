@@ -1,6 +1,7 @@
 'use client';
 
-import { StudentTrackWorkspace, StudentCategoryLoading, StudentCategorySkeleton } from '@/components/curriculum/TrackViews';
+import { StudentTrackWorkspace } from '@/components/curriculum/TrackViews';
+import { StudentCategoryLoading, StudentCategorySkeleton } from '@/components/dashboard/StudentCategoryLoading';
 import { useGetTrackSelectionQuery,useGetPublishedTracksQuery } from '@/store/api/stagesApi';
 import { useLocale } from 'next-intl';
 import { useState } from 'react';
