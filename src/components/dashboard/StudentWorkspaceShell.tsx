@@ -21,6 +21,7 @@ import { notificationsApi } from '@/store/api/notificationsApi';
 import { WorkspaceBreadcrumbs } from '@/components/ui/WorkspaceBreadcrumbs';
 import { StudentWorkspaceNavigation } from './StudentWorkspaceNavigation';
 import { MathWorldLoading } from '@/components/ui/MathWorldLoading';
+import { StudentCategoryLoading } from '@/components/dashboard/StudentCategoryLoading';
 
 export function StudentWorkspaceShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -79,6 +80,7 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
   // AuthProvider restores the cookie session asynchronously. Until the API
   // confirms it, never render temporary "Sign in" or fake account data.
   if (securedRoute && sessionLoading) {
+    if(pathname==='/dashboard/categories')return <StudentCategoryLoading ar={locale==='ar'}/>;
     return <main className="mx-auto max-w-6xl px-4 py-8"><MathWorldLoading skeleton /></main>;
   }
   if (securedRoute && sessionUnavailable) {
@@ -107,6 +109,7 @@ export function StudentWorkspaceShell({ children }: { children: React.ReactNode 
       {emailNotice&&<p role="status">{emailNotice}</p>}{exit}
     </main>;
     if(step==='SelectStage'||step==='SelectTrack')return <><div className="mx-auto max-w-5xl px-4 pt-4 text-end">{exit}</div>{pathname==='/learning-stage'?children:<MathWorldLoading compact/>}</>;
+    if(pathname==='/dashboard/categories'&&!onboarding.isError)return <StudentCategoryLoading ar={ar}/>;
     return <main className="mx-auto max-w-lg space-y-4 px-4 py-10">{onboarding.isError?<><p role="alert">{ar?'تعذّر التحقق من جاهزية حسابك.':'Could not check your account setup.'}</p><button type="button" onClick={()=>void onboarding.refetch()}>{ar?'إعادة المحاولة':'Retry'}</button>{exit}</>:<MathWorldLoading compact/>}</main>;
   }
 
