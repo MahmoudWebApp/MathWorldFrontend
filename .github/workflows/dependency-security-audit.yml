@@ -25,14 +25,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      # Temporary PR-only lockfile generation; remove after committing the exact output.
-      - name: Resolve candidate lockfile
-        run: pnpm install --lockfile-only --ignore-scripts
-      - name: Record generated lockfile
-        run: |
-          echo MATHSUPER_LOCKFILE_BEGIN
-          base64 -w 120 pnpm-lock.yaml
-          echo MATHSUPER_LOCKFILE_END
+      - name: Verify committed dependency lock
+        run: pnpm install --lockfile-only --frozen-lockfile --ignore-scripts
       - name: Audit locked production dependencies
         run: pnpm audit --prod --audit-level high
       - name: Report all dependency advisories
