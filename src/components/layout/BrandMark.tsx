@@ -14,7 +14,7 @@ interface BrandMarkProps {
  */
 export function BrandMark({
   className,
-  title = 'MathWorld',
+  title = 'MathSuper',
   priority = false,
 }: BrandMarkProps) {
   return (
