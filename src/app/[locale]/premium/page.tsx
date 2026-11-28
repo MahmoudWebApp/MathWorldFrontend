@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from 'react';
 import { useLocale } from 'next-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import { CheckCircle2, Crown, GraduationCap, LockOpen, ShieldCheck, Sparkles, Ticket } from 'lucide-react';
+import { CheckCircle2, Crown, Ticket } from 'lucide-react';
+import { getPremiumBenefits } from '@/lib/premium-benefits';
 import { Link, usePathname } from '@/i18n/routing';
 import type { RootState, AppDispatch } from '@/store';
 import type { User } from '@/store/api/types';
@@ -26,16 +27,7 @@ export default function PremiumBenefitsPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const premiumFeatures = [
-    { icon: CheckCircle2, ar: 'حل عدد غير محدود من المسائل في جميع الفئات', en: 'Unlimited problems in all categories' },
-    { icon: LockOpen, ar: 'فتح جميع فئات الصف أو المساق الذي يدرسه الطالب', en: 'Unlock all topics in the learner’s selected grade or course' },
-    { icon: GraduationCap, ar: 'تلميحان متدرجان قبل الحل', en: 'Two progressive hints before solving' },
-    { icon: Sparkles, ar: 'تقارير وإحصائيات شخصية مع تصدير PDF وExcel (XLSX)',
-      en: 'Personal analytics with PDF and native Excel (XLSX) reports' },
-    { icon: Sparkles, ar: 'تحدٍ يومي تفاعلي حتى خمس مسائل متتالية', en: 'Sequential daily challenge with up to five questions' },
-    ...(exams?.Enabled===true?[{icon:GraduationCap,ar:'امتحانات مخصصة للصف أو الفئة وشهادة عند الاجتياز',en:'Custom grade or topic exams with a certificate on passing'}]:[]),
-    { icon: ShieldCheck, ar: 'بدون إعلانات ضمن MathWorld', en: 'Ad-free MathWorld' },
-  ];
+  const premiumFeatures = getPremiumBenefits(exams?.Enabled===true);
   const freeFeatures = [
     ar ? 'فئتان مفتوحتان من كل مرحلة' : 'Two unlocked categories per stage',
     ar ? 'حل عدد غير محدود من المسائل المتاحة' : 'Unlimited problems in your open categories',
