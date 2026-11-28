@@ -158,3 +158,12 @@ console.log('PASS: scoped admin content, explicit brand headings, original guide
 const skillsPopover=read('src/components/curriculum/CategorySkillsDialog.tsx');
 assert.match(skillsPopover,/Popover\.Root modal=\{false\}/);
 assert.match(skillsPopover,/Popover\.Arrow/);
+
+// Cross-slice student progress must be refreshed only after successful writes.
+const userApi=read('src/store/api/usersApi.ts');
+const selectTrackBlock=stageApi.slice(stageApi.indexOf('selectTrack:builder.mutation'),stageApi.indexOf('getTrackContinue:builder.query'));
+assert.match(selectTrackBlock,/await queryFulfilled;[\s\S]*?usersApi\.util\.invalidateTags\(\[[^\]]*'Favorite'[^\]]*'Solved'/);
+const favoriteBlock=userApi.slice(userApi.indexOf('toggleFavorite: builder.mutation'),userApi.indexOf('checkFavorite: builder.query'));
+assert.match(favoriteBlock,/await queryFulfilled;\s*dispatch\(stagesApi\.util\.invalidateTags\(\['TrackPracticeState'\]\)\)/);
+assert.match(favoriteBlock,/invalidatesTags: \(_result, error, \{ ProblemId \}\) => error \? \[\] :/);
+console.log('PASS: successful grade and favorite writes refresh dependent student caches.');

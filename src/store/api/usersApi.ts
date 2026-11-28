@@ -716,14 +716,14 @@ export const usersApi = createApi({
         method: 'PUT',
         body,
       }),
-      invalidatesTags: ['LearningStage', 'LearningJourney', 'Dashboard', 'User', 'Leaderboard'],
+      invalidatesTags: (_result, error) => error ? [] : ['LearningStage', 'LearningJourney', 'Dashboard', 'User', 'Leaderboard', 'Favorite', 'Solved', 'ErrorNotebook', 'Achievements', 'PremiumAnalytics'],
       async onQueryStarted(_body, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
           // Stage-specific journey and daily suggestions live in stagesApi,
           // not this slice. Clearing their caches prevents prior-stage data
           // from flashing after a successful stage change.
-          dispatch(stagesApi.util.invalidateTags(['LearningJourney', 'DailyChallenge']));
+          dispatch(stagesApi.util.invalidateTags(['LearningTrack', 'TrackPracticeState', 'LearningJourney', 'DailyChallenge']));
         } catch {
           // A rejected stage update must leave existing progress untouched.
         }
@@ -1092,11 +1092,12 @@ export const usersApi = createApi({
 
         try {
           await queryFulfilled;
+          dispatch(stagesApi.util.invalidateTags(['TrackPracticeState']));
         } catch {
           patchResult.undo();
         }
       },
-      invalidatesTags: (_result, _error, { ProblemId }) => [
+      invalidatesTags: (_result, error, { ProblemId }) => error ? [] : [
         'Favorite',
         'Dashboard',
         { type: 'Problem', id: ProblemId },

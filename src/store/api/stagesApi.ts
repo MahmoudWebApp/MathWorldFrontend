@@ -111,7 +111,14 @@ export const stagesApi = createApi({
       query:()=>'/users/learning-track',providesTags:['LearningTrack'],
     }),
     selectTrack:builder.mutation<TrackSelection,{TrackId:number}>({
-      query:body=>({url:'/users/learning-track',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack','LearningJourney','DailyChallenge'],
+      query:body=>({url:'/users/learning-track',method:'PUT',body}),invalidatesTags:(_r,e)=>e?[]:['LearningTrack','LearningJourney','DailyChallenge','TrackPracticeState'],
+      async onQueryStarted(_body,{dispatch,queryFulfilled}){
+        try {
+          await queryFulfilled;
+          const {usersApi}=await import('./usersApi');
+          dispatch(usersApi.util.invalidateTags(['LearningStage','LearningJourney','Dashboard','User','Favorite','Solved','ErrorNotebook','Achievements','PremiumAnalytics']));
+        } catch { /* A rejected selection must not invalidate the previous grade. */ }
+      },
     }),
     getTrackContinue:builder.query<{TrackId:number;Problem:{Id:number;CategoryId:number;TitleAr:string;TitleEn:string}|null},void>({
       query:()=>'/users/learning-tracks/continue',providesTags:['LearningTrack','TrackPracticeState'],
