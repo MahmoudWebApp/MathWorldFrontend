@@ -45,7 +45,7 @@ export default function UserDashboardPage() {
   const isPremium = subscription?.IsPremium === true;
   const trackId=journey?.TrackId??null;
   // Secondary actions must not compete with the first dashboard load.
-  const coreReady=!!dashboard && !!journey && !!subscription;
+  const coreReady=!!journey && !!subscription && (!!dashboard || (!isLoading && !isFetching));
   const {currentData:examAvailability}=useGetCustomExamAvailabilityQuery(undefined,{skip:user?.Role!=='Student'||!coreReady,refetchOnMountOrArgChange:true});
   const {currentData:trackNext}=useGetTrackContinueQuery(undefined,{skip:!coreReady||!isPremium||!trackId,refetchOnMountOrArgChange:true});
   const { data: nextUnsolved } = useSearchProblemsQuery(
